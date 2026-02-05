@@ -23,11 +23,20 @@ export const metadata: Metadata = {
     siteName: "Regístrame Ya!",
     locale: "es_EC",
     type: "website",
+    images: [
+      {
+        url: '/images/social-preview.png',
+        width: 1200,
+        height: 630,
+        alt: 'Regístrame Ya! Preview',
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Regístrame Ya! - Tu Contacto Profesional en 1 Clic",
     description: "Deja de perder trabajos porque olviden cómo te registraron.",
+    images: ['/images/social-preview.png'],
   },
 };
 
