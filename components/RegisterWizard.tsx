@@ -135,6 +135,29 @@ export default function RegisterWizard() {
         }
     };
 
+    const generateVCard = (data: typeof formData, photoUrl: string | null) => {
+        // vCard 3.0 format
+        const vcard = [
+            'BEGIN:VCARD',
+            'VERSION:3.0',
+            `FN:${data.name}`,
+            `N:${data.name.split(' ').reverse().join(';')};;;`,
+            `TITLE:${data.profession}`,
+            `ORG:${data.company}`,
+            `TEL;TYPE=CELL:${data.whatsapp}`,
+            `EMAIL:${data.email}`,
+            `ADR;TYPE=WORK:;;${data.address};;;;`,
+            `URL:${data.web}`,
+            `NOTE:${data.bio}`,
+            photoUrl ? `PHOTO;VALUE=URI:${photoUrl}` : '',
+            data.instagram ? `X-SOCIALPROFILE;TYPE=instagram:${data.instagram}` : '',
+            data.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin:${data.linkedin}` : '',
+            'END:VCARD'
+        ].filter(Boolean).join('\n');
+
+        return vcard;
+    };
+
     const handleFinalSubmit = async () => {
         setIsSubmitting(true);
         try {
@@ -196,20 +219,17 @@ export default function RegisterWizard() {
                     foto_url: photoUrl,
                     comprobante_url: receiptUrl,
                     galeria_urls: galleryUrls,
-                    status: 'pendiente',
+                    status: 'pendiente', // Se mantiene pendiente hasta validación real si se quisiera
                     slug: slug,
                     etiquetas: (() => {
                         const profession = formData.profession.toLowerCase().trim();
                         const extraTags = INDUSTRY_TAGS[profession] || [];
                         const userTags = formData.categories.split(',').map(t => t.trim()).filter(Boolean);
-                        // Combinar y quitar duplicados case-insensitive
                         const combinedCount = new Set([
                             ...userTags.map(t => t.toLowerCase()),
                             ...extraTags.map(t => t.toLowerCase())
                         ]);
-                        // Mantenemos los originales para mejor visualización si es necesario
                         const finalTags = Array.from(combinedCount).map(t => {
-                            // Buscar el original con casing bonito o capitalizar
                             return t.charAt(0).toUpperCase() + t.slice(1);
                         });
                         return finalTags.join(', ');
@@ -217,6 +237,19 @@ export default function RegisterWizard() {
                 }, { onConflict: 'email' });
 
             if (error) throw error;
+
+            // 4. GENERAR Y DESCARGAR VCARD
+            const vcardContent = generateVCard(formData, photoUrl);
+            const blob = new Blob([vcardContent], { type: 'text/vcard' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${slug}.vcf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
             setStep(6);
         } catch (err) {
             alert(`Hubo un error al guardar tu pedido: ${err instanceof Error ? err.message : JSON.stringify(err)}. Por favor intenta de nuevo o contáctanos.`);
@@ -645,57 +678,24 @@ export default function RegisterWizard() {
                     {/* STEP 5: PAGO */}
                     {step === 5 && (
                         <div className="max-w-xl mx-auto text-center text-white">
-                            <h2 className="text-3xl md:text-5xl font-black text-primary tracking-tighter uppercase italic mb-4">Finaliza tu Pago</h2>
-                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-10 italic">Inversión única de ${currentPlanPrice}</p>
+                            <h2 className="text-3xl md:text-5xl font-black text-primary tracking-tighter uppercase italic mb-4">¡Casi Listo!</h2>
+                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-10 italic">Descarga tu tarjeta y finaliza el registro</p>
 
-                            <div className="space-y-6 text-left">
-                                <div className="bg-white/5 p-8 rounded-[40px] border border-white/10 space-y-6 relative overflow-hidden group">
-                                    <div className="absolute -top-10 -right-10 text-white/5 group-hover:text-primary/5 transition-colors rotate-12"><Zap size={200} /></div>
-                                    <div className="grid grid-cols-2 gap-8 relative z-10">
-                                        <div>
-                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Banco</p>
-                                            <p className="text-lg font-black">Pichincha</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Tipo</p>
-                                            <p className="text-lg font-black">Ahorros</p>
-                                        </div>
-                                        <div className="col-span-2">
-                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Número de Cuenta</p>
-                                            <p className="text-3xl font-black tracking-tight text-primary">2201234567</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Cédula</p>
-                                            <p className="text-lg font-black">1712345678</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Nombre</p>
-                                            <p className="text-lg font-black">César Reyes</p>
-                                        </div>
-                                    </div>
+                            <div className="bg-white/5 p-10 rounded-[40px] border border-white/10 flex flex-col items-center justify-center relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-32 bg-primary/20 blur-[100px] rounded-full pointer-events-none" />
+
+                                <div className="w-24 h-24 bg-primary/20 text-primary rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                    <Smartphone size={48} />
                                 </div>
 
-                                <div>
-                                    <label className="block text-[10px] font-black text-white/30 uppercase tracking-widest mb-4 ml-2">Sube tu comprobante de pago</label>
-                                    <div className="relative h-40 border-4 border-dashed border-white/10 rounded-[32px] flex flex-col items-center justify-center hover:border-primary/40 transition-all cursor-pointer group overflow-hidden">
-                                        <input
-                                            type="file"
-                                            accept="image/*,application/pdf"
-                                            onChange={(e) => updateForm('receipt', e.target.files?.[0] || null)}
-                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                        />
-                                        {formData.receipt ? (
-                                            <div className="flex items-center gap-4 text-primary">
-                                                <CheckCircle size={32} />
-                                                <span className="text-sm font-black uppercase tracking-tighter italic">{formData.receipt.name}</span>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <Camera size={40} className="text-white/10 group-hover:text-primary transition-colors mb-2" />
-                                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Elegir Archivo</span>
-                                            </>
-                                        )}
-                                    </div>
+                                <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter mb-4">Descarga tu vCard</h3>
+                                <p className="text-white/60 text-sm font-medium mb-8 max-w-sm">
+                                    Haz clic abajo para descargar tu archivo vCard (.vcf) y guardar tu registro.
+                                </p>
+
+                                <div className="w-full p-4 bg-navy/40 rounded-2xl border border-white/5 text-left mb-6">
+                                    <p className="text-[10px] uppercase tracking-widest text-white/40 mb-2 font-black">Tu Enlace Personal</p>
+                                    <p className="text-primary font-black text-lg tracking-tight">registrameya.com/card/{generateSlug(formData.name)}</p>
                                 </div>
                             </div>
                         </div>
@@ -752,7 +752,7 @@ export default function RegisterWizard() {
                                     isSubmitting && "opacity-50 cursor-not-allowed"
                                 )}
                             >
-                                {step === 5 ? (isSubmitting ? 'Procesando...' : 'Notificar Pago') : 'Siguiente'} <ArrowRight size={20} />
+                                {step === 5 ? (isSubmitting ? 'Procesando...' : 'Descargar vCard') : 'Siguiente'} <ArrowRight size={20} />
                             </button>
                         </div>
                     )}

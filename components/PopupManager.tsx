@@ -10,7 +10,7 @@ export default function PopupManager() {
     useEffect(() => {
         // --- 1. Exit Intent Logic ---
         const handleMouseLeave = (e: MouseEvent) => {
-            if (e.clientY <= 0 && !localStorage.getItem("popup_exit_closed")) {
+            if (e.clientY <= 0 && !sessionStorage.getItem("popup_exit_closed")) {
                 setActivePopup("exit");
             }
         };
@@ -19,7 +19,7 @@ export default function PopupManager() {
         // --- 2. Scroll Logic (50%) ---
         const handleScroll = () => {
             const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-            if (scrollPercent > 50 && !localStorage.getItem("popup_scroll_closed") && !activePopup) {
+            if (scrollPercent > 50 && !sessionStorage.getItem("popup_scroll_closed") && !activePopup) {
                 setActivePopup("scroll");
             }
         };
@@ -27,7 +27,7 @@ export default function PopupManager() {
 
         // --- 3. Time Logic (45s) ---
         const timer = setTimeout(() => {
-            if (!localStorage.getItem("popup_time_closed") && !activePopup) {
+            if (!sessionStorage.getItem("popup_time_closed") && !activePopup) {
                 setActivePopup("time");
             }
         }, 45000);
@@ -40,7 +40,7 @@ export default function PopupManager() {
     }, [activePopup]);
 
     const closePopup = (type: string) => {
-        localStorage.setItem(`popup_${type}_closed`, "true");
+        sessionStorage.setItem(`popup_${type}_closed`, "true");
         setActivePopup(null);
     };
 
