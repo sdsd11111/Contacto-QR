@@ -11,7 +11,7 @@ export default function Home() {
   // Cálculo: Clientes * 12 meses * Valor * 0.4 (40% de pérdida por olvido)
   const annualLoss = Math.round(clients * 12 * avgValue * 0.4).toLocaleString();
 
-  const typingText = "Esto es lo que necesitas";
+  const typingText = "Esto es lo que necesitas para no volver a perder un trabajo";
 
   return (
     <main className="min-h-screen bg-background selection:bg-primary/30 scroll-smooth relative overflow-hidden">
@@ -47,19 +47,6 @@ export default function Home() {
               </motion.span>
             ))}
           </motion.h1>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 3, duration: 1 }}
-          >
-            <a
-              href="#hero"
-              className="inline-flex items-center gap-4 bg-primary text-white px-10 py-5 rounded-full font-black text-lg shadow-orange hover:scale-110 transition-transform group"
-            >
-              DESCUBRIR <ArrowRight className="group-hover:translate-x-2 transition-transform" />
-            </a>
-          </motion.div>
         </div>
 
         {/* Indicador de scroll */}
@@ -574,13 +561,24 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-16 bg-cream border-t border-navy/5">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className="text-2xl font-black text-navy tracking-tighter">
+      <footer className="py-24 relative overflow-hidden bg-navy border-t border-white/5">
+        {/* Imagen de fondo con opacidad y overlay (Igual que Beneficios) */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="https://images.unsplash.com/photo-1541123437800-1bb1317badc2?auto=format&fit=crop&q=80&w=2000"
+            alt="Comunidad"
+            fill
+            className="object-cover opacity-20 grayscale"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/80 to-transparent" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center justify-between gap-12 text-center md:text-left">
+          <div className="text-2xl font-black text-white tracking-tighter">
             <span className="text-primary">!</span>Regístrame Ya
           </div>
-          <p className="text-sm text-navy/30 font-black uppercase tracking-[0.2em]">© 2026 · Profesionales en Acción</p>
-          <div className="flex gap-8 text-[10px] font-black text-navy/50 uppercase tracking-[0.3em]">
+          <p className="text-sm text-white/30 font-black uppercase tracking-[0.2em]">© 2026 · Profesionales en Acción</p>
+          <div className="flex gap-8 text-[10px] font-black text-white/50 uppercase tracking-[0.3em]">
             <a href="#" className="hover:text-primary transition-colors">Términos</a>
             <a href="#" className="hover:text-primary transition-colors">Privacidad</a>
             <a href="#" className="hover:text-primary transition-colors">Soporte</a>
