@@ -45,29 +45,78 @@ export default function VCardClient() {
         if (slug) fetchData();
     }, [slug]);
 
-    const downloadVCF = () => {
+    const downloadVCF = async () => {
         if (!data || data.status === 'pendiente') return;
 
-        const vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${data.nombre} | ${data.etiquetas || ""}
-ORG:${data.empresa || ""}
-TITLE:${data.profesion || ""} | ${data.etiquetas || ""}
-TEL;TYPE=CELL,VOICE:${data.whatsapp}
-EMAIL;TYPE=PREF,INTERNET:${data.email}
-NOTE:Servicios Profesionales: ${data.etiquetas || ""}. ${data.bio || ""}
-CATEGORIES:${data.etiquetas || ""}
-END:VCARD`;
+        // Feedback visual simple (opcional: podrías agregar un estado de 'generando...' si demora)
+        const originalText = document.getElementById('btn-download-text')?.innerText;
+        if (originalText) document.getElementById('btn-download-text')!.innerText = "Generando...";
 
-        const blob = new Blob([vcard], { type: "text/vcard" });
+        let photoBase64 = "";
+
+        // Intentar descargar y convertir la foto a Base64
+        if (data.foto_url) {
+            try {
+                const response = await fetch(data.foto_url);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                photoBase64 = await new Promise((resolve) => {
+                    reader.onloadend = () => {
+                        const base64 = (reader.result as string).split(',')[1];
+                        resolve(base64);
+                    };
+                    reader.readAsDataURL(blob);
+                });
+            } catch (error) {
+                console.error("Error al procesar la imagen para vCard", error);
+            }
+        }
+
+        // Construcción manual robusta de vCard 3.0
+        // Nota: Mantenemos 3.0 para máxima compatibilidad con iOS/Android nativos antiguos y nuevos.
+        let vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${data.nombre}
+N:${data.nombre.split(' ').slice(1).join(' ') || ''};${data.nombre.split(' ')[0] || ''};;;
+ORG:${data.empresa || ""}
+TITLE:${data.profesion || ""}
+TEL;TYPE=CELL,VOICE:${data.whatsapp}
+EMAIL;TYPE=WORK,INTERNET:${data.email || ""}
+URL:${currentUrl}
+NOTE:${data.bio || "Experto en " + (data.etiquetas || "servicios profesionales")}. Generado por Regístrame Ya!`;
+
+        // Agregar foto si existe
+        if (photoBase64) {
+            vcard += `
+PHOTO;ENCODING=b;TYPE=JPEG:${photoBase64}`;
+        }
+
+        // Agregar dirección (aunque sea genérica si no hay)
+        if (data.direccion) {
+            vcard += `
+ADR;TYPE=WORK:;;${data.direccion};;;;`;
+        }
+
+        // Agregar redes sociales como URLs adicionales (iOS a veces las lee mejor así en v3.0)
+        if (data.instagram) vcard += `\nURL;type=Instagram:${data.instagram}`;
+        if (data.linkedin) vcard += `\nURL;type=LinkedIn:${data.linkedin}`;
+        if (data.web) vcard += `\nURL;type=Website:${data.web}`;
+
+        vcard += `\nEND:VCARD`;
+
+        const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `${data.nombre.replace(/\s+/g, '_')}.vcf`;
+        // Nombre de archivo limpio
+        const filename = `${data.nombre.replace(/[^a-zA-Z0-9]/g, '_')}.vcf`;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+
+        if (originalText) document.getElementById('btn-download-text')!.innerText = originalText;
     };
 
     if (loading) {
@@ -183,7 +232,7 @@ END:VCARD`;
                             onClick={downloadVCF}
                             className="w-full bg-primary text-white py-6 rounded-button font-black text-xl shadow-orange flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 mb-10"
                         >
-                            <Download size={24} /> Guardar Contacto
+                            <Download size={24} /> <span id="btn-download-text">Guardar Contacto</span>
                         </button>
 
                         {/* Galería (Solo si hay fotos en galeria_urls) */}

@@ -21,14 +21,6 @@ export const metadata: Metadata = {
     description: "Deja de ser un número anónimo. Asegura que tus clientes siempre te encuentren con tu foto y profesión.",
     url: "https://registrameya.com",
     siteName: "Regístrame Ya!",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Regístrame Ya! - Tarjetas Digitales Profesionales",
-      },
-    ],
     locale: "es_EC",
     type: "website",
   },
@@ -36,7 +28,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Regístrame Ya! - Tu Contacto Profesional en 1 Clic",
     description: "Deja de perder trabajos porque olviden cómo te registraron.",
-    images: ["/og-image.png"],
   },
 };
 

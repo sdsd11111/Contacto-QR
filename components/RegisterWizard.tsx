@@ -60,6 +60,10 @@ export default function RegisterWizard() {
         whatsapp: '',
         email: '',
         bio: '',
+        address: '',
+        web: '',
+        instagram: '',
+        linkedin: '',
         categories: '',
         plan: 'pro' as 'basic' | 'pro',
         photo: null as File | null,
@@ -184,6 +188,10 @@ export default function RegisterWizard() {
                     profesion: formData.profession,
                     empresa: formData.company,
                     bio: formData.bio,
+                    direccion: formData.address,
+                    web: formData.web,
+                    instagram: formData.instagram,
+                    linkedin: formData.linkedin,
                     plan: formData.plan,
                     foto_url: photoUrl,
                     comprobante_url: receiptUrl,
@@ -409,6 +417,50 @@ export default function RegisterWizard() {
                                         rows={3}
                                         className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm resize-none"
                                     />
+                                </div>
+
+                                {/* DATOS DE CONTACTO EXTRA */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-navy/5">
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Dirección / Ubicación</label>
+                                        <input
+                                            type="text"
+                                            value={formData.address}
+                                            onChange={(e) => updateForm('address', e.target.value)}
+                                            placeholder="Ej. Oficina 203, Edificio X"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Sitio Web (Opcional)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.web}
+                                            onChange={(e) => updateForm('web', e.target.value)}
+                                            placeholder="www.tuempresa.com"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Instagram (Link Completo)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.instagram}
+                                            onChange={(e) => updateForm('instagram', e.target.value)}
+                                            placeholder="https://instagram.com/tuusuario"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">LinkedIn (Link Completo)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.linkedin}
+                                            onChange={(e) => updateForm('linkedin', e.target.value)}
+                                            placeholder="https://linkedin.com/in/tuusuario"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
