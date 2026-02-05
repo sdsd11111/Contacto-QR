@@ -305,6 +305,7 @@ export default function RegisterWizard() {
             aVcard.click();
             setTimeout(() => { aVcard.remove(); window.URL.revokeObjectURL(url); }, 1000);
 
+            setIsSubmitting(false);
             setStep(6);
         } catch (err) {
             console.error("Full Error Context:", err);
