@@ -151,7 +151,7 @@ export default function RegisterWizard() {
 
 
 
-    const generateVCard = (data: typeof formData, photoBase64: string | null, galleryUrls: string[] = []) => {
+    const generateVCard = (data: typeof formData, photoBase64: string | null, galleryUrls: string[] = [], categories: string = '') => {
         // vCard 3.0 format
         // NOTA: Para máxima compatibilidad, la foto debe ser BASE64 y tener "Line Folding" (saltos de línea con espacio).
 
@@ -180,6 +180,7 @@ export default function RegisterWizard() {
             `ADR;TYPE=WORK,POSTAL;CHARSET=UTF-8:;;${data.address};;;;`,
             `URL:${data.web}`,
             `NOTE;CHARSET=UTF-8:${noteContent}`,
+            categories ? `CATEGORIES:${categories}` : '', // ← ETIQUETAS AQUÍ
             photoBlock,
             data.instagram ? `X-SOCIALPROFILE;TYPE=instagram:${data.instagram}` : '',
             data.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin:${data.linkedin}` : '',
@@ -196,32 +197,44 @@ export default function RegisterWizard() {
             let photoUrl = null;
             let galleryUrls: string[] = [];
             let receiptUrl = null;
-            let photoBase64 = null; // Para vCard
+            let photoBase64 = null;
 
             const timestamp = Date.now();
 
+            // 0. CALCULAR ETIQUETAS (Una sola vez para usar en Upsert y vCard)
+            // Esto asegura consistencia y evita errores de procesamiento doble
+            const profession = formData.profession.toLowerCase().trim();
+            const extraTags = INDUSTRY_TAGS[profession] || [];
+            const userTags = formData.categories.split(',').map((t: string) => t.trim()).filter(Boolean);
+            const combinedTags = new Set([
+                ...userTags.map((t: string) => t.toLowerCase()),
+                ...extraTags.map((t: string) => t.toLowerCase())
+            ]);
+            const finalCategories = Array.from(combinedTags)
+                .map((t: string) => t.charAt(0).toUpperCase() + t.slice(1))
+                .join(', ');
+
             // 1. Verificar si ya existe el usuario para mantener el slug
-            const { data: existingUser } = await supabase
+            const { data: existingUser, error: fetchError } = await supabase
                 .from('registraya_vcard_registros')
                 .select('slug, foto_url, comprobante_url, galeria_urls')
                 .eq('email', formData.email)
                 .maybeSingle();
 
+            if (fetchError) {
+                console.error("Error fetching existing user:", fetchError);
+            }
+
             const slug = existingUser?.slug || generateSlug(formData.name);
 
             // 2. Subir imágenes (solo si hay nuevas)
             if (formData.photo) {
-                // Obtener base64 para vCard inmediatemente del archivo local
                 try {
-                    // Asegurarnos que sea una version comprimida o el original si es pequeño
                     photoBase64 = await fileToBase64(formData.photo);
                 } catch (e) { console.error("Error base64 photo", e); }
-
                 photoUrl = await compressAndUpload(formData.photo, 'vcards', `photos/${timestamp}-${formData.photo.name}`);
             } else if (existingUser) {
                 photoUrl = existingUser.foto_url;
-                // Si ya existe la foto en URL y queremos ponerla en vCard, tendríamos que bajarla. 
-                // Por ahora priorizamos el flujo de "Nuevo Registro" que tiene el archivo en mano.
             }
 
             if (formData.receipt) {
@@ -243,72 +256,60 @@ export default function RegisterWizard() {
             }
 
             // 3. UPSERT: Inserta o Actualiza por email
-            const { error } = await supabase
+            const upsertData = {
+                nombre: formData.name,
+                whatsapp: formData.whatsapp,
+                email: formData.email,
+                profesion: formData.profession,
+                empresa: formData.company,
+                bio: formData.bio,
+                direccion: formData.address,
+                web: formData.web,
+                instagram: formData.instagram,
+                linkedin: formData.linkedin,
+                plan: formData.plan,
+                foto_url: photoUrl,
+                comprobante_url: receiptUrl,
+                galeria_urls: galleryUrls,
+                status: 'pendiente',
+                slug: slug,
+                etiquetas: finalCategories
+            };
+
+            const { error: upsertError } = await supabase
                 .from('registraya_vcard_registros')
-                .upsert({
-                    nombre: formData.name,
-                    whatsapp: formData.whatsapp,
-                    email: formData.email,
-                    profesion: formData.profession,
-                    empresa: formData.company,
-                    bio: formData.bio,
-                    direccion: formData.address,
-                    web: formData.web,
-                    instagram: formData.instagram,
-                    linkedin: formData.linkedin,
-                    plan: formData.plan,
-                    foto_url: photoUrl,
-                    comprobante_url: receiptUrl,
-                    galeria_urls: galleryUrls,
-                    status: 'pendiente', // Se mantiene pendiente hasta validación real si se quisiera
-                    slug: slug,
-                    etiquetas: (() => {
-                        const profession = formData.profession.toLowerCase().trim();
-                        const extraTags = INDUSTRY_TAGS[profession] || [];
-                        const userTags = formData.categories.split(',').map((t: string) => t.trim()).filter(Boolean);
-                        const combinedCount = new Set([
-                            ...userTags.map((t: string) => t.toLowerCase()),
-                            ...extraTags.map(t => t.toLowerCase())
-                        ]);
-                        const finalTags = Array.from(combinedCount).map(t => {
-                            return t.charAt(0).toUpperCase() + t.slice(1);
-                        });
-                        return finalTags.join(', ');
-                    })()
-                }, { onConflict: 'email' });
+                .upsert(upsertData, { onConflict: 'email' });
 
-            if (error) throw error;
+            if (upsertError) {
+                console.error("Supabase Upsert Error Detail:", upsertError);
+                throw upsertError;
+            }
 
-            // 4a. GENERAR QR CODE (PNG)
-            const profileUrl = `${window.location.origin}/card/${slug}`; // URL construida con el slug guardado
+            // 4a. GENERAR QR CODE (PNG) pointing to API for direct download
+            const profileUrl = `${window.location.origin}/api/vcard/${slug}`;
             const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 500, margin: 2 });
 
             // Descargar QR
-            const aQr = document.createElement('a');
+            const aQr = document.body.appendChild(document.createElement('a'));
             aQr.href = qrDataUrl;
             aQr.download = `qr-${slug}.png`;
-            document.body.appendChild(aQr);
-            // Pequeño delay para asegurar que el navegador maneje ambas descargas
-            setTimeout(() => { aQr.click(); document.body.removeChild(aQr); }, 500);
+            setTimeout(() => { aQr.click(); aQr.remove(); }, 500);
 
-            // 4b. GENERAR Y DESCARGAR VCARD
-            // Usamos photoBase64 si tenemos el archivo local, de lo contrario la vCard irá sin foto (hacer fetch client-side de supabase storage puede dar cors issues a veces)
-            const vcardContent = generateVCard(formData, photoBase64 || null, galleryUrls); // Pasamos urls de galería
+            // 4b. GENERAR Y DESCARGAR VCARD (Client-side version for immediate feedback)
+            const vcardContent = generateVCard(formData, photoBase64 || null, galleryUrls, finalCategories);
             const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
-            const aVcard = document.createElement('a');
+            const aVcard = document.body.appendChild(document.createElement('a'));
             aVcard.href = url;
             aVcard.download = `${slug}.vcf`;
-            document.body.appendChild(aVcard);
-            aVcard.click(); // Descarga inmediata
-            document.body.removeChild(aVcard);
-            window.URL.revokeObjectURL(url);
+            aVcard.click();
+            setTimeout(() => { aVcard.remove(); window.URL.revokeObjectURL(url); }, 1000);
 
             setStep(6);
         } catch (err) {
-            alert(`Hubo un error al guardar tu pedido: ${err instanceof Error ? err.message : JSON.stringify(err)}. Por favor intenta de nuevo o contáctanos.`);
-            console.error(err);
-        } finally {
+            console.error("Full Error Context:", err);
+            const msg = err instanceof Error ? err.message : JSON.stringify(err);
+            alert(`Hubo un error al guardar tu pedido: ${msg}. Por favor intenta de nuevo o contáctanos.`);
             setIsSubmitting(false);
         }
     };

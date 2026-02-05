@@ -35,7 +35,7 @@ export default function Home() {
       <section className="relative w-full h-screen flex items-center justify-center bg-black overflow-hidden z-[60]">
         <div className="absolute inset-0 z-0">
           <iframe
-            className="w-full h-full scale-[1.5] pointer-events-none opacity-50 grayscale-[50%]"
+            className="w-full h-full scale-[1.5] pointer-events-none grayscale-[50%]"
             src="https://www.youtube.com/embed/c1gNsQjKZ_Q?autoplay=1&mute=1&controls=0&loop=1&playlist=c1gNsQjKZ_Q&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
             allow="autoplay; encrypted-media"
           />
@@ -47,6 +47,7 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-4xl md:text-7xl font-black text-white uppercase italic tracking-tighter mb-12 drop-shadow-2xl"
+            style={{ WebkitTextStroke: '2px black', paintOrder: 'stroke fill' }}
           >
             {typingText.split("").map((char, index) => (
               <motion.span
