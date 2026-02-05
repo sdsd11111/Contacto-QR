@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Si el archivo o carpeta existe, servirlo directamente
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 2. IMPORTANTE: Redirigir visitas a tarjetas dinámicas (ej: /card/juan)
+  RewriteRule ^card/.*$ card/example.html [L]
+
+  # 3. Para otras rutas no encontradas, mostrar la página 404
+  RewriteRule . 404.html [L]
+</IfModule>
