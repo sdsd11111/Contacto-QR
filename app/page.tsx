@@ -35,7 +35,7 @@ export default function Home() {
       <section className="relative w-full h-screen flex items-center justify-center bg-black overflow-hidden z-[60]">
         <div className="absolute inset-0 z-0">
           <iframe
-            className="w-full h-full scale-[1.5] pointer-events-none opacity-20 grayscale-[50%]"
+            className="w-full h-full scale-[1.5] pointer-events-none opacity-50 grayscale-[50%]"
             src="https://www.youtube.com/embed/c1gNsQjKZ_Q?autoplay=1&mute=1&controls=0&loop=1&playlist=c1gNsQjKZ_Q&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
             allow="autoplay; encrypted-media"
           />
@@ -108,7 +108,7 @@ export default function Home() {
               Pierdes <span className="text-primary italic">4 de cada 10</span> trabajos solo porque <span className="text-primary">olvidan cómo te registraron</span>.
             </h1>
 
-            <p className="text-lg md:text-xl text-navy/70 mb-10 leading-relaxed max-w-xl mx-auto lg:ml-0 font-medium">
+            <p className="text-lg md:text-xl text-navy/70 mb-10 leading-relaxed max-w-2xl mx-auto lg:ml-0 font-medium">
               Eres excelente en lo que haces. Deja de ser un desconocido en la agenda de tus clientes. Aparece <span className="text-navy font-bold">con tu foto y especialidad</span> de inmediato.
             </p>
 
@@ -182,18 +182,18 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-20"
+            className="text-center mb-10 md:mb-20"
           >
             <h2 className="text-3xl md:text-5xl font-black text-navy mb-6 tracking-tighter uppercase">¿Por qué no te llaman de nuevo?</h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch max-w-5xl mx-auto">
+          <div className="flex overflow-x-auto snap-x snap-mandatory lg:grid lg:grid-cols-2 gap-4 md:gap-12 items-stretch max-w-5xl mx-auto pb-8 lg:pb-0 px-4 md:px-0">
             {/* Antes */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-navy/5 p-10 rounded-[40px] border border-navy/5 flex flex-col items-center"
+              className="min-w-[85vw] lg:min-w-0 snap-center bg-navy/5 p-8 md:p-10 rounded-[40px] border border-navy/5 flex flex-col items-center"
             >
               <div className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-8">El Olvido (Antes)</div>
               <div className="w-full max-w-[280px] bg-white rounded-[48px] border-[12px] border-navy shadow-xl p-6 min-h-[480px] flex flex-col relative overflow-hidden">
@@ -222,7 +222,7 @@ export default function Home() {
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="bg-primary/5 p-10 rounded-[40px] border border-primary/20 flex flex-col items-center relative"
+              className="min-w-[85vw] lg:min-w-0 snap-center bg-primary/5 p-8 md:p-10 rounded-[40px] border border-primary/20 flex flex-col items-center relative"
             >
               <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-8">Tu Marca (Después)</div>
               <div className="w-full max-w-[280px] bg-white rounded-[48px] border-[12px] border-navy shadow-orange p-6 min-h-[480px] flex flex-col">
@@ -256,15 +256,15 @@ export default function Home() {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            className="flex overflow-x-auto snap-x snap-mandatory md:grid md:grid-cols-3 gap-4 md:gap-8 pb-8 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0"
           >
             {[
               { icon: Search, title: "Buscan tu oficio y sales tú", text: "Configuramos palabras clave estratégicas para que cuando busquen tu especialidad en su teléfono aparezcas de primero." },
               { icon: Camera, title: "Confianza al Instante", text: "Una foto profesional integrada hace que confíen en ti antes de hablarte. Te ves más pro y real." },
               { icon: Zap, title: "Galería Pro Incluida", text: "Muestra tus mejores 3 trabajos directamente en tu tarjeta. Tus clientes verán la calidad en segundos." }
             ].map((item, i) => (
-              <motion.div key={i} whileHover={{ y: -10 }} className="glass-card p-10 rounded-card bg-white/5 border-white/10 backdrop-blur-xl">
-                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-8 shadow-orange">
+              <motion.div key={i} whileHover={{ y: -10 }} className="min-w-[85vw] md:min-w-0 snap-center glass-card p-8 md:p-10 rounded-card bg-white/5 border-white/10 backdrop-blur-xl">
+                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-orange">
                   <item.icon className="text-white" size={32} />
                 </div>
                 <h3 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase italic">{item.title}</h3>

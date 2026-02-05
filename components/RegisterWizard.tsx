@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import QRCode from 'qrcode';
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
@@ -135,23 +136,54 @@ export default function RegisterWizard() {
         }
     };
 
-    const generateVCard = (data: typeof formData, photoUrl: string | null) => {
+    const fileToBase64 = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                let encoded = reader.result?.toString().replace(/^data:image\/(png|jpeg|jpg);base64,/, '');
+                if (encoded) resolve(encoded);
+                else reject('Error encoding image');
+            };
+            reader.onerror = error => reject(error);
+        });
+    };
+
+
+
+    const generateVCard = (data: typeof formData, photoBase64: string | null, galleryUrls: string[] = []) => {
         // vCard 3.0 format
+        // NOTA: Para máxima compatibilidad, la foto debe ser BASE64 y tener "Line Folding" (saltos de línea con espacio).
+
+        let photoBlock = '';
+        if (photoBase64) {
+            // Dividir en trozos de 72 caracteres para respetar el estándar (RFC 2426)
+            const folded = photoBase64.match(/.{1,72}/g)?.join('\r\n ') || photoBase64;
+            photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:\r\n ${folded}`;
+        }
+
+        // Agregar galería al campo NOTA
+        let noteContent = `${data.bio} - Generado con RegistrameYa`;
+        if (galleryUrls.length > 0) {
+            noteContent += `\n\nMis Trabajos:\n${galleryUrls.join('\n')}`;
+        }
+
         const vcard = [
             'BEGIN:VCARD',
             'VERSION:3.0',
-            `FN:${data.name}`,
-            `N:${data.name.split(' ').reverse().join(';')};;;`,
-            `TITLE:${data.profession}`,
-            `ORG:${data.company}`,
-            `TEL;TYPE=CELL:${data.whatsapp}`,
-            `EMAIL:${data.email}`,
-            `ADR;TYPE=WORK:;;${data.address};;;;`,
+            `FN;CHARSET=UTF-8:${data.name}`,
+            `N;CHARSET=UTF-8:${data.name.split(' ').reverse().join(';')};;;`,
+            `TITLE;CHARSET=UTF-8:${data.profession}`,
+            `ORG;CHARSET=UTF-8:${data.company}`,
+            `TEL;TYPE=CELL,VOICE:${data.whatsapp}`,
+            `EMAIL;TYPE=WORK,INTERNET:${data.email}`,
+            `ADR;TYPE=WORK,POSTAL;CHARSET=UTF-8:;;${data.address};;;;`,
             `URL:${data.web}`,
-            `NOTE:${data.bio}`,
-            photoUrl ? `PHOTO;VALUE=URI:${photoUrl}` : '',
+            `NOTE;CHARSET=UTF-8:${noteContent}`,
+            photoBlock,
             data.instagram ? `X-SOCIALPROFILE;TYPE=instagram:${data.instagram}` : '',
             data.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin:${data.linkedin}` : '',
+            `X-SOCIALPROFILE;TYPE=whatsapp:https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}`,
             'END:VCARD'
         ].filter(Boolean).join('\n');
 
@@ -164,6 +196,7 @@ export default function RegisterWizard() {
             let photoUrl = null;
             let galleryUrls: string[] = [];
             let receiptUrl = null;
+            let photoBase64 = null; // Para vCard
 
             const timestamp = Date.now();
 
@@ -178,9 +211,17 @@ export default function RegisterWizard() {
 
             // 2. Subir imágenes (solo si hay nuevas)
             if (formData.photo) {
+                // Obtener base64 para vCard inmediatemente del archivo local
+                try {
+                    // Asegurarnos que sea una version comprimida o el original si es pequeño
+                    photoBase64 = await fileToBase64(formData.photo);
+                } catch (e) { console.error("Error base64 photo", e); }
+
                 photoUrl = await compressAndUpload(formData.photo, 'vcards', `photos/${timestamp}-${formData.photo.name}`);
             } else if (existingUser) {
                 photoUrl = existingUser.foto_url;
+                // Si ya existe la foto en URL y queremos ponerla en vCard, tendríamos que bajarla. 
+                // Por ahora priorizamos el flujo de "Nuevo Registro" que tiene el archivo en mano.
             }
 
             if (formData.receipt) {
@@ -224,9 +265,9 @@ export default function RegisterWizard() {
                     etiquetas: (() => {
                         const profession = formData.profession.toLowerCase().trim();
                         const extraTags = INDUSTRY_TAGS[profession] || [];
-                        const userTags = formData.categories.split(',').map(t => t.trim()).filter(Boolean);
+                        const userTags = formData.categories.split(',').map((t: string) => t.trim()).filter(Boolean);
                         const combinedCount = new Set([
-                            ...userTags.map(t => t.toLowerCase()),
+                            ...userTags.map((t: string) => t.toLowerCase()),
                             ...extraTags.map(t => t.toLowerCase())
                         ]);
                         const finalTags = Array.from(combinedCount).map(t => {
@@ -238,16 +279,29 @@ export default function RegisterWizard() {
 
             if (error) throw error;
 
-            // 4. GENERAR Y DESCARGAR VCARD
-            const vcardContent = generateVCard(formData, photoUrl);
-            const blob = new Blob([vcardContent], { type: 'text/vcard' });
+            // 4a. GENERAR QR CODE (PNG)
+            const profileUrl = `${window.location.origin}/card/${slug}`; // URL construida con el slug guardado
+            const qrDataUrl = await QRCode.toDataURL(profileUrl, { width: 500, margin: 2 });
+
+            // Descargar QR
+            const aQr = document.createElement('a');
+            aQr.href = qrDataUrl;
+            aQr.download = `qr-${slug}.png`;
+            document.body.appendChild(aQr);
+            // Pequeño delay para asegurar que el navegador maneje ambas descargas
+            setTimeout(() => { aQr.click(); document.body.removeChild(aQr); }, 500);
+
+            // 4b. GENERAR Y DESCARGAR VCARD
+            // Usamos photoBase64 si tenemos el archivo local, de lo contrario la vCard irá sin foto (hacer fetch client-side de supabase storage puede dar cors issues a veces)
+            const vcardContent = generateVCard(formData, photoBase64 || null, galleryUrls); // Pasamos urls de galería
+            const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${slug}.vcf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const aVcard = document.createElement('a');
+            aVcard.href = url;
+            aVcard.download = `${slug}.vcf`;
+            document.body.appendChild(aVcard);
+            aVcard.click(); // Descarga inmediata
+            document.body.removeChild(aVcard);
             window.URL.revokeObjectURL(url);
 
             setStep(6);
