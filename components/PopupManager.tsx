@@ -45,7 +45,7 @@ export default function PopupManager() {
     };
 
     const handleWhatsAppRedirect = (message: string) => {
-        const url = `https://wa.me/593962768560?text=${encodeURIComponent(message)}`;
+        const url = `https://wa.me/593963410409?text=${encodeURIComponent(message)}`;
         window.open(url, "_blank");
         setActivePopup(null);
     };

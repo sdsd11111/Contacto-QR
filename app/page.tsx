@@ -288,31 +288,40 @@ export default function Home() {
       </section>
 
       {/* Calculadora de Pérdidas */}
-      <section className="py-24 bg-cream overflow-hidden">
+      <section className="py-24 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="glass-card p-8 md:p-16 rounded-[48px] border-primary/20 bg-white shadow-2xl relative overflow-hidden"
+            className="glass-card p-12 md:p-16 rounded-[48px] border-primary/20 bg-cream/30 shadow-2xl"
           >
-            <div className="max-w-3xl relative z-10">
-              <h2 className="text-4xl lg:text-7xl font-black text-navy mb-8 tracking-tighter uppercase">Calcula cuánto estás <span className="text-primary italic">dejando ir</span></h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div className="space-y-10">
+            <div className="max-w-5xl mx-auto">
+              <h2 className="text-4xl lg:text-7xl font-black text-navy mb-8 tracking-tighter uppercase text-center lg:text-left">
+                Calcula cuánto estás <span className="text-primary italic">dejando ir</span>
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div className="space-y-12">
                   <div>
-                    <div className="flex justify-between mb-4"><p className="text-[10px] font-black uppercase text-navy/40">Clientes al mes</p><span className="text-primary font-black">{clients}</span></div>
-                    <input type="range" min="1" max="20" value={clients} onChange={(e) => setClients(parseInt(e.target.value))} className="w-full h-3 bg-navy/5 rounded-full appearance-none accent-primary cursor-pointer" />
+                    <div className="flex justify-between mb-4">
+                      <p className="text-[10px] font-black uppercase text-navy/40 tracking-widest">Clientes al mes</p>
+                      <span className="text-primary font-black text-xl">{clients}</span>
+                    </div>
+                    <input type="range" min="1" max="20" value={clients} onChange={(e) => setClients(parseInt(e.target.value))} className="w-full h-3 bg-navy/10 rounded-full appearance-none accent-primary cursor-pointer" />
                   </div>
                   <div>
-                    <div className="flex justify-between mb-4"><p className="text-[10px] font-black uppercase text-navy/40">Valor Servicio</p><span className="text-primary font-black">${avgValue}</span></div>
-                    <input type="range" min="5" max="100" value={avgValue} onChange={(e) => setAvgValue(parseInt(e.target.value))} className="w-full h-3 bg-navy/5 rounded-full appearance-none accent-primary cursor-pointer" />
+                    <div className="flex justify-between mb-4">
+                      <p className="text-[10px] font-black uppercase text-navy/40 tracking-widest">Valor Servicio promedio</p>
+                      <span className="text-primary font-black text-xl">${avgValue}</span>
+                    </div>
+                    <input type="range" min="5" max="100" value={avgValue} onChange={(e) => setAvgValue(parseInt(e.target.value))} className="w-full h-3 bg-navy/10 rounded-full appearance-none accent-primary cursor-pointer" />
                   </div>
                 </div>
-                <div className="bg-navy p-12 rounded-[40px] text-center text-white shadow-orange">
+                <div className="bg-navy p-12 rounded-[40px] text-center text-white shadow-orange relative group overflow-hidden">
+                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-4">Pérdida Anual Estimada</p>
                   <p className="text-7xl font-black text-primary mb-6">${annualLoss}</p>
-                  <p className="text-xs italic opacity-70">"Recuperas los $10 de hoy con el primer cliente que sí te encuentre mañana."</p>
+                  <p className="text-xs italic opacity-70 leading-relaxed max-w-xs mx-auto">"Recuperas los $10 de hoy con el primer cliente que sí te encuentre mañana."</p>
                 </div>
               </div>
             </div>
@@ -345,18 +354,21 @@ export default function Home() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 bg-cream">
+      <section className="py-32 bg-cream">
         <div className="max-w-4xl mx-auto px-6">
           <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-navy uppercase tracking-tighter italic">Preguntas Comunes</h2>
           </motion.div>
-          <div className="space-y-4">
+          <div className="space-y-6">
             {[
-              { q: "¿Tengo que seguir pagando después?", a: "Absolutamente no. Pagas una vez $10 o $20 y tienes tu contacto profesional para siempre. Sin mensualidades." },
-              { q: "¿Cómo lo recibo?", a: "En exactamente 1 hora desde que confirmas tu pago, te enviamos un enlace a tu WhatsApp o correo con tu vCard y tu QR." },
-              { q: "¿Sirve para Android y iPhone?", a: "Sí, funciona perfectamente en todos los celulares modernos." }
+              { q: "¿Tengo que seguir pagando después?", a: "Absolutamente no. Pagas una vez $10 o $20 y tienes tu contacto profesional para siempre. Sin mensualidades, sin trucos." },
+              { q: "¿Cómo lo recibo?", a: "En exactamente 1 hora desde que confirmas tu pago, te enviamos un enlace a tu WhatsApp o correo con tu vCard y tu QR manual. Listo para usar." },
+              { q: "¿Y si no sé nada de tecnología?", a: "No necesitas saber nada. Nosotros hacemos todo el trabajo pesado por ti. Tú solo nos pasas tus datos y listo." },
+              { q: "¿Sirve para Android y iPhone?", a: "Sí, funciona perfectamente en todos los celulares modernos. Es tecnología nativa que no requiere descargar apps." },
+              { q: "¿Puedo actualizar mis datos después?", a: "¡Claro! Los primeros 3 meses de cambios son gratuitos. Luego tiene un costo mínimo de $5 por actualización." },
+              { q: "¿Cómo me ayuda a conseguir más trabajo?", a: "No es magia, es visibilidad. Cuando un cliente necesite un experto y busque en su agenda, aparecerás tú con nombre, foto y profesión, en lugar de un número anónimo." }
             ].map((item, i) => (
-              <details key={i} className="group glass-card rounded-3xl p-8 cursor-pointer border-navy/5">
+              <details key={i} className="group glass-card rounded-3xl p-8 cursor-pointer border-navy/5 bg-white/50 backdrop-blur-sm">
                 <summary className="flex items-center justify-between font-black text-navy list-none text-lg">
                   {item.q}<ChevronRight size={24} className="group-open:rotate-90 transition-transform text-primary" />
                 </summary>
@@ -368,17 +380,14 @@ export default function Home() {
       </section>
 
       {/* Footer Compacto */}
-      <footer className="py-8 bg-navy border-t border-white/5 relative overflow-hidden">
+      <footer className="py-12 bg-navy border-t border-white/5 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left relative z-10">
           <div className="text-xl font-black text-white tracking-tighter"><span className="text-primary">!</span>Regístrame Ya</div>
           <p className="text-[10px] text-white/30 font-black uppercase tracking-widest">© 2026 · Profesionales en Acción</p>
-          <div className="flex gap-6 text-[10px] font-black text-white/50 uppercase tracking-widest">
-            <a href="#" className="hover:text-primary">Términos</a>
-            <a href="#" className="hover:text-primary">Privacidad</a>
-            <a href="#" className="hover:text-primary transition-colors cursor-pointer" onClick={() => {
-              localStorage.clear();
-              window.location.reload();
-            }}>Reiniciar Popups (Pruebas)</a>
+          <div className="flex gap-8 text-[10px] font-black text-white/50 uppercase tracking-widest">
+            <a href="#" className="hover:text-primary transition-colors">Términos</a>
+            <a href="#" className="hover:text-primary transition-colors">Privacidad</a>
+            <a href="#" className="hover:text-primary transition-colors">Soporte</a>
           </div>
         </div>
       </footer>
