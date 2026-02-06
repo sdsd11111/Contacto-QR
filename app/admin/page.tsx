@@ -147,13 +147,13 @@ export default function AdminDashboard() {
             const fileExt = file.name.split('.').pop();
             const fileName = `${editingRegistro.id}/photo_${Math.random()}.${fileExt}`;
             const { data, error } = await supabase.storage
-                .from('vcard-assets')
+                .from('vcards')
                 .upload(fileName, file);
 
             if (error) throw error;
 
             const { data: { publicUrl } } = supabase.storage
-                .from('vcard-assets')
+                .from('vcards')
                 .getPublicUrl(fileName);
 
             setEditingRegistro({ ...editingRegistro, foto_url: publicUrl });
@@ -183,13 +183,13 @@ export default function AdminDashboard() {
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${editingRegistro.id}/gallery_${Math.random()}.${fileExt}`;
                 const { error } = await supabase.storage
-                    .from('vcard-assets')
+                    .from('vcards')
                     .upload(fileName, file);
 
                 if (error) throw error;
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('vcard-assets')
+                    .from('vcards')
                     .getPublicUrl(fileName);
 
                 newUrls.push(publicUrl);
@@ -652,24 +652,36 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            <div className="p-8 border-t border-white/10 bg-white/[0.02] flex justify-end gap-4">
+                            <div className="p-8 border-t border-white/10 bg-white/[0.02] flex justify-end gap-4 overflow-x-auto">
                                 <button
                                     onClick={() => setIsEditModalOpen(false)}
                                     className="px-8 py-4 rounded-2xl bg-white/5 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
                                 >
-                                    Cancelar
+                                    Cerrar
                                 </button>
+
+                                {editingRegistro && (
+                                    <a
+                                        href={`/api/vcard/${editingRegistro.slug}`}
+                                        download
+                                        className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 text-white"
+                                    >
+                                        <Download size={14} />
+                                        Descargar vCard
+                                    </a>
+                                )}
+
                                 <button
                                     onClick={handleSaveEdit}
                                     disabled={isSaving}
-                                    className="px-10 py-4 rounded-2xl bg-primary shadow-orange font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all text-navy flex items-center gap-2"
+                                    className="px-10 py-4 rounded-2xl bg-primary shadow-orange font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all text-navy flex items-center gap-2 whitespace-nowrap"
                                 >
                                     {isSaving ? (
                                         <RefreshCw size={14} className="animate-spin" />
                                     ) : (
                                         <Save size={14} />
                                     )}
-                                    {isSaving ? 'Guardando...' : 'Guardar Cambios'}
+                                    {isSaving ? 'Guardando...' : 'Guardar y Cerrar'}
                                 </button>
                             </div>
                         </motion.div>
