@@ -45,32 +45,40 @@ export async function GET(
             }
         }
 
-        // 1c. Formatear Notas con Galería
-        let noteContent = `${user.bio || ''} - Generado con RegistrameYa`;
+        // 1c. Formatear Notas con Galería y Productos
+        let noteContent = `${user.bio || ''}`;
+        if (user.productos_servicios) {
+            noteContent += `\n\nProductos/Servicios:\n${user.productos_servicios}`;
+        }
+        noteContent += ` - Generado con RegistrameYa`;
+
         if (user.galeria_urls && user.galeria_urls.length > 0) {
             noteContent += `\n\nMis Trabajos:\n${user.galeria_urls.join('\n')}`;
         }
 
-        // 2. Generar vCard con todos los campos
+        // 2. Generar vCard con todos los campos (Version 4.0)
         const vcard = [
             'BEGIN:VCARD',
-            'VERSION:3.0',
+            'VERSION:4.0',
             `FN;CHARSET=UTF-8:${user.nombre}`,
             `N;CHARSET=UTF-8:${user.nombre.split(' ').reverse().join(';')};;;`,
             `TITLE;CHARSET=UTF-8:${user.profesion || ''}`,
             `ORG;CHARSET=UTF-8:${user.empresa || ''}`,
-            `TEL;TYPE=CELL,VOICE:${user.whatsapp}`,
-            `EMAIL;TYPE=WORK,INTERNET:${user.email}`,
-            `ADR;TYPE=WORK,POSTAL;CHARSET=UTF-8:;;${user.direccion || ''};;;;`,
+            `TEL;TYPE=cell,text,voice;VALUE=uri:tel:${user.whatsapp}`,
+            `EMAIL;TYPE=work:${user.email}`,
+            `ADR;TYPE=work;LABEL="${(user.direccion || '').replace(/"/g, "'")}":;;${user.direccion || ''};;;;`,
             user.web ? `URL:${user.web}` : '',
-            `NOTE;CHARSET=UTF-8:${noteContent}`,
+            `NOTE:${noteContent.replace(/\n/g, '\\n')}`,
             user.etiquetas ? `CATEGORIES:${user.etiquetas}` : '',
-            photoBlock, // Foto procesada
-            user.instagram ? `X-SOCIALPROFILE;TYPE=instagram:${user.instagram}` : '',
-            user.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin:${user.linkedin}` : '',
-            `X-SOCIALPROFILE;TYPE=whatsapp:https://wa.me/${user.whatsapp.replace(/[^0-9]/g, '')}`,
+            photoBlock,
+            user.instagram ? `X-SOCIALPROFILE;TYPE=instagram;LABEL=Instagram:${user.instagram}` : '',
+            user.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin;LABEL=LinkedIn:${user.linkedin}` : '',
+            user.facebook ? `X-SOCIALPROFILE;TYPE=facebook;LABEL=Facebook:${user.facebook}` : '',
+            user.tiktok ? `X-SOCIALPROFILE;TYPE=tiktok;LABEL=TikTok:${user.tiktok}` : '',
+            `X-SOCIALPROFILE;TYPE=whatsapp;LABEL=WhatsApp:https://wa.me/${user.whatsapp.replace(/[^0-9]/g, '')}`,
+            `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
             'END:VCARD'
-        ].filter(Boolean).join('\n');
+        ].filter(Boolean).join('\r\n');
 
         // 3. Retornar con headers que fuercen descarga
         return new NextResponse(vcard, {

@@ -65,6 +65,9 @@ export default function RegisterWizard() {
         web: '',
         instagram: '',
         linkedin: '',
+        facebook: '',
+        tiktok: '',
+        products: '',
         categories: '',
         plan: 'pro' as 'basic' | 'pro',
         photo: null as File | null,
@@ -74,6 +77,31 @@ export default function RegisterWizard() {
 
     const [emailError, setEmailError] = useState('');
     const [hasManualTags, setHasManualTags] = useState(false);
+    const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+
+    const generateWithAI = async () => {
+        if (!formData.profession) {
+            alert("Por favor ingresa tu profesión primero");
+            return;
+        }
+        setIsGeneratingTags(true);
+        try {
+            const res = await fetch('/api/generate-tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profession: formData.profession, bio: formData.bio })
+            });
+            const data = await res.json();
+            if (data.tags) {
+                updateForm('categories', data.tags);
+                setHasManualTags(true);
+            }
+        } catch (err) {
+            console.error("Error generating tags:", err);
+        } finally {
+            setIsGeneratingTags(false);
+        }
+    };
 
     // Auto-suggest tags based on profession
     useEffect(() => {
@@ -152,41 +180,40 @@ export default function RegisterWizard() {
 
 
     const generateVCard = (data: typeof formData, photoBase64: string | null, galleryUrls: string[] = [], categories: string = '') => {
-        // vCard 3.0 format
-        // NOTA: Para máxima compatibilidad, la foto debe ser BASE64 y tener "Line Folding" (saltos de línea con espacio).
-
+        // vCard 4.0 format
         let photoBlock = '';
         if (photoBase64) {
-            // Dividir en trozos de 72 caracteres para respetar el estándar (RFC 2426)
             const folded = photoBase64.match(/.{1,72}/g)?.join('\r\n ') || photoBase64;
-            photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:\r\n ${folded}`;
+            photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:data:image/jpeg;base64,${folded}`;
         }
 
-        // Agregar galería al campo NOTA
-        let noteContent = `${data.bio} - Generado con RegistrameYa`;
+        let noteContent = `${data.bio}${data.products ? '\n\nProductos/Servicios:\n' + data.products : ''} - Generado con RegistrameYa`;
         if (galleryUrls.length > 0) {
             noteContent += `\n\nMis Trabajos:\n${galleryUrls.join('\n')}`;
         }
 
         const vcard = [
             'BEGIN:VCARD',
-            'VERSION:3.0',
+            'VERSION:4.0',
             `FN;CHARSET=UTF-8:${data.name}`,
             `N;CHARSET=UTF-8:${data.name.split(' ').reverse().join(';')};;;`,
             `TITLE;CHARSET=UTF-8:${data.profession}`,
             `ORG;CHARSET=UTF-8:${data.company}`,
-            `TEL;TYPE=CELL,VOICE:${data.whatsapp}`,
-            `EMAIL;TYPE=WORK,INTERNET:${data.email}`,
-            `ADR;TYPE=WORK,POSTAL;CHARSET=UTF-8:;;${data.address};;;;`,
+            `TEL;TYPE=cell,text,voice;VALUE=uri:tel:${data.whatsapp}`,
+            `EMAIL;TYPE=work:${data.email}`,
+            `ADR;TYPE=work;LABEL="${data.address.replace(/"/g, "'")}":;;${data.address};;;;`,
             `URL:${data.web}`,
-            `NOTE;CHARSET=UTF-8:${noteContent}`,
-            categories ? `CATEGORIES:${categories}` : '', // ← ETIQUETAS AQUÍ
+            `NOTE:${noteContent.replace(/\n/g, '\\n')}`,
+            categories ? `CATEGORIES:${categories}` : '',
             photoBlock,
-            data.instagram ? `X-SOCIALPROFILE;TYPE=instagram:${data.instagram}` : '',
-            data.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin:${data.linkedin}` : '',
-            `X-SOCIALPROFILE;TYPE=whatsapp:https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}`,
+            data.instagram ? `X-SOCIALPROFILE;TYPE=instagram;LABEL=Instagram:${data.instagram}` : '',
+            data.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin;LABEL=LinkedIn:${data.linkedin}` : '',
+            data.facebook ? `X-SOCIALPROFILE;TYPE=facebook;LABEL=Facebook:${data.facebook}` : '',
+            data.tiktok ? `X-SOCIALPROFILE;TYPE=tiktok;LABEL=TikTok:${data.tiktok}` : '',
+            `X-SOCIALPROFILE;TYPE=whatsapp;LABEL=WhatsApp:https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}`,
+            `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
             'END:VCARD'
-        ].filter(Boolean).join('\n');
+        ].filter(Boolean).join('\r\n');
 
         return vcard;
     };
@@ -267,6 +294,9 @@ export default function RegisterWizard() {
                 web: formData.web,
                 instagram: formData.instagram,
                 linkedin: formData.linkedin,
+                facebook: formData.facebook,
+                tiktok: formData.tiktok,
+                productos_servicios: formData.products,
                 plan: formData.plan,
                 foto_url: photoUrl,
                 comprobante_url: receiptUrl,
@@ -503,6 +533,17 @@ export default function RegisterWizard() {
                                         value={formData.bio}
                                         onChange={(e) => updateForm('bio', e.target.value)}
                                         placeholder="Cuéntales qué ofreces..."
+                                        rows={2}
+                                        className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm resize-none"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Productos o Servicios (Se incluirán en el contacto)</label>
+                                    <textarea
+                                        value={formData.products}
+                                        onChange={(e) => updateForm('products', e.target.value)}
+                                        placeholder="Ej. Cambio de tuberías, Instalación de grifos, Mantenimiento preventivo..."
                                         rows={3}
                                         className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm resize-none"
                                     />
@@ -550,10 +591,40 @@ export default function RegisterWizard() {
                                             className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
                                         />
                                     </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Facebook (Link Completo)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.facebook}
+                                            onChange={(e) => updateForm('facebook', e.target.value)}
+                                            placeholder="https://facebook.com/tupagina"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">TikTok (Link Completo)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.tiktok}
+                                            onChange={(e) => updateForm('tiktok', e.target.value)}
+                                            placeholder="https://tiktok.com/@tuusuario"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Etiquetas de Búsqueda (Comas)</label>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest ml-1">Etiquetas de Búsqueda (Comas)</label>
+                                        <button
+                                            onClick={generateWithAI}
+                                            disabled={isGeneratingTags}
+                                            className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-opacity disabled:opacity-50"
+                                        >
+                                            {isGeneratingTags ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                                            {isGeneratingTags ? 'Generando...' : 'Generar con IA (20 etiquetas)'}
+                                        </button>
+                                    </div>
                                     <div className="relative">
                                         <Tag className="absolute left-6 top-1/2 -translate-y-1/2 text-navy/20" size={20} />
                                         <input
@@ -567,7 +638,7 @@ export default function RegisterWizard() {
                                             className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
                                         />
                                     </div>
-                                    <p className="text-[9px] font-bold text-navy/30 uppercase mt-2 tracking-widest">Lo que tus clientes escriben para buscarte</p>
+                                    <p className="text-[9px] font-bold text-navy/30 uppercase mt-2 tracking-widest">Mejora tu SEO local y visibilidad</p>
                                 </div>
                             </div>
                         </div>
