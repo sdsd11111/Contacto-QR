@@ -3,404 +3,312 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  CheckCircle,
-  MessageSquare,
-  ShieldCheck,
-  Zap,
+  CheckCircle2,
+  Phone,
   ArrowRight,
   Smartphone,
-  Search,
-  Camera,
+  Users,
+  Star,
+  ShieldCheck,
   ChevronRight,
-  Play,
-  CheckCircle2
+  QrCode
 } from "lucide-react";
-import Image from "next/image";
 import VideoModal from "@/components/VideoModal";
 import PopupManager from "@/components/PopupManager";
 
 export default function Home() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [clients, setClients] = useState(10);
-  const [avgValue, setAvgValue] = useState(30);
-
-  // Cálculo: Clientes * 12 meses * Valor * 0.4 (40% de pérdida por olvido)
-  const annualLoss = Math.round(clients * 12 * avgValue * 0.4).toLocaleString();
-  const typingText = "Esto es lo que necesitas para no volver a perder un trabajo";
 
   return (
-    <main className="min-h-screen bg-background selection:bg-primary/30 scroll-smooth relative overflow-hidden">
+    <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
 
-      {/* 1. Video Pre-Hero (Ante-sala) */}
-      <section className="relative w-full h-screen flex items-center justify-center bg-black overflow-hidden z-[60]">
-        <div className="absolute inset-0 z-0">
-          <iframe
-            className="w-full h-full scale-[1.5] pointer-events-none grayscale-[50%]"
-            src="https://www.youtube.com/embed/c1gNsQjKZ_Q?autoplay=1&mute=1&controls=0&loop=1&playlist=c1gNsQjKZ_Q&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
-            allow="autoplay; encrypted-media"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
-        </div>
-
-        <div className="relative z-10 text-center px-6">
-          <motion.h1
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-4xl md:text-7xl font-black text-white uppercase italic tracking-tighter mb-12 drop-shadow-2xl"
-            style={{ WebkitTextStroke: '2px black', paintOrder: 'stroke fill' }}
-          >
-            {typingText.split("").map((char, index) => (
-              <motion.span
-                key={index}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.1, delay: index * 0.05 }}
-              >
-                {char}
-              </motion.span>
-            ))}
-          </motion.h1>
-        </div>
-
-        <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-white/50"
-        >
-          <div className="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center p-1">
-            <div className="w-1 h-2 bg-primary rounded-full" />
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Decorative BG */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-20">
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[60%] bg-primary/30 blur-[150px] rounded-full" />
-        <div className="absolute bottom-[20%] right-[-10%] w-[50%] h-[50%] bg-royal/20 blur-[120px] rounded-full" />
-      </div>
-
-      {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-cream/80 backdrop-blur-md border-b border-navy/5">
+      {/* Navbar Minimalista */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-navy/5">
         <div className="max-w-7xl mx-auto px-6 h-16 md:h-20 flex items-center justify-between">
           <div className="text-xl md:text-2xl font-black tracking-tighter text-navy flex items-center gap-2">
             <span className="text-primary">!</span>Regístrame Ya
           </div>
-          <a href="/registro" className="hidden md:flex bg-primary text-white px-6 py-2.5 rounded-button font-bold text-sm shadow-orange hover:scale-105 transition-transform">
-            Empezar ahora
+          <a href="/registro" className="bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-orange hover:scale-105 transition-transform">
+            Crear mi Tarjeta
           </a>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section id="hero" className="relative pt-24 md:pt-32 pb-16 md:pb-24 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="z-10 text-center lg:text-left"
+      {/* Hero Section: Full Screen Video (Alternative) */}
+      <section className="relative h-screen min-h-[800px] w-full overflow-hidden flex items-center justify-center">
+        {/* Video Background Full Screen */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
           >
-            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-navy/5 shadow-soft mb-8">
-              <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] text-navy/60">Disponible en Ecuador</span>
-            </div>
+            <source src="https://cdn.coverr.co/videos/coverr-people-scanning-qr-code-in-meeting-5264/1080p.mp4" type="video/mp4" />
+          </video>
+          {/* Gradiente sutil inferior para legibilidad del texto si es necesario, pero respetando "sin opacidad" general */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/40 to-transparent z-10"></div>
+        </div>
 
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-navy leading-[1.1] mb-8 tracking-tighter uppercase">
-              Pierdes <span className="text-primary italic">4 de cada 10</span> trabajos solo porque <span className="text-primary">olvidan cómo te registraron</span>.
-            </h1>
+        <div className="max-w-4xl mx-auto text-center relative z-20 px-6 pt-20">
 
-            <p className="text-lg md:text-xl text-navy/70 mb-10 leading-relaxed max-w-2xl mx-auto lg:ml-0 font-medium">
-              Eres excelente en lo que haces. Deja de ser un desconocido en la agenda de tus clientes. Aparece <span className="text-navy font-bold">con tu foto y especialidad</span> de inmediato.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
-              <motion.a
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                href="/registro"
-                className="w-full sm:w-auto bg-primary text-white px-10 py-5 rounded-button font-black text-lg shadow-orange flex items-center justify-center gap-3"
-              >
-                Quiero que me encuentren <ArrowRight size={20} />
-              </motion.a>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={() => setIsVideoModalOpen(true)}
-                className="w-full sm:w-auto bg-white text-navy px-8 py-5 rounded-button font-black text-lg border-2 border-navy/5 shadow-soft flex items-center justify-center gap-3 group"
-              >
-                <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary transition-colors">
-                  <Play size={16} fill="currentColor" className="text-primary group-hover:text-white ml-1" />
-                </div>
-                Ver Demo
-              </motion.button>
-            </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-navy/10 shadow-sm mb-8"
+          >
+            <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-xs font-bold uppercase tracking-widest text-navy/60">Sistema Validado</span>
           </motion.div>
 
-          {/* Samsung Mockup */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, x: 20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            transition={{ duration: 1, delay: 0.2 }}
-            className="relative flex justify-center lg:justify-end w-full"
+          {/* Social Proof Avatars */}
+          <div className="flex justify-center -space-x-4 mb-8">
+            <img className="w-10 h-10 rounded-full border-2 border-white" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" alt="Cliente" />
+            <img className="w-10 h-10 rounded-full border-2 border-white" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" alt="Cliente" />
+            <img className="w-10 h-10 rounded-full border-2 border-white" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="Cliente" />
+            <div className="w-10 h-10 rounded-full border-2 border-white bg-navy text-white flex items-center justify-center text-xs font-bold">+500</div>
+          </div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-5xl md:text-7xl font-black text-navy leading-[1.1] mb-8 tracking-tighter drop-shadow-sm"
           >
-            <div className="relative z-10 w-full max-w-[320px] aspect-[9/19.5] bg-navy rounded-[3rem] p-3 shadow-2xl border-[8px] border-navy/90 hero-float">
-              <div className="w-full h-full bg-cream rounded-[2.2rem] overflow-hidden relative flex flex-col">
-                <div className="px-6 pt-10 text-center">
-                  <div className="w-24 h-24 rounded-full bg-primary mx-auto mb-6 border-4 border-white shadow-lg overflow-hidden relative">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" alt="Manuel Pérez" className="w-full h-full object-cover" />
-                  </div>
-                  <h4 className="text-xl font-black text-navy mb-2">Manuel Pérez</h4>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-widest px-3 py-1 bg-primary/10 rounded-full inline-block">Plomero Maestro</p>
-                </div>
-                <div className="flex-grow flex items-center justify-center p-8">
-                  <div className="w-full aspect-square bg-white rounded-3xl p-4 shadow-inner border border-navy/5 flex items-center justify-center relative">
-                    <div className="w-full h-full bg-[url('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=example')] bg-contain bg-no-repeat bg-center opacity-80" />
-                  </div>
-                </div>
-                <div className="px-6 pb-10 space-y-3">
-                  <div className="w-full py-4 bg-primary text-white rounded-2xl text-center text-[10px] font-black uppercase tracking-[0.2em] shadow-orange">Guardar Contacto</div>
-                  <div className="w-full py-4 bg-navy text-white rounded-2xl text-center text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-                    <MessageSquare size={14} className="text-primary" /> WhatsApp
-                  </div>
-                </div>
-              </div>
-            </div>
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -top-6 -right-6 glass-card p-4 rounded-2xl z-20 flex items-center gap-3 bg-white border border-primary/20 shadow-orange"
+            Que tus clientes te guarden en su teléfono <span className="text-primary italic">y no te olviden.</span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl md:text-2xl text-navy/80 mb-12 leading-relaxed max-w-2xl mx-auto font-bold"
+          >
+            Deja de perder dinero porque no encuentran tu número. Cuando busquen tu servicio, <span className="text-navy font-black bg-white/50 backdrop-blur-sm px-2 rounded">aparecerás TÚ con tu foto</span>.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          >
+            <a
+              href="/registro"
+              className="w-full sm:w-auto bg-primary text-white px-8 py-5 rounded-full font-black text-xl shadow-orange hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-3"
             >
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-xs">✨</div>
-              <p className="text-[10px] font-black text-navy uppercase tracking-widest">Perfil Premium</p>
-            </motion.div>
+              Crear mi Tarjeta ($10) <ArrowRight size={24} />
+            </a>
+            <button
+              onClick={() => setIsVideoModalOpen(true)}
+              className="w-full sm:w-auto bg-white/90 backdrop-blur-md text-navy px-8 py-5 rounded-full font-bold text-xl border border-navy/10 shadow-lg hover:bg-white transition-colors flex items-center justify-center gap-3"
+            >
+              <Phone size={24} className="text-primary" /> Ver cómo funciona
+            </button>
           </motion.div>
+
+          {/* Social Proof Text */}
+          <p className="mt-8 text-sm text-navy/60 font-black uppercase tracking-widest bg-white/30 inline-block px-4 py-1 rounded-full backdrop-blur-sm">
+            <span className="text-primary">★</span> Únete a cientos de profesionales
+          </p>
         </div>
       </section>
 
-      {/* Comparación Section */}
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10 md:mb-20"
-          >
-            <h2 className="text-3xl md:text-5xl font-black text-navy mb-6 tracking-tighter uppercase">¿Por qué no te llaman de nuevo?</h2>
-          </motion.div>
-
-          <div className="flex overflow-x-auto snap-x snap-mandatory lg:grid lg:grid-cols-2 gap-4 md:gap-12 items-stretch max-w-5xl mx-auto pb-8 lg:pb-0 px-4 md:px-0">
+      {/* Demo Visual: Antes vs Después (Simplificado) */}
+      <section className="py-20 bg-white/50 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Antes */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="min-w-[85vw] lg:min-w-0 snap-center bg-navy/5 p-8 md:p-10 rounded-[40px] border border-navy/5 flex flex-col items-center"
-            >
-              <div className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-8">El Olvido (Antes)</div>
-              <div className="w-full max-w-[280px] bg-white rounded-[48px] border-[12px] border-navy shadow-xl p-6 min-h-[480px] flex flex-col relative overflow-hidden">
-                <div className="space-y-4 flex-grow overflow-hidden relative opacity-10">
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-navy/20" />
-                      <div className="space-y-2"><div className="h-2 w-24 bg-navy/20" /><div className="h-1.5 w-16 bg-navy/10" /></div>
-                    </div>
-                  ))}
-                </div>
-                <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex flex-col gap-4">
-                  <div className="h-24 w-full bg-white/40 backdrop-blur-md rounded-2xl border border-white/20 flex items-center gap-4 px-4 shadow-sm scale-110 z-10">
-                    <div className="w-12 h-12 rounded-full bg-navy/10 flex items-center justify-center text-2xl grayscale">👤</div>
-                    <div>
-                      <p className="text-xs font-black text-navy/40 italic">"Plomero" o "Juan"</p>
-                      <p className="text-[10px] text-navy/20 font-bold uppercase tracking-widest">¿Cúal de todos era?</p>
-                    </div>
-                  </div>
+            <div className="bg-gray-100 p-8 rounded-3xl opacity-50 border border-gray-200">
+              <div className="text-center mb-6">
+                <span className="text-xs font-black uppercase tracking-widest text-red-500">Lo que pasa hoy</span>
+                <h3 className="text-2xl font-bold text-gray-400 mt-2">"¿Cuál era el número?"</h3>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm max-w-xs mx-auto flex items-center gap-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-2xl">?</div>
+                <div className="space-y-2 w-full">
+                  <div className="h-2 bg-gray-100 rounded w-3/4"></div>
+                  <div className="h-2 bg-gray-100 rounded w-1/2"></div>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Después */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="min-w-[85vw] lg:min-w-0 snap-center bg-primary/5 p-8 md:p-10 rounded-[40px] border border-primary/20 flex flex-col items-center relative"
-            >
-              <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-8">Tu Marca (Después)</div>
-              <div className="w-full max-w-[280px] bg-white rounded-[48px] border-[12px] border-navy shadow-orange p-6 min-h-[480px] flex flex-col">
-                <div className="text-center mb-8">
-                  <div className="w-24 h-24 rounded-full bg-primary mx-auto mb-6 border-4 border-cream shadow-lg overflow-hidden relative">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" alt="Manuel Pérez" className="w-full h-full object-cover" />
-                  </div>
-                  <h4 className="text-xl font-black text-navy">Manuel Pérez</h4>
-                  <p className="text-[10px] font-black text-primary uppercase mt-2">Plomero Maestro</p>
-                </div>
-                <div className="space-y-4 flex-grow">
-                  <div className="p-4 bg-cream rounded-2xl flex items-center gap-4 border border-primary/10">
-                    <MessageSquare size={16} className="text-primary" /><div className="h-2 w-24 bg-primary/20 rounded-full" />
-                  </div>
-                  <div className="p-4 bg-cream rounded-2xl flex items-center gap-4 border border-primary/10">
-                    <Smartphone size={16} className="text-primary" /><div className="h-2 w-28 bg-primary/20 rounded-full" />
-                  </div>
-                </div>
-                <div className="mt-6 p-5 bg-primary text-white rounded-2xl text-center text-xs font-black uppercase tracking-[0.2em] shadow-orange">Llamar ahora</div>
+            <div className="bg-primary/5 p-8 rounded-3xl border-2 border-primary/20 relative">
+              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">TU SOLUCIÓN</div>
+              <div className="text-center mb-6">
+                <span className="text-xs font-black uppercase tracking-widest text-primary">Lo que tendrás</span>
+                <h3 className="text-2xl font-bold text-navy mt-2">Te encuentran al instante</h3>
               </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Beneficios Section */}
-      <section className="py-24 relative overflow-hidden bg-navy">
-        <div className="absolute inset-0 z-0 text-white flex items-center justify-center text-8xl font-black opacity-5 grayscale pointer-events-none">RESULTADOS</div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="flex overflow-x-auto snap-x snap-mandatory md:grid md:grid-cols-3 gap-4 md:gap-8 pb-8 md:pb-0 -mx-6 px-6 md:mx-0 md:px-0"
-          >
-            {[
-              { icon: Search, title: "Buscan tu oficio y sales tú", text: "Configuramos palabras clave estratégicas para que cuando busquen tu especialidad en su teléfono aparezcas de primero." },
-              { icon: Camera, title: "Confianza al Instante", text: "Una foto profesional integrada hace que confíen en ti antes de hablarte. Te ves más pro y real." },
-              { icon: Zap, title: "Galería Pro Incluida", text: "Muestra tus mejores 3 trabajos directamente en tu tarjeta. Tus clientes verán la calidad en segundos." }
-            ].map((item, i) => (
-              <motion.div key={i} whileHover={{ y: -10 }} className="min-w-[85vw] md:min-w-0 snap-center glass-card p-8 md:p-10 rounded-card bg-white/5 border-white/10 backdrop-blur-xl">
-                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 md:mb-8 shadow-orange">
-                  <item.icon className="text-white" size={32} />
-                </div>
-                <h3 className="text-2xl font-black text-white mb-4 tracking-tighter uppercase italic">{item.title}</h3>
-                <p className="text-white/70 leading-relaxed font-medium">{item.text}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Sectores Section */}
-      <section className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-black text-navy uppercase tracking-tighter italic mb-16">Especialistas que ya están ganando más</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
-            {["🛠️ Reparación", "🎨 Pintura", "🔧 Mecánica", "🔌 Electricistas", "🚿 Plomería", "🏗️ Albañiles", "🏥 Médicos", "🧹 Limpieza"].map(s => (
-              <div key={s} className="p-4 bg-cream rounded-2xl font-black text-navy border border-navy/5 text-sm uppercase tracking-widest">{s}</div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Calculadora de Pérdidas */}
-      <section className="py-24 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="glass-card p-12 md:p-16 rounded-[48px] border-primary/20 bg-cream/30 shadow-2xl"
-          >
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl lg:text-7xl font-black text-navy mb-8 tracking-tighter uppercase text-center lg:text-left">
-                Calcula cuánto estás <span className="text-primary italic">dejando ir</span>
-              </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div className="space-y-12">
-                  <div>
-                    <div className="flex justify-between mb-4">
-                      <p className="text-[10px] font-black uppercase text-navy/40 tracking-widest">Clientes al mes</p>
-                      <span className="text-primary font-black text-xl">{clients}</span>
-                    </div>
-                    <input type="range" min="1" max="20" value={clients} onChange={(e) => setClients(parseInt(e.target.value))} className="w-full h-3 bg-navy/10 rounded-full appearance-none accent-primary cursor-pointer" />
+              <div className="bg-white p-6 rounded-2xl shadow-lg max-w-xs mx-auto border border-primary/10">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-primary rounded-full overflow-hidden border-2 border-primary">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" alt="Foto Pro" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <div className="flex justify-between mb-4">
-                      <p className="text-[10px] font-black uppercase text-navy/40 tracking-widest">Valor Servicio promedio</p>
-                      <span className="text-primary font-black text-xl">${avgValue}</span>
+                    <h4 className="font-bold text-navy text-lg">Manuel Pérez</h4>
+                    <p className="text-primary text-xs font-black uppercase tracking-wider">Plomero Maestro</p>
+                    <div className="flex gap-1 mt-1 text-yellow-400">
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
                     </div>
-                    <input type="range" min="5" max="100" value={avgValue} onChange={(e) => setAvgValue(parseInt(e.target.value))} className="w-full h-3 bg-navy/10 rounded-full appearance-none accent-primary cursor-pointer" />
                   </div>
                 </div>
-                <div className="bg-navy p-12 rounded-[40px] text-center text-white shadow-orange relative group overflow-hidden">
-                  <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-4">Pérdida Anual Estimada</p>
-                  <p className="text-4xl md:text-7xl font-black text-primary mb-6 break-words overflow-hidden leading-none">${annualLoss}</p>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/60 mt-4 italic">"Lo pagas con un solo trabajo que recuperes"</p>
-                  <p className="text-xs italic opacity-70 leading-relaxed max-w-xs mx-auto">"Recuperas los $10 de hoy con el primer cliente que sí te encuentre mañana."</p>
+                <div className="mt-4 flex gap-2">
+                  <div className="flex-1 bg-green-500 text-white text-center py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
+                    <Phone size={12} /> Llamar
+                  </div>
+                  <div className="flex-1 bg-navy text-white text-center py-2 rounded-lg text-xs font-bold">
+                    Ver Fotos
+                  </div>
                 </div>
               </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section id="precios" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-20">
-            <h2 className="text-4xl lg:text-7xl font-black text-navy uppercase tracking-tighter italic">Planes Profesionales</h2>
-          </motion.div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            {[
-              { name: "Básico", price: "10", originalPrice: "20", features: ["Tarjeta Digital Pro", "Tu Foto de Perfil", "Categoría de Búsqueda", "Historial de Llamadas", "Entrega en 1 hora"] },
-              { name: "Pro", price: "20", originalPrice: "40", featured: true, features: ["Todo el Básico", "Código QR para Imprimir", "Galería de 3 Fotos", "Botón WhatsApp Directo", "Diseño Premium", "Soporte Prioritario"] }
-            ].map((plan) => (
-              <motion.div key={plan.name} whileHover={{ y: -10 }} className={`bg-white p-12 rounded-[40px] flex flex-col shadow-soft border-4 ${plan.featured ? "border-primary" : "border-navy/5"}`}>
-                <h3 className={`text-xl font-black uppercase tracking-widest mb-4 ${plan.featured ? "text-primary" : "opacity-40"}`}>{plan.name}</h3>
-                <div className="flex items-baseline gap-2 mb-10">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-navy/30 line-through uppercase">Antes ${plan.originalPrice}</span>
-                    <span className="text-6xl font-black text-navy">${plan.price}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-navy/30 font-black uppercase text-xs tracking-tighter">Pago Único*</span>
-                    <span className="text-[8px] text-navy/20 font-bold leading-none mt-1">*Mantenimiento $1.50/año (desde el 2do año)</span>
-                  </div>
-                </div>
-                <ul className="space-y-5 mb-12 flex-grow">
-                  {plan.features.map(f => <li key={f} className="flex items-center gap-4 text-navy/70 font-bold"><CheckCircle2 size={20} className="text-primary" /> {f}</li>)}
-                </ul>
-                <a href="/registro" className={`w-full py-5 font-black rounded-button text-center uppercase tracking-widest text-xs ${plan.featured ? "bg-primary text-white shadow-orange" : "bg-navy/5 text-navy border-2 border-navy/5"}`}>Elegir {plan.name}</a>
-              </motion.div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="py-32 bg-cream">
-        <div className="max-w-4xl mx-auto px-6">
-          <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-black text-navy uppercase tracking-tighter italic">Preguntas Comunes</h2>
-          </motion.div>
-          <div className="space-y-6">
+      {/* Social Proof + Beneficios */}
+      <section className="py-24 bg-navy text-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
+          <h2 className="text-3xl md:text-5xl font-black mb-16 tracking-tighter">¿Por qué funciona?</h2>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white/10 p-8 rounded-3xl backdrop-blur-sm border border-white/5">
+              <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-6 text-2xl">📸</div>
+              <h3 className="text-xl font-bold mb-3">Foto = Confianza</h3>
+              <p className="text-white/60 text-sm leading-relaxed">Nadie guarda números sin nombre. Al ver tu cara y profesión, te guardan como un contacto VIP.</p>
+            </div>
+            <div className="bg-white/10 p-8 rounded-3xl backdrop-blur-sm border border-white/5">
+              <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-6 text-2xl">🔍</div>
+              <h3 className="text-xl font-bold mb-3">Búsqueda Fácil</h3>
+              <p className="text-white/60 text-sm leading-relaxed">Cuando busquen "Plomero" o "Abogado" en su celular, apareces TÚ primero.</p>
+            </div>
+            <div className="bg-white/10 p-8 rounded-3xl backdrop-blur-sm border border-white/5">
+              <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-6 text-2xl">🚀</div>
+              <h3 className="text-xl font-bold mb-3">Descarga Cloud</h3>
+              <p className="text-white/60 text-sm leading-relaxed">Tus clientes descargan tu contacto directo desde la nube. Siempre actualizado, siempre disponible.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Restaurado y Mejorado */}
+      <section className="py-24 bg-cream" id="precios">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase">Elige tu Plan</h2>
+            <p className="text-navy/60 mt-4 text-lg">Inversión única que se paga con tu primer cliente nuevo.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
+            {/* Plan Básico $10 */}
+            <div className="bg-white p-8 rounded-[30px] shadow-lg border border-navy/5 flex flex-col relative overflow-hidden h-full">
+              <h3 className="text-xl font-black text-navy uppercase tracking-widest mb-2">Tarjeta Digital</h3>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-5xl font-black text-navy">$10</span>
+                <span className="text-navy/40 text-xs font-bold uppercase tracking-widest">Pago Único</span>
+              </div>
+
+              <ul className="space-y-4 mb-8 flex-grow">
+                <li className="flex items-center gap-3 text-navy font-medium text-sm">
+                  <CheckCircle2 size={18} className="text-navy/40 shrink-0" /> Diseño Profesional con Foto
+                </li>
+                <li className="flex items-center gap-3 text-navy font-medium text-sm">
+                  <CheckCircle2 size={18} className="text-navy/40 shrink-0" /> Botones de Llamada y WhatsApp
+                </li>
+                <li className="flex items-center gap-3 text-navy font-medium text-sm">
+                  <CheckCircle2 size={18} className="text-navy/40 shrink-0" /> Enlace para compartir
+                </li>
+              </ul>
+
+              <a href="/registro?plan=basic" className="block w-full bg-navy/5 text-navy py-4 rounded-full font-black text-lg hover:bg-navy/10 transition-colors text-center mt-auto">
+                Elegir Básico
+              </a>
+            </div>
+
+            {/* Plan Negocio $20 */}
+            <div className="bg-white p-8 rounded-[30px] shadow-xl border-4 border-primary flex flex-col relative overflow-hidden h-full">
+              <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-black uppercase px-3 py-1 rounded-bl-lg">Más Vendido</div>
+
+              <h3 className="text-xl font-black text-navy uppercase tracking-widest mb-2">Negocio Pro</h3>
+              <div className="flex items-baseline gap-1 mb-6">
+                <span className="text-5xl font-black text-primary">$20</span>
+                <span className="text-navy/40 text-xs font-bold uppercase tracking-widest">Pago Único*</span>
+              </div>
+
+              <ul className="space-y-4 mb-8 flex-grow">
+                <li className="flex items-center gap-3 text-navy font-bold text-sm">
+                  <CheckCircle2 size={18} className="text-primary shrink-0" /> Todo lo del Plan Básico
+                </li>
+                <li className="flex items-center gap-3 text-navy font-bold text-sm">
+                  <QrCode size={18} className="text-primary shrink-0" /> Código QR para Imprimir
+                </li>
+                <li className="flex items-center gap-3 text-navy font-bold text-sm">
+                  <CheckCircle2 size={18} className="text-primary shrink-0" /> Galería de 3 Fotos
+                </li>
+                <li className="flex items-center gap-3 text-navy font-bold text-sm">
+                  <ShieldCheck size={18} className="text-primary shrink-0" /> Soporte Prioritario
+                </li>
+              </ul>
+
+              <a href="/registro?plan=pro" className="block w-full bg-primary text-white py-4 rounded-full font-black text-lg shadow-orange hover:scale-105 transition-transform text-center mb-3 mt-auto">
+                QUIERO ESTE
+              </a>
+              <p className="text-[9px] text-center text-navy/30 leading-tight">
+                *Incluye QR y Edición. Renovación opcional de $10/año para mantener el hosting del QR y cambios ilimitados.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section Restaurada (Vital para SEO y Confianza) */}
+      <section className="py-24 bg-white">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-black text-navy uppercase tracking-tighter">Preguntas Frecuentes</h2>
+          </div>
+          <div className="space-y-4">
             {[
-              { q: "¿Tengo que seguir pagando después?", a: "El pago inicial es por la creación de tu tarjeta. A partir del segundo año, solo cobramos un mantenimiento mínimo de $1.50 anual por renovación de hosting para mantener tu tarjeta y QR activos. Sin trucos." },
-              { q: "¿Cómo lo recibo?", a: "En exactamente 1 hora desde que confirmas tu pago, te enviamos un email con el enlace a tu tarjeta digital y tus archivos de impresión. ¡Listo para usar!" },
-              { q: "¿Y si no sé nada de tecnología?", a: "No necesitas saber nada. Nosotros hacemos todo el trabajo pesado por ti. Tú solo nos pasas tus datos y listo." },
-              { q: "¿Sirve para Android y iPhone?", a: "Sí, funciona perfectamente en todos los celulares modernos. Es tecnología nativa que no requiere descargar apps." },
-              { q: "¿Puedo actualizar mis datos después?", a: "¡Claro! El primer cambio es totalmente gratuito. Luego, cada actualización tiene un costo mínimo de $5." },
-              { q: "¿Cómo me ayuda a conseguir más trabajo?", a: "Imagina que publicas tu QR en tus redes o lo pegas en lugares estratégicos. Alguien lo escanea y, en segundos, tiene tu foto y contacto en su agenda. Dejas de ser un volante olvidado para ser un contacto real." }
+              {
+                q: "¿Por qué necesito esto si ya tengo redes sociales?",
+                a: "Las redes son para entretenimiento. Cuando alguien necesita un servicio urgente, busca en su agenda o contactos. Con esto, te aseguras de estar ahí, guardado con foto y profesión, listo para que te llamen."
+              },
+              {
+                q: "¿El Código QR funciona para siempre?",
+                a: "Sí. En el Plan de $20, el código QR es dinámico. Si cambias de número, actualizamos tu tarjeta y el mismo QR impreso sigue funcionando. Este servicio tiene un costo de mantenimiento anual de $10 a partir del segundo año."
+              },
+              {
+                q: "¿Cómo recibo mi tarjeta?",
+                a: "Es automático. Llenas tus datos, realizas el pago y recibes en tu correo el enlace a tu tarjeta y tus archivos listos para usar."
+              },
+              {
+                q: "¿Tengo que pagar mensualidades?",
+                a: "No. El plan de $10 es un único pago de por vida. El plan de $20 tiene una renovación anual opcional de $10 solo si quieres mantener el QR dinámico activo y la posibilidad de editar tu tarjeta."
+              }
             ].map((item, i) => (
-              <details key={i} className="group glass-card rounded-3xl p-8 cursor-pointer border-navy/5 bg-white/50 backdrop-blur-sm">
-                <summary className="flex items-center justify-between font-black text-navy list-none text-lg">
-                  {item.q}<ChevronRight size={24} className="group-open:rotate-90 transition-transform text-primary" />
+              <details key={i} className="group bg-gray-50 rounded-2xl p-6 cursor-pointer border border-gray-100 hover:bg-gray-100 transition-colors">
+                <summary className="flex items-center justify-between font-bold text-navy list-none text-base md:text-lg">
+                  {item.q}<ChevronRight size={20} className="group-open:rotate-90 transition-transform text-primary" />
                 </summary>
-                <p className="mt-6 text-navy/60 leading-relaxed font-bold">{item.a}</p>
+                <p className="mt-4 text-navy/70 leading-relaxed text-sm">{item.a}</p>
               </details>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Footer Compacto */}
-      <footer className="py-12 bg-navy border-t border-white/5 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left relative z-10">
-          <div className="text-xl font-black text-white tracking-tighter"><span className="text-primary">!</span>Regístrame Ya</div>
-          <p className="text-[10px] text-white/30 font-black uppercase tracking-widest">© 2026 · Profesionales en Acción</p>
-          <div className="flex gap-8 text-[10px] font-black text-white/50 uppercase tracking-widest">
-            <a href="#" className="hover:text-primary transition-colors">Términos</a>
-            <a href="#" className="hover:text-primary transition-colors">Privacidad</a>
-            <a href="#" className="hover:text-primary transition-colors">Soporte</a>
-          </div>
-        </div>
+      {/* Footer Mejorado */}
+      <footer className="py-12 text-center text-white/60 text-xs font-bold uppercase tracking-widest bg-navy border-t border-white/10">
+        <p className="mb-2">© 2026 · Regístrame Ya</p>
+        <p className="text-[10px] opacity-50 hover:opacity-100 transition-opacity">
+          Diseñado por <a href="https://www.caesarreyesjaramillo.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">César Reyes Jaramillo</a>
+        </p>
       </footer>
 
       <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} videoId="c1gNsQjKZ_Q" />
