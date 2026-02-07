@@ -373,22 +373,44 @@ export default function RegisterWizard() {
 
             console.log("4. REGISTRO COMPLETADO!");
 
-            // 5. GENERAR Y DESCARGAR VCARD AUTOMÁTICAMENTE
-            try {
-                const vcardContent = generateVCard(formData, photoBase64, galleryUrls, finalCategories);
-                const blob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
-                const url = window.URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `${slug}.vcf`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                window.URL.revokeObjectURL(url);
-                console.log("5. vCard descargada con éxito");
-            } catch (vcardErr) {
-                console.error("Error al generar/descargar vCard:", vcardErr);
-                // No bloqueamos el flujo si falla la descarga
+            // 5. GENERAR Y DESCARGAR VCARD AUTOMÁTICAMENTE (Solo si es PayPhone / Pagado)
+            if (formData.paymentMethod === 'payphone') {
+                try {
+                    // Descargar vCard
+                    const vcardContent = generateVCard(formData, photoBase64, galleryUrls, finalCategories);
+                    const vcardBlob = new Blob([vcardContent], { type: 'text/vcard;charset=utf-8' });
+                    const vcardUrl = window.URL.createObjectURL(vcardBlob);
+                    const vcardLink = document.createElement('a');
+                    vcardLink.href = vcardUrl;
+                    vcardLink.setAttribute('download', `${slug}.vcf`);
+                    document.body.appendChild(vcardLink);
+                    vcardLink.click();
+                    document.body.removeChild(vcardLink);
+                    window.URL.revokeObjectURL(vcardUrl);
+                    console.log("5. vCard descargada con éxito (PayPhone)");
+
+                    // Descargar QR (Solo si es Plan Pro)
+                    if (formData.plan === 'pro') {
+                        const cardLink = `${window.location.origin}/card/${slug}`;
+                        const qrDataUrl = await QRCode.toDataURL(cardLink, {
+                            width: 1024,
+                            margin: 2,
+                            color: {
+                                dark: '#001a33',
+                                light: '#ffffff'
+                            }
+                        });
+                        const qrLink = document.createElement('a');
+                        qrLink.href = qrDataUrl;
+                        qrLink.setAttribute('download', `QR-${slug}.png`);
+                        document.body.appendChild(qrLink);
+                        qrLink.click();
+                        document.body.removeChild(qrLink);
+                        console.log("5b. QR descargado con éxito (PayPhone Pro)");
+                    }
+                } catch (vcardErr) {
+                    console.error("Error al generar/descargar archivos:", vcardErr);
+                }
             }
 
             setIsSubmitting(false);
