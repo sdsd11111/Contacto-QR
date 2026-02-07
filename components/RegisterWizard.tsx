@@ -203,9 +203,19 @@ export default function RegisterWizard() {
                 fileToUpload = await imageCompression(file, options);
             }
 
+            // Limpiar nombre de archivo de caracteres especiales (acentos, ñ, espacios, etc)
+            const cleanFileName = file.name
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9.]/g, "-")
+                .replace(/-+/g, "-");
+
+            const finalPath = path.replace(file.name, cleanFileName);
+
             const { data, error } = await supabase.storage
                 .from(bucket)
-                .upload(path, fileToUpload, { upsert: true });
+                .upload(finalPath, fileToUpload, { upsert: true });
 
             if (error) throw error;
 
@@ -372,6 +382,22 @@ export default function RegisterWizard() {
                 .upsert(upsertData, { onConflict: 'email' });
 
             console.log("4. REGISTRO COMPLETADO!");
+
+            // 4b. NOTIFICAR POR WHATSAPP (Automático via Evolution API)
+            try {
+                fetch('/api/notify-whatsapp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: formData.name,
+                        email: formData.email,
+                        whatsapp: formData.whatsapp,
+                        plan: formData.plan
+                    })
+                }).catch(err => console.error("Error silencioso en notificación WhatsApp:", err));
+            } catch (notifyErr) {
+                console.error("Error al disparar notificación WhatsApp:", notifyErr);
+            }
 
             // 5. GENERAR Y DESCARGAR VCARD AUTOMÁTICAMENTE (Solo si es PayPhone / Pagado)
             if (formData.paymentMethod === 'payphone') {
