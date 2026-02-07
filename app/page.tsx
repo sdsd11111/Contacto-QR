@@ -307,7 +307,7 @@ export default function Home() {
       <footer className="py-12 text-center text-white/60 text-xs font-bold uppercase tracking-widest bg-navy border-t border-white/10">
         <p className="mb-2">© 2026 · Regístrame Ya</p>
         <p className="text-[10px] opacity-50 hover:opacity-100 transition-opacity">
-          Diseñado por <a href="https://www.caesarreyesjaramillo.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">César Reyes Jaramillo</a>
+          Diseñado por <a href="https://www.cesarreyesjaramillo.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">César Reyes Jaramillo</a>
         </p>
       </footer>
 

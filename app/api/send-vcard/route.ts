@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, name, vcardUrl, qrUrl } = await req.json();
+        const { email, name, vcardUrl, qrUrl, backupData } = await req.json();
 
         // VALIDACIÓN DE VARIABLES DE ENTORNO
         const smtpHost = process.env.SMTP_HOST;
@@ -33,9 +33,21 @@ export async function POST(req: NextRequest) {
             },
         });
 
+        const attachments = [];
+        if (qrUrl) {
+            attachments.push({ filename: 'qr-code.png', path: qrUrl });
+        }
+        if (backupData) {
+            attachments.push({
+                filename: `backup_${name.replace(/\s+/g, '_')}_${Date.now()}.json`,
+                content: JSON.stringify(backupData, null, 2),
+                contentType: 'application/json'
+            });
+        }
+
         const mailOptions = {
             from: process.env.EMAIL_FROM || '"RegistraYa VCards" <noreply@registraya.com>',
-            to: email,
+            to: email, // Could also send to an admin address if it's for internal backup
             subject: '¡Tu Contacto Digital está Listo! 🚀',
             html: `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
@@ -49,12 +61,7 @@ export async function POST(req: NextRequest) {
                     <p style="font-size: 12px; color: #888;">TE RECORDAMOS. Al recibir este correo, has sido suscrito a nuestro boletín de noticias exclusivo para profesionales, donde compartiremos tips de networking y tecnología. Si deseas desuscribirte, responde a este correo.</p>
                 </div>
             `,
-            attachments: [
-                {
-                    filename: 'qr-code.png',
-                    path: qrUrl
-                }
-            ]
+            attachments
         };
 
         const info = await transporter.sendMail(mailOptions);

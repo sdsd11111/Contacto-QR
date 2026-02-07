@@ -19,16 +19,16 @@ import {
     CheckCircle,
     FileText,
     Tag,
-    Loader2
+    Loader2,
+    Mic,
+    Star
 } from "lucide-react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { supabase } from "@/lib/supabase";
 import imageCompression from 'browser-image-compression';
-
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
+import { cn } from "@/lib/utils";
+import VideoStepGuide from "./VideoStepGuide";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import { QRCodeSVG } from "qrcode.react";
 
 const steps = [
     { id: 1, title: 'Básico', icon: User },
@@ -56,6 +56,7 @@ const INDUSTRY_TAGS: Record<string, string[]> = {
 export default function RegisterWizard() {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showVideoGuide, setShowVideoGuide] = useState(true);
     const [formData, setFormData] = useState({
         name: '',
         profession: '',
@@ -76,11 +77,46 @@ export default function RegisterWizard() {
         gallery: [] as File[],
         receipt: null as File | null,
         receiptUrl: '',
-        paymentMethod: 'transfer' as 'transfer' | 'payphone',
+        paymentMethod: 'transfer' as 'transfer' | 'payphone' | 'paypal' | 'crypto',
     });
 
     const [emailError, setEmailError] = useState('');
     const [hasManualTags, setHasManualTags] = useState(false);
+    const [isListening, setIsListening] = useState<string | null>(null);
+    const [cryptoPayment, setCryptoPayment] = useState<{ payAddress: string, payAmount: number, payCurrency: string } | null>(null);
+    const [isCreatingCrypto, setIsCreatingCrypto] = useState(false);
+
+    const startListening = (field: 'bio' | 'products') => {
+        if (isListening) return; // Prevent double engagement
+
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Tu navegador no soporta dictado por voz. Por favor usa Chrome o Safari.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'es-EC';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false; // Stop after one phrase
+
+        recognition.onstart = () => setIsListening(field);
+        recognition.onend = () => setIsListening(null);
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0][0].transcript;
+            const currentValue = field === 'bio' ? formData.bio : formData.products;
+            updateForm(field, currentValue ? `${currentValue} ${transcript}` : transcript);
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error("Speech recognition error", event.error);
+            setIsListening(null);
+        };
+
+        recognition.start();
+    };
     const [previewDevice, setPreviewDevice] = useState('android');
     const [isGeneratingTags, setIsGeneratingTags] = useState(false);
 
@@ -95,15 +131,20 @@ export default function RegisterWizard() {
         }
         setIsGeneratingTags(true);
         try {
-            const res = await fetch('/api/generate-tags', {
+            const response = await fetch('/api/generate-tags', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ profession: formData.profession, bio: formData.bio })
+                body: JSON.stringify({
+                    company: formData.company,
+                    bio: formData.bio,
+                    products: formData.products,
+                    plan: formData.plan
+                })
             });
 
-            if (!res.ok) throw new Error('Error en el servidor');
+            if (!response.ok) throw new Error('Error en el servidor');
 
-            const data = await res.json();
+            const data = await response.json();
             if (data.tags) {
                 updateForm('categories', data.tags);
                 setHasManualTags(true);
@@ -218,15 +259,36 @@ export default function RegisterWizard() {
                 .upload(finalPath, fileToUpload, { upsert: true });
 
             if (error) throw error;
+            return `https://yqizvscisogpizwpxpqr.supabase.co/storage/v1/object/public/${bucket}/${finalPath}`;
+        } catch (error) {
+            console.error("Upload Error:", error);
+            throw error;
+        }
+    };
 
-            const { data: { publicUrl } } = supabase.storage
-                .from(bucket)
-                .getPublicUrl(path);
-
-            return publicUrl;
-        } catch (err) {
-            console.error("Error uploading file:", err);
-            throw err; // Re-lanzar para que handleFinalSubmit lo capture y muestre el alert
+    const handleCryptoPayment = async () => {
+        setIsCreatingCrypto(true);
+        try {
+            const response = await fetch('/api/create-crypto-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    amount: currentPlanPrice,
+                    email: formData.email,
+                    orderId: `vcard-${Date.now()}`
+                })
+            });
+            const data = await response.json();
+            if (data.paymentId) {
+                setCryptoPayment(data);
+            } else {
+                alert(data.error || "Error al generar el pago cripto");
+            }
+        } catch (error) {
+            console.error("Crypto Error:", error);
+            alert("Error de conexión");
+        } finally {
+            setIsCreatingCrypto(false);
         }
     };
 
@@ -397,6 +459,23 @@ export default function RegisterWizard() {
                 }).catch(err => console.error("Error silencioso en notificación WhatsApp:", err));
             } catch (notifyErr) {
                 console.error("Error al disparar notificación WhatsApp:", notifyErr);
+            }
+
+            // 4c. COPIA DE SEGURIDAD (Backup JSON via Email)
+            try {
+                fetch('/api/send-vcard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'admin@registraya.com', // Dirección de backup
+                        name: `BACKUP_${formData.name}`,
+                        backupData: upsertData,
+                        vcardUrl: '#',
+                        qrUrl: ''
+                    })
+                }).catch(err => console.error("Error silencioso en backup email:", err));
+            } catch (backupEmailErr) {
+                console.error("Error al disparar backup email:", backupEmailErr);
             }
 
             // 5. GENERAR Y DESCARGAR VCARD AUTOMÁTICAMENTE (Solo si es PayPhone / Pagado)
@@ -668,6 +747,12 @@ export default function RegisterWizard() {
                             </div>
 
                             <div className="space-y-6">
+                                <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-2 flex items-center gap-3">
+                                    <Mic size={16} className="text-primary shrink-0" />
+                                    <p className="text-[10px] font-bold text-navy/60 uppercase leading-tight tracking-widest">
+                                        <span className="text-primary font-black">Pro Tip:</span> Puedes dictar tus textos con el micrófono 🎙️. Si se detiene, dale un espacio y pulsa el botón de nuevo.
+                                    </p>
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Profesión / Título</label>
@@ -692,7 +777,19 @@ export default function RegisterWizard() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Tu Bio o Descripción</label>
+                                    <div className="flex justify-between items-center mb-3">
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest ml-1">Tu Bio o Descripción</label>
+                                        <button
+                                            onClick={() => startListening('bio')}
+                                            className={cn(
+                                                "text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
+                                                isListening === 'bio' ? "text-red-500 animate-pulse" : "text-primary hover:opacity-80"
+                                            )}
+                                        >
+                                            <Mic size={12} />
+                                            <span>{isListening === 'bio' ? 'Escuchando...' : 'Dictar'}</span>
+                                        </button>
+                                    </div>
                                     <textarea
                                         value={formData.bio}
                                         onChange={(e) => updateForm('bio', e.target.value)}
@@ -704,23 +801,35 @@ export default function RegisterWizard() {
 
                                 <div>
                                     <div className="flex justify-between items-center mb-3">
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest">Productos o Servicios (Se incluirán en el contacto)</label>
-                                        <label className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
-                                            {isAnalyzingImage ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
-                                            <span>{isAnalyzingImage ? 'Analizando...' : 'Escanear Foto con IA'}</span>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={analyzeImageFromPhoto}
-                                                disabled={isAnalyzingImage}
-                                            />
-                                        </label>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest">Productos o Servicios</label>
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={() => startListening('products')}
+                                                className={cn(
+                                                    "text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
+                                                    isListening === 'products' ? "text-red-500 animate-pulse" : "text-primary hover:opacity-80"
+                                                )}
+                                            >
+                                                <Mic size={12} />
+                                                <span>{isListening === 'products' ? 'Escuchando...' : 'Dictar'}</span>
+                                            </button>
+                                            <label className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                                                {isAnalyzingImage ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+                                                <span>{isAnalyzingImage ? 'Analizando...' : 'Escanear Foto'}</span>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={analyzeImageFromPhoto}
+                                                    disabled={isAnalyzingImage}
+                                                />
+                                            </label>
+                                        </div>
                                     </div>
                                     <textarea
                                         value={formData.products}
                                         onChange={(e) => updateForm('products', e.target.value)}
-                                        placeholder="Ej. Cambio de tuberías, Instalación de grifos, Mantenimiento preventivo... (O sube una foto de tu lista de precios)"
+                                        placeholder="Ej. Cambio de tuberías, Instalación de grifos... (O dicta tu lista de precios)"
                                         rows={4}
                                         className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm resize-none"
                                     />
@@ -799,7 +908,7 @@ export default function RegisterWizard() {
                                             className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-opacity disabled:opacity-50"
                                         >
                                             {isGeneratingTags ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                                            {isGeneratingTags ? 'Generando...' : 'Generar con IA (20 etiquetas)'}
+                                            {isGeneratingTags ? 'Generando...' : `Generar con IA (${formData.plan === 'pro' ? '30' : '20'} etiquetas)`}
                                         </button>
                                     </div>
                                     <div className="relative">
@@ -864,48 +973,6 @@ export default function RegisterWizard() {
                                     Una foto profesional o un logo claro aumenta tu confianza en un <span className="text-primary font-black">200%</span>.
                                 </p>
 
-                                {formData.plan === 'pro' && (
-                                    <div className="mt-8 pt-8 border-t border-navy/5 w-full">
-                                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-navy/40 mb-6">Galería de Trabajos (Plan Pro - Hasta 3 fotos)</h3>
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {[0, 1, 2].map((i) => (
-                                                <div key={i} className="relative aspect-square rounded-2xl bg-white border-2 border-dashed border-navy/5 flex items-center justify-center overflow-hidden hover:border-primary/20 transition-all cursor-pointer group">
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                const newGallery = [...formData.gallery];
-                                                                newGallery[i] = file;
-                                                                updateForm('gallery', newGallery);
-                                                            }
-                                                        }}
-                                                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                                                    />
-                                                    {formData.gallery[i] ? (
-                                                        <>
-                                                            <img src={URL.createObjectURL(formData.gallery[i])} className="w-full h-full object-cover" />
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const newGallery = [...formData.gallery];
-                                                                    newGallery.splice(i, 1);
-                                                                    updateForm('gallery', newGallery);
-                                                                }}
-                                                                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center z-20"
-                                                            >
-                                                                ×
-                                                            </button>
-                                                        </>
-                                                    ) : (
-                                                        <Camera size={20} className="text-navy/10 group-hover:text-primary transition-colors" />
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     )}
@@ -1039,25 +1106,24 @@ export default function RegisterWizard() {
                                 <p className="text-white/60 text-sm">Tu inversión para tu nueva presencia digital: ${currentPlanPrice}.00</p>
                             </div>
 
-                            <div className="flex bg-white/5 p-2 rounded-3xl mb-10 max-w-sm mx-auto">
-                                <button
-                                    onClick={() => updateForm('paymentMethod', 'transfer')}
-                                    className={cn(
-                                        "flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all",
-                                        formData.paymentMethod === 'transfer' ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"
-                                    )}
-                                >
-                                    Transferencia
-                                </button>
-                                <button
-                                    onClick={() => updateForm('paymentMethod', 'payphone')}
-                                    className={cn(
-                                        "flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all",
-                                        formData.paymentMethod === 'payphone' ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"
-                                    )}
-                                >
-                                    PayPhone
-                                </button>
+                            <div className="flex bg-white/5 p-2 rounded-3xl mb-10 max-w-lg mx-auto overflow-x-auto no-scrollbar">
+                                {[
+                                    { id: 'transfer', label: 'Transferencia' },
+                                    { id: 'payphone', label: 'PayPhone' },
+                                    { id: 'paypal', label: 'PayPal' },
+                                    { id: 'crypto', label: 'Cripto' },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => updateForm('paymentMethod', tab.id)}
+                                        className={cn(
+                                            "flex-1 px-4 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
+                                            formData.paymentMethod === tab.id ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"
+                                        )}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
                             </div>
 
                             <AnimatePresence mode="wait">
@@ -1074,7 +1140,7 @@ export default function RegisterWizard() {
                                             <div className="space-y-4">
                                                 <div>
                                                     <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Banco</p>
-                                                    <p className="font-bold text-lg">BANCO PICHINCHA</p>
+                                                    <p className="font-bold text-lg uppercase tracking-tight">Banco de Loja</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Tipo de Cuenta</p>
@@ -1082,15 +1148,19 @@ export default function RegisterWizard() {
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Número de Cuenta</p>
-                                                    <p className="font-black text-xl text-primary">2100223344</p>
+                                                    <p className="font-black text-xl text-primary">2901861882</p>
                                                 </div>
                                                 <div>
                                                     <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Titular</p>
-                                                    <p className="font-bold">César Reyes Jaramillo</p>
+                                                    <p className="font-bold">Cristhopher Abel Reyes Pardo</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">ID / RUC</p>
-                                                    <p className="font-bold">1712345678</p>
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Cédula</p>
+                                                    <p className="font-bold">1105106866</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest mb-1">Correo para notificación</p>
+                                                    <p className="text-xs font-bold leading-tight">cristhopheryeah113@gmail.com</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -1127,6 +1197,82 @@ export default function RegisterWizard() {
                                             </div>
 
                                         </div>
+                                    </motion.div>
+                                ) : formData.paymentMethod === 'paypal' ? (
+                                    <motion.div
+                                        key="paypal"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="text-center bg-white/5 p-10 rounded-[40px] border border-white/10 max-w-xl mx-auto"
+                                    >
+                                        <h3 className="text-xl font-black uppercase italic tracking-tighter mb-4">Pago vía PayPal</h3>
+                                        <p className="text-white/60 text-xs mb-8 leading-relaxed">
+                                            Aceptamos todas las tarjetas de crédito internacionales y saldo PayPal.
+                                        </p>
+                                        <div className="bg-white p-6 rounded-[30px] flex justify-center min-h-[150px]">
+                                            <PayPalScriptProvider options={{ clientId: "test" }}>
+                                                <PayPalButtons
+                                                    style={{ layout: "vertical", shape: "pill", label: "pay" }}
+                                                    createOrder={(data, actions) => {
+                                                        return actions.order.create({
+                                                            intent: "CAPTURE",
+                                                            purchase_units: [{
+                                                                amount: {
+                                                                    currency_code: "USD",
+                                                                    value: currentPlanPrice.toString()
+                                                                }
+                                                            }]
+                                                        });
+                                                    }}
+                                                    onApprove={async (data, actions) => {
+                                                        if (actions.order) {
+                                                            await actions.order.capture();
+                                                            handleFinalSubmit('pagado');
+                                                        }
+                                                    }}
+                                                />
+                                            </PayPalScriptProvider>
+                                        </div>
+                                    </motion.div>
+                                ) : formData.paymentMethod === 'crypto' ? (
+                                    <motion.div
+                                        key="crypto"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="text-center bg-white/5 p-12 rounded-[50px] border border-white/10 max-w-xl mx-auto"
+                                    >
+                                        <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <Zap className="text-primary" size={40} />
+                                        </div>
+                                        <h3 className="text-2xl font-black uppercase italic mb-2 tracking-tighter">Cripto Pagos</h3>
+                                        <p className="text-white/60 text-sm mb-10 leading-relaxed font-medium">
+                                            Paga con Bitcoin, USDT (TRC20) o Ethereum vía **NOWPayments**.
+                                        </p>
+
+                                        {cryptoPayment ? (
+                                            <div className="bg-white p-6 rounded-[30px] border border-primary/20 space-y-4">
+                                                <div className="flex justify-center mb-2">
+                                                    <div className="w-40 h-40 bg-gray-100 flex items-center justify-center rounded-2xl">
+                                                        <QRCodeSVG value={cryptoPayment.payAddress} size={160} />
+                                                    </div>
+                                                </div>
+                                                <div className="text-left space-y-2">
+                                                    <p className="text-[10px] font-black text-navy/40 uppercase tracking-widest">Enviar</p>
+                                                    <p className="font-bold text-navy text-sm">{cryptoPayment.payAmount} {cryptoPayment.payCurrency.toUpperCase()}</p>
+                                                    <p className="text-[10px] font-black text-navy/40 uppercase tracking-widest">Dirección</p>
+                                                    <p className="font-mono text-navy text-[9px] break-all bg-navy/5 p-2 rounded-lg">{cryptoPayment.payAddress}</p>
+                                                </div>
+                                                <p className="text-[10px] font-bold text-primary uppercase animate-pulse">Esperando confirmación en la red...</p>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={handleCryptoPayment}
+                                                disabled={isCreatingCrypto}
+                                                className="bg-primary text-white px-10 py-5 rounded-full font-black text-xs uppercase tracking-widest shadow-orange hover:scale-105 transition-transform disabled:opacity-50"
+                                            >
+                                                {isCreatingCrypto ? 'Generando...' : 'Generar Dirección de Pago'}
+                                            </button>
+                                        )}
                                     </motion.div>
                                 ) : (
                                     <motion.div
@@ -1192,11 +1338,41 @@ export default function RegisterWizard() {
                                         <Mail size={32} />
                                     </div>
                                     <div className="text-left">
-                                        <p className="font-black text-navy text-lg">Revisa tu correo</p>
-                                        <p className="text-sm text-navy/60">{formData.email}</p>
+                                        <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
+                                        <p className="text-sm font-bold text-navy/40 truncate max-w-[180px]">{formData.email}</p>
                                     </div>
                                 </div>
                             </div>
+
+                            {/* RECOMPENSA POR RESEÑA */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                                className="mt-10 bg-gradient-to-br from-navy to-navy/90 p-8 rounded-[3rem] text-white border-2 border-primary/30 shadow-2xl relative overflow-hidden"
+                            >
+                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+                                <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 text-left">
+                                    <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center shrink-0 border border-white/5">
+                                        <span className="text-4xl font-black text-primary">-50%</span>
+                                        <span className="text-[8px] font-black uppercase tracking-widest">Descuento</span>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-black uppercase tracking-tighter italic mb-2">¡Gana un 50% de Descuento en tu renovación!</h3>
+                                        <p className="text-sm text-white/60 mb-6 font-medium leading-relaxed">
+                                            Ayúdanos a crecer con una reseña en Google y te regalamos la mitad del costo de tu renovación el próximo año. ¡Solo te toma 15 segundos!
+                                        </p>
+                                        <a
+                                            href="https://g.page/r/CRWzEc2rIpGjEAI/review"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-orange hover:scale-105 transition-all"
+                                        >
+                                            <Star size={16} fill="currentColor" /> Dejar mi Reseña <ArrowRight size={16} />
+                                        </a>
+                                    </div>
+                                </div>
+                            </motion.div>
                         </div>
                     )}
 
@@ -1230,6 +1406,12 @@ export default function RegisterWizard() {
                     )}
                 </motion.div>
             </AnimatePresence>
+
+            <VideoStepGuide
+                step={step}
+                isVisible={showVideoGuide}
+                onClose={() => setShowVideoGuide(false)}
+            />
         </div>
     );
 }
