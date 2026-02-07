@@ -40,7 +40,7 @@ Cualquier duda, respóndeme este correo."
 "Hola [Nombre],
 Ya pasó una semana. ¿Cuántas personas han guardado tu nuevo contacto?
 Recuerda: El truco es que **tú** inicies la conversación enviando tu tarjeta.
-No esperes a que te pidan el número. Anticípate: *'Te paso mi tarjeta digital para que me tengas a mano'.*
+No esperes a que te pidan el número. Anticípate: *'Te paso mi contacto digital para que me tengas a mano'.*
 ¡A por esos clientes!"
 
 ### Día 30: Solicitud de Testimonio / Referidos

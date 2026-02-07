@@ -29,7 +29,7 @@ export default function Home() {
             <span className="text-primary">!</span>Regístrame Ya
           </div>
           <a href="/registro" className="bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-orange hover:scale-105 transition-transform">
-            Crear mi Tarjeta
+            Crear mi Contacto
           </a>
         </div>
       </nav>
@@ -98,7 +98,7 @@ export default function Home() {
               href="/registro"
               className="w-full sm:w-auto bg-primary text-white px-8 py-5 rounded-full font-black text-xl shadow-orange hover:translate-y-[-2px] transition-transform flex items-center justify-center gap-3"
             >
-              Crear mi Tarjeta ($10) <ArrowRight size={24} />
+              Crear mi Contacto Digital ($10) <ArrowRight size={24} />
             </a>
             <button
               onClick={() => setIsVideoModalOpen(true)}
@@ -208,7 +208,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-start">
             {/* Plan Básico $10 */}
             <div className="bg-white p-8 rounded-[30px] shadow-lg border border-navy/5 flex flex-col relative overflow-hidden h-full">
-              <h3 className="text-xl font-black text-navy uppercase tracking-widest mb-2">Tarjeta Digital</h3>
+              <h3 className="text-xl font-black text-navy uppercase tracking-widest mb-2">Contacto Digital</h3>
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-5xl font-black text-navy">$10</span>
                 <span className="text-navy/40 text-xs font-bold uppercase tracking-widest">Pago Único</span>
@@ -281,15 +281,15 @@ export default function Home() {
               },
               {
                 q: "¿El Código QR funciona para siempre?",
-                a: "Sí. En el Plan de $20, el código QR es dinámico. Si cambias de número, actualizamos tu tarjeta y el mismo QR impreso sigue funcionando. Este servicio tiene un costo de mantenimiento anual de $10 a partir del segundo año."
+                a: "Sí. En el Plan de $20, el código QR es dinámico. Si cambias de número, actualizamos tu contacto y el mismo QR impreso sigue funcionando. Este servicio tiene un costo de mantenimiento anual de $10 a partir del segundo año."
               },
               {
-                q: "¿Cómo recibo mi tarjeta?",
-                a: "Es automático. Llenas tus datos, realizas el pago y recibes en tu correo el enlace a tu tarjeta y tus archivos listos para usar."
+                q: "¿Cómo recibo mi contacto?",
+                a: "Es automático. Llenas tus datos, realizas el pago y recibes en tu correo el enlace a tu contacto y tus archivos listos para usar."
               },
               {
                 q: "¿Tengo que pagar mensualidades?",
-                a: "No. El plan de $10 es un único pago de por vida. El plan de $20 tiene una renovación anual opcional de $10 solo si quieres mantener el QR dinámico activo y la posibilidad de editar tu tarjeta."
+                a: "No. El plan de $10 es un único pago de por vida. El plan de $20 tiene una renovación anual opcional de $10 solo si quieres mantener el QR dinámico activo y la posibilidad de editar tu contacto."
               }
             ].map((item, i) => (
               <details key={i} className="group bg-gray-50 rounded-2xl p-6 cursor-pointer border border-gray-100 hover:bg-gray-100 transition-colors">

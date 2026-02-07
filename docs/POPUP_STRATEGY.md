@@ -34,7 +34,7 @@ Esta estrategia utiliza 3 momentos clave de comportamiento de usuario para resca
 
 **Copy:**
 *   **Headline:** 👷‍♂️ De "Juan ????" a "Juan Eléctrico"
-*   **Cuerpo:** "Mis clientes me decían que nunca encontraban mi número. Desde que les paso mi tarjeta digital, me llaman el triple porque salgo primero en su lista."
+*   **Cuerpo:** "Mis clientes me decían que nunca encontraban mi número. Desde que les paso mi contacto digital, me llaman el triple porque salgo primero en su lista."
 *   **Subtexto:** - Roberto, Electricista en Guayaquil.
 *   **CTA:** [ Ver cómo lo hizo él -> ] (Scroll suave a la sección de beneficios).
 

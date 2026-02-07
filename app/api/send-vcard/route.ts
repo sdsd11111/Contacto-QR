@@ -5,17 +5,31 @@ export async function POST(req: NextRequest) {
     try {
         const { email, name, vcardUrl, qrUrl } = await req.json();
 
-        if (!email || !vcardUrl) {
-            return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 });
+        // VALIDACIÓN DE VARIABLES DE ENTORNO
+        const smtpHost = process.env.SMTP_HOST;
+        const smtpPort = process.env.SMTP_PORT;
+        const smtpUser = process.env.SMTP_USER;
+        const smtpPass = process.env.SMTP_PASS;
+
+        if (!smtpHost || !smtpPort || !smtpUser || !smtpPass) {
+            console.error('ERROR: Faltan variables de entorno SMTP:', {
+                host: !!smtpHost,
+                port: !!smtpPort,
+                user: !!smtpUser,
+                pass: !!smtpPass
+            });
+            return NextResponse.json({
+                error: 'Error de configuración del servidor: Variables SMTP no definidas.'
+            }, { status: 500 });
         }
 
         const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT) || 465,
+            host: smtpHost,
+            port: Number(smtpPort) || 465,
             secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
             auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
+                user: smtpUser,
+                pass: smtpPass,
             },
         });
 
@@ -31,7 +45,6 @@ export async function POST(req: NextRequest) {
                     <br/>
                     <a href="${vcardUrl}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Descargar Contacto (.vcf)</a>
                     <br/><br/>
-                    <p>O mira tu perfil online aquí: <a href="${vcardUrl.replace('/api/vcard', '/card').replace('.vcf', '')}">Ver Perfil Online</a></p>
                     <hr/>
                     <p style="font-size: 12px; color: #888;">TE RECORDAMOS. Al recibir este correo, has sido suscrito a nuestro boletín de noticias exclusivo para profesionales, donde compartiremos tips de networking y tecnología. Si deseas desuscribirte, responde a este correo.</p>
                 </div>

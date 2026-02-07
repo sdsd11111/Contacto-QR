@@ -68,7 +68,7 @@ export default function PopupManager() {
                         <p className="text-navy/60 font-medium mb-8">¿Sabes cuántos trabajos perdiste este mes solo porque no encontraron tu número en la lista de contactos?</p>
                         <div className="space-y-3">
                             <button
-                                onClick={() => handleWhatsAppRedirect("Hola, creo que estoy perdiendo trabajos por mi contacto actual. Quiero mi tarjeta digital.")}
+                                onClick={() => handleWhatsAppRedirect("Hola, creo que estoy perdiendo trabajos por mi contacto actual. Quiero mi contacto digital.")}
                                 className="w-full py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-orange hover:scale-105 transition-transform"
                             >
                                 Probablemente varios... ¡Ayúdame!
@@ -97,7 +97,7 @@ export default function PopupManager() {
                         </div>
                     </div>
                     <p className="text-white/70 text-xs font-medium italic leading-relaxed mb-4">
-                        "Desde que les paso mi tarjeta digital, me llaman el triple porque salgo primero en su agenda."
+                        "Desde que les paso mi contacto digital, me llaman el triple porque salgo primero en su agenda."
                     </p>
                     <button
                         onClick={() => {
@@ -140,7 +140,7 @@ export default function PopupManager() {
                         </div>
 
                         <button
-                            onClick={() => handleWhatsAppRedirect("¡Hola! Quiero activar mi tarjeta profesional con la Oferta de Lanzamiento (Básico $10 / Pro $20)")}
+                            onClick={() => handleWhatsAppRedirect("¡Hola! Quiero activar mi contacto profesional con la Oferta de Lanzamiento (Básico $10 / Pro $20)")}
                             className="w-full py-5 bg-white text-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 transition-transform"
                         >
                             Lo pago con un solo trabajo

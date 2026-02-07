@@ -870,7 +870,7 @@ export default function RegisterWizard() {
                                 {/* PLANES */}
                                 <div className="order-1 lg:order-2 space-y-4 text-left">
                                     {[
-                                        { id: 'basic', title: 'Básico', price: '10', features: ['Tarjeta Digital Pro', 'Entrega 1hr'] },
+                                        { id: 'basic', title: 'Básico', price: '10', features: ['Contacto Digital Pro', 'Entrega 1hr'] },
                                         { id: 'pro', title: 'Premium (Pro)', price: '20', features: ['Todo el Básico', 'Código QR Manual', 'Botón WhatsApp Directo'] }
                                     ].map((p) => (
                                         <motion.div
@@ -911,10 +911,14 @@ export default function RegisterWizard() {
                                 <CheckCircle size={56} strokeWidth={2.5} />
                             </motion.div>
                             <h2 className="text-3xl md:text-4xl font-black text-navy tracking-tighter uppercase italic mb-4">¡Registro Recibido!</h2>
-                            <p className="text-navy/60 font-medium text-lg mb-8">
+                            <p className="text-navy/60 font-medium text-base mb-3 text-center">
                                 Tu solicitud ha sido enviada con éxito.
-                                <br />
-                                <span className="font-bold text-primary">Nuestro equipo revisará tu perfil</span> y te enviará tu Contacto Digital y Código QR a tu correo electrónico en breve.
+                            </p>
+                            <p className="text-2xl md:text-3xl font-black text-primary text-center mb-3 leading-tight">
+                                Nuestro equipo revisará tu perfil
+                            </p>
+                            <p className="text-navy/60 font-medium text-base mb-8 text-center">
+                                Te enviaremos tu Contacto Digital y Código QR a tu correo electrónico en breve.
                             </p>
 
                             <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">

@@ -9,7 +9,7 @@ Este documento contiene la estrategia de comunicación, textos para la web y gui
 **Concepto Principal:** No vendemos "vCards" (término técnico). Vendemos **"Que te encuentren fácil y te guarden bien"**.
 
 **Propuesta de Valor Única (UVP):**
-> "La única tarjeta digital que se configura estratégicamente para que aparezcas primero en la agenda de tus clientes, hecha 100% por nosotros."
+> "La única contacto digital que se configura estratégicamente para que aparezcas primero en la agenda de tus clientes, hecha 100% por nosotros."
 
 **Diferencial "Humanizado":**
 - ❌ Competencia: "Entra, crea tu cuenta, sube tu logo, escanea..." (Fricción tecnológica)
@@ -74,7 +74,7 @@ Estos mensajes están diseñados para no parecer bots. Úsalos cuando alguien pr
 "¡Hola! 👋 Claro que sí.
 Básicamente, ayudamos a que no pierdas clientes porque 'no encuentran tu número'.
 
-Te creamos una tarjeta digital que se guarda sola en el celular de tus clientes con tu nombre, foto y servicio bien puestos. Así cuando busquen 'Tu Profesión' en su agenda, sales tú primero.
+Te creamos un contacto digital que se guarda solo en el celular de tus clientes con tu nombre, foto y servicio bien puestos. Así cuando busquen 'Tu Profesión' en su agenda, sales tú primero.
 
 Cuesta **$10 dólares** (un solo pago de por vida). Yo me encargo de armarla, tú solo me pasas la foto.
 ¿Te gustaría ver un ejemplo de cómo queda?"
@@ -100,7 +100,7 @@ Además, te ves mucho más profesional mandando esto que solo un mensaje de text
 ¿Cuántos clientes te han olvidado hoy? 📉
 El 80% de los trabajos se pierden porque el cliente te guardó como "El señor que arregla" y luego no te encontró en su lista de contactos.
 🛑 Deja de ser un número más en la agenda.
-Con nuestra Tarjeta Digital Profesional:
+Con nuestro Contacto Digital Profesional:
 ✅ Tu cliente ve tu foto y logo.
 ✅ Se guarda tu nombre + TU PROFESIÓN automáticamente.
 ✅ Te encuentran fácil cuando te necesitan.
@@ -127,4 +127,4 @@ Tu tarjeta de presentación que nunca se rompe ni se pierde. 📲
 Pega tu Código QR en tus herramientas, en la refrigeradora de tus clientes o en tu vehículo.
 Al escanearlo, ¡pum! Tu contacto completo directo a su celular.
 Más efectivo que mil tarjetas de papel que terminan en la basura.
-Pide tu QR + Tarjeta Digital hoy por $20.
+Pide tu QR + Contacto Digital hoy por $20.
