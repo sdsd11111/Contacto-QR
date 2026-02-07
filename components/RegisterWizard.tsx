@@ -443,34 +443,6 @@ export default function RegisterWizard() {
 
     const handleBack = () => setStep(s => Math.max(s - 1, 1));
 
-    const handleWhatsAppNotification = async () => {
-        if (!formData.receipt && !formData.receiptUrl) {
-            alert("Por favor sube tu comprobante primero.");
-            return;
-        }
-
-        setIsUploadingReceipt(true);
-        try {
-            let finalReceiptUrl = formData.receiptUrl;
-
-            // Si hay un archivo nuevo y no se ha subido, subirlo ahora
-            if (formData.receipt && !finalReceiptUrl) {
-                const timestamp = Date.now();
-                finalReceiptUrl = await compressAndUpload(formData.receipt, 'vcards', `receipts/${timestamp}-${formData.receipt.name}`);
-                updateForm('receiptUrl', finalReceiptUrl);
-            }
-
-            const currentPlanPrice = formData.plan === 'pro' ? 20 : 10;
-            const text = `¡Hola! Soy ${formData.name}. He completado mi registro para el Plan ${formData.plan.toUpperCase()} ($${currentPlanPrice}.00) y adjunto mi comprobante de pago aquí: ${finalReceiptUrl}`;
-
-            window.open(`https://wa.me/593984180800?text=${encodeURIComponent(text)}`, '_blank');
-        } catch (error) {
-            console.error("Error al subir comprobante para WhatsApp:", error);
-            alert("Error al procesar el comprobante. Por favor intenta de nuevo.");
-        } finally {
-            setIsUploadingReceipt(false);
-        }
-    };
 
     const updateForm = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -1128,14 +1100,6 @@ export default function RegisterWizard() {
                                                 </div>
                                             </div>
 
-                                            <button
-                                                onClick={handleWhatsAppNotification}
-                                                disabled={isUploadingReceipt}
-                                                className="w-full py-4 bg-green-500 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-600 transition-colors disabled:opacity-50"
-                                            >
-                                                {isUploadingReceipt ? <Loader2 size={16} className="animate-spin" /> : <Smartphone size={16} />}
-                                                {isUploadingReceipt ? 'Subiendo...' : 'Notificar por WhatsApp'}
-                                            </button>
                                         </div>
                                     </motion.div>
                                 ) : (
