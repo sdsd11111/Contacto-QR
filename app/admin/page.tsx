@@ -46,8 +46,6 @@ export default function AdminDashboard() {
     const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
-        // En un escenario real, esto vendría de una sesión o JWT.
-        // Para Stage 1, usamos una "Shared Key" simple.
         const storedKey = localStorage.getItem('admin_access_key');
         if (storedKey === 'registrameya2026') {
             setIsAuthorized(true);
@@ -71,8 +69,6 @@ export default function AdminDashboard() {
 
     const fetchRegistros = async () => {
         setLoading(true);
-        // NOTA: En producción, esto requiere auth.
-        // Por ahora, traemos todo lo que el RLS permita (configurado para authenticated)
         const { data, error } = await supabase
             .from('registraya_vcard_registros')
             .select('*')
@@ -125,6 +121,7 @@ export default function AdminDashboard() {
                 productos_servicios: editingRegistro.productos_servicios,
                 etiquetas: editingRegistro.etiquetas,
                 status: editingRegistro.status,
+                plan: editingRegistro.plan,
                 foto_url: editingRegistro.foto_url,
                 galeria_urls: editingRegistro.galeria_urls,
             })
@@ -148,7 +145,7 @@ export default function AdminDashboard() {
         try {
             const fileExt = file.name.split('.').pop();
             const fileName = `${editingRegistro.id}/photo_${Math.random()}.${fileExt}`;
-            const { data, error } = await supabase.storage
+            const { error } = await supabase.storage
                 .from('vcards')
                 .upload(fileName, file);
 
@@ -160,7 +157,6 @@ export default function AdminDashboard() {
 
             setEditingRegistro({ ...editingRegistro, foto_url: publicUrl });
 
-            // Update directly in DB too
             await supabase
                 .from('registraya_vcard_registros')
                 .update({ foto_url: publicUrl })
@@ -199,7 +195,6 @@ export default function AdminDashboard() {
 
             setEditingRegistro({ ...editingRegistro, galeria_urls: newUrls });
 
-            // Update directly in DB
             await supabase
                 .from('registraya_vcard_registros')
                 .update({ galeria_urls: newUrls })
@@ -233,22 +228,20 @@ export default function AdminDashboard() {
     const sendVCardEmail = async (registro: any) => {
         if (!confirm(`¿Estás seguro de aprobar y enviar el correo a ${registro.email}?`)) return;
 
-        // Optimistic update to UI
         const originalStatus = registro.status;
         setRegistros(prev => prev.map(r => r.id === registro.id ? { ...r, isSending: true } : r));
 
         try {
             const vcardUrl = `${window.location.origin}/api/vcard/${registro.slug || registro.id}`;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(vcardUrl)}`; // Quick workaround for public QR if local API fails
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(vcardUrl)}`;
 
             const res = await fetch('/api/send-vcard', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    email: registro.email,
-                    name: registro.nombre,
                     vcardUrl,
-                    qrUrl // Note: Sending a public URL for QR is easier for email service than base64
+                    qrUrl,
+                    plan: registro.plan
                 })
             });
 
@@ -258,7 +251,6 @@ export default function AdminDashboard() {
 
             alert("✅ Correo enviado con éxito");
 
-            // Auto update status to "entregado" if it wasn't already
             if (registro.status !== 'entregado') {
                 updateStatus(registro.id, 'entregado');
             }
@@ -469,7 +461,6 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Modal para ver comprobante */}
             <AnimatePresence>
                 {selectedReceipt && (
                     <motion.div
@@ -503,7 +494,6 @@ export default function AdminDashboard() {
                 )}
             </AnimatePresence>
 
-            {/* Modal para EDITAR vCard */}
             <AnimatePresence>
                 {isEditModalOpen && editingRegistro && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto pt-20 pb-20">
@@ -529,7 +519,6 @@ export default function AdminDashboard() {
 
                             <div className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
                                 <div className="space-y-12">
-                                    {/* Foto de Perfil */}
                                     <div className="space-y-6">
                                         <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">FOTO DE PERFIL</h4>
                                         <div className="flex flex-col items-center gap-4">
@@ -548,7 +537,6 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
 
-                                    {/* Información Personal */}
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-6">
                                             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">INFO PERSONAL</h4>
@@ -586,7 +574,6 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
 
-                                        {/* Redes y Links */}
                                         <div className="space-y-6">
                                             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">REDES Y LINKS</h4>
                                             <div>
@@ -624,7 +611,6 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
 
-                                    {/* Contenido Extendido */}
                                     <div className="space-y-6 pt-4">
                                         <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">CONTENIDO Y SEO</h4>
                                         <div>
@@ -653,6 +639,7 @@ export default function AdminDashboard() {
                                                 onChange={e => setEditingRegistro({ ...editingRegistro, etiquetas: e.target.value })}
                                             />
                                         </div>
+
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                             <div>
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Estado del Registro</label>
@@ -667,6 +654,28 @@ export default function AdminDashboard() {
                                                 </select>
                                             </div>
                                             <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Plan contratado</label>
+                                                <select
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none uppercase"
+                                                    value={editingRegistro.plan}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, plan: e.target.value })}
+                                                >
+                                                    <option value="basic" className="bg-navy">Básico ($10)</option>
+                                                    <option value="pro" className="bg-navy">Pro ($20)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Ubicación / Dirección</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.direccion || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, direccion: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Sitio Web</label>
                                                 <input
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
@@ -676,7 +685,33 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
 
-                                        {/* Galería de Trabajos */}
+                                        {editingRegistro.plan === 'pro' && (
+                                            <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20">
+                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6">GESTIÓN DE CÓDIGO QR (PRO)</h4>
+                                                <div className="flex flex-col md:flex-row items-center gap-8">
+                                                    <div className="bg-white p-4 rounded-3xl shadow-lg border border-primary/10">
+                                                        <img
+                                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                            alt="Preview QR"
+                                                            className="w-32 h-32"
+                                                        />
+                                                    </div>
+                                                    <div className="text-left space-y-4">
+                                                        <p className="text-xs font-bold text-white/60 leading-relaxed">
+                                                            Este QR apunta directamente al perfil público del cliente. Puedes descargarlo para enviárselo por WhatsApp si es necesario.
+                                                        </p>
+                                                        <a
+                                                            href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                            target="_blank"
+                                                            className="inline-flex items-center gap-2 bg-primary text-navy px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-orange"
+                                                        >
+                                                            <Download size={14} /> Descargar QR Alta Resolución
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="pt-4">
                                             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4 mb-6">GALERÍA DE TRABAJOS</h4>
                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
