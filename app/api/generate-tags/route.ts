@@ -7,12 +7,13 @@ export async function POST(req: NextRequest) {
             apiKey: process.env.OPENAI_API_KEY,
         });
 
-        const { company, bio, products, plan } = await req.json();
+        const { company, bio, products, plan, profession } = await req.json();
 
         const tagCount = plan === 'pro' ? 30 : 20;
 
         const combinedText = `
             Negocio: ${company || ''}
+            Profesión: ${profession || ''}
             Descripción: ${bio || ''}
             Productos/Servicios: ${products || ''}
         `.trim();
@@ -37,13 +38,17 @@ Formato: Devuelve SOLO las etiquetas separadas por comas, sin numeración, sin t
                 { role: "user", content: prompt }
             ],
             temperature: 0.7,
+            max_tokens: 500,
         });
 
         const tags = response.choices[0].message.content?.trim();
 
         return NextResponse.json({ tags });
-    } catch (error) {
-        console.error('Error generating tags:', error);
-        return NextResponse.json({ error: 'Error al generar etiquetas' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Error in generate-tags API:', error);
+        return NextResponse.json({
+            error: 'Error al conectar con la IA',
+            details: error.message || 'Error desconocido'
+        }, { status: 500 });
     }
 }

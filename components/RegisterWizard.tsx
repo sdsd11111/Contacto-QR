@@ -136,24 +136,28 @@ export default function RegisterWizard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     company: formData.company,
+                    profession: formData.profession,
                     bio: formData.bio,
                     products: formData.products,
                     plan: formData.plan
                 })
             });
 
-            if (!response.ok) throw new Error('Error en el servidor');
-
             const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.details || data.error || 'Error en el servidor');
+            }
+
             if (data.tags) {
                 updateForm('categories', data.tags);
                 setHasManualTags(true);
             } else {
                 alert("No se pudieron generar etiquetas. Intenta de nuevo.");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error generating tags:", err);
-            alert("Hubo un error al conectar con la IA. Por favor revisa tu conexión.");
+            alert(`No pudimos conectar con la IA: ${err.message || 'Error de conexión'}. Revisa tu internet o intenta más tarde.`);
         } finally {
             setIsGeneratingTags(false);
         }
