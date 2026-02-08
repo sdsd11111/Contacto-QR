@@ -11,7 +11,8 @@ import {
   Star,
   ShieldCheck,
   ChevronRight,
-  QrCode
+  QrCode,
+  BarChart3
 } from "lucide-react";
 import VideoModal from "@/components/VideoModal";
 import PopupManager from "@/components/PopupManager";
@@ -108,6 +109,26 @@ export default function Home() {
             </button>
           </motion.div>
 
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-12 group"
+          >
+            <a
+              href="/encuesta"
+              className="inline-flex items-center gap-3 bg-navy/5 hover:bg-primary/10 border border-navy/10 hover:border-primary/30 px-6 py-3 rounded-2xl transition-all duration-300"
+            >
+              <div className="bg-primary/20 p-2 rounded-lg text-primary group-hover:scale-110 transition-transform">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] font-black uppercase tracking-widest text-navy/40 mb-0.5">Diagnóstico Gratuito</p>
+                <p className="text-sm font-bold text-navy group-hover:text-primary transition-colors italic">Realizar Test de Ventas Digitales <ChevronRight className="inline w-4 h-4 ml-1" /></p>
+              </div>
+            </a>
+          </motion.div>
+
           {/* Social Proof Text */}
           <p className="mt-8 text-sm text-navy/60 font-black uppercase tracking-widest bg-white/30 inline-block px-4 py-1 rounded-full backdrop-blur-sm">
             <span className="text-primary">★</span> Únete a cientos de profesionales
@@ -143,12 +164,12 @@ export default function Home() {
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-lg max-w-xs mx-auto border border-primary/10">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-primary rounded-full overflow-hidden border-2 border-primary">
-                    <img src="/images/Maricela.webp" alt="Maricela enfermera" className="w-full h-full object-cover" />
+                  <div className="w-16 h-16 bg-primary/10 rounded-full overflow-hidden border-2 border-primary/20 flex items-center justify-center p-2">
+                    <img src="/images/logo.png" alt="RegistraYa Logo" className="w-full h-full object-contain" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-navy text-lg">Maricela</h4>
-                    <p className="text-primary text-xs font-black uppercase tracking-wider">Enfermera a Domicilio</p>
+                    <h4 className="font-bold text-navy text-lg">Tu Perfil</h4>
+                    <p className="text-primary text-xs font-black uppercase tracking-wider">Profesional Digital</p>
                     <div className="flex gap-1 mt-1 text-yellow-400">
                       <Star size={12} fill="currentColor" />
                       <Star size={12} fill="currentColor" />

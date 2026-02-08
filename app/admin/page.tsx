@@ -25,10 +25,13 @@ import {
     Trash2,
     Mail,
     Loader2,
-    QrCode
+    ChevronRight,
+    QrCode,
+    BarChart3
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import Link from "next/link";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -319,12 +322,30 @@ export default function AdminDashboard() {
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="bg-primary px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-orange cursor-pointer hover:scale-105 transition-all"
+                            className="bg-primary px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-orange cursor-pointer hover:scale-105 transition-all text-navy"
                         >
                             Cerrar Sesión
                         </button>
                     </div>
                 </header>
+
+                {/* Quick Access to Survey Analytics */}
+                <div className="mb-12">
+                    <Link href="/admin/encuesta" className="group block">
+                        <div className="glass-card p-8 border border-primary/20 hover:border-primary/50 transition-all flex items-center justify-between overflow-hidden relative">
+                            <div className="relative z-10">
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Módulo de Análisis</p>
+                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Panel de Estadísticas de Encuesta</h3>
+                                <p className="text-white/40 text-sm mt-1 max-w-xl">Analiza el impacto de digitalización de tus prospectos y visualiza los resultados del semáforo de ventas.</p>
+                            </div>
+                            <div className="relative z-10 bg-primary/20 p-5 rounded-3xl text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-navy transition-all duration-500">
+                                <BarChart3 size={32} />
+                            </div>
+                            {/* Decorative background element */}
+                            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all" />
+                        </div>
+                    </Link>
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-12">
                     {['todos', 'pendiente', 'pagado', 'entregado'].map(s => (
