@@ -24,7 +24,8 @@ import {
     Upload,
     Trash2,
     Mail,
-    Loader2
+    Loader2,
+    QrCode
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -220,7 +221,9 @@ export default function AdminDashboard() {
     };
 
     const filtered = registros.filter(r => {
-        const matchesSearch = r.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || r.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const name = (r.nombre || "").toLowerCase();
+        const email = (r.email || "").toLowerCase();
+        const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === "todos" || r.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -228,7 +231,6 @@ export default function AdminDashboard() {
     const sendVCardEmail = async (registro: any) => {
         if (!confirm(`¿Estás seguro de aprobar y enviar el correo a ${registro.email}?`)) return;
 
-        const originalStatus = registro.status;
         setRegistros(prev => prev.map(r => r.id === registro.id ? { ...r, isSending: true } : r));
 
         try {
@@ -241,7 +243,9 @@ export default function AdminDashboard() {
                 body: JSON.stringify({
                     vcardUrl,
                     qrUrl,
-                    plan: registro.plan
+                    plan: registro.plan,
+                    email: registro.email,
+                    nombre: registro.nombre
                 })
             });
 
@@ -382,7 +386,7 @@ export default function AdminDashboard() {
                                                 "px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
                                                 r.plan === 'pro' ? "bg-primary/20 text-primary" : "bg-white/10 text-white/40"
                                             )}>
-                                                {r.plan}
+                                                {r.plan || 'basic'}
                                             </span>
                                         </td>
                                         <td className="px-8 py-6">
@@ -544,7 +548,7 @@ export default function AdminDashboard() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre Completo</label>
                                                 <input
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.nombre}
+                                                    value={editingRegistro.nombre || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, nombre: e.target.value })}
                                                 />
                                             </div>
@@ -552,7 +556,7 @@ export default function AdminDashboard() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Profesión</label>
                                                 <input
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.profesion}
+                                                    value={editingRegistro.profesion || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, profesion: e.target.value })}
                                                 />
                                             </div>
@@ -560,7 +564,7 @@ export default function AdminDashboard() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">WhatsApp (con código)</label>
                                                 <input
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.whatsapp}
+                                                    value={editingRegistro.whatsapp || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, whatsapp: e.target.value })}
                                                 />
                                             </div>
@@ -568,7 +572,7 @@ export default function AdminDashboard() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Email</label>
                                                 <input
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.email}
+                                                    value={editingRegistro.email || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, email: e.target.value })}
                                                 />
                                             </div>
@@ -657,7 +661,7 @@ export default function AdminDashboard() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Plan contratado</label>
                                                 <select
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none uppercase"
-                                                    value={editingRegistro.plan}
+                                                    value={editingRegistro.plan || 'basic'}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, plan: e.target.value })}
                                                 >
                                                     <option value="basic" className="bg-navy">Básico ($10)</option>
@@ -685,32 +689,64 @@ export default function AdminDashboard() {
                                             </div>
                                         </div>
 
-                                        {editingRegistro.plan === 'pro' && (
-                                            <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20">
-                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6">GESTIÓN DE CÓDIGO QR (PRO)</h4>
-                                                <div className="flex flex-col md:flex-row items-center gap-8">
-                                                    <div className="bg-white p-4 rounded-3xl shadow-lg border border-primary/10">
-                                                        <img
-                                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                            alt="Preview QR"
-                                                            className="w-32 h-32"
-                                                        />
+                                        <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20">
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6 flex items-center gap-2">
+                                                <QrCode size={16} /> GESTIÓN DE CÓDIGOS QR
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Opción 1: Descarga Directa (Archivo .vcf)</p>
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="bg-white p-3 rounded-2xl">
+                                                            <img
+                                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/vcard/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                                alt="QR Descarga"
+                                                                className="w-20 h-20"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] font-bold text-white/60 leading-tight">Ideal para tarjetas físicas básicas. Al escanear, el contacto se guarda al instante.</p>
+                                                            <a
+                                                                href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/vcard/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                                target="_blank"
+                                                                className="inline-flex items-center gap-2 text-primary text-[10px] font-black uppercase hover:underline"
+                                                            >
+                                                                <Download size={12} /> Descargar QR Alta Res.
+                                                            </a>
+                                                        </div>
                                                     </div>
-                                                    <div className="text-left space-y-4">
-                                                        <p className="text-xs font-bold text-white/60 leading-relaxed">
-                                                            Este QR apunta directamente al perfil público del cliente. Puedes descargarlo para enviárselo por WhatsApp si es necesario.
-                                                        </p>
-                                                        <a
-                                                            href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                            target="_blank"
-                                                            className="inline-flex items-center gap-2 bg-primary text-navy px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 transition-all shadow-orange"
-                                                        >
-                                                            <Download size={14} /> Descargar QR Alta Resolución
-                                                        </a>
+                                                </div>
+
+                                                <div className={cn(
+                                                    "bg-white/5 p-6 rounded-3xl border space-y-4 transition-all",
+                                                    editingRegistro.plan === 'pro' ? "border-primary/40 opacity-100" : "border-white/5 opacity-40 grayscale pointer-events-none"
+                                                )}>
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest flex justify-between">
+                                                        Opción 2: Perfil Digital (Pro)
+                                                        {editingRegistro.plan !== 'pro' && <span className="text-primary">Solo Pro</span>}
+                                                    </p>
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="bg-white p-3 rounded-2xl">
+                                                            <img
+                                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                                alt="QR Perfil"
+                                                                className="w-20 h-20"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] font-bold text-white/60 leading-tight">Muestra la página interactiva del cliente con su foto, links y galería.</p>
+                                                            <a
+                                                                href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                                target="_blank"
+                                                                className="inline-flex items-center gap-2 text-primary text-[10px] font-black uppercase hover:underline"
+                                                            >
+                                                                <Download size={12} /> Descargar QR Alta Res.
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        )}
+                                        </div>
 
                                         <div className="pt-4">
                                             <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4 mb-6">GALERÍA DE TRABAJOS</h4>
@@ -749,8 +785,8 @@ export default function AdminDashboard() {
 
                                 {editingRegistro && (
                                     <a
-                                        href={`/api/vcard/${editingRegistro.slug}`}
-                                        download
+                                        href={`/api/vcard/${editingRegistro.slug || editingRegistro.id}`}
+                                        download={`${editingRegistro.slug || editingRegistro.id}.vcf`}
                                         className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 text-white"
                                     >
                                         <Download size={14} />

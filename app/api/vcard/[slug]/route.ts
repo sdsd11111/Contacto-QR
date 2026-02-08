@@ -13,12 +13,25 @@ export async function GET(
     try {
         const { slug } = await context.params;
 
-        // 1. Buscar usuario por slug
-        const { data: user, error } = await supabase
+        // 1. Buscar usuario por slug o ID
+        let { data: user, error } = await supabase
             .from('registraya_vcard_registros')
             .select('*')
             .eq('slug', slug)
             .maybeSingle();
+
+        // Si no se encuentra por slug, intentar por ID
+        if (!user && !error) {
+            const { data: userById, error: errorById } = await supabase
+                .from('registraya_vcard_registros')
+                .select('*')
+                .eq('id', slug)
+                .maybeSingle();
+
+            if (userById) {
+                user = userById;
+            }
+        }
 
         if (error || !user) {
             return NextResponse.json(
