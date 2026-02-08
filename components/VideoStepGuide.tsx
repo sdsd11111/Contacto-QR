@@ -24,6 +24,12 @@ export default function VideoStepGuide({ step, isVisible, onClose }: VideoStepGu
     const [isMinimized, setIsMinimized] = useState(false);
     const [isDismissed, setIsDismissed] = useState(false);
 
+    // Resetear estados cuando cambia el paso para que la guía vuelva a aparecer
+    useEffect(() => {
+        setIsMinimized(false);
+        setIsDismissed(false);
+    }, [step]);
+
     // Si el usuario lo cerró completamente (X), mostramos un pequeño lanzador
     if (!isVisible) return null;
 
