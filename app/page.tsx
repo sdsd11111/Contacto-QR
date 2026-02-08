@@ -144,11 +144,11 @@ export default function Home() {
               <div className="bg-white p-6 rounded-2xl shadow-lg max-w-xs mx-auto border border-primary/10">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 bg-primary rounded-full overflow-hidden border-2 border-primary">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop" alt="Foto Pro" className="w-full h-full object-cover" />
+                    <img src="/images/Maricela.webp" alt="Maricela enfermera" className="w-full h-full object-cover" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-navy text-lg">Manuel Pérez</h4>
-                    <p className="text-primary text-xs font-black uppercase tracking-wider">Plomero Maestro</p>
+                    <h4 className="font-bold text-navy text-lg">Maricela</h4>
+                    <p className="text-primary text-xs font-black uppercase tracking-wider">Enfermera a Domicilio</p>
                     <div className="flex gap-1 mt-1 text-yellow-400">
                       <Star size={12} fill="currentColor" />
                       <Star size={12} fill="currentColor" />
@@ -163,7 +163,7 @@ export default function Home() {
                     <Phone size={12} /> Llamar
                   </div>
                   <div className="flex-1 bg-navy text-white text-center py-2 rounded-lg text-xs font-bold">
-                    Ver Fotos
+                    Ver Servicios
                   </div>
                 </div>
               </div>

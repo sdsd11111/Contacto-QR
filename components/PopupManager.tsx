@@ -90,23 +90,23 @@ export default function PopupManager() {
                 >
                     <button onClick={() => closePopup("scroll")} className="absolute top-4 right-4 text-white/20 hover:text-white/40"><X size={20} /></button>
                     <div className="flex items-center gap-4 mb-4">
-                        <img src="https://i.pravatar.cc/100?img=12" alt="Testimonio" className="w-12 h-12 rounded-full border-2 border-primary grayscale hover:grayscale-0 transition-transform cursor-pointer" />
+                        <img src="/images/las%20costillas%20del%20veci.webp" alt="Las Costillas del Veci" className="w-12 h-12 rounded-full border-2 border-primary grayscale hover:grayscale-0 transition-transform cursor-pointer object-cover" />
                         <div>
-                            <h4 className="text-white text-sm font-black uppercase tracking-widest leading-none">Roberto · Eléctrico</h4>
-                            <p className="text-primary text-[10px] font-bold mt-1 uppercase">Guayaquil</p>
+                            <h4 className="text-white text-sm font-black uppercase tracking-widest leading-none">Las Costillas del Veci</h4>
+                            <p className="text-primary text-[10px] font-bold mt-1 uppercase">Restaurante · Loja</p>
                         </div>
                     </div>
                     <p className="text-white/70 text-xs font-medium italic leading-relaxed mb-4">
-                        "Desde que les paso mi contacto digital, me llaman el triple porque salgo primero en su agenda."
+                        "El Código QR es una gran ayuda para compartir nuestro contacto a los clientes. ¡Ya nos agendan al instante!"
                     </p>
                     <button
                         onClick={() => {
-                            window.scrollTo({ top: document.getElementById('hero')?.offsetTop, behavior: 'smooth' });
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
                             closePopup("scroll");
                         }}
                         className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline"
                     >
-                        Ver cómo lo hizo él →
+                        Ver cómo lo hicieron ellos →
                     </button>
                 </motion.div>
             )}

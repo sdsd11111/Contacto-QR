@@ -22,11 +22,30 @@ const stepVideos: Record<number, string> = {
 
 export default function VideoStepGuide({ step, isVisible, onClose }: VideoStepGuideProps) {
     const [isMinimized, setIsMinimized] = useState(false);
+    const [isDismissed, setIsDismissed] = useState(false);
 
+    // Si el usuario lo cerró completamente (X), mostramos un pequeño lanzador
     if (!isVisible) return null;
 
     const videoId = stepVideos[step] || stepVideos[1];
     const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&controls=1`;
+
+    if (isDismissed) {
+        return (
+            <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                onClick={() => setIsDismissed(false)}
+                className="fixed bottom-6 right-6 z-[100] w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform group border-4 border-white"
+            >
+                <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping group-hover:hidden" />
+                <Play size={24} className="fill-current relative z-10" />
+                <div className="absolute -top-1 -right-1 bg-navy text-[8px] font-black px-1.5 py-0.5 rounded-full border border-white">
+                    GUÍA
+                </div>
+            </motion.button>
+        );
+    }
 
     return (
         <AnimatePresence>
@@ -61,7 +80,7 @@ export default function VideoStepGuide({ step, isVisible, onClose }: VideoStepGu
                                 <Minimize2 size={14} />
                             </button>
                             <button
-                                onClick={(e) => { e.stopPropagation(); onClose(); }}
+                                onClick={(e) => { e.stopPropagation(); setIsDismissed(true); }}
                                 className="w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
                             >
                                 <X size={14} />
