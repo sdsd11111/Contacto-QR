@@ -101,12 +101,12 @@ export default function Home() {
             >
               Crear mi Contacto Digital ($10) <ArrowRight size={24} />
             </a>
-            <button
-              onClick={() => setIsVideoModalOpen(true)}
+            <a
+              href="#demo-video"
               className="w-full sm:w-auto bg-white/90 backdrop-blur-md text-navy px-8 py-5 rounded-full font-bold text-xl border border-navy/10 shadow-lg hover:bg-white transition-colors flex items-center justify-center gap-3"
             >
               <Phone size={24} className="text-primary" /> Ver cómo funciona
-            </button>
+            </a>
           </motion.div>
 
 
@@ -118,64 +118,138 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Demo Visual: Antes vs Después (Simplificado) */}
-      <section className="py-20 bg-white/50 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            {/* Antes */}
-            <div className="bg-gray-100 p-8 rounded-3xl opacity-50 border border-gray-200">
-              <div className="text-center mb-6">
-                <span className="text-xs font-black uppercase tracking-widest text-red-500">Lo que pasa hoy</span>
-                <h3 className="text-2xl font-bold text-gray-400 mt-2">"¿Cuál era el número?"</h3>
-              </div>
-              <div className="bg-white p-4 rounded-2xl shadow-sm max-w-xs mx-auto flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-2xl">?</div>
-                <div className="space-y-2 w-full">
-                  <div className="h-2 bg-gray-100 rounded w-3/4"></div>
-                  <div className="h-2 bg-gray-100 rounded w-1/2"></div>
-                </div>
-              </div>
-            </div>
+      {/* Nueva Sección: Video Demo (ID Ancla para Encuesta) */}
+      <section id="demo-video" className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-primary border border-primary/20 mb-6"
+            >
+              Obtenlo hoy mismo
+            </motion.div>
+            <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase mb-6">
+              Mira cómo funciona <span className="text-primary italic">en menos de 1 minuto</span>
+            </h2>
+            <p className="text-navy/60 max-w-2xl mx-auto text-lg font-medium">
+              Te mostramos cómo esta herramienta elimina la informalidad al entregar tu contacto y asegura que tus clientes siempre te encuentren.
+            </p>
+          </div>
 
-            {/* Después */}
-            <div className="bg-primary/5 p-8 rounded-3xl border-2 border-primary/20 relative">
-              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">TU SOLUCIÓN</div>
-              <div className="text-center mb-6">
-                <span className="text-xs font-black uppercase tracking-widest text-primary">Lo que tendrás</span>
-                <h3 className="text-2xl font-bold text-navy mt-2">Te encuentran al instante</h3>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="relative aspect-video w-full max-w-5xl mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white group"
+          >
+            <iframe
+              width="100%"
+              height="100%"
+              src="https://www.youtube.com/embed/Iy69aXd7MFI?autoplay=0&rel=0"
+              title="Cómo funciona Regístrame Ya"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full"
+            ></iframe>
+
+            {/* Overlay decorativo en bordes para estética premium */}
+            <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-navy/5 rounded-[2.5rem]"></div>
+          </motion.div>
+
+          <div className="mt-12 flex justify-center">
+            <div className="flex items-center gap-6 p-4 bg-navy/5 rounded-3xl border border-navy/5 max-w-lg">
+              <div className="bg-primary/20 p-3 rounded-2xl text-primary">
+                <CheckCircle2 size={24} />
               </div>
-              <div className="bg-white p-6 rounded-2xl shadow-lg max-w-xs mx-auto border border-primary/10">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full overflow-hidden border-2 border-primary/20 flex items-center justify-center p-2">
-                    <img src="/images/logo.png" alt="RegistraYa Logo" className="w-full h-full object-contain" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-navy text-lg">Tu Perfil</h4>
-                    <p className="text-primary text-xs font-black uppercase tracking-wider">Profesional Digital</p>
-                    <div className="flex gap-1 mt-1 text-yellow-400">
-                      <Star size={12} fill="currentColor" />
-                      <Star size={12} fill="currentColor" />
-                      <Star size={12} fill="currentColor" />
-                      <Star size={12} fill="currentColor" />
-                      <Star size={12} fill="currentColor" />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <div className="flex-1 bg-green-500 text-white text-center py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
-                    <Phone size={12} /> Llamar
-                  </div>
-                  <div className="flex-1 bg-navy text-white text-center py-2 rounded-lg text-xs font-bold">
-                    Ver Servicios
-                  </div>
-                </div>
-              </div>
+              <p className="text-sm font-bold text-navy/70 uppercase tracking-widest leading-tight">
+                Ideal para <span className="text-primary font-black">profesionales, dueños de negocios y artesanos</span> que no quieren perder ni un cliente más.
+              </p>
             </div>
           </div>
         </div>
+
+        {/* Decoración de fondo para la sección */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-navy/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
       </section>
 
-      {/* Social Proof + Beneficios */}
+      {/* Sección: ¿Cómo funcionaría en tu negocio? */}
+      <section className="py-24 bg-navy text-white relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-6">
+              ¿Cómo funcionaría esto <span className="text-primary italic">en tu negocio?</span>
+            </h2>
+            <p className="text-white/60 max-w-2xl mx-auto text-lg font-medium">
+              Elimina la informalidad y asegura que cada contacto se convierta en una relación comercial a largo plazo.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] shadow-xl border border-white/5 relative group"
+            >
+              <div className="bg-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500 text-primary">
+                <QrCode size={32} />
+              </div>
+              <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Paso 1: Escaneo</h3>
+              <p className="text-white/60 leading-relaxed font-medium italic">
+                &quot;Tu cliente apunta con su cámara al código QR en tu local, tarjeta o mostrador. Sin descargar nada.&quot;
+              </p>
+              <div className="absolute top-8 right-8 text-4xl font-black text-white/5">01</div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] shadow-xl border border-white/5 relative group"
+            >
+              <div className="bg-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500 text-primary">
+                <CheckCircle2 size={32} />
+              </div>
+              <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Paso 2: Guardado</h3>
+              <p className="text-white/60 leading-relaxed font-medium italic">
+                &quot;Con un solo toque, toda tu información profesional (foto, nombre, servicios) se guarda directamente en su agenda.&quot;
+              </p>
+              <div className="absolute top-8 right-8 text-4xl font-black text-white/5">02</div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="bg-primary p-8 rounded-[2.5rem] shadow-xl border-4 border-white/20 relative group overflow-hidden"
+            >
+              {/* Brillo decorativo para la card principal */}
+              <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/20 rounded-full blur-3xl"></div>
+
+              <div className="bg-white w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-primary shadow-lg">
+                <Star size={32} fill="currentColor" />
+              </div>
+              <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Paso 3: Presencia</h3>
+              <p className="text-white leading-relaxed font-bold italic">
+                &quot;¡Listo! Ahora verá tus estados de WhatsApp y aparecerás TÚ cuando busque tu servicio en su buscador de contactos.&quot;
+              </p>
+              <div className="absolute top-8 right-8 text-4xl font-black text-white/10">03</div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Decoración de fondo adaptada al modo oscuro */}
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-navy/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
+        </div>
+      </section>      {/* Social Proof + Beneficios */}
       <section className="py-24 bg-navy text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
           <h2 className="text-3xl md:text-5xl font-black mb-16 tracking-tighter">¿Por qué funciona?</h2>
@@ -201,7 +275,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Restaurado y Mejorado */}
-      <section className="py-24 bg-cream" id="precios">
+      <section className="py-24 bg-cream" id="precios" style={{ position: 'relative', zIndex: 10 }}>
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase">Elige tu Plan</h2>
@@ -269,6 +343,65 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Demo Visual: Antes vs Después (Simplificado) */}
+      <section className="py-20 bg-white/50 backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Antes */}
+            <div className="bg-gray-100 p-8 rounded-3xl opacity-50 border border-gray-200">
+              <div className="text-center mb-6">
+                <span className="text-xs font-black uppercase tracking-widest text-red-500">Lo que pasa hoy</span>
+                <h3 className="text-2xl font-bold text-gray-400 mt-2">"¿Cuál era el número?"</h3>
+              </div>
+              <div className="bg-white p-4 rounded-2xl shadow-sm max-w-xs mx-auto flex items-center gap-4">
+                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-2xl">?</div>
+                <div className="space-y-2 w-full">
+                  <div className="h-2 bg-gray-100 rounded w-3/4"></div>
+                  <div className="h-2 bg-gray-100 rounded w-1/2"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Después */}
+            <div className="bg-primary/5 p-8 rounded-3xl border-2 border-primary/20 relative">
+              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-lg">TU SOLUCIÓN</div>
+              <div className="text-center mb-6">
+                <span className="text-xs font-black uppercase tracking-widest text-primary">Lo que tendrás</span>
+                <h3 className="text-2xl font-bold text-navy mt-2">Te encuentran al instante</h3>
+              </div>
+              <div className="bg-white p-6 rounded-2xl shadow-lg max-w-xs mx-auto border border-primary/10">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full overflow-hidden border-2 border-primary/20 flex items-center justify-center p-2">
+                    <img src="/images/logo.png" alt="RegistraYa Logo" className="w-full h-full object-contain" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-navy text-lg">Tu Perfil</h4>
+                    <p className="text-primary text-xs font-black uppercase tracking-wider">Profesional Digital</p>
+                    <div className="flex gap-1 mt-1 text-yellow-400">
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
+                      <Star size={12} fill="currentColor" />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <div className="flex-1 bg-green-500 text-white text-center py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
+                    <Phone size={12} /> Llamar
+                  </div>
+                  <div className="flex-1 bg-navy text-white text-center py-2 rounded-lg text-xs font-bold">
+                    Ver Servicios
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
 
       {/* FAQ Section Restaurada (Vital para SEO y Confianza) */}
       <section className="py-24 bg-white">

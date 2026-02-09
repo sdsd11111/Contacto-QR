@@ -352,7 +352,7 @@ export default function SurveyPage() {
                             <div className="text-2xl font-black text-navy">{totalScore}/35</div>
                         </div>
 
-                        <Link href="/" className={cn(
+                        <Link href="/#demo-video" className={cn(
                             "group flex items-center gap-3 px-8 py-5 rounded-full font-black text-xl hover:scale-105 transition-all shadow-2xl w-full md:w-auto justify-center",
                             trafficLight.color === 'verde' ? "bg-red-600 text-white shadow-red-500/30" :
                                 trafficLight.color === 'amarillo' ? "bg-primary text-white shadow-primary/30" :
