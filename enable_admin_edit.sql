@@ -14,13 +14,14 @@ BEGIN
     END IF;
 END $$;
 
--- 2. Asegurar que las Políticas de RLS permitan la edición pública (para pruebas locales) o admin
--- Nota: En producción, esto debería estar restringido. El usuario pidió aplicar seguridad después.
-
--- Permitir actualizaciones públicas (necesario si el Admin Panel corre sin Auth de Supabase real)
+-- 2. Asegurar que las Políticas de RLS permitan la edición pública (para el Admin Dashboard)
 DROP POLICY IF EXISTS "Permitir actualizaciones públicas" ON registraya_vcard_registros;
-CREATE POLICY "Permitir actualizaciones públicas" 
+DROP POLICY IF EXISTS "Permitir actualización pública de registros pendientes" ON registraya_vcard_registros;
+DROP POLICY IF EXISTS "Admin puede actualizar" ON registraya_vcard_registros;
+
+CREATE POLICY "Permitir actualizaciones totales" 
 ON registraya_vcard_registros FOR UPDATE 
+TO public
 USING (true) 
 WITH CHECK (true);
 

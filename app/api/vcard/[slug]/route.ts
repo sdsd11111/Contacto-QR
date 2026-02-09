@@ -42,25 +42,7 @@ export async function GET(
             );
         }
 
-        // 1b. Procesar foto si existe
-        let photoBlock = '';
-        if (user.foto_url) {
-            try {
-                const response = await fetch(user.foto_url);
-                if (response.ok) {
-                    const arrayBuffer = await response.arrayBuffer();
-                    const base64 = Buffer.from(arrayBuffer).toString('base64');
-                    // RFC 2426: Line folding (75 chars max, then CRLF + space)
-                    const folded = base64.match(/.{1,72}/g)?.join('\r\n ') || base64;
-                    photoBlock = `PHOTO;TYPE=JPEG;ENCODING=B:\r\n ${folded}`;
-                }
-            } catch (photoErr) {
-                console.error('Error fetching photo for vCard:', photoErr);
-                // Si falla la foto, el vCard se genera sin ella para no romper la descarga
-            }
-        }
-
-        // 1c. Formatear Notas con Galería, Productos y Redes (para redundancia)
+        // 1b. Formatear Notas con Galería, Productos y Redes (para redundancia)
         let noteContent = `${user.bio || ''}`;
         if (user.productos_servicios) {
             noteContent += `\n\nProductos/Servicios:\n${user.productos_servicios}`;
@@ -87,10 +69,10 @@ export async function GET(
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = user.whatsapp.replace(/\s+/g, '');
 
-        // 2. Generar vCard con todos los campos (Version 3.0 - Optimizado para iOS/Android)
+        // 2. Generar vCard con todos los campos (Version 2.1 - Máxima compatibilidad móvil)
         const vcardArr = [
             'BEGIN:VCARD',
-            'VERSION:3.0',
+            'VERSION:2.1',
             `FN:${user.nombre}`,
             `N:${user.nombre.split(' ').reverse().join(';')};;;`,
             user.profesion ? `TITLE:${user.profesion}` : '',
@@ -127,8 +109,8 @@ export async function GET(
                 if (photoResp.ok) {
                     const buffer = await photoResp.arrayBuffer();
                     const b64 = Buffer.from(buffer).toString('base64');
-                    const folded = b64.match(/.{1,72}/g)?.join('\r\n ') || b64;
-                    vcardArr.push(`PHOTO;TYPE=JPEG;ENCODING=B:\r\n ${folded}`);
+                    // Formato más compatible para PHOTO en vCard 2.1
+                    vcardArr.push(`PHOTO;JPEG;ENCODING=BASE64:\r\n${b64}\r\n`);
                 }
             } catch (e) {
                 console.error("Error inline photo:", e);
@@ -143,7 +125,7 @@ export async function GET(
             status: 200,
             headers: {
                 'Content-Type': 'text/vcard; charset=UTF-8',
-                'Content-Disposition': `attachment; filename="${slug}.vcf"`,
+                'Content-Disposition': `inline; filename="${slug}.vcf"`,
                 'Cache-Control': 'no-store, max-age=0',
             },
         });

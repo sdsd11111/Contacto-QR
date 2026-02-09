@@ -263,7 +263,11 @@ export default function RegisterWizard() {
                 .upload(finalPath, fileToUpload, { upsert: true });
 
             if (error) throw error;
-            return `https://yqizvscisogpizwpxpqr.supabase.co/storage/v1/object/public/${bucket}/${finalPath}`;
+            const { data: { publicUrl } } = supabase.storage
+                .from(bucket)
+                .getPublicUrl(finalPath);
+
+            return publicUrl;
         } catch (error) {
             console.error("Upload Error:", error);
             throw error;
