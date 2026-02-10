@@ -31,8 +31,13 @@ export async function GET(
         }
 
         if (error || !user) {
+            console.error("VCF Lookup Error:", { slug, error, user });
             return NextResponse.json(
-                { error: 'Perfil no encontrado' },
+                {
+                    error: 'Perfil no encontrado',
+                    debug_slug: slug,
+                    debug_error: error || 'User is null'
+                },
                 { status: 404 }
             );
         }
