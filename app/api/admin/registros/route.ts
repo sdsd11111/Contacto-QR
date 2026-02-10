@@ -12,6 +12,11 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing');
+        return NextResponse.json({ error: 'Error de configuración: Falta SUPABASE_SERVICE_ROLE_KEY en Vercel' }, { status: 500 });
+    }
+
     try {
         const { data, error } = await supabaseAdmin
             .from('registraya_vcard_registros')

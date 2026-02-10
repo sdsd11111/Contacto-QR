@@ -447,9 +447,17 @@ export default function RegisterWizard() {
             };
 
             console.log("3. UPSERT: Enviando a Supabase...");
-            const { error: upsertError } = await supabase
-                .from('registraya_vcard_registros')
-                .upsert(upsertData, { onConflict: 'email' });
+            console.log("3. UPSERT: Enviando a API servidor (bypass RLS)...");
+            const response = await fetch('/api/vcard/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(upsertData)
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Error al guardar en el servidor');
+            }
 
             console.log("4. REGISTRO COMPLETADO!");
 

@@ -102,10 +102,17 @@ export default function AdminDashboard() {
             const res = await fetch('/api/admin/registros', {
                 headers: { 'x-admin-key': adminKey }
             });
+            if (!res.ok) {
+                const result = await res.json();
+                console.error('Admin API Error:', result);
+                alert(`Error cargando registros: ${result.error || res.statusText}`);
+                return;
+            }
             const result = await res.json();
             if (result.data) setRegistros(result.data);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error fetching registros:', err);
+            alert(`Error de conexión: ${err.message}`);
         }
         setLoading(false);
     };

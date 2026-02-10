@@ -65,10 +65,17 @@ export default function AdminSurveyPage() {
             const response = await fetch('/api/survey/list', {
                 headers: { 'x-admin-key': adminKey }
             });
+            if (!response.ok) {
+                const errData = await response.json();
+                console.error('Survey API Error:', errData);
+                alert(`Error cargando encuestas: ${errData.error || response.statusText}`);
+                return;
+            }
             const result = await response.json();
-
-            if (!response.ok) throw new Error(result.error || 'Failed to fetch');
-            setResponses(result.data || []);
+            if (result.data) setResponses(result.data);
+        } catch (error: any) {
+            console.error('Error fetching surveys:', error);
+            alert(`Error de conexión: ${error.message}`);
         } finally {
             setLoading(false);
         }

@@ -14,6 +14,10 @@ export async function GET(req: NextRequest) {
             );
         }
 
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            return NextResponse.json({ error: 'Error de configuración: Falta SUPABASE_SERVICE_ROLE_KEY en Vercel' }, { status: 500 });
+        }
+
         const { data, error } = await supabaseAdmin
             .from('registraya_encuesta_respuestas')
             .select('*')
