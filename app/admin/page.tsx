@@ -818,34 +818,7 @@ export default function AdminDashboard() {
                                                     </div>
                                                 </div>
 
-                                                <div className={cn(
-                                                    "bg-white/5 p-6 rounded-3xl border space-y-4 transition-all",
-                                                    editingRegistro.plan === 'pro' ? "border-primary/40 opacity-100" : "border-white/5 opacity-40 grayscale pointer-events-none"
-                                                )}>
-                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest flex justify-between">
-                                                        Opción 2: Perfil Digital (Pro)
-                                                        {editingRegistro.plan !== 'pro' && <span className="text-primary">Solo Pro</span>}
-                                                    </p>
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="bg-white p-3 rounded-2xl">
-                                                            <img
-                                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                                alt="QR Perfil"
-                                                                className="w-20 h-20"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <p className="text-[10px] font-bold text-white/60 leading-tight">Muestra la página interactiva del cliente con su foto, links y galería.</p>
-                                                            <a
-                                                                href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                                target="_blank"
-                                                                className="inline-flex items-center gap-2 text-primary text-[10px] font-black uppercase hover:underline"
-                                                            >
-                                                                <Download size={12} /> Descargar QR Alta Res.
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                {/* Opción 2: Perfil Digital (Desactivado por ahora) */}
                                             </div>
                                         </div>
 
