@@ -51,18 +51,42 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         const storedKey = localStorage.getItem('admin_access_key');
-        if (storedKey === 'registrameya2026') {
-            setIsAuthorized(true);
+        if (storedKey) {
+            // Validar la clave almacenada contra el servidor
+            fetch('/api/admin/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: storedKey })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.valid) {
+                        setIsAuthorized(true);
+                    } else {
+                        localStorage.removeItem('admin_access_key');
+                    }
+                })
+                .catch(() => localStorage.removeItem('admin_access_key'));
         }
     }, []);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (accessKey === 'registrameya2026') {
-            localStorage.setItem('admin_access_key', 'registrameya2026');
-            setIsAuthorized(true);
-        } else {
-            alert("Clave incorrecta");
+        try {
+            const res = await fetch('/api/admin/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: accessKey })
+            });
+            const data = await res.json();
+            if (data.valid) {
+                localStorage.setItem('admin_access_key', accessKey);
+                setIsAuthorized(true);
+            } else {
+                alert("Clave incorrecta");
+            }
+        } catch {
+            alert("Error de conexión al servidor");
         }
     };
 
@@ -73,28 +97,41 @@ export default function AdminDashboard() {
 
     const fetchRegistros = async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('registraya_vcard_registros')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (data) setRegistros(data);
+        try {
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const res = await fetch('/api/admin/registros', {
+                headers: { 'x-admin-key': adminKey }
+            });
+            const result = await res.json();
+            if (result.data) setRegistros(result.data);
+        } catch (err) {
+            console.error('Error fetching registros:', err);
+        }
         setLoading(false);
     };
 
     useEffect(() => {
-        fetchRegistros();
-    }, []);
+        if (isAuthorized) fetchRegistros();
+    }, [isAuthorized]);
 
     const updateStatus = async (id: string, newStatus: string) => {
-        const { error } = await supabase
-            .from('registraya_vcard_registros')
-            .update({ status: newStatus })
-            .eq('id', id);
-
-        if (!error) {
-            setRegistros(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
-        } else {
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify({ id, status: newStatus })
+            });
+            const result = await res.json();
+            if (res.ok) {
+                setRegistros(prev => prev.map(r => r.id === id ? { ...r, status: newStatus } : r));
+            } else {
+                alert("Error al actualizar estado: " + (result.error || 'Error desconocido'));
+            }
+        } catch {
             alert("Error al actualizar estado.");
         }
     };
@@ -107,36 +144,46 @@ export default function AdminDashboard() {
     const handleSaveEdit = async () => {
         if (!editingRegistro) return;
         setIsSaving(true);
-        const { error } = await supabase
-            .from('registraya_vcard_registros')
-            .update({
-                nombre: editingRegistro.nombre,
-                profesion: editingRegistro.profesion,
-                empresa: editingRegistro.empresa,
-                whatsapp: editingRegistro.whatsapp,
-                email: editingRegistro.email,
-                bio: editingRegistro.bio,
-                direccion: editingRegistro.direccion,
-                web: editingRegistro.web,
-                instagram: editingRegistro.instagram,
-                linkedin: editingRegistro.linkedin,
-                facebook: editingRegistro.facebook,
-                tiktok: editingRegistro.tiktok,
-                productos_servicios: editingRegistro.productos_servicios,
-                etiquetas: editingRegistro.etiquetas,
-                status: editingRegistro.status,
-                plan: editingRegistro.plan,
-                foto_url: editingRegistro.foto_url,
-                galeria_urls: editingRegistro.galeria_urls,
-            })
-            .eq('id', editingRegistro.id);
-
-        if (!error) {
-            setRegistros(prev => prev.map(r => r.id === editingRegistro.id ? editingRegistro : r));
-            setIsEditModalOpen(false);
-            setEditingRegistro(null);
-        } else {
-            alert("Error al guardar cambios: " + error.message);
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify({
+                    id: editingRegistro.id,
+                    nombre: editingRegistro.nombre,
+                    profesion: editingRegistro.profesion,
+                    empresa: editingRegistro.empresa,
+                    whatsapp: editingRegistro.whatsapp,
+                    email: editingRegistro.email,
+                    bio: editingRegistro.bio,
+                    direccion: editingRegistro.direccion,
+                    web: editingRegistro.web,
+                    instagram: editingRegistro.instagram,
+                    linkedin: editingRegistro.linkedin,
+                    facebook: editingRegistro.facebook,
+                    tiktok: editingRegistro.tiktok,
+                    productos_servicios: editingRegistro.productos_servicios,
+                    etiquetas: editingRegistro.etiquetas,
+                    status: editingRegistro.status,
+                    plan: editingRegistro.plan,
+                    foto_url: editingRegistro.foto_url,
+                    galeria_urls: editingRegistro.galeria_urls,
+                })
+            });
+            const result = await res.json();
+            if (res.ok) {
+                setRegistros(prev => prev.map(r => r.id === editingRegistro.id ? editingRegistro : r));
+                setIsEditModalOpen(false);
+                setEditingRegistro(null);
+            } else {
+                alert("Error al guardar cambios: " + (result.error || 'Error desconocido'));
+            }
+        } catch (err: any) {
+            alert("Error al guardar cambios: " + err.message);
         }
         setIsSaving(false);
     };
@@ -231,6 +278,9 @@ export default function AdminDashboard() {
         return matchesSearch && matchesStatus;
     });
 
+    // Helper: obtener admin key del localStorage
+    const getAdminKey = () => localStorage.getItem('admin_access_key') || '';
+
     const sendVCardEmail = async (registro: any) => {
         if (!confirm(`¿Estás seguro de aprobar y enviar el correo a ${registro.email}?`)) return;
 
@@ -242,7 +292,10 @@ export default function AdminDashboard() {
 
             const res = await fetch('/api/send-vcard', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': getAdminKey()
+                },
                 body: JSON.stringify({
                     vcardUrl,
                     qrUrl,

@@ -61,7 +61,10 @@ export default function AdminSurveyPage() {
     const fetchResponses = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/survey/list');
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const response = await fetch('/api/survey/list', {
+                headers: { 'x-admin-key': adminKey }
+            });
             const result = await response.json();
 
             if (!response.ok) throw new Error(result.error || 'Failed to fetch');

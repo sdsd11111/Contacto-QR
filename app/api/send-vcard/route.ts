@@ -1,11 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { isRateLimited, getClientIP } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, name, vcardUrl, qrUrl, backupData } = await req.json();
+        // Verificación de admin key (defensa en profundidad, el middleware ya valida)
+        const adminKey = req.headers.get('x-admin-key');
+        if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
+            return NextResponse.json(
+                { error: 'No autorizado' },
+                { status: 401 }
+            );
+        }
 
-        // VALIDACIÓN DE VARIABLES DE ENTORNO
+        // Rate limiting: máximo 10 emails por minuto
+        const clientIP = getClientIP(req);
+        if (isRateLimited(`send-vcard:${clientIP}`, 10, 60000)) {
+            return NextResponse.json(
+                { error: 'Demasiadas solicitudes. Intenta en un momento.' },
+                { status: 429 }
+            );
+        }
+
+        const body = await req.json();
+        const { email, name, nombre, vcardUrl, qrUrl, backupData } = body;
+
+        // Validar campos requeridos
+        const recipientEmail = email;
+        const recipientName = name || nombre;
+
+        if (!recipientEmail || typeof recipientEmail !== 'string' || !recipientEmail.includes('@')) {
+            return NextResponse.json(
+                { error: 'Email del destinatario es requerido y debe ser válido' },
+                { status: 400 }
+            );
+        }
+
+        if (!recipientName || typeof recipientName !== 'string') {
+            return NextResponse.json(
+                { error: 'Nombre del destinatario es requerido' },
+                { status: 400 }
+            );
+        }
+
+        // VALIDACIÓN DE VARIABLES DE ENTORNO SMTP
         const smtpHost = process.env.SMTP_HOST;
         const smtpPort = process.env.SMTP_PORT;
         const smtpUser = process.env.SMTP_USER;
@@ -26,7 +64,7 @@ export async function POST(req: NextRequest) {
         const transporter = nodemailer.createTransport({
             host: smtpHost,
             port: Number(smtpPort) || 465,
-            secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+            secure: process.env.SMTP_SECURE === 'true',
             auth: {
                 user: smtpUser,
                 pass: smtpPass,
@@ -39,7 +77,7 @@ export async function POST(req: NextRequest) {
         }
         if (backupData) {
             attachments.push({
-                filename: `backup_${name.replace(/\s+/g, '_')}_${Date.now()}.json`,
+                filename: `backup_${recipientName.replace(/\s+/g, '_')}_${Date.now()}.json`,
                 content: JSON.stringify(backupData, null, 2),
                 contentType: 'application/json'
             });
@@ -47,11 +85,11 @@ export async function POST(req: NextRequest) {
 
         const mailOptions = {
             from: process.env.EMAIL_FROM || '"RegistraYa VCards" <noreply@registraya.com>',
-            to: email, // Could also send to an admin address if it's for internal backup
+            to: recipientEmail,
             subject: '¡Tu Contacto Digital está Listo! 🚀',
             html: `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-                    <h1 style="color: #4F46E5;">¡Hola ${name}!</h1>
+                    <h1 style="color: #4F46E5;">¡Hola ${recipientName}!</h1>
                     <p>Tu Contacto Digital profesional ha sido aprobado y generado exitosamente.</p>
                     <p>Adjunto encontrarás tu código QR para compartir.</p>
                     <br/>
