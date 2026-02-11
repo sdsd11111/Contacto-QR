@@ -27,5 +27,14 @@ export default function manifest(): MetadataRoute.Manifest {
                 type: 'image/png',
             },
         ],
+        shortcuts: [
+            {
+                name: 'Panel Administrador',
+                short_name: 'Admin',
+                description: 'Acceso directo al panel de gestión de vCards',
+                url: '/admin',
+                icons: [{ src: '/favicon.ico', sizes: '192x192' }]
+            }
+        ]
     }
 }
