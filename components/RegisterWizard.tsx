@@ -53,6 +53,15 @@ const INDUSTRY_TAGS: Record<string, string[]> = {
     'odontologo': ['Dientes', 'Salud Bucal', 'Dentista', 'Limpieza'],
 };
 
+// Utilidad para normalizar texto para comparación flexible
+const normalizeText = (text: string) => {
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
+        .trim();
+};
+
 export default function RegisterWizard() {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,6 +75,7 @@ export default function RegisterWizard() {
         bio: '',
         address: '',
         web: '',
+        google_business: '',
         instagram: '',
         linkedin: '',
         facebook: '',
@@ -207,9 +217,11 @@ export default function RegisterWizard() {
     // Auto-suggest tags based on profession
     useEffect(() => {
         if (!hasManualTags) {
-            const profession = formData.profession.toLowerCase().trim();
-            // Buscar coincidencia exacta o parcial
-            const key = Object.keys(INDUSTRY_TAGS).find(k => profession.includes(k));
+            const professionNormalized = normalizeText(formData.profession);
+            // Buscar coincidencia exacta o parcial usando texto normalizado
+            const key = Object.keys(INDUSTRY_TAGS).find(k =>
+                professionNormalized.includes(normalizeText(k))
+            );
             if (key) {
                 updateForm('categories', INDUSTRY_TAGS[key].join(', '));
             }
@@ -364,7 +376,8 @@ export default function RegisterWizard() {
             `EMAIL;TYPE=work:${data.email}`,
             `ADR;TYPE=work;LABEL="${data.address.replace(/"/g, "'")}":;;${data.address};;;;`,
             `URL:${data.web}`,
-            `NOTE:${noteContent.replace(/\n/g, '\\n')}`,
+            data.google_business ? `URL;type=GOOGLE_BUSINESS:${data.google_business}` : '',
+            `NOTE:${noteContent.replace(/\n/g, '\\n')}${data.google_business ? '\\n\\nUbicación/Google Maps: ' + data.google_business : ''}`,
             categories ? `CATEGORIES:${categories}` : '',
             photoBlock,
             data.instagram ? `X-SOCIALPROFILE;TYPE=instagram;LABEL=Instagram:${data.instagram}` : '',
@@ -457,6 +470,7 @@ export default function RegisterWizard() {
                 bio: formData.bio,
                 direccion: formData.address,
                 web: formData.web,
+                google_business: formData.google_business,
                 instagram: formData.instagram,
                 linkedin: formData.linkedin,
                 facebook: formData.facebook,
@@ -508,7 +522,7 @@ export default function RegisterWizard() {
 
 
             setIsSubmitting(false);
-            setStep(6); // Ir a pantalla de "En Revisión"
+            setStep(5); // Ir a pantalla de Éxito (FINAL)
         } catch (err) {
             console.error("Full Error Context:", err);
             const msg = err instanceof Error ? err.message : JSON.stringify(err);
@@ -852,6 +866,20 @@ export default function RegisterWizard() {
                                             onChange={(e) => updateForm('web', e.target.value)}
                                             placeholder="www.tuempresa.com"
                                             className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-[10px] font-black text-primary uppercase tracking-widest mb-3">Enlace Google My Business / Maps (Recomendado)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.google_business}
+                                            onChange={(e) => {
+                                                let val = e.target.value;
+                                                if (val && !val.startsWith('http')) val = 'https://' + val;
+                                                updateForm('google_business', val);
+                                            }}
+                                            placeholder="https://maps.app.goo.gl/..."
+                                            className="w-full bg-primary/5 border-2 border-primary/20 focus:border-primary rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
                                         />
                                     </div>
                                     <div>
@@ -1291,11 +1319,21 @@ export default function RegisterWizard() {
                             <p className="text-navy/60 font-medium text-base mb-3 text-center">
                                 Tu solicitud ha sido enviada con éxito.
                             </p>
+                            <div className="relative w-48 h-48 mx-auto mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-primary/20">
+                                <img
+                                    src="/images/entrega_contacto.webp"
+                                    className="w-full h-full object-cover"
+                                    alt="Entrega en 60 minutos"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-navy/60 to-transparent flex items-end justify-center pb-4">
+                                    <span className="text-white font-black text-xs uppercase tracking-tighter">Entrega en 60 min</span>
+                                </div>
+                            </div>
                             <p className="text-2xl md:text-3xl font-black text-primary text-center mb-3 leading-tight">
-                                Nuestro equipo revisará tu perfil
+                                Tu perfil estará listo en máximo 60 minutos
                             </p>
                             <p className="text-navy/60 font-medium text-base mb-8 text-center">
-                                Te enviaremos tu Contacto Digital y Código QR a tu correo electrónico en breve.
+                                Te enviaremos tu Contacto Digital y Código QR a tu correo electrónico y WhatsApp.
                             </p>
 
                             <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">

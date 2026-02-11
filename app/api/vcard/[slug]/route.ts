@@ -116,7 +116,8 @@ export async function GET(
             `EMAIL;TYPE=WORK,INTERNET:${user.email}`,
             user.direccion ? `ADR;TYPE=WORK:;;${user.direccion};;;;` : '',
             user.web ? `URL:${user.web}` : '',
-            `NOTE:${noteContent}`,
+            user.google_business ? `URL;type=GOOGLE_BUSINESS:${user.google_business}` : '',
+            `NOTE:${noteContent}${user.google_business ? '\\n\\nUbicación/Google Maps: ' + user.google_business : ''}`,
             // Redes Sociales como URL en vCard 3.0
             user.instagram ? `URL;type=INSTAGRAM:${user.instagram}` : '',
             user.facebook ? `URL;type=FACEBOOK:${user.facebook}` : '',

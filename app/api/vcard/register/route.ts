@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
         // El cliente envía los nombres de columnas de DB directamente (nombre, email, etc.)
         const {
             nombre, email, whatsapp, profesion, empresa, bio, direccion,
-            web, instagram, linkedin, facebook, tiktok, productos_servicios,
+            web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
             plan, foto_url, comprobante_url, galeria_urls,
             status, slug, etiquetas
         } = body;
@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
             bio: bio,
             direccion: direccion,
             web: web,
+            google_business: google_business,
             instagram: instagram,
             linkedin: linkedin,
             facebook: facebook,
