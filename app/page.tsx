@@ -288,9 +288,14 @@ export default function Home() {
               <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-black uppercase px-4 py-2 rounded-bl-xl">Oferta Especial</div>
 
               <h3 className="text-2xl font-black text-navy uppercase tracking-widest mb-2">Profesional Pro</h3>
-              <div className="flex items-baseline gap-1 mb-6">
+              <div className="flex items-baseline gap-1 mb-2">
                 <span className="text-6xl font-black text-primary">$20</span>
                 <span className="text-navy/40 text-sm font-bold uppercase tracking-widest">Pago Anual</span>
+              </div>
+              <div className="bg-primary/10 px-4 py-2 rounded-xl mb-6 border border-primary/20">
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest leading-tight">
+                  🔥 20% OFF en pedidos de 5+ contactos
+                </p>
               </div>
 
               <ul className="space-y-4 mb-8">

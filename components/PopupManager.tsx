@@ -123,25 +123,25 @@ export default function PopupManager() {
                         <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 animate-bounce">
                             <Zap className="text-primary" size={32} />
                         </div>
-                        <h3 className="text-3xl font-black text-white mb-2 uppercase tracking-tighter italic">⚡ Oferta Flash</h3>
-                        <p className="text-white/80 font-bold mb-8 leading-tight">Te veo interesado. Hoy tu vCard Profesional con un <span className="text-white text-2xl font-black">20% de Descuento</span>.</p>
+                        <p className="text-white/80 font-bold mb-8 leading-tight">Aprovecha hoy el <span className="text-white text-2xl font-black">Precio de Lanzamiento</span> para tu identidad digital.</p>
 
-                        <div className="grid grid-cols-2 gap-4 mb-8">
-                            <div className="bg-white/10 p-4 rounded-2xl border border-white/20">
-                                <p className="text-[10px] text-white/60 uppercase font-black mb-1">Básico</p>
-                                <p className="text-2xl font-black text-white leading-none">$10</p>
-                                <p className="text-[8px] text-white/40 line-through">Antes $20</p>
-                            </div>
-                            <div className="bg-white/20 p-4 rounded-2xl border border-white/40 shadow-lg">
-                                <p className="text-[10px] text-primary uppercase font-black mb-1 bg-white px-2 py-0.5 rounded-full inline-block">Pro + QR</p>
-                                <p className="text-2xl font-black text-white leading-none">$20</p>
-                                <p className="text-[8px] text-white/40 line-through">Antes $40</p>
+                        <div className="flex justify-center mb-8">
+                            <div className="bg-white/20 p-6 rounded-3xl border-4 border-white/60 shadow-xl max-w-[240px] w-full text-center">
+                                <p className="text-[12px] text-primary uppercase font-black mb-2 bg-white px-3 py-1 rounded-full inline-block shadow-sm">Plan Profesional PRO</p>
+                                <p className="text-5xl font-black text-white leading-none mb-2">$20/año</p>
+                                <p className="text-[10px] text-white/60 font-bold">Sin cuotas mensuales</p>
                             </div>
                         </div>
 
+                        <div className="bg-white/10 p-4 rounded-2xl mb-8 border border-white/20">
+                            <p className="text-[11px] font-bold text-white/80 leading-tight">
+                                🎁 <span className="text-white">¿Necesitas más de 5?</span> Obtén un <span className="text-primary font-black">20% OFF</span> adicional en licencias corporativas.
+                            </p>
+                        </div>
+
                         <button
-                            onClick={() => handleWhatsAppRedirect("¡Hola! Quiero activar mi contacto profesional con la Oferta de Lanzamiento (Básico $10 / Pro $20)")}
-                            className="w-full py-5 bg-white text-primary rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 transition-transform"
+                            onClick={() => handleWhatsAppRedirect("¡Hola! Me interesa el descuento de lanzamiento para mi contacto profesional ($20).")}
+                            className="w-full py-5 bg-white text-primary rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl hover:scale-105 transition-transform"
                         >
                             Lo pago con un solo trabajo
                         </button>

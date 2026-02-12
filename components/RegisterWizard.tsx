@@ -933,7 +933,7 @@ export default function RegisterWizard() {
                                             className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-opacity disabled:opacity-50"
                                         >
                                             {isGeneratingTags ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                                            {isGeneratingTags ? 'Generando...' : `Generar con IA (${formData.plan === 'pro' ? '30' : '20'} etiquetas)`}
+                                            {isGeneratingTags ? 'Generando...' : `Generar con IA (30 etiquetas)`}
                                         </button>
                                     </div>
                                     <div className="relative">
@@ -1242,7 +1242,7 @@ export default function RegisterWizard() {
                                                                         currency_code: "USD",
                                                                         value: currentPlanPrice.toString(),
                                                                     },
-                                                                    description: `Plan ${formData.plan === 'pro' ? 'Premium' : 'Básico'} - RegistrameYa`
+                                                                    description: `Plan Profesional PRO - RegistrameYa`
                                                                 },
                                                             ],
                                                         });
