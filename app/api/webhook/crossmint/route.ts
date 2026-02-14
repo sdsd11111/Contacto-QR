@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import pool from '@/lib/db';
 
 export async function POST(req: Request) {
     try {
@@ -11,8 +11,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Missing signature" }, { status: 401 });
         }
 
+        const secret = process.env.CROSSMINT_WEBHOOK_SECRET;
+        if (!secret) {
+            console.error("[Crossmint Webhook] CROSSMINT_WEBHOOK_SECRET not set");
+            return NextResponse.json({ error: "Configuration error" }, { status: 500 });
+        }
+
         const expectedSignature = crypto
-            .createHmac("sha256", process.env.CROSSMINT_WEBHOOK_SECRET!)
+            .createHmac("sha256", secret)
             .update(rawBody)
             .digest("hex");
 
@@ -27,40 +33,53 @@ export async function POST(req: Request) {
         const event = JSON.parse(rawBody);
         console.log("[Crossmint Webhook] Evento recibido:", event.type);
 
-        // orders.payment.succeeded o similar dependiendo de la versión del API
         if (event.type === "orders.payment.succeeded") {
-            const paymentId = event.data.id;
-            const email = event.data.recipient.email;
+            const paymentId = event.data?.id;
+            const email = event.data?.recipient?.email;
 
-            console.log(`[Crossmint Webhook] Pago exitoso para ${email}, ID: ${paymentId}`);
+            if (email) {
+                console.log(`[Crossmint Webhook] Pago exitoso para ${email}, ID: ${paymentId}`);
 
-            // Actualizar registro en Supabase
-            const { data, error } = await supabaseAdmin
-                .from('registraya_vcard_registros')
-                .update({ status: 'pagado' })
-                .eq('email', email)
-                .select();
-
-            if (error) {
-                console.error("[Crossmint Webhook] Error en Supabase:", error);
-            } else if (data && data.length > 0) {
-                console.log(`[Crossmint Webhook] Usuario ${email} marcado como pagado.`);
-
-                // Notificar por WhatsApp
                 try {
-                    const wpNotifyUrl = new URL('/api/notify-whatsapp', req.url).toString();
-                    await fetch(wpNotifyUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name: data[0].nombre,
-                            email: email,
-                            whatsapp: data[0].whatsapp,
-                            plan: 'PAGO CRYPTO CONFIRMADO (Crossmint)'
-                        })
-                    });
-                } catch (notifyErr) {
-                    console.error('[Crossmint Webhook] Error al notificar WhatsApp:', notifyErr);
+                    const connection = await pool.getConnection();
+                    try {
+                        const [result] = await connection.execute(
+                            'UPDATE registraya_vcard_registros SET status = ? WHERE email = ?',
+                            ['pagado', email]
+                        );
+
+                        const [rows] = await connection.execute(
+                            'SELECT nombre, whatsapp FROM registraya_vcard_registros WHERE email = ?',
+                            [email]
+                        );
+                        const users = rows as any[];
+
+                        if (users.length > 0) {
+                            console.log(`[Crossmint Webhook] Usuario ${email} marcado como pagado.`);
+
+                            try {
+                                const wpNotifyUrl = new URL('/api/notify-whatsapp', req.url).toString();
+                                await fetch(wpNotifyUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        name: users[0].nombre,
+                                        email: email,
+                                        whatsapp: users[0].whatsapp,
+                                        plan: 'PAGO CRYPTO CONFIRMADO (Crossmint)'
+                                    })
+                                });
+                            } catch (notifyErr) {
+                                console.error('[Crossmint Webhook] Error al notificar WhatsApp:', notifyErr);
+                            }
+                        } else {
+                            console.warn(`[Crossmint Webhook] Usuario no encontrado: ${email}`);
+                        }
+                    } finally {
+                        connection.release();
+                    }
+                } catch (dbErr) {
+                    console.error("[Crossmint Webhook] Error en MySQL:", dbErr);
                 }
             }
         }

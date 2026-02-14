@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import pool from '@/lib/db';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -21,38 +22,49 @@ export async function POST(req: NextRequest) {
             if (email && email.includes('@')) {
                 console.log(`[PayPal Webhook] Confirmando pago para el usuario: ${email}`);
 
-                const { data, error } = await supabaseAdmin
-                    .from('registraya_vcard_registros')
-                    .update({ status: 'pagado' })
-                    .eq('email', email)
-                    .select();
-
-                if (error) {
-                    console.error('[PayPal Webhook] Error actualizando Supabase:', error);
-                    return NextResponse.json({ error: error.message }, { status: 500 });
-                }
-
-                if (data && data.length > 0) {
-                    console.log(`[PayPal Webhook] ¡Éxito! Usuario ${email} marcado como pagado.`);
-
-                    // Opcional: Disparar notificación por WhatsApp de pago aprobado
+                try {
+                    const connection = await pool.getConnection();
                     try {
-                        const wpNotifyUrl = new URL('/api/notify-whatsapp', req.url).toString();
-                        await fetch(wpNotifyUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                name: data[0].nombre,
-                                email: email,
-                                whatsapp: data[0].whatsapp,
-                                plan: 'PAGO CONFIRMADO (PayPal)'
-                            })
-                        });
-                    } catch (notifyErr) {
-                        console.error('[PayPal Webhook] Error al notificar WhatsApp:', notifyErr);
+                        const [result] = await connection.execute(
+                            'UPDATE registraya_vcard_registros SET status = ? WHERE email = ?',
+                            ['pagado', email]
+                        );
+
+                        // Fetch updated user info
+                        const [rows] = await connection.execute(
+                            'SELECT nombre, whatsapp FROM registraya_vcard_registros WHERE email = ?',
+                            [email]
+                        );
+                        const users = rows as any[];
+
+                        if (users.length > 0) {
+                            console.log(`[PayPal Webhook] ¡Éxito! Usuario ${email} marcado como pagado.`);
+
+                            // Opcional: Disparar notificación por WhatsApp de pago aprobado
+                            try {
+                                const wpNotifyUrl = new URL('/api/notify-whatsapp', req.url).toString();
+                                await fetch(wpNotifyUrl, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        name: users[0].nombre,
+                                        email: email,
+                                        whatsapp: users[0].whatsapp,
+                                        plan: 'PAGO CONFIRMADO (PayPal)'
+                                    })
+                                });
+                            } catch (notifyErr) {
+                                console.error('[PayPal Webhook] Error al notificar WhatsApp:', notifyErr);
+                            }
+                        } else {
+                            console.warn(`[PayPal Webhook] No se encontró ningún registro pendiente para el email: ${email}`);
+                        }
+                    } finally {
+                        connection.release();
                     }
-                } else {
-                    console.warn(`[PayPal Webhook] No se encontró ningún registro pendiente para el email: ${email}`);
+                } catch (dbErr: any) {
+                    console.error('[PayPal Webhook] Error actualizando MySQL:', dbErr);
+                    return NextResponse.json({ error: dbErr.message }, { status: 500 });
                 }
             } else {
                 console.warn('[PayPal Webhook] Evento recibido sin custom_id (email) válido.');

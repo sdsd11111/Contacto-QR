@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import pool from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,22 +12,16 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing');
-        return NextResponse.json({ error: 'Error de configuración: Falta SUPABASE_SERVICE_ROLE_KEY en Vercel' }, { status: 500 });
-    }
-
     try {
-        const { data, error } = await supabaseAdmin
-            .from('registraya_vcard_registros')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        const connection = await pool.getConnection();
+        try {
+            const [rows] = await connection.execute(
+                'SELECT * FROM registraya_vcard_registros ORDER BY created_at DESC'
+            );
+            return NextResponse.json({ data: rows });
+        } finally {
+            connection.release();
         }
-
-        return NextResponse.json({ data });
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
@@ -50,17 +44,28 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
         }
 
-        const { data, error } = await supabaseAdmin
-            .from('registraya_vcard_registros')
-            .update(updateFields)
-            .eq('id', id)
-            .select();
-
-        if (error) {
-            return NextResponse.json({ error: error.message }, { status: 500 });
+        const keys = Object.keys(updateFields);
+        if (keys.length === 0) {
+            return NextResponse.json({ error: 'Nada que actualizar' }, { status: 400 });
         }
 
-        return NextResponse.json({ data });
+        // Construct dynamic UPDATE query
+        const setClause = keys.map(key => `${key} = ?`).join(', ');
+        const values = keys.map(key => updateFields[key]);
+        const query = `UPDATE registraya_vcard_registros SET ${setClause} WHERE id = ?`;
+
+        const connection = await pool.getConnection();
+        try {
+            const [result] = await connection.execute(query, [...values, id]);
+
+            // Fetch updated record
+            const [rows] = await connection.execute('SELECT * FROM registraya_vcard_registros WHERE id = ?', [id]);
+            return NextResponse.json({ data: rows });
+
+        } finally {
+            connection.release();
+        }
+
     } catch (err: any) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
