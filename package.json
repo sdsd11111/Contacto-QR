@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@paypal/react-paypal-js": "^8.9.2",
-    "@prisma/client": "^7.4.0",
     "@supabase/supabase-js": "^2.94.1",
     "@types/nodemailer": "^7.0.9",
     "@types/qrcode": "^1.5.6",
@@ -40,7 +39,6 @@
     "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "prisma": "^7.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
