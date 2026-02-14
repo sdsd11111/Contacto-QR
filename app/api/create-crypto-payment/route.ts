@@ -1,48 +1,53 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
     try {
-        const { amount, currency, orderId, email } = await req.json();
+        const { amount, email } = await req.json();
 
-        // Placeholder for NOWPayments API Key - User will need to add this to .env.local
-        const apiKey = process.env.NOWPAYMENTS_API_KEY;
+        console.log(`[Crossmint] Iniciando creación de pago para ${email} por $${amount}`);
 
-        if (!apiKey) {
-            console.error("NOWPayments API Key missing");
-            return NextResponse.json({ error: "Configuración de pagos cripto incompleta" }, { status: 500 });
-        }
-
-        const response = await fetch('https://api.nowpayments.io/v1/payment', {
-            method: 'POST',
-            headers: {
-                'x-api-key': apiKey,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                price_amount: amount,
-                price_currency: 'usd',
-                pay_currency: currency || 'usdttrc20', // Default to USDT on TRC20
-                ipn_callback_url: 'https://registrameya.com/api/webhooks/nowpayments',
-                order_id: orderId,
-                order_description: `VCard Registro - ${email}`,
-            }),
-        });
+        const response = await fetch(
+            "https://staging.crossmint.com/api/v1/payment-links",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-API-KEY": process.env.CROSSMINT_SECRET_KEY!,
+                },
+                body: JSON.stringify({
+                    amount: amount.toString(),
+                    currency: "usd",
+                    recipient: {
+                        email: email
+                    },
+                    title: "vCard Pro - RegistrameYa",
+                    description: "Pago por generación de vCard profesional y código QR",
+                    redirectUrl: process.env.PAYPHONE_RESPONSE_URL || "https://registrameya.vercel.app/registro"
+                }),
+            }
+        );
 
         const data = await response.json();
+        console.log(`[Crossmint] Respuesta Status: ${response.status}`);
 
-        if (data.payment_id) {
-            return NextResponse.json({
-                paymentId: data.payment_id,
-                payAddress: data.pay_address,
-                payAmount: data.pay_amount,
-                payCurrency: data.pay_currency
-            });
-        } else {
-            console.error("NOWPayments Error:", data);
-            return NextResponse.json({ error: "Error al crear el pago cripto" }, { status: 400 });
+        if (!response.ok) {
+            console.error("[Crossmint] Error de API:", JSON.stringify(data, null, 2));
+            return NextResponse.json(
+                { error: "Error de Crossmint API", details: data },
+                { status: response.status }
+            );
         }
+
+        // El endpoint payment-links devuelve la URL en 'url'
+        return NextResponse.json({
+            ...data,
+            paymentUrl: data.url || data.paymentUrl
+        });
     } catch (error) {
-        console.error("Crypto Payment Route Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        console.error("[Crossmint] Excepción en create-payment:", error);
+        return NextResponse.json(
+            { error: "Error creating payment" },
+            { status: 500 }
+        );
     }
 }

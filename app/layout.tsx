@@ -15,6 +15,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://registrameya.com'),
   title: "Regístrame Ya! - Tu Contacto Profesional en 1 Clic",
   description: "Deja de perder trabajos porque olviden cómo te registraron. Configuramos tu contacto estratégico para que siempre aparezcas primero.",
   openGraph: {

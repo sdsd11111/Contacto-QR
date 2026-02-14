@@ -24,6 +24,7 @@ import {
     Star
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
 import imageCompression from 'browser-image-compression';
 import { cn } from "@/lib/utils";
 import VideoStepGuide from "./VideoStepGuide";
@@ -293,15 +294,17 @@ export default function RegisterWizard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     amount: currentPlanPrice,
-                    email: formData.email,
-                    orderId: `vcard-${Date.now()}`
+                    email: formData.email
                 })
             });
             const data = await response.json();
-            if (data.paymentId) {
-                setCryptoPayment(data);
+
+            if (response.ok && data.paymentUrl) {
+                // Redirigir directamente al portal de Crossmint
+                window.location.href = data.paymentUrl;
             } else {
-                alert(data.error || "Error al generar el pago cripto");
+                console.error("Crossmint Error Completo:", data);
+                alert(data.error || "Error al generar el portal de pago");
             }
         } catch (error) {
             console.error("Crypto Error:", error);
@@ -411,24 +414,35 @@ export default function RegisterWizard() {
                 .join(', ');
 
             // 1. Verificar si ya existe el usuario para mantener el slug
-            const { data: existingUser, error: fetchError } = await supabase
-                .from('registraya_vcard_registros')
-                .select('slug, foto_url, comprobante_url, galeria_urls')
-                .eq('email', formData.email)
-                .maybeSingle();
-
-            if (fetchError) {
-                console.error("Error fetching existing user:", fetchError);
+            let existingUser = null;
+            try {
+                const lookupRes = await fetch(`/api/vcard/lookup?email=${encodeURIComponent(formData.email)}`);
+                if (lookupRes.ok) {
+                    existingUser = await lookupRes.json();
+                }
+            } catch (err) {
+                console.error("Error fetching existing user:", err);
             }
 
             const slug = existingUser?.slug || generateSlug(formData.name);
 
             // 2. Subir imágenes (solo si hay nuevas)
+            // 2. Subir imágenes localmente
+            const uploadFile = async (file: File) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error('Upload failed');
+                const data = await res.json();
+                return data.url;
+            };
+
             if (formData.photo) {
                 try {
+                    photoUrl = await uploadFile(formData.photo);
+                    // Generate base64 for vCard
                     photoBase64 = await fileToBase64(formData.photo);
-                } catch (e) { console.error("Error base64 photo", e); }
-                photoUrl = await compressAndUpload(formData.photo, 'vcards', `photos/${timestamp}-${formData.photo.name}`);
+                } catch (e) { console.error("Error uploading photo", e); }
             } else if (existingUser) {
                 photoUrl = existingUser.foto_url;
             }
@@ -437,7 +451,9 @@ export default function RegisterWizard() {
                 if (formData.receiptUrl) {
                     receiptUrl = formData.receiptUrl;
                 } else {
-                    receiptUrl = await compressAndUpload(formData.receipt, 'vcards', `receipts/${timestamp}-${formData.receipt.name}`);
+                    try {
+                        receiptUrl = await uploadFile(formData.receipt);
+                    } catch (e) { console.error("Error uploading receipt", e); }
                 }
             } else if (existingUser) {
                 receiptUrl = existingUser.comprobante_url;
@@ -555,11 +571,6 @@ export default function RegisterWizard() {
                         const amountInCents = currentPlanPrice * 100;
                         const transactionId = `reg_${Date.now()}_${formData.name.replace(/\s+/g, '_')}`;
 
-                        console.log("Inicializando PayPhone Box con:", {
-                            token: process.env.NEXT_PUBLIC_PAYPHONE_TOKEN?.substring(0, 10) + "...",
-                            amount: amountInCents,
-                            storeId: process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID
-                        });
 
                         try {
                             const ppb = new PBox({
@@ -571,6 +582,8 @@ export default function RegisterWizard() {
                                 storeId: process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID,
                                 reference: `Pago Plan ${formData.plan.toUpperCase()} - ${formData.name}`,
                                 lang: "es",
+                                responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://registrameya.vercel.app/registro",
+                                cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://registrameya.vercel.app/registro",
                                 onComplete: async (model: any, actions: any) => {
                                     console.log("Pago completado con éxito:", model);
                                     handleFinalSubmit('pagado');
@@ -1007,7 +1020,12 @@ export default function RegisterWizard() {
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
-                                        onClick={() => updateForm('paymentMethod', tab.id)}
+                                        onClick={() => {
+                                            updateForm('paymentMethod', tab.id);
+                                            if (tab.id === 'crypto') {
+                                                handleCryptoPayment();
+                                            }
+                                        }}
                                         className={cn(
                                             "flex-1 px-4 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
                                             formData.paymentMethod === tab.id ? "bg-primary text-white shadow-lg" : "text-white/40 hover:text-white/60"
@@ -1163,22 +1181,34 @@ export default function RegisterWizard() {
                                         </div>
 
                                         <div className="relative z-0">
-                                            <PayPalScriptProvider options={{ clientId: "test", currency: "USD" }}>
+                                            <PayPalScriptProvider options={{
+                                                clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "test",
+                                                currency: "USD",
+                                                intent: "capture",
+                                                "disable-funding": "paylater,venmo",
+                                                locale: "es_EC"
+                                            }}>
                                                 <PayPalButtons
                                                     style={{ layout: "vertical", shape: 'rect' }}
+                                                    fundingSource="card"
                                                     createOrder={(data, actions) => {
                                                         return actions.order.create({
-                                                            intent: "CAPTURE", // Explicit intent
+                                                            intent: "CAPTURE",
                                                             purchase_units: [
                                                                 {
                                                                     amount: {
                                                                         currency_code: "USD",
                                                                         value: currentPlanPrice.toString(),
                                                                     },
-                                                                    description: `Plan Profesional PRO - RegistrameYa`
+                                                                    description: `Plan Profesional PRO - RegistrameYa`,
+                                                                    custom_id: formData.email
                                                                 },
                                                             ],
-                                                        });
+                                                            application_context: {
+                                                                shipping_preference: "NO_SHIPPING",
+                                                                user_action: "PAY_NOW",
+                                                            }
+                                                        } as any);
                                                     }}
                                                     onApprove={async (data, actions) => {
                                                         if (actions.order) {
@@ -1201,37 +1231,27 @@ export default function RegisterWizard() {
                                         exit={{ opacity: 0, x: 10 }}
                                         className="bg-white/5 p-8 rounded-[40px] border border-white/10 text-center max-w-md mx-auto"
                                     >
+                                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <ShieldCheck className="text-primary" size={32} />
+                                        </div>
                                         <h3 className="text-xl font-black uppercase italic tracking-tighter mb-4">Pago con Criptomonedas</h3>
-                                        <p className="text-sm text-white/60 mb-6">Paga con USDT, BTC, ETH de forma segura.</p>
+                                        <p className="text-sm text-white/60 mb-6">Paga de forma segura con USDT, BTC o ETH a través de Crossmint.</p>
 
-                                        {!cryptoPayment ? (
-                                            <button
-                                                onClick={handleCryptoPayment}
-                                                disabled={isCreatingCrypto}
-                                                className="bg-primary text-white w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-orange hover:scale-105 transition-transform disabled:opacity-50"
-                                            >
-                                                {isCreatingCrypto ? <Loader2 className="animate-spin mx-auto" /> : 'Generar Dirección de Pago'}
-                                            </button>
+                                        {isCreatingCrypto ? (
+                                            <div className="bg-primary/20 text-primary p-6 rounded-2xl font-black uppercase tracking-widest flex flex-col items-center justify-center gap-4 animate-pulse border border-primary/30">
+                                                <Loader2 className="animate-spin w-8 h-8" />
+                                                <span>Abriendo Pasarela Segura...</span>
+                                            </div>
                                         ) : (
-                                            <div className="space-y-4">
-                                                <div className="bg-white p-4 rounded-xl mx-auto w-fit">
-                                                    <QRCodeSVG value={cryptoPayment.payAddress} size={150} />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-white/40 uppercase font-black">Enviar exacto:</p>
-                                                    <p className="text-xl font-black text-primary">{cryptoPayment.payAmount} {cryptoPayment.payCurrency}</p>
-                                                </div>
-                                                <div className="bg-black/20 p-3 rounded-lg break-all">
-                                                    <p className="text-[10px] font-mono text-white/80">{cryptoPayment.payAddress}</p>
-                                                </div>
-                                                <button
-                                                    onClick={() => handleFinalSubmit('pendiente')}
-                                                    className="w-full bg-green-500 text-white py-3 rounded-xl font-bold text-sm hover:bg-green-600 transition-colors"
-                                                >
-                                                    Ya realicé el pago
-                                                </button>
+                                            <div className="p-6 rounded-2xl border border-white/10 bg-white/5">
+                                                <p className="text-xs text-white/40 uppercase font-black tracking-widest mb-2">Estado</p>
+                                                <p className="text-primary font-bold">ESPERANDO INICIO DE PAGO</p>
                                             </div>
                                         )}
+
+                                        <p className="text-[10px] text-white/30 mt-6 leading-tight max-w-[200px] mx-auto">
+                                            Serás redirigido al portal oficial de Crossmint para completar tu transacción.
+                                        </p>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -1271,14 +1291,39 @@ export default function RegisterWizard() {
 
                             <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-accent to-primary" />
-                                <div className="flex items-center gap-4 justify-center">
-                                    <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
-                                        <Mail size={32} />
+                                <div className="flex flex-col md:flex-row items-center gap-6 justify-center">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                            <Mail size={32} />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
+                                            <p className="text-sm font-bold text-navy/40 truncate max-w-[180px]">{formData.email}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-left">
-                                        <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
-                                        <p className="text-sm font-bold text-navy/40 truncate max-w-[180px]">{formData.email}</p>
-                                    </div>
+
+                                    <button
+                                        onClick={async () => {
+                                            let photoB64 = null;
+                                            if (formData.photo) {
+                                                try {
+                                                    photoB64 = await fileToBase64(formData.photo);
+                                                } catch (e) { console.error("Error base64 photo", e); }
+                                            }
+                                            const vcfContent = generateVCard(formData, photoB64, formData.categories);
+                                            const blob = new Blob([vcfContent], { type: 'text/vcard' });
+                                            const url = window.URL.createObjectURL(blob);
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            link.setAttribute('download', `${formData.name.replace(/\s+/g, '_')}.vcf`);
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                        }}
+                                        className="bg-navy text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary transition-all flex items-center gap-2 shadow-lg"
+                                    >
+                                        <FileText size={18} /> Descargar vCard
+                                    </button>
                                 </div>
                             </div>
 
@@ -1349,6 +1394,23 @@ export default function RegisterWizard() {
                 step={step}
                 isVisible={showVideoGuide}
                 onClose={() => setShowVideoGuide(false)}
+            />
+
+            <Script
+                src="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.js"
+                type="module"
+                strategy="lazyOnload"
+                onLoad={() => {
+                    console.log("PayPhone Script (Oficial) cargado");
+                    setPayphoneInitialized(true);
+                }}
+                onError={() => {
+                    console.error("Error cargando script de PayPhone (Oficial)");
+                }}
+            />
+            <link
+                rel="stylesheet"
+                href="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.css"
             />
         </div>
     );

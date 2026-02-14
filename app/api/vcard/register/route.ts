@@ -1,18 +1,13 @@
-
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase-admin';
+import pool from '@/lib/db';
+import { v4 as uuidv4 } from 'uuid';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-        return NextResponse.json({ error: 'Error de configuración: Falta SUPABASE_SERVICE_ROLE_KEY' }, { status: 500 });
-    }
-
     try {
         const body = await req.json();
 
-        // El cliente envía los nombres de columnas de DB directamente (nombre, email, etc.)
         const {
             nombre, email, whatsapp, profesion, empresa, bio, direccion,
             web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
@@ -20,50 +15,78 @@ export async function POST(req: NextRequest) {
             status, slug, etiquetas
         } = body;
 
-        // Validación básica
+        // Basic validation
         if (!email || !nombre) {
             return NextResponse.json({ error: 'Email y Nombre son requeridos' }, { status: 400 });
         }
 
-        // Upsert usando Service Role (bypass RLS)
-        const upsertData = {
-            nombre: nombre,
-            email: email,
-            whatsapp: whatsapp,
-            profesion: profesion,
-            empresa: empresa,
-            bio: bio,
-            direccion: direccion,
-            web: web,
-            google_business: google_business,
-            instagram: instagram,
-            linkedin: linkedin,
-            facebook: facebook,
-            tiktok: tiktok,
-            productos_servicios: productos_servicios,
-            plan: plan,
-            foto_url: foto_url,
-            comprobante_url: comprobante_url,
-            galeria_urls: galeria_urls,
-            status: status || 'pendiente',
-            slug: slug,
-            etiquetas: etiquetas
-        };
+        const connection = await pool.getConnection();
 
-        const { data, error } = await supabaseAdmin
-            .from('registraya_vcard_registros')
-            .upsert(upsertData, { onConflict: 'email' })
-            .select()
-            .single();
+        try {
+            // Check if user exists (by email) to determine Insert or Update
+            const [rows] = await connection.execute(
+                'SELECT id, slug FROM registraya_vcard_registros WHERE email = ?',
+                [email]
+            );
 
-        if (error) {
-            console.error('Error en upsert de registro:', error);
-            return NextResponse.json({ error: error.message }, { status: 500 });
+            // Prepare JSON fields
+            const galeriaUrlsJson = JSON.stringify(galeria_urls || []);
+
+            if ((rows as any[]).length > 0) {
+                // UPDATE
+                const existingUser = (rows as any[])[0];
+                const updateQuery = `
+                    UPDATE registraya_vcard_registros SET
+                        nombre=?, whatsapp=?, profesion=?, empresa=?, bio=?, direccion=?,
+                        web=?, google_business=?, instagram=?, linkedin=?, facebook=?, tiktok=?,
+                        productos_servicios=?, plan=?, foto_url=?, comprobante_url=?, galeria_urls=?,
+                        status=?, slug=?, etiquetas=?
+                    WHERE email=?
+                `;
+
+                // Use existing slug if not provided/changed, or update it. 
+                // Logic mostly keeps existing slug unless strictly needed.
+                // Here we update everything as requested.
+
+                await connection.execute(updateQuery, [
+                    nombre, whatsapp, profesion, empresa, bio, direccion,
+                    web, google_business, instagram, linkedin, facebook, tiktok,
+                    productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
+                    status || 'pendiente', slug || existingUser.slug, etiquetas,
+                    email
+                ]);
+
+                return NextResponse.json({ success: true, action: 'updated', id: existingUser.id });
+
+            } else {
+                // INSERT
+                const newId = uuidv4();
+                const now = new Date();
+
+                const insertQuery = `
+                    INSERT INTO registraya_vcard_registros (
+                        id, created_at, nombre, email, whatsapp, profesion, empresa, bio, direccion,
+                        web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
+                        plan, foto_url, comprobante_url, galeria_urls, status, slug, etiquetas,
+                        commission_status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                `;
+
+                await connection.execute(insertQuery, [
+                    newId, now, nombre, email, whatsapp, profesion, empresa, bio, direccion,
+                    web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
+                    plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', slug, etiquetas
+                ]);
+
+                return NextResponse.json({ success: true, action: 'created', id: newId });
+            }
+
+        } finally {
+            connection.release();
         }
 
-        return NextResponse.json({ success: true, data });
     } catch (err: any) {
-        console.error('Error en API de registro:', err);
+        console.error('Error en API de registro (MySQL):', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

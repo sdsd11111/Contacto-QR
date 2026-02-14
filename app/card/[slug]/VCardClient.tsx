@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+
 import { motion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
 import {
@@ -31,16 +31,20 @@ export default function VCardClient() {
 
     useEffect(() => {
         const fetchData = async () => {
-            const { data: record, error } = await supabase
-                .from('registraya_vcard_registros')
-                .select('*')
-                .or(`slug.eq.${slug},id.eq.${slug}`)
-                .single();
-
-            if (record) {
-                setData(record);
+            try {
+                const response = await fetch(`/api/profile/${slug}`);
+                if (response.ok) {
+                    const record = await response.json();
+                    setData(record);
+                } else {
+                    console.error("Profile fetch error:", response.status);
+                    // Handle 404 or error state if needed
+                }
+            } catch (error) {
+                console.error("Error fetching profile:", error);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
         if (slug) fetchData();
     }, [slug]);
