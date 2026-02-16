@@ -27,7 +27,9 @@ import {
     Loader2,
     ChevronRight,
     QrCode,
-    BarChart3
+    BarChart3,
+    Users,
+    ChevronDown
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -42,6 +44,9 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("todos");
+    const [sellers, setSellers] = useState<any[]>([]);
+    const [sellerIdFilter, setSellerIdFilter] = useState<number | null>(null);
+    const [isSellersDropdownOpen, setIsSellersDropdownOpen] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [accessKey, setAccessKey] = useState("");
@@ -117,8 +122,26 @@ export default function AdminDashboard() {
         setLoading(false);
     };
 
+    const fetchSellers = async () => {
+        try {
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const res = await fetch('/api/admin/sellers', {
+                headers: { 'x-admin-key': adminKey }
+            });
+            if (res.ok) {
+                const result = await res.json();
+                if (result.data) setSellers(result.data);
+            }
+        } catch (err) {
+            console.error('Error fetching sellers:', err);
+        }
+    };
+
     useEffect(() => {
-        if (isAuthorized) fetchRegistros();
+        if (isAuthorized) {
+            fetchRegistros();
+            fetchSellers();
+        }
     }, [isAuthorized]);
 
     const updateStatus = async (id: string, newStatus: string) => {
@@ -294,7 +317,8 @@ export default function AdminDashboard() {
         const email = (r.email || "").toLowerCase();
         const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === "todos" || r.status === statusFilter;
-        return matchesSearch && matchesStatus;
+        const matchesSeller = !sellerIdFilter || Number(r.seller_id) === Number(sellerIdFilter);
+        return matchesSearch && matchesStatus && matchesSeller;
     });
 
     // Helper: obtener admin key del localStorage
@@ -401,22 +425,96 @@ export default function AdminDashboard() {
                     </div>
                 </header>
 
-                {/* Quick Access to Survey Analytics */}
+                {/* Resumen de Vendedores */}
                 <div className="mb-12">
-                    <Link href="/admin/encuesta" className="group block">
-                        <div className="glass-card p-8 border border-primary/20 hover:border-primary/50 transition-all flex items-center justify-between overflow-hidden relative">
-                            <div className="relative z-10">
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Módulo de Análisis</p>
-                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Panel de Estadísticas de Encuesta</h3>
-                                <p className="text-white/40 text-sm mt-1 max-w-xl">Analiza el impacto de digitalización de tus prospectos y visualiza los resultados del semáforo de ventas.</p>
-                            </div>
-                            <div className="relative z-10 bg-primary/20 p-5 rounded-3xl text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-navy transition-all duration-500">
-                                <BarChart3 size={32} />
-                            </div>
-                            {/* Decorative background element */}
-                            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all" />
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                            <Users className="text-primary" size={24} />
+                            <h2 className="text-2xl font-black uppercase italic tracking-tighter">Socios & Vendedores</h2>
                         </div>
-                    </Link>
+                    </div>
+
+                    <div className="flex flex-wrap gap-4">
+                        {/* Botón General */}
+                        <button
+                            onClick={() => setSellerIdFilter(null)}
+                            className={cn(
+                                "px-8 py-4 rounded-2xl border font-black text-xs uppercase tracking-widest transition-all transition-all",
+                                !sellerIdFilter ? "bg-primary text-navy border-primary shadow-orange" : "bg-white/5 border-white/10 hover:bg-white/10"
+                            )}
+                        >
+                            General
+                        </button>
+
+                        {/* Botón Cesar Reyes (Socio) */}
+                        {sellers.filter(s => s.nombre === 'Cesar Reyes').map(s => (
+                            <button
+                                key={s.id}
+                                onClick={() => setSellerIdFilter(s.id)}
+                                className={cn(
+                                    "px-8 py-4 rounded-2xl border font-black text-xs uppercase tracking-widest transition-all",
+                                    sellerIdFilter === s.id ? "bg-accent text-white border-accent shadow-lg shadow-accent/20" : "bg-white/5 border-white/10 hover:bg-white/10"
+                                )}
+                            >
+                                <span className="flex items-center gap-2">
+                                    {s.nombre} <span className="bg-white/10 px-2 py-0.5 rounded-md text-[8px] font-black uppercase">Socio</span>
+                                </span>
+                            </button>
+                        ))}
+
+                        {/* Dropdown de Vendedores */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsSellersDropdownOpen(!isSellersDropdownOpen)}
+                                className={cn(
+                                    "px-8 py-4 rounded-2xl border font-black text-xs uppercase tracking-widest transition-all flex items-center gap-2",
+                                    sellerIdFilter && sellers.find(s => s.id === sellerIdFilter)?.nombre !== 'Cesar Reyes'
+                                        ? "bg-white/20 border-white/40"
+                                        : "bg-white/5 border-white/10 hover:bg-white/10"
+                                )}
+                            >
+                                {sellerIdFilter && sellers.find(s => s.id === sellerIdFilter)?.nombre !== 'Cesar Reyes'
+                                    ? sellers.find(s => s.id === sellerIdFilter)?.nombre
+                                    : "Vendedores"}
+                                <ChevronDown size={16} className={cn("transition-transform", isSellersDropdownOpen && "rotate-180")} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isSellersDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 10 }}
+                                        className="absolute top-full mt-2 left-0 w-64 bg-navy border border-white/10 rounded-[32px] overflow-hidden z-50 shadow-2xl p-2"
+                                    >
+                                        {sellers.filter(s => s.nombre !== 'Cesar Reyes').length === 0 ? (
+                                            <p className="p-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">No hay otros vendedores</p>
+                                        ) : (
+                                            sellers.filter(s => s.nombre !== 'Cesar Reyes').map(s => (
+                                                <button
+                                                    key={s.id}
+                                                    onClick={() => {
+                                                        setSellerIdFilter(s.id);
+                                                        setIsSellersDropdownOpen(false);
+                                                    }}
+                                                    className={cn(
+                                                        "w-full text-left px-6 py-4 rounded-2xl transition-all flex flex-col hover:bg-white/5",
+                                                        sellerIdFilter === s.id ? "bg-white/10" : ""
+                                                    )}
+                                                >
+                                                    <span className="font-black text-xs uppercase tracking-tighter truncate">{s.nombre}</span>
+                                                    <div className="flex justify-between items-center mt-1">
+                                                        <span className="text-[9px] font-bold text-white/40">{s.total_ventas} Ventas</span>
+                                                        <span className="text-[9px] font-black text-primary uppercase">Com. {s.comision_porcentaje}%</span>
+                                                    </div>
+                                                </button>
+                                            ))
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-12">
@@ -456,6 +554,7 @@ export default function AdminDashboard() {
                                     <th className="px-8 py-6">Usuario</th>
                                     <th className="px-8 py-6">Plan</th>
                                     <th className="px-8 py-6">Comprobante</th>
+                                    <th className="px-8 py-6">Vendedor</th>
                                     <th className="px-8 py-6">Estado</th>
                                     <th className="px-8 py-6">Acciones</th>
                                 </tr>
@@ -492,6 +591,18 @@ export default function AdminDashboard() {
                                                 </button>
                                             ) : (
                                                 <span className="text-[10px] text-white/20 uppercase font-black">Sin Archivo</span>
+                                            )}
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            {r.seller_id ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black uppercase text-primary">Socio #{r.seller_id}</span>
+                                                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${r.commission_status === 'paid' ? 'text-green-500' : 'text-white/30'}`}>
+                                                        {r.commission_status || 'pending'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[10px] text-white/20 uppercase font-black">Directo</span>
                                             )}
                                         </td>
                                         <td className="px-8 py-6">

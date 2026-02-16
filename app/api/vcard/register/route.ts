@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
             nombre, email, whatsapp, profesion, empresa, bio, direccion,
             web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
             plan, foto_url, comprobante_url, galeria_urls,
-            status, slug, etiquetas
+            status, slug, etiquetas, seller_id
         } = body;
 
         // Basic validation
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
                         nombre=?, whatsapp=?, profesion=?, empresa=?, bio=?, direccion=?,
                         web=?, google_business=?, instagram=?, linkedin=?, facebook=?, tiktok=?,
                         productos_servicios=?, plan=?, foto_url=?, comprobante_url=?, galeria_urls=?,
-                        status=?, slug=?, etiquetas=?
+                        status=?, slug=?, etiquetas=?, seller_id=?
                     WHERE email=?
                 `;
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
                     nombre, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok,
                     productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
-                    status || 'pendiente', slug || existingUser.slug, etiquetas,
+                    status || 'pendiente', slug || existingUser.slug, etiquetas, seller_id || null,
                     email
                 ]);
 
@@ -68,14 +68,15 @@ export async function POST(req: NextRequest) {
                         id, created_at, nombre, email, whatsapp, profesion, empresa, bio, direccion,
                         web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                         plan, foto_url, comprobante_url, galeria_urls, status, slug, etiquetas,
-                        commission_status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                        commission_status, seller_id
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
                 `;
 
                 await connection.execute(insertQuery, [
                     newId, now, nombre, email, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
-                    plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', slug, etiquetas
+                    plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', slug, etiquetas,
+                    seller_id || null
                 ]);
 
                 return NextResponse.json({ success: true, action: 'created', id: newId });

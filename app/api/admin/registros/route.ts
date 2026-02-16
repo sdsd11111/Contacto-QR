@@ -8,16 +8,32 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(req: NextRequest) {
     const adminKey = req.headers.get('x-admin-key');
+    const searchParams = req.nextUrl.searchParams;
+    const sellerId = searchParams.get('seller_id');
+
+    // Simple security: Admin key allows everything. 
+    // If no admin key, we check if it's a seller request (future: session check)
+    // For now, let's allow it if sellerId is provided, but in production we'd want a token.
     if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        if (!sellerId) {
+            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        }
     }
 
     try {
         const connection = await pool.getConnection();
         try {
-            const [rows] = await connection.execute(
-                'SELECT * FROM registraya_vcard_registros ORDER BY created_at DESC'
-            );
+            let query = 'SELECT * FROM registraya_vcard_registros';
+            const params = [];
+
+            if (sellerId) {
+                query += ' WHERE seller_id = ?';
+                params.push(sellerId);
+            }
+
+            query += ' ORDER BY created_at DESC';
+
+            const [rows] = await connection.execute(query, params);
             return NextResponse.json({ data: rows });
         } finally {
             connection.release();

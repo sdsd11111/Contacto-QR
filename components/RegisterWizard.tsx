@@ -88,6 +88,7 @@ export default function RegisterWizard() {
         receipt: null as File | null,
         receiptUrl: '',
         paymentMethod: 'transfer' as 'transfer' | 'payphone' | 'paypal' | 'crypto',
+        seller_id: null as string | null,
     });
 
     const [emailError, setEmailError] = useState('');
@@ -227,6 +228,22 @@ export default function RegisterWizard() {
             }
         }
     }, [formData.profession, hasManualTags]);
+
+    // Seller Attribution Logic
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const refId = params.get('ref') || params.get('seller');
+
+        if (refId) {
+            localStorage.setItem('vcard_attribution_id', refId);
+        }
+
+        const attributionId = localStorage.getItem('vcard_attribution_id');
+        if (attributionId) {
+            setFormData(prev => ({ ...prev, seller_id: attributionId }));
+            console.log("Seller Attribution Active:", attributionId);
+        }
+    }, []);
 
     const validateEmail = (email: string) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -482,7 +499,8 @@ export default function RegisterWizard() {
                 comprobante_url: receiptUrl,
                 status: forcedStatus || 'pendiente',
                 slug: slug,
-                etiquetas: finalCategories
+                etiquetas: finalCategories,
+                seller_id: formData.seller_id
             };
 
             console.log("3. UPSERT: Enviando a Supabase...");
@@ -1360,7 +1378,7 @@ export default function RegisterWizard() {
                     )}
 
                     {/* Navigation */}
-                    {step < 6 && (
+                    {step < 5 && (
                         <div className="mt-12 flex justify-between items-center max-w-xl mx-auto">
                             {step > 1 ? (
                                 <button
