@@ -16,12 +16,16 @@ export async function GET() {
         const connection = await pool.getConnection();
         const [rows] = await connection.execute('SELECT 1 as connected');
         const [count]: any = await connection.execute('SELECT COUNT(*) as total FROM registraya_vcard_registros');
+        const [lastRecords]: any = await connection.execute(
+            'SELECT nombre, email, created_at FROM registraya_vcard_registros ORDER BY created_at DESC LIMIT 5'
+        );
         connection.release();
 
         return NextResponse.json({
             status: 'success',
             database: 'connected',
             total_records: count[0].total,
+            latest_records: lastRecords,
             config: config,
             result: rows
         });
