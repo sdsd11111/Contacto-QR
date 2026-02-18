@@ -1736,6 +1736,21 @@ export default function RegisterWizard() {
                                         </div>
                                     </div>
                                 </motion.div>
+
+                                {/* Botón Volver al Inicio */}
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.8 }}
+                                    className="mt-12"
+                                >
+                                    <button
+                                        onClick={() => window.location.href = '/'}
+                                        className="inline-flex items-center gap-2 text-navy/40 font-bold hover:text-primary transition-all uppercase tracking-widest text-xs"
+                                    >
+                                        <ArrowLeft size={16} /> Volver al Inicio
+                                    </button>
+                                </motion.div>
                             </div>
                         )
                     }
