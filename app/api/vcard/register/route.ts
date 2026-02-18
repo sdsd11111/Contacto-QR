@@ -77,16 +77,25 @@ export async function POST(req: NextRequest) {
                         plan, foto_url, comprobante_url, galeria_urls, status, paid_at, slug, etiquetas,
                         commission_status, seller_id,
                         tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                        ?, ?, ?, ?, ?, ?, ?, 
+                        ?, ?, ?, ?, ?, ?, ?, ?, 
+                        ?, ?, 
+                        ?, ?, ?, ?, ?, ?
+                    )
                 `;
 
-                await pool.execute(insertQuery, [
+                const values = [
                     newId, now, finalNombre, email, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                     plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', isPaid ? now : null, slug, etiquetas,
+                    'pending', // commission_status
                     seller_id || null,
                     tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || ''
-                ]);
+                ];
+
+                await pool.execute(insertQuery, values);
 
                 return NextResponse.json({ success: true, action: 'created', id: newId });
             }

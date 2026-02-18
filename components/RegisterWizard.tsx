@@ -1747,7 +1747,7 @@ export default function RegisterWizard() {
                                 >
                                     <button
                                         onClick={() => window.location.href = '/'}
-                                        className="inline-flex items-center gap-2 text-navy/40 font-bold hover:text-primary transition-all uppercase tracking-widest text-xs"
+                                        className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-orange hover:scale-105 transition-all"
                                     >
                                         <ArrowLeft size={16} /> Volver al Inicio
                                     </button>

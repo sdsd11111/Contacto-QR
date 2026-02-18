@@ -22,9 +22,15 @@ export async function GET(req: NextRequest) {
 
     try {
         let query = `
-            SELECT r.*, s.nombre as sold_by_name, s.codigo as sold_by_code
+            SELECT 
+                r.*, 
+                s.nombre as sold_by_name, 
+                s.codigo as sold_by_code,
+                p.nombre as parent_name,
+                p.codigo as parent_code
             FROM registraya_vcard_registros r
             LEFT JOIN registraya_vcard_sellers s ON r.seller_id = s.id
+            LEFT JOIN registraya_vcard_sellers p ON s.parent_id = p.id
         `;
         const params: any[] = [];
 

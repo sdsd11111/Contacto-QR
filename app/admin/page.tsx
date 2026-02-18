@@ -68,6 +68,7 @@ export default function AdminDashboard() {
     const [newSeller, setNewSeller] = useState({ nombre: '', email: '', password: '', comision_porcentaje: 30 });
     const [isCreatingSeller, setIsCreatingSeller] = useState(false);
     const [nextSellerCode, setNextSellerCode] = useState<string | null>(null);
+    const [isLive, setIsLive] = useState(false);
 
     const fetchNextCode = async () => {
         const adminKey = localStorage.getItem('admin_access_key') || '';
@@ -186,6 +187,24 @@ export default function AdminDashboard() {
             fetchSellers();
         }
     }, [isAuthorized]);
+
+    // Live Mode Effect
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isAuthorized && isLive) {
+            interval = setInterval(() => {
+                // Refresh without showing loading state to avoid flickering
+                const adminKey = localStorage.getItem('admin_access_key') || '';
+                fetch('/api/admin/registros', { headers: { 'x-admin-key': adminKey } })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.data) setRegistros(data.data);
+                    })
+                    .catch(err => console.error("Live update failed", err));
+            }, 10000); // Every 10 seconds
+        }
+        return () => clearInterval(interval);
+    }, [isAuthorized, isLive]);
 
     const updateCommissionStatus = async (id: string, currentStatus: string) => {
         if (pendingIds.has(id)) return;
@@ -540,14 +559,28 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="flex gap-4">
-                        <button onClick={fetchRegistros} className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
-                            <RefreshCw size={20} className={cn(loading && "animate-spin")} />
+                        <button
+                            onClick={() => setIsLive(!isLive)}
+                            className={cn(
+                                "px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-xl",
+                                isLive ? "bg-green-500 text-white animate-pulse" : "bg-white/5 text-white/40 border border-white/10 hover:bg-white/10"
+                            )}
+                        >
+                            <div className={cn("w-2 h-2 rounded-full", isLive ? "bg-white" : "bg-white/20")} />
+                            {isLive ? "LIVE MOD..." : "MODO LIVE OFF"}
+                        </button>
+                        <button
+                            onClick={fetchRegistros}
+                            className="bg-white/5 border border-white/10 p-4 rounded-2xl hover:bg-white/10 transition-all text-white/40 hover:text-white"
+                        >
+                            <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="bg-primary px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-orange cursor-pointer hover:scale-105 transition-all text-navy"
+                            className="bg-primary hover:bg-[#FF8A33] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-[0_10px_25px_rgba(255,107,0,0.3)] text-[#050B1C] transition-all flex items-center gap-2 group"
                         >
                             Cerrar Sesión
+                            <LogOut className="group-hover:translate-x-1 transition-transform" size={18} />
                         </button>
                     </div>
                 </header>
@@ -830,10 +863,15 @@ export default function AdminDashboard() {
                                                     title={`Filtrar ventas de Socio #${r.seller_id}`}
                                                 >
                                                     <span className="text-[10px] font-black uppercase text-primary group-hover/seller:underline flex items-center gap-1">
-                                                        {(() => {
-                                                            const seller = sellers.find(s => s.id == r.seller_id);
-                                                            return seller ? `${seller.nombre} (${seller.codigo})` : `Socio #${r.seller_id}`;
-                                                        })()}
+                                                        {r.parent_name ? (
+                                                            <>
+                                                                <span className="text-white/40">{r.parent_name}</span>
+                                                                <ChevronRight size={10} className="text-white/20" />
+                                                                <span>{r.sold_by_name?.split(' ')[0]}</span>
+                                                            </>
+                                                        ) : (
+                                                            r.sold_by_name || `Socio #${r.seller_id}`
+                                                        )}
                                                         <Users size={10} className="opacity-0 group-hover/seller:opacity-100 transition-opacity" />
                                                     </span>
                                                     <span className={cn(
