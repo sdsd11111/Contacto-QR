@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         }
 
         const mailOptions = {
-            from: process.env.EMAIL_FROM || '"RegistraYa VCards" <noreply@registraya.com>',
+            from: process.env.EMAIL_FROM || '"RegistraYa" <registrameya@cesarreyesjaramillo.com>',
             to: recipientEmail,
             subject: '¡Tu Contacto Digital está Listo! 🚀',
             html: `

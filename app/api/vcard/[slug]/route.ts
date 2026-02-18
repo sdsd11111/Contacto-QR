@@ -44,11 +44,28 @@ export async function GET(
         }
 
         // 1b. Formatear Notas con Galería, Productos y Redes
-        // En vCard 3.0, los saltos de línea se representan con \n (literal backslash + n)
-        // Pero primero limpiamos cualquier salto de línea real del contenido para evitar roturas
         const sanitize = (text: string) => text ? text.replace(/\r?\n/g, '\\n') : '';
 
-        let noteContent = `${sanitize(user.bio)}`;
+        // Safe JSON parse for gallery
+        const getGalleryArray = (data: any) => {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (typeof data === 'string') {
+                try {
+                    const parsed = JSON.parse(data);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    return data.split(',').map(u => u.trim()).filter(Boolean);
+                }
+            }
+            return [];
+        };
+
+        const bio = user.bio || '';
+        const whatsapp = user.whatsapp || '';
+        const nombre = user.nombre || 'Usuario';
+
+        let noteContent = `${sanitize(bio)}`;
         if (user.productos_servicios) {
             noteContent += `\\n\\nProductos/Servicios:\\n${sanitize(user.productos_servicios)}`;
         }
@@ -61,8 +78,9 @@ export async function GET(
             if (user.linkedin) noteContent += `\\nLI: ${user.linkedin}`;
         }
 
-        if (user.galeria_urls && user.galeria_urls.length > 0) {
-            noteContent += `\\n\\nMis Trabajos:\\n${user.galeria_urls.join('\\n')}`;
+        const gallery = getGalleryArray(user.galeria_urls);
+        if (gallery.length > 0) {
+            noteContent += `\\n\\nMis Trabajos:\\n${gallery.join('\\n')}`;
         }
 
         if (user.etiquetas) {
@@ -72,7 +90,7 @@ export async function GET(
         noteContent += `\\n\\n- RegistrameYa`;
 
         // Limpiar WhatsApp para el campo TEL
-        const cleanWhatsApp = user.whatsapp.replace(/\D/g, ''); // Solo números
+        const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
 
         // Función para line folding (obligatorio en vCard para líneas largas)
         const foldLine = (line: string) => {
@@ -91,8 +109,8 @@ export async function GET(
         let organization = '';   // Campo ORG:
 
         if (user.tipo_perfil === 'negocio') {
-            fullName = user.nombre_negocio || user.nombre;
-            organization = user.nombre_negocio || user.nombre;
+            fullName = user.nombre_negocio || nombre;
+            organization = user.nombre_negocio || nombre;
             if (user.contacto_nombre || user.contacto_apellido) {
                 structuredName = `${user.contacto_apellido || ''};${user.contacto_nombre || ''};;;`;
             } else {
@@ -100,9 +118,9 @@ export async function GET(
             }
         } else {
             // Caso Persona (o legacy)
-            const firstName = user.nombres || user.nombre.split(' ')[0] || '';
-            const lastName = user.apellidos || user.nombre.split(' ').slice(1).join(' ') || '';
-            fullName = `${firstName} ${lastName}`.trim();
+            const firstName = user.nombres || nombre.split(' ')[0] || '';
+            const lastName = user.apellidos || nombre.split(' ').slice(1).join(' ') || '';
+            fullName = `${firstName} ${lastName}`.trim() || nombre;
             structuredName = `${lastName};${firstName};;;`;
             organization = user.empresa || "";
         }
