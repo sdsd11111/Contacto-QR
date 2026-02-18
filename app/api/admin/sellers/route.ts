@@ -25,11 +25,21 @@ export async function GET(req: NextRequest) {
         const query = `
             SELECT 
                 s.id, s.nombre, s.codigo, s.email, s.comision_porcentaje, s.activo, s.created_at,
-                COUNT(r.id) as total_ventas,
-                SUM(CASE WHEN r.status IN ('pagado', 'entregado') THEN 1 ELSE 0 END) as ventas_pagadas
+                (
+                    SELECT COUNT(*) 
+                    FROM registraya_vcard_registros r 
+                    LEFT JOIN registraya_vcard_sellers sub ON r.seller_id = sub.id
+                    WHERE r.seller_id = s.id OR sub.parent_id = s.id
+                ) as total_ventas,
+                (
+                    SELECT COUNT(*) 
+                    FROM registraya_vcard_registros r 
+                    LEFT JOIN registraya_vcard_sellers sub ON r.seller_id = sub.id
+                    WHERE (r.seller_id = s.id OR sub.parent_id = s.id)
+                    AND r.status IN ('pagado', 'entregado')
+                ) as ventas_pagadas
             FROM registraya_vcard_sellers s
-            LEFT JOIN registraya_vcard_registros r ON s.id = r.seller_id
-            GROUP BY s.id, s.nombre, s.codigo, s.email, s.comision_porcentaje, s.activo, s.created_at
+            WHERE s.parent_id IS NULL
             ORDER BY s.nombre ASC
         `;
         const [rows] = await pool.execute(query);
