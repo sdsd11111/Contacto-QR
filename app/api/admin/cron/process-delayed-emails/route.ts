@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
+// Deployment trigger: Actualización de automatización de correos
 
 export async function GET(req: NextRequest) {
     const authHeader = req.headers.get('Authorization');
