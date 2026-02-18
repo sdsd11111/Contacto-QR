@@ -1679,17 +1679,17 @@ export default function RegisterWizard() {
                                     <img
                                         src="/images/entrega_contacto.webp"
                                         className="w-full h-full object-cover"
-                                        alt="Entrega en 60 minutos"
+                                        alt="Entrega en 24 horas"
                                     />
                                     <div className="absolute inset-x-0 bottom-0 bg-primary/90 backdrop-blur-sm py-2 flex items-center justify-center border-t border-white/20">
-                                        <span className="text-white font-black text-xs uppercase tracking-widest">Entrega en 60 minutos</span>
+                                        <span className="text-white font-black text-xs uppercase tracking-widest">Entrega en 24 horas</span>
                                     </div>
                                 </div>
                                 <p className="text-2xl md:text-3xl font-black text-primary text-center mb-3 leading-tight">
-                                    Tu perfil estará listo en máximo 60 minutos
+                                    Tu perfil estará listo y enviado en máximo 24 horas
                                 </p>
                                 <p className="text-navy/60 font-medium text-base mb-8 text-center">
-                                    Te enviaremos tu Contacto Digital y Código QR a tu correo electrónico y WhatsApp.
+                                    Te enviaremos tu Contacto Digital (.vcf) y Código QR a tu correo electrónico y WhatsApp.
                                 </p>
 
                                 <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">
@@ -1701,32 +1701,9 @@ export default function RegisterWizard() {
                                             </div>
                                             <div className="text-left">
                                                 <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
-                                                <p className="text-sm font-bold text-navy/40 truncate max-w-[180px]">{formData.email}</p>
+                                                <p className="text-sm font-bold text-navy/40 truncate max-w-[280px]">{formData.email}</p>
                                             </div>
                                         </div>
-
-                                        <button
-                                            onClick={async () => {
-                                                let photoB64 = null;
-                                                if (formData.photo) {
-                                                    try {
-                                                        photoB64 = await fileToBase64(formData.photo);
-                                                    } catch (e) { console.error("Error base64 photo", e); }
-                                                }
-                                                const vcfContent = generateVCard(formData, photoB64, formData.categories);
-                                                const blob = new Blob([vcfContent], { type: 'text/vcard' });
-                                                const url = window.URL.createObjectURL(blob);
-                                                const link = document.createElement('a');
-                                                link.href = url;
-                                                link.setAttribute('download', `${formData.name.replace(/\s+/g, '_')}.vcf`);
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                document.body.removeChild(link);
-                                            }}
-                                            className="bg-navy text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary transition-all flex items-center gap-2 shadow-lg"
-                                        >
-                                            <FileText size={18} /> Descargar vCard
-                                        </button>
                                     </div>
                                 </div>
 
