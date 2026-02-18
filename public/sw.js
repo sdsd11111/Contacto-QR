@@ -35,9 +35,20 @@ self.addEventListener('activate', (event) => {
 // Esto asegura que siempre se vea la última versión si hay internet,
 // pero funciona offline si no la hay.
 self.addEventListener('fetch', (event) => {
+    // Solo manejar peticiones GET para evitar errores con APIs que usan POST
+    if (event.request.method !== 'GET') return;
+
     event.respondWith(
         fetch(event.request).catch(() => {
-            return caches.match(event.request);
+            return caches.match(event.request).then((response) => {
+                if (response) return response;
+                // Si no hay internet ni cache, devolvemos un error amigable o dejamos que falle silenciosamente
+                return new Response('Red no disponible', {
+                    status: 503,
+                    statusText: 'Service Unavailable',
+                    headers: new Headers({ 'Content-Type': 'text/plain' })
+                });
+            });
         })
     );
 });

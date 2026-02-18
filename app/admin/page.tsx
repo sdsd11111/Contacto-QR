@@ -40,6 +40,13 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+// Utilidad para detectar URLs de marcador de posición o no válidas
+const isPlaceholderUrl = (url: string | null | undefined) => {
+    if (!url) return true;
+    const placeholders = ['photo.com', 'example.com', 'placeholder.com', 'placehold.co'];
+    return placeholders.some(p => url.toLowerCase().includes(p));
+};
+
 export default function AdminDashboard() {
     const [registros, setRegistros] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -496,6 +503,8 @@ export default function AdminDashboard() {
                     </div>
                     <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-8">Acceso Restringido</h2>
                     <form onSubmit={handleLogin} className="space-y-6">
+                        {/* Accessible username field (hidden) */}
+                        <input type="text" name="username" autoComplete="username" style={{ display: 'none' }} defaultValue="admin" />
                         <input
                             type="password"
                             placeholder="Ingrese Clave de Acceso"
@@ -781,7 +790,11 @@ export default function AdminDashboard() {
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden flex items-center justify-center">
-                                                    {r.foto_url ? <img src={r.foto_url} className="w-full h-full object-cover" /> : <User size={20} />}
+                                                    {r.foto_url && !isPlaceholderUrl(r.foto_url) ? (
+                                                        <img src={r.foto_url} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User size={20} className="text-white/20" />
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <p className="font-bold text-sm">{r.nombre}</p>
@@ -960,8 +973,8 @@ export default function AdminDashboard() {
                                 </button>
                             </div>
                             <div className="p-8 flex items-center justify-center min-h-[400px]">
-                                {!selectedReceipt ? (
-                                    <p className="text-white/20 font-black uppercase tracking-widest">No hay imagen disponible</p>
+                                {!selectedReceipt || isPlaceholderUrl(selectedReceipt) ? (
+                                    <p className="text-white/20 font-black uppercase tracking-widest">No hay imagen válida disponible</p>
                                 ) : selectedReceipt.startsWith('data:image/') || (!selectedReceipt.endsWith('.pdf')) ? (
                                     <img
                                         src={selectedReceipt}
@@ -1008,7 +1021,7 @@ export default function AdminDashboard() {
                                         <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">FOTO DE PERFIL</h4>
                                         <div className="flex flex-col items-center gap-4">
                                             <div className="w-32 h-32 rounded-full bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
-                                                {editingRegistro.foto_url ? (
+                                                {editingRegistro.foto_url && !isPlaceholderUrl(editingRegistro.foto_url) ? (
                                                     <img src={editingRegistro.foto_url} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <User size={40} className="text-white/10" />
