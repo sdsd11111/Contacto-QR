@@ -19,8 +19,13 @@ export async function POST(req: NextRequest) {
 
         const whatsapp = formatPhoneEcuador(body.whatsapp || '');
 
+        // Calculate legacy name for compatibility and validation
+        const finalNombre = nombre || (tipo_perfil === 'negocio'
+            ? nombre_negocio
+            : `${nombres || ''} ${apellidos || ''}`.trim());
+
         // Basic validation
-        if (!email || !nombre) {
+        if (!email || !finalNombre) {
             return NextResponse.json({ error: 'Email y Nombre son requeridos' }, { status: 400 });
         }
 
@@ -33,11 +38,6 @@ export async function POST(req: NextRequest) {
 
             // Prepare JSON fields
             const galeriaUrlsJson = JSON.stringify(galeria_urls || []);
-
-            // Calculate legacy name for compatibility
-            const nombreLegacy = tipo_perfil === 'negocio'
-                ? nombre_negocio
-                : `${nombres || ''} ${apellidos || ''}`.trim();
 
             if ((rows as any[]).length > 0) {
                 // UPDATE
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
                 `;
 
                 await pool.execute(updateQuery, [
-                    nombreLegacy, whatsapp, profesion, empresa, bio, direccion,
+                    finalNombre, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok,
                     productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
                     status || 'pendiente', status, slug || existingUser.slug, etiquetas, seller_id || null,
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
                 `;
 
                 await pool.execute(insertQuery, [
-                    newId, now, nombreLegacy, email, whatsapp, profesion, empresa, bio, direccion,
+                    newId, now, finalNombre, email, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                     plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', isPaid ? now : null, slug, etiquetas,
                     seller_id || null,

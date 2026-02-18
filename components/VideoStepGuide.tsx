@@ -61,12 +61,15 @@ export default function VideoStepGuide({ step, isVisible, onClose }: VideoStepGu
                     opacity: 1,
                     y: 0,
                     scale: 1,
-                    width: isMinimized ? "60px" : "300px",
-                    height: isMinimized ? "60px" : "auto"
+                    // Mobile: 160px width, Desktop: 300px width
+                    width: isMinimized ? "60px" : { base: "160px", md: "300px" } as any,
                 }}
                 exit={{ opacity: 0, y: 50, scale: 0.9 }}
+                style={{
+                    width: isMinimized ? "60px" : undefined // Handled by animate width above, but framer-motion width needs to be consistent
+                }}
                 className={cn(
-                    "fixed bottom-6 right-6 z-[100] bg-navy/90 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl overflow-hidden shadow-primary/20 transition-all duration-500",
+                    "fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[100] bg-navy/90 backdrop-blur-xl border border-white/10 rounded-2xl md:rounded-[2rem] shadow-2xl overflow-hidden shadow-primary/20 transition-all duration-500",
                     isMinimized && "rounded-full cursor-pointer hover:scale-110"
                 )}
                 onClick={() => isMinimized && setIsMinimized(false)}
