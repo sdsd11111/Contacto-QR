@@ -10,11 +10,9 @@ export async function GET(
     try {
         const { slug } = await context.params;
 
-        const connection = await pool.getConnection();
-
         try {
             // Search by slug or id
-            const [rows] = await connection.execute(
+            const [rows] = await pool.execute(
                 'SELECT * FROM registraya_vcard_registros WHERE slug = ? OR id = ?',
                 [slug, slug]
             );
@@ -26,16 +24,11 @@ export async function GET(
             }
 
             const user = users[0];
-
-            // Parse existing JSON fields if necessary (mysql2 returns them as objects usually if defined as JSON, but let's be safe)
-            // galeria_urls is JSON type in DB.
-
             return NextResponse.json(user);
 
-        } finally {
-            connection.release();
+        } catch (dbErr) {
+            throw dbErr;
         }
-
     } catch (err: any) {
         console.error('Error fetching profile:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });

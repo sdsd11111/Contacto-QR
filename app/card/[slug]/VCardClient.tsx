@@ -78,11 +78,33 @@ export default function VCardClient() {
 
         // Construcción manual robusta de vCard 3.0
         // Nota: Mantenemos 3.0 para máxima compatibilidad con iOS/Android nativos antiguos y nuevos.
+
+        let fullName = '';
+        let structuredName = ''; // Campo N:
+        let organization = '';   // Campo ORG:
+
+        if (data.tipo_perfil === 'negocio') {
+            fullName = data.nombre_negocio || data.nombre;
+            organization = data.nombre_negocio || data.nombre;
+            if (data.contacto_nombre || data.contacto_apellido) {
+                structuredName = `${data.contacto_apellido || ''};${data.contacto_nombre || ''};;;`;
+            } else {
+                structuredName = ';;;;';
+            }
+        } else {
+            // Caso Persona (o legacy)
+            const firstName = data.nombres || data.nombre.split(' ')[0] || '';
+            const lastName = data.apellidos || data.nombre.split(' ').slice(1).join(' ') || '';
+            fullName = `${firstName} ${lastName}`.trim();
+            structuredName = `${lastName};${firstName};;;`;
+            organization = data.empresa || "";
+        }
+
         let vcard = `BEGIN:VCARD
 VERSION:3.0
-FN:${data.nombre}
-N:${data.nombre.split(' ').slice(1).join(' ') || ''};${data.nombre.split(' ')[0] || ''};;;
-ORG:${data.empresa || ""}
+FN:${fullName}
+N:${structuredName}
+ORG:${organization}
 TITLE:${data.profesion || ""}
 TEL;TYPE=CELL,VOICE:${data.whatsapp}
 EMAIL;TYPE=WORK,INTERNET:${data.email || ""}

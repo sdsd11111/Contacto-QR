@@ -86,13 +86,34 @@ export async function GET(
         };
 
         // 2. Generar vCard con todos los campos (Version 3.0 - Estándar moderno)
+        let fullName = '';
+        let structuredName = ''; // Campo N:
+        let organization = '';   // Campo ORG:
+
+        if (user.tipo_perfil === 'negocio') {
+            fullName = user.nombre_negocio || user.nombre;
+            organization = user.nombre_negocio || user.nombre;
+            if (user.contacto_nombre || user.contacto_apellido) {
+                structuredName = `${user.contacto_apellido || ''};${user.contacto_nombre || ''};;;`;
+            } else {
+                structuredName = ';;;;';
+            }
+        } else {
+            // Caso Persona (o legacy)
+            const firstName = user.nombres || user.nombre.split(' ')[0] || '';
+            const lastName = user.apellidos || user.nombre.split(' ').slice(1).join(' ') || '';
+            fullName = `${firstName} ${lastName}`.trim();
+            structuredName = `${lastName};${firstName};;;`;
+            organization = user.empresa || "";
+        }
+
         const vcardLines = [
             'BEGIN:VCARD',
             'VERSION:3.0',
-            `FN:${user.nombre}`,
-            `N:${user.nombre.split(' ').reverse().join(';')};;;`,
+            `FN:${fullName}`,
+            `N:${structuredName}`,
             user.profesion ? `TITLE:${user.profesion}` : '',
-            user.empresa ? `ORG:${user.empresa}` : '',
+            `ORG:${organization}`,
             `TEL;TYPE=CELL,VOICE:${cleanWhatsApp}`,
             `EMAIL;TYPE=WORK,INTERNET:${user.email}`,
             user.direccion ? `ADR;TYPE=WORK:;;${user.direccion};;;;` : '',

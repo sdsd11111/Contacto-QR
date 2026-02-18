@@ -12,27 +12,21 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const connection = await pool.getConnection();
-
         try {
-            const [rows] = await connection.execute(
+            const [rows] = await pool.execute(
                 'SELECT slug, foto_url, comprobante_url, galeria_urls FROM registraya_vcard_registros WHERE email = ?',
                 [email]
             );
 
             const results = rows as any[];
-
             if (results.length > 0) {
                 return NextResponse.json(results[0]);
             } else {
-                // Not found is not an error here, just null
                 return NextResponse.json(null);
             }
-
-        } finally {
-            connection.release();
+        } catch (dbErr) {
+            throw dbErr;
         }
-
     } catch (err: any) {
         console.error('Lookup error:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });

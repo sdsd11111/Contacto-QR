@@ -16,9 +16,12 @@ import {
 } from "lucide-react";
 import VideoModal from "@/components/VideoModal";
 import PopupManager from "@/components/PopupManager";
+import EditPortalModal from "@/components/EditPortalModal";
+import { Edit } from "lucide-react";
 
 export default function Home() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   return (
     <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
@@ -432,6 +435,28 @@ export default function Home() {
 
       <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} videoId="Iy69aXd7MFI" />
       <PopupManager />
+
+      {/* Edit Portal Modal */}
+      <EditPortalModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
+
+      {/* Floating Edit Button (Bottom Left) */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsEditModalOpen(true)}
+        className="fixed bottom-6 left-6 z-40 bg-white/90 backdrop-blur-md border border-navy/10 text-navy px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 group hover:bg-white transition-colors"
+      >
+        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+          <Edit size={20} className="text-primary group-hover:text-white transition-colors" />
+        </div>
+        <div className="text-left hidden sm:block">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-navy/50">¿Datos desactualizados?</p>
+          <p className="text-xs font-black text-navy uppercase leading-tight">Solicita tu modificación</p>
+        </div>
+      </motion.button>
+
     </main>
   );
 }

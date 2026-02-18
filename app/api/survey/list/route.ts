@@ -15,15 +15,10 @@ export async function GET(req: NextRequest) {
             );
         }
 
-        const connection = await pool.getConnection();
-        try {
-            const [rows] = await connection.execute(
-                'SELECT * FROM registraya_encuesta_respuestas ORDER BY created_at DESC'
-            );
-            return NextResponse.json({ data: rows });
-        } finally {
-            connection.release();
-        }
+        const [rows] = await pool.execute(
+            'SELECT * FROM registraya_encuesta_respuestas ORDER BY created_at DESC'
+        );
+        return NextResponse.json({ data: rows });
     } catch (err: any) {
         console.error('Unexpected error fetching surveys:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });

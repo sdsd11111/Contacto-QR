@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic';
  * GET: Lista todos los registros (requiere admin key)
  */
 export async function GET(req: NextRequest) {
-    const adminKey = req.headers.get('x-admin-key');
-    const searchParams = req.nextUrl.searchParams;
+    const { searchParams } = new URL(req.url);
     const sellerId = searchParams.get('seller_id');
+    const adminKey = req.headers.get('x-admin-key');
 
     // Simple security: Admin key allows everything. 
     // If no admin key, we check if it's a seller request (future: session check)
@@ -21,24 +21,20 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const connection = await pool.getConnection();
-        try {
-            let query = 'SELECT * FROM registraya_vcard_registros';
-            const params = [];
+        let query = 'SELECT * FROM registraya_vcard_registros';
+        const params = [];
 
-            if (sellerId) {
-                query += ' WHERE seller_id = ?';
-                params.push(sellerId);
-            }
-
-            query += ' ORDER BY created_at DESC';
-
-            const [rows] = await connection.execute(query, params);
-            return NextResponse.json({ data: rows });
-        } finally {
-            connection.release();
+        if (sellerId) {
+            query += ' WHERE seller_id = ?';
+            params.push(Number(sellerId));
         }
+
+        query += ' ORDER BY created_at DESC';
+
+        const [rows]: any = await pool.execute(query, params);
+        return NextResponse.json({ data: rows });
     } catch (err: any) {
+        console.error('Error fetching registros:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
@@ -70,19 +66,14 @@ export async function PATCH(req: NextRequest) {
         const values = keys.map(key => updateFields[key]);
         const query = `UPDATE registraya_vcard_registros SET ${setClause} WHERE id = ?`;
 
-        const connection = await pool.getConnection();
-        try {
-            const [result] = await connection.execute(query, [...values, id]);
+        await pool.execute(query, [...values, id]);
 
-            // Fetch updated record
-            const [rows] = await connection.execute('SELECT * FROM registraya_vcard_registros WHERE id = ?', [id]);
-            return NextResponse.json({ data: rows });
-
-        } finally {
-            connection.release();
-        }
+        // Fetch updated record
+        const [rows] = await pool.execute('SELECT * FROM registraya_vcard_registros WHERE id = ?', [id]);
+        return NextResponse.json({ data: rows });
 
     } catch (err: any) {
+        console.error('Error updating registro:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

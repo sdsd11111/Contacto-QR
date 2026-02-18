@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
+import { formatPhoneEcuador } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,28 +10,34 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
 
         const {
-            nombre, email, whatsapp, profesion, empresa, bio, direccion,
+            nombre, email, profesion, empresa, bio, direccion,
             web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
             plan, foto_url, comprobante_url, galeria_urls,
-            status, slug, etiquetas, seller_id
+            status, slug, etiquetas, seller_id,
+            tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
         } = body;
+
+        const whatsapp = formatPhoneEcuador(body.whatsapp || '');
 
         // Basic validation
         if (!email || !nombre) {
             return NextResponse.json({ error: 'Email y Nombre son requeridos' }, { status: 400 });
         }
 
-        const connection = await pool.getConnection();
-
         try {
             // Check if user exists (by email) to determine Insert or Update
-            const [rows] = await connection.execute(
+            const [rows] = await pool.execute(
                 'SELECT id, slug FROM registraya_vcard_registros WHERE email = ?',
                 [email]
             );
 
             // Prepare JSON fields
             const galeriaUrlsJson = JSON.stringify(galeria_urls || []);
+
+            // Calculate legacy name for compatibility
+            const nombreLegacy = tipo_perfil === 'negocio'
+                ? nombre_negocio
+                : `${nombres || ''} ${apellidos || ''}`.trim();
 
             if ((rows as any[]).length > 0) {
                 // UPDATE
@@ -40,19 +47,17 @@ export async function POST(req: NextRequest) {
                         nombre=?, whatsapp=?, profesion=?, empresa=?, bio=?, direccion=?,
                         web=?, google_business=?, instagram=?, linkedin=?, facebook=?, tiktok=?,
                         productos_servicios=?, plan=?, foto_url=?, comprobante_url=?, galeria_urls=?,
-                        status=?, slug=?, etiquetas=?, seller_id=?
+                        status=?, slug=?, etiquetas=?, seller_id=?,
+                        tipo_perfil=?, nombres=?, apellidos=?, nombre_negocio=?, contacto_nombre=?, contacto_apellido=?
                     WHERE email=?
                 `;
 
-                // Use existing slug if not provided/changed, or update it. 
-                // Logic mostly keeps existing slug unless strictly needed.
-                // Here we update everything as requested.
-
-                await connection.execute(updateQuery, [
-                    nombre, whatsapp, profesion, empresa, bio, direccion,
+                await pool.execute(updateQuery, [
+                    nombreLegacy, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok,
                     productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
                     status || 'pendiente', slug || existingUser.slug, etiquetas, seller_id || null,
+                    tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || '',
                     email
                 ]);
 
@@ -68,24 +73,25 @@ export async function POST(req: NextRequest) {
                         id, created_at, nombre, email, whatsapp, profesion, empresa, bio, direccion,
                         web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                         plan, foto_url, comprobante_url, galeria_urls, status, slug, etiquetas,
-                        commission_status, seller_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+                        commission_status, seller_id,
+                        tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?)
                 `;
 
-                await connection.execute(insertQuery, [
-                    newId, now, nombre, email, whatsapp, profesion, empresa, bio, direccion,
+                await pool.execute(insertQuery, [
+                    newId, now, nombreLegacy, email, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                     plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', slug, etiquetas,
-                    seller_id || null
+                    seller_id || null,
+                    tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || ''
                 ]);
 
                 return NextResponse.json({ success: true, action: 'created', id: newId });
             }
 
-        } finally {
-            connection.release();
+        } catch (dbErr) {
+            throw dbErr;
         }
-
     } catch (err: any) {
         console.error('Error en API de registro (MySQL):', err);
         return NextResponse.json({ error: err.message }, { status: 500 });

@@ -23,44 +23,38 @@ export async function POST(req: NextRequest) {
                 console.log(`[PayPal Webhook] Confirmando pago para el usuario: ${email}`);
 
                 try {
-                    const connection = await pool.getConnection();
-                    try {
-                        const [result] = await connection.execute(
-                            'UPDATE registraya_vcard_registros SET status = ? WHERE email = ?',
-                            ['pagado', email]
-                        );
+                    await pool.execute(
+                        'UPDATE registraya_vcard_registros SET status = ? WHERE email = ?',
+                        ['pagado', email]
+                    );
 
-                        // Fetch updated user info
-                        const [rows] = await connection.execute(
-                            'SELECT nombre, whatsapp FROM registraya_vcard_registros WHERE email = ?',
-                            [email]
-                        );
-                        const users = rows as any[];
+                    // Fetch updated user info
+                    const [rows] = await pool.execute(
+                        'SELECT nombre, whatsapp FROM registraya_vcard_registros WHERE email = ?',
+                        [email]
+                    );
+                    const users = rows as any[];
 
-                        if (users.length > 0) {
-                            console.log(`[PayPal Webhook] ¡Éxito! Usuario ${email} marcado como pagado.`);
+                    if (users.length > 0) {
+                        console.log(`[PayPal Webhook] ¡Éxito! Usuario ${email} marcado como pagado.`);
 
-                            // Opcional: Disparar notificación por WhatsApp de pago aprobado
-                            try {
-                                const wpNotifyUrl = new URL('/api/notify-whatsapp', req.url).toString();
-                                await fetch(wpNotifyUrl, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({
-                                        name: users[0].nombre,
-                                        email: email,
-                                        whatsapp: users[0].whatsapp,
-                                        plan: 'PAGO CONFIRMADO (PayPal)'
-                                    })
-                                });
-                            } catch (notifyErr) {
-                                console.error('[PayPal Webhook] Error al notificar WhatsApp:', notifyErr);
-                            }
-                        } else {
-                            console.warn(`[PayPal Webhook] No se encontró ningún registro pendiente para el email: ${email}`);
+                        try {
+                            const wpNotifyUrl = new URL('/api/notify-whatsapp', req.url).toString();
+                            await fetch(wpNotifyUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: users[0].nombre,
+                                    email: email,
+                                    whatsapp: users[0].whatsapp,
+                                    plan: 'PAGO CONFIRMADO (PayPal)'
+                                })
+                            });
+                        } catch (notifyErr) {
+                            console.error('[PayPal Webhook] Error al notificar WhatsApp:', notifyErr);
                         }
-                    } finally {
-                        connection.release();
+                    } else {
+                        console.warn(`[PayPal Webhook] No se encontró ningún registro pendiente para el email: ${email}`);
                     }
                 } catch (dbErr: any) {
                     console.error('[PayPal Webhook] Error actualizando MySQL:', dbErr);

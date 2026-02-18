@@ -14,9 +14,16 @@ import {
     RefreshCw,
     ShieldCheck,
     DollarSign,
-    Users
+    Users,
+    ChevronDown
 } from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 import Link from "next/link";
+
+function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
 
 export default function SellerDashboard() {
     const [isAuthorized, setIsAuthorized] = useState(false);
@@ -75,15 +82,16 @@ export default function SellerDashboard() {
         setLoading(true);
         try {
             // We need an API that returns ONLY the sales for THIS seller
-            const res = await fetch(`/api/admin/registros?seller_id=${sellerId}`, {
-                headers: { 'x-admin-key': 'rya-admin-k3y-2026-s3cur3' } // Temporarily using admin key or we should create a seller-specific API
-            });
+            const res = await fetch(`/api/admin/registros?seller_id=${sellerId}`);
+            // The API should handle seller-level authorization or use a public-safe seller endpoint
             const data = await res.json();
             if (data.data) {
+                // Mostramos todo para que el vendedor vea su "pipeline"
+                // Pero los totales solo cuentan lo confirmado
                 setRegistros(data.data);
             }
         } catch (err) {
-            console.error("Error fetching sales:", err);
+            console.error("SellerDashboard: Error fetching sales:", err);
         }
         setLoading(false);
     };
@@ -139,10 +147,40 @@ export default function SellerDashboard() {
         );
     }
 
-    const totalSales = registros.length;
+    const totalSales = registros.filter(r => r.status !== 'cancelado').length;
     const pendingSales = registros.filter(r => r.status === 'pendiente').length;
     const paidSales = registros.filter(r => r.status === 'pagado' || r.status === 'entregado').length;
-    const totalComission = paidSales * (seller?.comision || 10); // Simple calculation for now
+
+    // Lógica de Comisiones Dinámicas
+    const getCommissionTier = (salesCount: number) => {
+        if (salesCount >= 200) return { percentage: 50, nextTier: null, goal: 200, currentTierMin: 200 };
+        if (salesCount >= 100) return { percentage: 40, nextTier: 200, goal: 100, currentTierMin: 100 };
+        return { percentage: 30, nextTier: 100, goal: 0, currentTierMin: 0 };
+    };
+
+    const tier = getCommissionTier(paidSales);
+    const currentPercentage = tier.percentage;
+
+    // Comisiones Pagadas (según lo marcado por el admin)
+    const paidCommissions = registros.reduce((acc, r) => {
+        if ((r.status === 'pagado' || r.status === 'entregado') && r.commission_status === 'paid') {
+            const price = r.plan === 'pro' ? 20 : 10;
+            return acc + (price * (currentPercentage / 100));
+        }
+        return acc;
+    }, 0);
+
+    // Pendiente de Cobro
+    const pendingCommissions = registros.reduce((acc, r) => {
+        if ((r.status === 'pagado' || r.status === 'entregado') && r.commission_status !== 'paid') {
+            const price = r.plan === 'pro' ? 20 : 10;
+            return acc + (price * (currentPercentage / 100));
+        }
+        return acc;
+    }, 0);
+
+    // Valor Total Histórico
+    const totalCommission = paidCommissions + pendingCommissions;
 
     return (
         <div className="min-h-screen bg-[#050B1C] text-white p-8 font-sans">
@@ -178,26 +216,70 @@ export default function SellerDashboard() {
                     </div>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {/* Barra de Progreso y Motivación */}
+                <div className="mb-12 bg-[#0A1229] border border-primary/20 rounded-[40px] p-10 relative overflow-hidden shadow-2xl">
+                    <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+                        <DollarSign size={120} className="text-primary" />
+                    </div>
+
+                    <div className="relative z-10">
+                        <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-8">
+                            <div>
+                                <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">Tu Nivel de Comisión: <span className="text-primary">{currentPercentage}%</span></h2>
+                                <p className="text-white/40 text-[11px] font-black uppercase tracking-widest">
+                                    {tier.nextTier
+                                        ? `¡Estás a ${tier.nextTier - paidSales} ventas de subir al ${currentPercentage + 10}%!`
+                                        : "¡HAS ALCANZADO EL NIVEL MÁXIMO DE COMISIÓN! 🚀"}
+                                </p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Ventas Confirmadas</p>
+                                <p className="text-3xl font-black italic tracking-tighter text-white">{paidSales} / {tier.nextTier || '∞'}</p>
+                            </div>
+                        </div>
+
+                        {/* Barra de progreso */}
+                        <div className="h-6 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-1">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${tier.nextTier ? Math.min(100, ((paidSales - tier.currentTierMin) / (tier.nextTier - tier.currentTierMin)) * 100) : 100}%` }}
+                                className="h-full bg-gradient-to-r from-primary to-[#FF8A33] rounded-full shadow-[0_0_20px_rgba(255,107,0,0.4)]"
+                            />
+                        </div>
+
+                        <div className="flex justify-between mt-4 text-[10px] font-black uppercase tracking-widest">
+                            <span className={cn(paidSales >= 0 ? "text-primary" : "text-white/20")}>Nivel 1 (30%)</span>
+                            <span className={cn(paidSales >= 100 ? "text-primary" : "text-white/20")}>Nivel 2 (40%)</span>
+                            <span className={cn(paidSales >= 200 ? "text-primary" : "text-white/20")}>Nivel Pro (50%)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
                     <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform"><Users size={48} /></div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Total Clientes</p>
                         <p className="text-4xl font-black italic tracking-tighter">{totalSales}</p>
                     </div>
                     <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-accent"><DollarSign size={48} /></div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-3">Ventas Pagadas</p>
-                        <p className="text-4xl font-black italic tracking-tighter">{paidSales}</p>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-yellow-500"><Clock size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 mb-3">Ventas Pendientes</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-yellow-500">{pendingSales}</p>
                     </div>
                     <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-yellow-500"><Clock size={48} /></div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 mb-3">En Revisión</p>
-                        <p className="text-4xl font-black italic tracking-tighter">{pendingSales}</p>
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-accent"><DollarSign size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-3">Ventas Confirmadas</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-accent">{paidSales}</p>
+                    </div>
+                    <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-green-500"><CheckCircle size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-500 mb-3">Ya Cobrado</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-green-500">${paidCommissions.toFixed(2)}</p>
                     </div>
                     <div className="bg-[#0A1229] border border-primary/20 rounded-[32px] p-8 relative overflow-hidden group shadow-lg shadow-primary/5">
                         <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-primary"><BarChart3 size={48} /></div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3">Comisión Generada</p>
-                        <p className="text-4xl font-black italic tracking-tighter">${totalComission.toFixed(2)}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3">Pendiente de Cobro</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-primary">${pendingCommissions.toFixed(2)}</p>
                     </div>
                 </div>
 
@@ -214,10 +296,10 @@ export default function SellerDashboard() {
                             <thead>
                                 <tr className="text-[10px] font-black uppercase tracking-widest text-white/30 bg-white/[0.01]">
                                     <th className="px-8 py-6">Fecha</th>
-                                    <th className="px-8 py-6">Cliente</th>
-                                    <th className="px-8 py-6">Email / WhatsApp</th>
-                                    <th className="px-8 py-6">Plan</th>
-                                    <th className="px-8 py-6">Estado</th>
+                                    <th className="px-8 py-6">Cliente / Plan</th>
+                                    <th className="px-8 py-6">Contacto</th>
+                                    <th className="px-8 py-6">Estado / Venta</th>
+                                    <th className="px-8 py-6 text-right">Pago / Comisión</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -239,25 +321,40 @@ export default function SellerDashboard() {
                                                 <p className="text-[10px] text-white/20 mt-1">{new Date(r.created_at).toLocaleTimeString()}</p>
                                             </td>
                                             <td className="px-8 py-6">
-                                                <p className="font-bold text-sm text-white uppercase italic tracking-tighter">{r.nombre}</p>
-                                                <p className="text-[10px] text-white/30 font-bold tracking-widest">{r.profesion || 'vCard Personal'}</p>
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="font-bold text-sm text-white uppercase italic tracking-tighter">{r.nombre}</p>
+                                                    <span className={cn(
+                                                        "px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest w-fit",
+                                                        r.plan === 'pro' ? "bg-primary/20 text-primary" : "bg-white/10 text-white/40"
+                                                    )}>
+                                                        Plan {r.plan || 'basic'}
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td className="px-8 py-6">
                                                 <p className="text-xs font-medium text-white/60">{r.email}</p>
-                                                <p className="text-xs font-medium text-white/40 mt-1">{r.whatsapp}</p>
-                                            </td>
-                                            <td className="px-8 py-6">
-                                                <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${r.plan === 'pro' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-white/10 text-white/30'}`}>
-                                                    {r.plan || 'basic'}
-                                                </span>
+                                                <p className="text-[10px] text-white/40 mt-1">{r.whatsapp}</p>
                                             </td>
                                             <td className="px-8 py-6">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full ${r.status === 'pagado' || r.status === 'entregado' ? 'bg-[#00F0FF]' : 'bg-yellow-500'}`} />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">
-                                                        {r.status === 'pagado' || r.status === 'entregado' ? 'Completado' : 'Pendiente'}
+                                                    <div className={cn(
+                                                        "w-2 h-2 rounded-full",
+                                                        (r.status === 'pagado' || r.status === 'entregado') ? "bg-[#00F0FF]" : r.status === 'cancelado' ? "bg-red-500" : "bg-yellow-500"
+                                                    )} />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                                                        {r.status === 'pagado' || r.status === 'entregado' ? 'Confirmado' : r.status === 'cancelado' ? 'Cancelado' : 'Pendiente Pago'}
                                                     </span>
                                                 </div>
+                                            </td>
+                                            <td className="px-8 py-6 text-right">
+                                                <span className={cn(
+                                                    "inline-block px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                                                    r.commission_status === 'paid'
+                                                        ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                                        : "bg-white/5 text-white/30 border-white/5"
+                                                )}>
+                                                    {r.commission_status === 'paid' ? 'Comisión Cobrada' : 'Pendiente Cobro'}
+                                                </span>
                                             </td>
                                         </tr>
                                     ))

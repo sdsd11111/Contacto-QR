@@ -25,11 +25,15 @@ export function middleware(request: NextRequest) {
     }
 
     // Para API routes protegidas: validar header
-    if (!adminKey || adminKey !== expectedKey) {
-        return NextResponse.json(
-            { error: 'No autorizado. Se requiere clave de administrador.' },
-            { status: 401 }
-        );
+    // Excepción: si viene un seller_id, permitimos que el route handler maneje la lógica
+    const sellerId = request.nextUrl.searchParams.get('seller_id');
+    if (!sellerId) {
+        if (!adminKey || adminKey !== expectedKey) {
+            return NextResponse.json(
+                { error: 'No autorizado. Se requiere clave de administrador.' },
+                { status: 401 }
+            );
+        }
     }
 
     return NextResponse.next();

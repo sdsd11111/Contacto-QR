@@ -21,7 +21,8 @@ import {
     Tag,
     Loader2,
     Mic,
-    Star
+    Star,
+    Square
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -68,7 +69,13 @@ export default function RegisterWizard() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showVideoGuide, setShowVideoGuide] = useState(true);
     const [formData, setFormData] = useState({
-        name: '',
+        tipo_perfil: 'persona' as 'persona' | 'negocio',
+        nombres: '',
+        apellidos: '',
+        nombre_negocio: '',
+        contacto_nombre: '',
+        contacto_apellido: '',
+        name: '', // Legacy field for internal logic if needed
         profession: '',
         company: '',
         whatsapp: '',
@@ -89,13 +96,24 @@ export default function RegisterWizard() {
         receiptUrl: '',
         paymentMethod: 'transfer' as 'transfer' | 'payphone' | 'paypal' | 'crypto',
         seller_id: null as string | null,
+        sellerCode: '',
     });
+
+    const [sellerName, setSellerName] = useState<string | null>(null);
+    const [isValidatingCode, setIsValidatingCode] = useState(false);
 
     const [emailError, setEmailError] = useState('');
     const [hasManualTags, setHasManualTags] = useState(false);
     const [isListening, setIsListening] = useState<string | null>(null);
     const [cryptoPayment, setCryptoPayment] = useState<{ payAddress: string, payAmount: number, payCurrency: string } | null>(null);
+    const [cryptoUrl, setCryptoUrl] = useState<string | null>(null);
     const [isCreatingCrypto, setIsCreatingCrypto] = useState(false);
+
+    // Voice interview states
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+    const [recordingTime, setRecordingTime] = useState(0);
+    const [isProcessingInterview, setIsProcessingInterview] = useState(false);
 
     const startListening = (field: 'bio' | 'products') => {
         if (isListening) return; // Prevent double engagement
@@ -128,6 +146,110 @@ export default function RegisterWizard() {
 
         recognition.start();
     };
+
+    // Voice Interview Functions
+    const startInterview = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            const audioChunks: Blob[] = [];
+
+            recorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            recorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                await processInterview(audioBlob);
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            recorder.start();
+            setMediaRecorder(recorder);
+            setIsRecording(true);
+            setRecordingTime(0);
+
+            // Auto-stop after 90 seconds
+            const maxDuration = 90000;
+            setTimeout(() => {
+                if (recorder.state === 'recording') {
+                    stopInterview();
+                }
+            }, maxDuration);
+
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            alert('No se pudo acceder al micrófono. Por favor, verifica los permisos.');
+        }
+    };
+
+    const stopInterview = () => {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            setIsRecording(false);
+        }
+    };
+
+    const processInterview = async (audioBlob: Blob) => {
+        setIsProcessingInterview(true);
+        try {
+            const interviewFormData = new FormData();
+            interviewFormData.append('audio', audioBlob, 'interview.webm');
+
+            const response = await fetch('/api/transcribe-interview', {
+                method: 'POST',
+                body: interviewFormData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al procesar el audio');
+            }
+
+            const result = await response.json();
+            if (result.success && result.data) {
+                // Auto-fill fields with extracted data
+                if (result.data.name) {
+                    if (formData.tipo_perfil === 'negocio') {
+                        updateForm('nombre_negocio', result.data.name);
+                    } else {
+                        updateForm('nombres', result.data.name);
+                    }
+                }
+                if (result.data.profession) updateForm('profession', result.data.profession);
+                if (result.data.bio) updateForm('bio', result.data.bio);
+                if (result.data.products) updateForm('products', result.data.products);
+                if (result.data.etiquetas) {
+                    updateForm('categories', result.data.etiquetas);
+                    setHasManualTags(true);
+                }
+
+                alert('¡Perfil completado exitosamente! Revisa los campos y ajusta si es necesario.');
+            }
+        } catch (error) {
+            console.error('Error processing interview:', error);
+            alert('Hubo un error al procesar tu entrevista. Por favor, intenta de nuevo.');
+        } finally {
+            setIsProcessingInterview(false);
+        }
+    };
+
+    // Recording timer
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isRecording) {
+            interval = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [isRecording]);
+
+    const formatTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
     const [previewDevice, setPreviewDevice] = useState('android');
     const [isGeneratingTags, setIsGeneratingTags] = useState(false);
 
@@ -242,16 +364,60 @@ export default function RegisterWizard() {
         if (attributionId) {
             setFormData(prev => ({ ...prev, seller_id: attributionId }));
             console.log("Seller Attribution Active:", attributionId);
+
+            // Si ya tenemos un seller_id, intentar buscar su nombre para mostrarlo
+            fetch(`/api/vcard/validate-seller?id=${attributionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        setSellerName(data.nombre);
+                    }
+                })
+                .catch(err => console.error("Error fetching seller name:", err));
         }
     }, []);
+
+    // Validar código de vendedor manual
+    useEffect(() => {
+        if (formData.sellerCode.length >= 3) {
+            const validateCode = async () => {
+                setIsValidatingCode(true);
+                try {
+                    const res = await fetch(`/api/vcard/validate-seller?code=${formData.sellerCode}`);
+                    const data = await res.json();
+                    if (data.success) {
+                        setFormData(prev => ({ ...prev, seller_id: data.id }));
+                        setSellerName(data.nombre);
+                    } else {
+                        setSellerName(null);
+                        setFormData(prev => ({ ...prev, seller_id: null }));
+                    }
+                } catch (err) {
+                    console.error("Error validating code:", err);
+                } finally {
+                    setIsValidatingCode(false);
+                }
+            };
+
+            const timer = setTimeout(validateCode, 500);
+            return () => clearTimeout(timer);
+        } else if (formData.sellerCode === '') {
+            setSellerName(null);
+            // No resetear seller_id si vino por URL (atribución automática)
+        }
+    }, [formData.sellerCode]);
 
     const validateEmail = (email: string) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
     };
 
-    const generateSlug = (nombre: string) => {
-        const cleanName = nombre
+    const generateSlug = (data: typeof formData) => {
+        const nameToUse = data.tipo_perfil === 'negocio'
+            ? data.nombre_negocio
+            : `${data.nombres} ${data.apellidos}`.trim();
+
+        const cleanName = nameToUse
             .toLowerCase()
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "") // Quitar acentos
@@ -303,7 +469,12 @@ export default function RegisterWizard() {
         }
     };
 
-    const handleCryptoPayment = async () => {
+    const handleCryptoPayment = async (e?: any) => {
+        if (e && typeof e.preventDefault === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        console.log("[Crossmint Trigger] handleCryptoPayment llamado. Evento:", e?.type || 'No event', "Trace:", new Error().stack);
         setIsCreatingCrypto(true);
         try {
             const response = await fetch('/api/create-crypto-payment', {
@@ -317,8 +488,9 @@ export default function RegisterWizard() {
             const data = await response.json();
 
             if (response.ok && data.paymentUrl) {
-                // Redirigir directamente al portal de Crossmint
-                window.location.href = data.paymentUrl;
+                setCryptoUrl(data.paymentUrl);
+                // Abrir en ventana nueva para no perder el progreso del formulario
+                window.open(data.paymentUrl, '_blank', 'width=500,height=700,scrollbars=yes');
             } else {
                 console.error("Crossmint Error Completo:", data);
                 alert(data.error || "Error al generar el portal de pago");
@@ -329,6 +501,14 @@ export default function RegisterWizard() {
         } finally {
             setIsCreatingCrypto(false);
         }
+    };
+
+    const generateEditCode = () => {
+        const year = new Date().getFullYear();
+        // Use 2026 as requested by user
+        const displayYear = 2026;
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        return `RYA-${displayYear}-${randomNum}`;
     };
 
     const fileToBase64 = (file: File): Promise<string> => {
@@ -379,15 +559,33 @@ export default function RegisterWizard() {
             photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:data:image/jpeg;base64,${folded}`;
         }
 
+        let fullName = '';
+        let structuredName = ''; // Campo N:
+        let organization = '';   // Campo ORG:
+
+        if (data.tipo_perfil === 'negocio') {
+            fullName = data.nombre_negocio;
+            organization = data.nombre_negocio;
+            if (data.contacto_nombre || data.contacto_apellido) {
+                structuredName = `${data.contacto_apellido || ''};${data.contacto_nombre || ''};;;`;
+            } else {
+                structuredName = ';;;;';
+            }
+        } else {
+            fullName = `${data.nombres} ${data.apellidos}`.trim();
+            structuredName = `${data.apellidos};${data.nombres};;;`;
+            organization = data.company || "";
+        }
+
         let noteContent = `${data.bio}${data.products ? '\n\nProductos/Servicios:\n' + data.products : ''} - Generado con RegistrameYa`;
 
         const vcard = [
             'BEGIN:VCARD',
             'VERSION:4.0',
-            `FN;CHARSET=UTF-8:${data.name}`,
-            `N;CHARSET=UTF-8:${data.name.split(' ').reverse().join(';')};;;`,
+            `FN;CHARSET=UTF-8:${fullName}`,
+            `N;CHARSET=UTF-8:${structuredName}`,
             `TITLE;CHARSET=UTF-8:${data.profession}`,
-            `ORG;CHARSET=UTF-8:${data.company}`,
+            `ORG;CHARSET=UTF-8:${organization}`,
             `TEL;TYPE=cell,text,voice;VALUE=uri:tel:${data.whatsapp}`,
             `EMAIL;TYPE=work:${data.email}`,
             `ADR;TYPE=work;LABEL="${data.address.replace(/"/g, "'")}":;;${data.address};;;;`,
@@ -441,7 +639,7 @@ export default function RegisterWizard() {
                 console.error("Error fetching existing user:", err);
             }
 
-            const slug = existingUser?.slug || generateSlug(formData.name);
+            const slug = existingUser?.slug || generateSlug(formData);
 
             // 2. Subir imágenes (solo si hay nuevas)
             // 2. Subir imágenes localmente
@@ -465,13 +663,9 @@ export default function RegisterWizard() {
             }
 
             if (formData.receipt) {
-                if (formData.receiptUrl) {
-                    receiptUrl = formData.receiptUrl;
-                } else {
-                    try {
-                        receiptUrl = await uploadFile(formData.receipt);
-                    } catch (e) { console.error("Error uploading receipt", e); }
-                }
+                try {
+                    receiptUrl = await uploadFile(formData.receipt);
+                } catch (e) { console.error("Error uploading receipt", e); }
             } else if (existingUser) {
                 receiptUrl = existingUser.comprobante_url;
             }
@@ -480,7 +674,12 @@ export default function RegisterWizard() {
 
             // 3. UPSERT: Inserta o Actualiza por email
             const upsertData = {
-                nombre: formData.name,
+                tipo_perfil: formData.tipo_perfil,
+                nombres: formData.nombres,
+                apellidos: formData.apellidos,
+                nombre_negocio: formData.nombre_negocio,
+                contacto_nombre: formData.contacto_nombre,
+                contacto_apellido: formData.contacto_apellido,
                 whatsapp: formData.whatsapp,
                 email: formData.email,
                 profesion: formData.profession,
@@ -551,7 +750,11 @@ export default function RegisterWizard() {
 
     const handleNext = () => {
         if (step === 1) {
-            if (!formData.name || !formData.whatsapp || !validateEmail(formData.email)) {
+            const hasName = formData.tipo_perfil === 'negocio'
+                ? !!formData.nombre_negocio
+                : (!!formData.nombres && !!formData.apellidos);
+
+            if (!hasName || !formData.whatsapp || !validateEmail(formData.email)) {
                 if (!validateEmail(formData.email)) setEmailError('Ingresa un correo válido');
                 return;
             }
@@ -707,19 +910,99 @@ export default function RegisterWizard() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="group">
-                                    <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1">Nombre Completo</label>
-                                    <div className="relative">
-                                        <User className="absolute left-6 top-1/2 -translate-y-1/2 text-navy/20 group-focus-within:text-primary transition-colors" size={20} />
-                                        <input
-                                            type="text"
-                                            value={formData.name}
-                                            onChange={(e) => updateForm('name', e.target.value)}
-                                            placeholder="Ej. Manuel Pérez"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
-                                        />
-                                    </div>
+
+                                {/* Perfil Type Toggle */}
+                                <div className="flex bg-navy/5 p-1 rounded-2xl mb-8">
+                                    <button
+                                        onClick={() => updateForm('tipo_perfil', 'persona')}
+                                        className={cn(
+                                            "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                            formData.tipo_perfil === 'persona' ? "bg-white text-navy shadow-sm" : "text-navy/40 hover:text-navy/60"
+                                        )}
+                                    >
+                                        <User size={14} />
+                                        Persona
+                                    </button>
+                                    <button
+                                        onClick={() => updateForm('tipo_perfil', 'negocio')}
+                                        className={cn(
+                                            "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                            formData.tipo_perfil === 'negocio' ? "bg-white text-navy shadow-sm" : "text-navy/40 hover:text-navy/60"
+                                        )}
+                                    >
+                                        <Briefcase size={14} />
+                                        Negocio / Local
+                                    </button>
                                 </div>
+
+                                {formData.tipo_perfil === 'persona' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="group">
+                                            <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1">Nombres</label>
+                                            <div className="relative">
+                                                <User className="absolute left-6 top-1/2 -translate-y-1/2 text-navy/20 group-focus-within:text-primary transition-colors" size={20} />
+                                                <input
+                                                    type="text"
+                                                    value={formData.nombres}
+                                                    onChange={(e) => updateForm('nombres', e.target.value)}
+                                                    placeholder="Ej. Manuel"
+                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="group">
+                                            <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1">Apellidos</label>
+                                            <div className="relative">
+                                                <User className="absolute left-6 top-1/2 -translate-y-1/2 text-navy/20 group-focus-within:text-primary transition-colors" size={20} />
+                                                <input
+                                                    type="text"
+                                                    value={formData.apellidos}
+                                                    onChange={(e) => updateForm('apellidos', e.target.value)}
+                                                    placeholder="Ej. Pérez"
+                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        <div className="group">
+                                            <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1">Nombre del Negocio / Local</label>
+                                            <div className="relative">
+                                                <Briefcase className="absolute left-6 top-1/2 -translate-y-1/2 text-navy/20 group-focus-within:text-primary transition-colors" size={20} />
+                                                <input
+                                                    type="text"
+                                                    value={formData.nombre_negocio}
+                                                    onChange={(e) => updateForm('nombre_negocio', e.target.value)}
+                                                    placeholder="Ej. Ferretería El Maestro"
+                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-black text-navy transition-all shadow-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="group">
+                                                <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1 text-primary/60">Nombre de Contacto (Opcional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.contacto_nombre}
+                                                    onChange={(e) => updateForm('contacto_nombre', e.target.value)}
+                                                    placeholder="Ej. Juan (Opcional)"
+                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                />
+                                            </div>
+                                            <div className="group">
+                                                <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1 text-primary/60">Apellido de Contacto (Opcional)</label>
+                                                <input
+                                                    type="text"
+                                                    value={formData.contacto_apellido}
+                                                    onChange={(e) => updateForm('contacto_apellido', e.target.value)}
+                                                    placeholder="Ej. Paz (Opcional)"
+                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="group">
                                     <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1">WhatsApp</label>
@@ -752,6 +1035,43 @@ export default function RegisterWizard() {
                                     </div>
                                     {emailError && <p className="mt-2 text-[10px] font-black text-red-500 uppercase italic tracking-widest ml-1">{emailError}</p>}
                                 </div>
+
+                                {/* Seller Code Field */}
+                                <div className="group pt-4 border-t border-navy/5">
+                                    <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1 flex justify-between items-center">
+                                        <span>Código de Vendedor / Promocional</span>
+                                        {sellerName && <span className="text-primary animate-pulse">Vendedor: {sellerName}</span>}
+                                    </label>
+                                    <div className="relative">
+                                        <Tag className={cn(
+                                            "absolute left-6 top-1/2 -translate-y-1/2 transition-colors",
+                                            sellerName ? "text-primary" : "text-navy/20 group-focus-within:text-primary"
+                                        )} size={20} />
+                                        <input
+                                            type="text"
+                                            value={formData.sellerCode}
+                                            onChange={(e) => updateForm('sellerCode', e.target.value)}
+                                            placeholder="Ej. 001"
+                                            className={cn(
+                                                "w-full bg-white/50 border-2 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm uppercase",
+                                                sellerName ? "border-primary/20 bg-primary/5" : "border-transparent focus:border-primary/20"
+                                            )}
+                                        />
+                                        {isValidatingCode && (
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                                                <Loader2 className="animate-spin text-primary" size={20} />
+                                            </div>
+                                        )}
+                                        {sellerName && (
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                                                <CheckCircle className="text-primary" size={20} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="mt-2 text-[9px] font-bold text-navy/30 uppercase tracking-widest ml-1">
+                                        Si un asesor te ayudó, ingresa su código aquí.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -771,6 +1091,63 @@ export default function RegisterWizard() {
                                         <span className="text-primary font-black">Pro Tip:</span> Puedes dictar tus textos con el micrófono 🎙️. Si se detiene, dale un espacio y pulsa el botón de nuevo.
                                     </p>
                                 </div>
+
+                                {/* Voice Interview Button */}
+                                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-3xl p-6 mb-6 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
+                                    <div className="relative">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center">
+                                                <Mic className="text-white" size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-black text-navy uppercase italic tracking-tight">Entrevista Inteligente</h3>
+                                                <p className="text-[10px] text-navy/60 font-bold uppercase tracking-widest">Completa tu perfil en segundos con IA</p>
+                                            </div>
+                                        </div>
+
+                                        {!isRecording && !isProcessingInterview && (
+                                            <>
+                                                <p className="text-sm text-navy/70 font-medium mb-4 leading-relaxed">
+                                                    Graba un audio de 30-90 segundos respondiendo: <strong>¿Quién eres? ¿A qué te dedicas? ¿Qué servicios ofreces?</strong> La IA completará tu perfil automáticamente.
+                                                </p>
+                                                <button
+                                                    onClick={startInterview}
+                                                    className="w-full bg-primary text-white font-black uppercase text-sm py-4 px-6 rounded-2xl hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
+                                                >
+                                                    <Mic size={20} className="group-hover:scale-110 transition-transform" />
+                                                    Empezar entrevista
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {isRecording && (
+                                            <div className="text-center">
+                                                <div className="flex items-center justify-center gap-3 mb-4">
+                                                    <div className="w-4 h-4 rounded-full bg-red-500 animate-pulse"></div>
+                                                    <span className="text-2xl font-black text-navy tabular-nums">{formatTime(recordingTime)}</span>
+                                                </div>
+                                                <p className="text-sm text-navy/60 font-medium mb-4">Grabando... Habla claro y natural</p>
+                                                <button
+                                                    onClick={stopInterview}
+                                                    className="w-full bg-red-500 text-white font-black uppercase text-sm py-4 px-6 rounded-2xl hover:bg-red-600 transition-all shadow-lg flex items-center justify-center gap-2"
+                                                >
+                                                    <Square size={20} />
+                                                    Detener grabación
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {isProcessingInterview && (
+                                            <div className="text-center py-4">
+                                                <Loader2 className="animate-spin text-primary mx-auto mb-3" size={40} />
+                                                <p className="text-sm font-black text-navy uppercase">Procesando tu entrevista...</p>
+                                                <p className="text-xs text-navy/50 font-medium mt-1">Transcribiendo y extrayendo información</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Profesión / Título</label>
@@ -1040,9 +1417,6 @@ export default function RegisterWizard() {
                                         key={tab.id}
                                         onClick={() => {
                                             updateForm('paymentMethod', tab.id);
-                                            if (tab.id === 'crypto') {
-                                                handleCryptoPayment();
-                                            }
                                         }}
                                         className={cn(
                                             "flex-1 px-4 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap",
@@ -1244,167 +1618,168 @@ export default function RegisterWizard() {
                                 ) : (
                                     <motion.div
                                         key="crypto"
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: 10 }}
-                                        className="bg-white/5 p-8 rounded-[40px] border border-white/10 text-center max-w-md mx-auto"
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-white/5 p-12 rounded-[40px] border border-white/10 text-center max-w-md mx-auto"
                                     >
-                                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <ShieldCheck className="text-primary" size={32} />
+                                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                            <Zap className="text-primary animate-pulse" size={32} />
                                         </div>
-                                        <h3 className="text-xl font-black uppercase italic tracking-tighter mb-4">Pago con Criptomonedas</h3>
-                                        <p className="text-sm text-white/60 mb-6">Paga de forma segura con USDT, BTC o ETH a través de Crossmint.</p>
+                                        <h3 className="text-2xl font-black uppercase italic tracking-tighter mb-2">Próximamente</h3>
+                                        <p className="text-sm text-white/40 font-medium">Estamos trabajando para integrar pagos seguros con Criptomonedas (BTC, USDT, ETH).</p>
 
-                                        {isCreatingCrypto ? (
-                                            <div className="bg-primary/20 text-primary p-6 rounded-2xl font-black uppercase tracking-widest flex flex-col items-center justify-center gap-4 animate-pulse border border-primary/30">
-                                                <Loader2 className="animate-spin w-8 h-8" />
-                                                <span>Abriendo Pasarela Segura...</span>
-                                            </div>
-                                        ) : (
-                                            <div className="p-6 rounded-2xl border border-white/10 bg-white/5">
-                                                <p className="text-xs text-white/40 uppercase font-black tracking-widest mb-2">Estado</p>
-                                                <p className="text-primary font-bold">ESPERANDO INICIO DE PAGO</p>
-                                            </div>
-                                        )}
+                                        <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                                            <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-bold">Disponible en la versión 2.0</p>
 
-                                        <p className="text-[10px] text-white/30 mt-6 leading-tight max-w-[200px] mx-auto">
-                                            Serás redirigido al portal oficial de Crossmint para completar tu transacción.
-                                        </p>
+                                            <a
+                                                href={`https://wa.me/593963410409?text=Hola,%20estoy%20en%20el%20paso%20de%20pago%20con%20Cripto%20y%20necesito%20ayuda%20para%20pagar%20mi%20vCard%20(Plan%20Pro%20$20).%20Mi%20correo:%20${formData.email}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="w-full bg-green-500/10 text-green-400 font-bold text-[10px] py-4 rounded-xl flex items-center justify-center gap-2 border border-green-500/20 hover:bg-green-500/20 transition-all"
+                                            >
+                                                ¿Necesitas ayuda inmediata? Soporte por WhatsApp
+                                            </a>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
                         </div>
-                    )}
+                    )
+                    }
 
                     {/* STEP 5: EN REVISIÓN */}
-                    {step === 5 && (
-                        <div className="max-w-2xl mx-auto text-center">
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="w-24 h-24 bg-accent/20 text-accent rounded-full flex items-center justify-center mx-auto mb-10"
-                            >
-                                <CheckCircle size={56} strokeWidth={2.5} />
-                            </motion.div>
-                            <h2 className="text-3xl md:text-4xl font-black text-navy tracking-tighter uppercase italic mb-4">¡Registro Recibido!</h2>
-                            <p className="text-navy/60 font-medium text-base mb-3 text-center">
-                                Tu solicitud ha sido enviada con éxito.
-                            </p>
-                            <div className="relative w-48 h-48 mx-auto mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-primary/20">
-                                <img
-                                    src="/images/entrega_contacto.webp"
-                                    className="w-full h-full object-cover"
-                                    alt="Entrega en 60 minutos"
-                                />
-                                <div className="absolute inset-x-0 bottom-0 bg-primary/90 backdrop-blur-sm py-2 flex items-center justify-center border-t border-white/20">
-                                    <span className="text-white font-black text-xs uppercase tracking-widest">Entrega en 60 minutos</span>
-                                </div>
-                            </div>
-                            <p className="text-2xl md:text-3xl font-black text-primary text-center mb-3 leading-tight">
-                                Tu perfil estará listo en máximo 60 minutos
-                            </p>
-                            <p className="text-navy/60 font-medium text-base mb-8 text-center">
-                                Te enviaremos tu Contacto Digital y Código QR a tu correo electrónico y WhatsApp.
-                            </p>
-
-                            <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-accent to-primary" />
-                                <div className="flex flex-col md:flex-row items-center gap-6 justify-center">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
-                                            <Mail size={32} />
-                                        </div>
-                                        <div className="text-left">
-                                            <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
-                                            <p className="text-sm font-bold text-navy/40 truncate max-w-[180px]">{formData.email}</p>
-                                        </div>
+                    {
+                        step === 5 && (
+                            <div className="max-w-2xl mx-auto text-center">
+                                <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="w-24 h-24 bg-accent/20 text-accent rounded-full flex items-center justify-center mx-auto mb-10"
+                                >
+                                    <CheckCircle size={56} strokeWidth={2.5} />
+                                </motion.div>
+                                <h2 className="text-3xl md:text-4xl font-black text-navy tracking-tighter uppercase italic mb-4">¡Registro Recibido!</h2>
+                                <p className="text-navy/60 font-medium text-base mb-3 text-center">
+                                    Tu solicitud ha sido enviada con éxito.
+                                </p>
+                                <div className="relative w-48 h-48 mx-auto mb-6 rounded-3xl overflow-hidden shadow-xl border-4 border-primary/20">
+                                    <img
+                                        src="/images/entrega_contacto.webp"
+                                        className="w-full h-full object-cover"
+                                        alt="Entrega en 60 minutos"
+                                    />
+                                    <div className="absolute inset-x-0 bottom-0 bg-primary/90 backdrop-blur-sm py-2 flex items-center justify-center border-t border-white/20">
+                                        <span className="text-white font-black text-xs uppercase tracking-widest">Entrega en 60 minutos</span>
                                     </div>
-
-                                    <button
-                                        onClick={async () => {
-                                            let photoB64 = null;
-                                            if (formData.photo) {
-                                                try {
-                                                    photoB64 = await fileToBase64(formData.photo);
-                                                } catch (e) { console.error("Error base64 photo", e); }
-                                            }
-                                            const vcfContent = generateVCard(formData, photoB64, formData.categories);
-                                            const blob = new Blob([vcfContent], { type: 'text/vcard' });
-                                            const url = window.URL.createObjectURL(blob);
-                                            const link = document.createElement('a');
-                                            link.href = url;
-                                            link.setAttribute('download', `${formData.name.replace(/\s+/g, '_')}.vcf`);
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                        }}
-                                        className="bg-navy text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary transition-all flex items-center gap-2 shadow-lg"
-                                    >
-                                        <FileText size={18} /> Descargar vCard
-                                    </button>
                                 </div>
-                            </div>
+                                <p className="text-2xl md:text-3xl font-black text-primary text-center mb-3 leading-tight">
+                                    Tu perfil estará listo en máximo 60 minutos
+                                </p>
+                                <p className="text-navy/60 font-medium text-base mb-8 text-center">
+                                    Te enviaremos tu Contacto Digital y Código QR a tu correo electrónico y WhatsApp.
+                                </p>
 
-                            {/* RECOMPENSA POR RESEÑA */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.5 }}
-                                className="mt-10 bg-gradient-to-br from-navy to-navy/90 p-8 rounded-[3rem] text-white border-2 border-primary/30 shadow-2xl relative overflow-hidden"
-                            >
-                                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
-                                <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 text-left">
-                                    <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center shrink-0 border border-white/5">
-                                        <span className="text-4xl font-black text-primary">-50%</span>
-                                        <span className="text-[8px] font-black uppercase tracking-widest">Descuento</span>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-2xl font-black uppercase tracking-tighter italic mb-2">¡Gana un 50% de Descuento en tu renovación!</h3>
-                                        <p className="text-sm text-white/60 mb-6 font-medium leading-relaxed">
-                                            Ayúdanos a crecer con una reseña en Google y te regalamos la mitad del costo de tu renovación el próximo año. ¡Solo te toma 15 segundos!
-                                        </p>
-                                        <a
-                                            href="https://g.page/r/CRWzEc2rIpGjEAI/review"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-orange hover:scale-105 transition-all"
+                                <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-accent to-primary" />
+                                    <div className="flex flex-col md:flex-row items-center gap-6 justify-center">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                                <Mail size={32} />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
+                                                <p className="text-sm font-bold text-navy/40 truncate max-w-[180px]">{formData.email}</p>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={async () => {
+                                                let photoB64 = null;
+                                                if (formData.photo) {
+                                                    try {
+                                                        photoB64 = await fileToBase64(formData.photo);
+                                                    } catch (e) { console.error("Error base64 photo", e); }
+                                                }
+                                                const vcfContent = generateVCard(formData, photoB64, formData.categories);
+                                                const blob = new Blob([vcfContent], { type: 'text/vcard' });
+                                                const url = window.URL.createObjectURL(blob);
+                                                const link = document.createElement('a');
+                                                link.href = url;
+                                                link.setAttribute('download', `${formData.name.replace(/\s+/g, '_')}.vcf`);
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                            }}
+                                            className="bg-navy text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary transition-all flex items-center gap-2 shadow-lg"
                                         >
-                                            <Star size={16} fill="currentColor" /> Dejar mi Reseña <ArrowRight size={16} />
-                                        </a>
+                                            <FileText size={18} /> Descargar vCard
+                                        </button>
                                     </div>
                                 </div>
-                            </motion.div>
-                        </div>
-                    )}
+
+                                {/* RECOMPENSA POR RESEÑA */}
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                    className="mt-10 bg-gradient-to-br from-navy to-navy/90 p-8 rounded-[3rem] text-white border-2 border-primary/30 shadow-2xl relative overflow-hidden"
+                                >
+                                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 rounded-full blur-3xl" />
+                                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 text-left">
+                                        <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center shrink-0 border border-white/5">
+                                            <span className="text-4xl font-black text-primary">-50%</span>
+                                            <span className="text-[8px] font-black uppercase tracking-widest">Descuento</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-black uppercase tracking-tighter italic mb-2">¡Gana un 50% de Descuento en tu renovación!</h3>
+                                            <p className="text-sm text-white/60 mb-6 font-medium leading-relaxed">
+                                                Ayúdanos a crecer con una reseña en Google y te regalamos la mitad del costo de tu renovación el próximo año. ¡Solo te toma 15 segundos!
+                                            </p>
+                                            <a
+                                                href="https://g.page/r/CRWzEc2rIpGjEAI/review"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-orange hover:scale-105 transition-all"
+                                            >
+                                                <Star size={16} fill="currentColor" /> Dejar mi Reseña <ArrowRight size={16} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )
+                    }
 
                     {/* Navigation */}
-                    {step < 5 && (
-                        <div className="mt-12 flex justify-between items-center max-w-xl mx-auto">
-                            {step > 1 ? (
+                    {
+                        step < 5 && (
+                            <div className="mt-12 flex justify-between items-center max-w-xl mx-auto">
+                                {step > 1 ? (
+                                    <button
+                                        onClick={handleBack}
+                                        className={cn(
+                                            "px-10 py-5 rounded-button font-black text-xs uppercase tracking-widest transition-all",
+                                            step >= 4 ? "text-white/40 hover:text-white" : "text-navy/40 hover:text-navy"
+                                        )}
+                                    >
+                                        ← Atrás
+                                    </button>
+                                ) : <div />}
+
                                 <button
-                                    onClick={handleBack}
+                                    onClick={handleNext}
+                                    disabled={isSubmitting}
                                     className={cn(
-                                        "px-10 py-5 rounded-button font-black text-xs uppercase tracking-widest transition-all",
-                                        step >= 4 ? "text-white/40 hover:text-white" : "text-navy/40 hover:text-navy"
+                                        "px-12 py-6 rounded-button font-black text-xl shadow-lg flex items-center gap-4 transition-all hover:scale-105 active:scale-95",
+                                        step >= 4 ? "bg-primary text-white shadow-orange" : "bg-navy text-white",
+                                        isSubmitting && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
-                                    ← Atrás
+                                    {step === 5 ? (isSubmitting ? 'Procesando...' : 'Finalizar Registro') : 'Siguiente'} <ArrowRight size={20} />
                                 </button>
-                            ) : <div />}
-
-                            <button
-                                onClick={handleNext}
-                                disabled={isSubmitting}
-                                className={cn(
-                                    "px-12 py-6 rounded-button font-black text-xl shadow-lg flex items-center gap-4 transition-all hover:scale-105 active:scale-95",
-                                    step >= 4 ? "bg-primary text-white shadow-orange" : "bg-navy text-white",
-                                    isSubmitting && "opacity-50 cursor-not-allowed"
-                                )}
-                            >
-                                {step === 5 ? (isSubmitting ? 'Procesando...' : 'Finalizar Registro') : 'Siguiente'} <ArrowRight size={20} />
-                            </button>
-                        </div>
-                    )}
+                            </div>
+                        )
+                    }
                 </motion.div>
             </AnimatePresence>
 
@@ -1430,6 +1805,7 @@ export default function RegisterWizard() {
                 rel="stylesheet"
                 href="https://cdn.payphonetodoesposible.com/box/v1.1/payphone-payment-box.css"
             />
+
         </div>
     );
 }

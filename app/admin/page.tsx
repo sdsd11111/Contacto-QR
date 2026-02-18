@@ -18,6 +18,7 @@ import {
     ImageIcon,
     FileText,
     ShieldAlert,
+    ShieldCheck,
     Edit,
     Save,
     X,
@@ -53,6 +54,12 @@ export default function AdminDashboard() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingRegistro, setEditingRegistro] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+
+    // Estados para creación de vendedor
+    const [isCreateSellerModalOpen, setIsCreateSellerModalOpen] = useState(false);
+    const [newSeller, setNewSeller] = useState({ nombre: '', email: '', password: '', comision_porcentaje: 30 });
+    const [isCreatingSeller, setIsCreatingSeller] = useState(false);
 
     useEffect(() => {
         const storedKey = localStorage.getItem('admin_access_key');
@@ -144,7 +151,42 @@ export default function AdminDashboard() {
         }
     }, [isAuthorized]);
 
+    const updateCommissionStatus = async (id: string, currentStatus: string) => {
+        if (pendingIds.has(id)) return;
+        setPendingIds(prev => new Set(prev).add(id));
+
+        const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify({ id, commission_status: newStatus })
+            });
+            if (res.ok) {
+                setRegistros(prev => prev.map(r => r.id === id ? { ...r, commission_status: newStatus } : r));
+            } else {
+                const result = await res.json();
+                alert("Error al actualizar comisión: " + (result.error || 'Error desconocido'));
+            }
+        } catch {
+            alert("Error al actualizar comisión.");
+        } finally {
+            setPendingIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
+    };
+
     const updateStatus = async (id: string, newStatus: string) => {
+        if (pendingIds.has(id)) return;
+        setPendingIds(prev => new Set(prev).add(id));
+
         const adminKey = localStorage.getItem('admin_access_key') || '';
         try {
             const res = await fetch('/api/admin/registros', {
@@ -163,6 +205,12 @@ export default function AdminDashboard() {
             }
         } catch {
             alert("Error al actualizar estado.");
+        } finally {
+            setPendingIds(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
         }
     };
 
@@ -216,6 +264,34 @@ export default function AdminDashboard() {
             alert("Error al guardar cambios: " + err.message);
         }
         setIsSaving(false);
+    };
+
+    const handleCreateSeller = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreatingSeller(true);
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch('/api/admin/sellers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify(newSeller)
+            });
+            const result = await res.json();
+            if (res.ok) {
+                alert(`✅ Vendedor creado con éxito. Código asignado: ${result.data.codigo}`);
+                setIsCreateSellerModalOpen(false);
+                setNewSeller({ nombre: '', email: '', password: '', comision_porcentaje: 30 });
+                fetchSellers();
+            } else {
+                alert("❌ Error: " + (result.error || 'Error desconocido'));
+            }
+        } catch (err: any) {
+            alert("❌ Error: " + err.message);
+        }
+        setIsCreatingSeller(false);
     };
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -316,7 +392,19 @@ export default function AdminDashboard() {
         const name = (r.nombre || "").toLowerCase();
         const email = (r.email || "").toLowerCase();
         const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === "todos" || r.status === statusFilter;
+
+        // Logical filter mapping
+        let matchesStatus = true;
+        if (statusFilter === "clientes_pendientes") {
+            matchesStatus = r.status === "pendiente";
+        } else if (statusFilter === "comisiones_pendientes") {
+            matchesStatus = !!(r.seller_id && r.commission_status !== "paid" && (r.status === "pagado" || r.status === "entregado"));
+        } else if (statusFilter === "comisiones_pagadas") {
+            matchesStatus = !!(r.seller_id && r.commission_status === "paid");
+        } else if (statusFilter !== "todos") {
+            matchesStatus = r.status === statusFilter;
+        }
+
         const matchesSeller = !sellerIdFilter || Number(r.seller_id) === Number(sellerIdFilter);
         return matchesSearch && matchesStatus && matchesSeller;
     });
@@ -382,6 +470,7 @@ export default function AdminDashboard() {
                         <input
                             type="password"
                             placeholder="Ingrese Clave de Acceso"
+                            autoComplete="current-password"
                             value={accessKey}
                             onChange={(e) => setAccessKey(e.target.value)}
                             className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/40 text-center font-bold"
@@ -432,6 +521,12 @@ export default function AdminDashboard() {
                             <Users className="text-primary" size={24} />
                             <h2 className="text-2xl font-black uppercase italic tracking-tighter">Socios & Vendedores</h2>
                         </div>
+                        <button
+                            onClick={() => setIsCreateSellerModalOpen(true)}
+                            className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-navy transition-all shadow-lg shadow-primary/5"
+                        >
+                            <Users size={16} /> Crear Nuevo Vendedor
+                        </button>
                     </div>
 
                     <div className="flex flex-wrap gap-4">
@@ -504,8 +599,8 @@ export default function AdminDashboard() {
                                                 >
                                                     <span className="font-black text-xs uppercase tracking-tighter truncate">{s.nombre}</span>
                                                     <div className="flex justify-between items-center mt-1">
+                                                        <span className="text-[9px] font-black text-primary uppercase">Código: {s.codigo}</span>
                                                         <span className="text-[9px] font-bold text-white/40">{s.total_ventas} Ventas</span>
-                                                        <span className="text-[9px] font-black text-primary uppercase">Com. {s.comision_porcentaje}%</span>
                                                     </div>
                                                 </button>
                                             ))
@@ -517,20 +612,112 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 mb-12">
-                    {['todos', 'pendiente', 'pagado', 'entregado'].map(s => (
-                        <div
-                            key={s}
-                            onClick={() => setStatusFilter(s)}
-                            className={cn(
-                                "p-6 rounded-3xl border cursor-pointer transition-all",
-                                statusFilter === s ? "bg-primary/10 border-primary" : "bg-white/5 border-white/10 hover:border-white/20"
-                            )}
-                        >
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2">{s}</p>
-                            <p className="text-3xl font-black">{registros.filter(r => s === 'todos' || r.status === s).length}</p>
-                        </div>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
+                    <div
+                        onClick={() => setStatusFilter("todos")}
+                        className={cn(
+                            "bg-[#0A1229] border rounded-[32px] p-6 relative overflow-hidden group cursor-pointer transition-all hover:scale-[1.02]",
+                            statusFilter === "todos" ? "border-primary" : "border-white/5"
+                        )}
+                    >
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-white"><QrCode size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">vCards Vendidas</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-white">
+                            {registros.filter(r => r.status === 'pagado' || r.status === 'entregado').length}
+                        </p>
+                    </div>
+
+                    <div
+                        onClick={() => setStatusFilter("pagado")}
+                        className={cn(
+                            "bg-[#0A1229] border rounded-[32px] p-6 relative overflow-hidden group cursor-pointer transition-all hover:scale-[1.02]",
+                            statusFilter === "pagado" ? "border-accent" : "border-white/5"
+                        )}
+                    >
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-accent"><BarChart3 size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Total Ingresado</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-accent">
+                            ${registros.reduce((acc, r) => (r.status === 'pagado' || r.status === 'entregado') ? acc + (r.plan === 'pro' ? 20 : 10) : acc, 0).toFixed(2)}
+                        </p>
+                    </div>
+
+                    <div
+                        onClick={() => setStatusFilter("todos")}
+                        className="bg-[#0A1229] border border-white/5 rounded-[32px] p-6 relative overflow-hidden group shadow-lg shadow-white/5"
+                    >
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-white"><ShieldAlert size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Utilidad Neta</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-white">
+                            ${(() => {
+                                const totalIngreso = registros.reduce((acc, r) => (r.status === 'pagado' || r.status === 'entregado') ? acc + (r.plan === 'pro' ? 20 : 10) : acc, 0);
+                                const totalComisiones = registros.reduce((acc, r) => {
+                                    if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id) {
+                                        return acc + (r.plan === 'pro' ? 10 : 5);
+                                    }
+                                    return acc;
+                                }, 0);
+                                return (totalIngreso - totalComisiones).toFixed(2);
+                            })()}
+                        </p>
+                    </div>
+
+                    <div
+                        onClick={() => setStatusFilter("clientes_pendientes")}
+                        className={cn(
+                            "border rounded-[32px] p-6 relative overflow-hidden group cursor-pointer transition-all hover:scale-[1.02]",
+                            statusFilter === "clientes_pendientes" ? "bg-primary/20 border-primary shadow-[0_0_30px_rgba(255,107,0,0.1)]" : "bg-primary/10 border-primary/20 hover:bg-primary/20"
+                        )}
+                    >
+                        <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:scale-110 transition-transform text-primary"><Users size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3 font-bold">Clientes x Cobrar</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-primary">
+                            {registros.filter(r => r.status === 'pendiente').length}
+                        </p>
+                        <p className="text-[10px] font-bold text-primary/60 mt-2">
+                            Val. Pendiente: ${registros.reduce((acc, r) => r.status === 'pendiente' ? acc + (r.plan === 'pro' ? 20 : 10) : acc, 0).toFixed(2)}
+                        </p>
+                    </div>
+
+                    <div
+                        onClick={() => setStatusFilter("comisiones_pendientes")}
+                        className={cn(
+                            "bg-[#0A1229] border rounded-[32px] p-8 relative overflow-hidden group cursor-pointer transition-all hover:scale-[1.02]",
+                            statusFilter === "comisiones_pendientes" ? "border-primary shadow-lg shadow-primary/5" : "border-white/5"
+                        )}
+                    >
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-primary"><Users size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Comisiones x Pagar</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-white">
+                            ${registros.reduce((acc, r) => {
+                                if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && r.commission_status !== 'paid') {
+                                    return acc + (r.plan === 'pro' ? 10 : 5);
+                                }
+                                return acc;
+                            }, 0).toFixed(2)}
+                        </p>
+                        <p className="text-[10px] font-bold text-white/40 mt-2">
+                            {registros.filter(r => r.seller_id && r.commission_status !== 'paid' && (r.status === 'pagado' || r.status === 'entregado')).length} comisiones pendientes
+                        </p>
+                    </div>
+
+                    <div
+                        onClick={() => setStatusFilter("comisiones_pagadas")}
+                        className={cn(
+                            "bg-[#0A1229] border rounded-[32px] p-6 relative overflow-hidden group cursor-pointer transition-all hover:scale-[1.02]",
+                            statusFilter === "comisiones_pagadas" ? "border-green-500" : "border-white/5"
+                        )}
+                    >
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-green-500"><CheckCircle size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-500 mb-3">Comis. Pagadas</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-green-500">
+                            ${registros.reduce((acc, r) => {
+                                if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && r.commission_status === 'paid') {
+                                    return acc + (r.plan === 'pro' ? 10 : 5);
+                                }
+                                return acc;
+                            }, 0).toFixed(2)}
+                        </p>
+                    </div>
                 </div>
 
                 <div className="bg-white/5 border border-white/10 rounded-[40px] overflow-hidden">
@@ -595,47 +782,98 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-8 py-6">
                                             {r.seller_id ? (
-                                                <div className="flex flex-col">
-                                                    <span className="text-[10px] font-black uppercase text-primary">Socio #{r.seller_id}</span>
-                                                    <span className={`text-[8px] font-bold uppercase tracking-tighter ${r.commission_status === 'paid' ? 'text-green-500' : 'text-white/30'}`}>
-                                                        {r.commission_status || 'pending'}
+                                                <button
+                                                    onClick={() => setSellerIdFilter(r.seller_id)}
+                                                    className="flex flex-col gap-1 items-start group/seller hover:bg-primary/5 p-2 -m-2 rounded-lg transition-all"
+                                                    title={`Filtrar ventas de Socio #${r.seller_id}`}
+                                                >
+                                                    <span className="text-[10px] font-black uppercase text-primary group-hover/seller:underline flex items-center gap-1">
+                                                        {(() => {
+                                                            const seller = sellers.find(s => s.id == r.seller_id);
+                                                            return seller ? `${seller.nombre} (${seller.codigo})` : `Socio #${r.seller_id}`;
+                                                        })()}
+                                                        <Users size={10} className="opacity-0 group-hover/seller:opacity-100 transition-opacity" />
                                                     </span>
-                                                </div>
+                                                    <span className={cn(
+                                                        "text-[8px] font-black uppercase tracking-tighter text-left",
+                                                        r.commission_status === 'paid' ? "text-green-500" : "text-white/20"
+                                                    )}>
+                                                        {r.commission_status === 'paid' ? 'Comisión Pagada' : 'Pago Pendiente'}
+                                                    </span>
+                                                </button>
                                             ) : (
                                                 <span className="text-[10px] text-white/20 uppercase font-black">Directo</span>
                                             )}
                                         </td>
                                         <td className="px-8 py-6">
-                                            <div className="flex items-center gap-2">
-                                                <div className={cn(
-                                                    "w-2 h-2 rounded-full",
-                                                    r.status === 'pagado' ? "bg-accent" : r.status === 'pendiente' ? "bg-yellow-500" : "bg-white/20"
-                                                )} />
-                                                <span className="text-[10px] font-black uppercase tracking-widest">
-                                                    {r.status}
-                                                </span>
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={cn(
+                                                        "w-2 h-2 rounded-full",
+                                                        r.status === 'pagado' ? "bg-accent" : r.status === 'entregado' ? "bg-green-500" : r.status === 'cancelado' ? "bg-red-500" : "bg-yellow-500"
+                                                    )} />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">
+                                                        {r.status}
+                                                    </span>
+                                                </div>
+                                                {r.status === 'pendiente' && (
+                                                    <span className="text-[8px] font-bold text-white/30 uppercase tracking-tighter italic">Esperando Pago</span>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             <div className="flex items-center gap-3">
+                                                {/* Botón Enviar Email */}
                                                 <button
                                                     onClick={() => sendVCardEmail(r)}
-                                                    className="p-3 bg-green-500/20 text-green-500 rounded-xl hover:bg-green-500 hover:text-white transition-all flex items-center gap-2"
+                                                    className="p-3 bg-green-500/20 text-green-500 rounded-xl hover:bg-green-500 hover:text-white transition-all"
                                                     title="Aprobar y Enviar Email"
                                                     disabled={r.isSending}
                                                 >
                                                     {r.isSending ? <Loader2 size={18} className="animate-spin" /> : <Mail size={18} />}
                                                 </button>
 
-                                                {r.status === 'pendiente' && (
+                                                {/* Botón Aprobar Pago Manual */}
+                                                {(r.status === 'pendiente' || r.status === 'cancelado') && (
                                                     <button
                                                         onClick={() => updateStatus(r.id, 'pagado')}
-                                                        className="p-3 bg-accent/20 text-accent rounded-xl hover:bg-accent transition-all hover:text-white"
-                                                        title="Aprobar Pago"
+                                                        disabled={pendingIds.has(r.id)}
+                                                        className="p-3 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
+                                                        title="Marcar como Pagado"
                                                     >
                                                         <CheckCircle size={18} />
                                                     </button>
                                                 )}
+
+                                                {/* Botón Cancelar */}
+                                                {r.status !== 'cancelado' && (
+                                                    <button
+                                                        onClick={() => updateStatus(r.id, 'cancelado')}
+                                                        disabled={pendingIds.has(r.id)}
+                                                        className="p-3 bg-red-500/10 text-red-500/40 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                                        title="Cancelar Registro"
+                                                    >
+                                                        <XCircle size={18} />
+                                                    </button>
+                                                )}
+
+                                                {/* Botón Comisión (Socio) */}
+                                                {r.seller_id && (
+                                                    <button
+                                                        onClick={() => updateCommissionStatus(r.id, r.commission_status)}
+                                                        disabled={pendingIds.has(r.id)}
+                                                        className={cn(
+                                                            "p-3 rounded-xl transition-all shadow-lg",
+                                                            r.commission_status === 'paid'
+                                                                ? "bg-green-500 text-white shadow-green-500/20"
+                                                                : "bg-white/5 text-white/20 border border-white/10 hover:bg-white/10"
+                                                        )}
+                                                        title={r.commission_status === 'paid' ? "Marcar Comisión como PENDIENTE" : "Marcar Comisión como PAGADA"}
+                                                    >
+                                                        <ShieldCheck size={18} />
+                                                    </button>
+                                                )}
+
                                                 <button
                                                     onClick={() => handleEdit(r)}
                                                     className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
@@ -643,6 +881,7 @@ export default function AdminDashboard() {
                                                 >
                                                     <Edit size={18} />
                                                 </button>
+
                                                 <a
                                                     href={`/api/vcard/${r.slug || r.id}`}
                                                     download={`${r.slug || r.id}.vcf`}
@@ -651,6 +890,7 @@ export default function AdminDashboard() {
                                                 >
                                                     <Download size={18} />
                                                 </a>
+
                                                 <a
                                                     href={`/card/${r.slug || r.id}`}
                                                     target="_blank"
@@ -691,10 +931,18 @@ export default function AdminDashboard() {
                                 </button>
                             </div>
                             <div className="p-8 flex items-center justify-center min-h-[400px]">
-                                {selectedReceipt.endsWith('.pdf') ? (
-                                    <iframe src={selectedReceipt} className="w-full h-[600px] rounded-2xl" />
+                                {!selectedReceipt ? (
+                                    <p className="text-white/20 font-black uppercase tracking-widest">No hay imagen disponible</p>
+                                ) : selectedReceipt.startsWith('data:image/') || (!selectedReceipt.endsWith('.pdf')) ? (
+                                    <img
+                                        src={selectedReceipt}
+                                        className="max-h-[600px] w-auto rounded-2xl shadow-2xl"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = "https://placehold.co/600x400/0a0b1e/white?text=Error+al+cargar+imagen";
+                                        }}
+                                    />
                                 ) : (
-                                    <img src={selectedReceipt} className="max-h-[600px] w-auto rounded-2xl shadow-2xl" />
+                                    <iframe src={selectedReceipt} className="w-full h-[600px] rounded-2xl" />
                                 )}
                             </div>
                         </motion.div>
@@ -992,6 +1240,93 @@ export default function AdminDashboard() {
                                     {isSaving ? 'Guardando...' : 'Guardar y Cerrar'}
                                 </button>
                             </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {isCreateSellerModalOpen && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="w-full max-w-lg bg-navy rounded-[48px] border border-white/10 shadow-3xl overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Nuevo Vendedor</h3>
+                                <button onClick={() => setIsCreateSellerModalOpen(false)} className="text-white/20 hover:text-white transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleCreateSeller} className="p-10 space-y-8">
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre Completo</label>
+                                        <input
+                                            required
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                            value={newSeller.nombre}
+                                            onChange={e => setNewSeller({ ...newSeller, nombre: e.target.value })}
+                                            placeholder="Ej: Abel Quiñonez"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Email / WhatsApp</label>
+                                        <input
+                                            required
+                                            type="email"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                            value={newSeller.email}
+                                            onChange={e => setNewSeller({ ...newSeller, email: e.target.value })}
+                                            placeholder="vendedor@empresa.com"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Contraseña</label>
+                                            <input
+                                                required
+                                                type="text"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all font-mono"
+                                                value={newSeller.password}
+                                                onChange={e => setNewSeller({ ...newSeller, password: e.target.value })}
+                                                placeholder="••••"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Comisión inicial (%)</label>
+                                            <input
+                                                required
+                                                type="number"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                value={newSeller.comision_porcentaje}
+                                                onChange={e => setNewSeller({ ...newSeller, comision_porcentaje: Number(e.target.value) })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCreateSellerModalOpen(false)}
+                                        className="flex-1 px-8 py-4 rounded-2xl bg-white/5 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isCreatingSeller}
+                                        className="flex-1 px-8 py-4 rounded-2xl bg-primary shadow-orange font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all text-navy flex items-center justify-center gap-2"
+                                    >
+                                        {isCreatingSeller ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                                        {isCreatingSeller ? 'Guardando...' : 'Crear Vendedor'}
+                                    </button>
+                                </div>
+                            </form>
                         </motion.div>
                     </div>
                 )}
