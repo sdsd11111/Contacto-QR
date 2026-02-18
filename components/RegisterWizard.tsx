@@ -16,6 +16,7 @@ import {
     Zap,
     ShieldCheck,
     ArrowRight,
+    ArrowLeft,
     CheckCircle,
     FileText,
     Tag,
