@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
                 r.*, 
                 s.nombre as sold_by_name, 
                 s.codigo as sold_by_code,
+                s.parent_id,
                 p.nombre as parent_name,
                 p.codigo as parent_code
             FROM registraya_vcard_registros r

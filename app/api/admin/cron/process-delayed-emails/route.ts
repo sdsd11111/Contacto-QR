@@ -57,7 +57,8 @@ export async function GET(req: NextRequest) {
                         vcardUrl,
                         qrUrl,
                         email: registro.email,
-                        nombre: registro.nombre
+                        nombre: registro.nombre,
+                        edit_code: registro.edit_code
                     })
                 });
 

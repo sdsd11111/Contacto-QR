@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { email, name, nombre, vcardUrl, qrUrl, backupData } = body;
+        const { email, name, nombre, vcardUrl, qrUrl, backupData, edit_code } = body;
 
         // Validar campos requeridos
         const recipientEmail = email;
@@ -83,6 +83,18 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        // Build edit code section if available
+        const editCodeSection = edit_code ? `
+                    <div style="background-color: #F0F9FF; border: 2px solid #3B82F6; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                        <h3 style="color: #1E40AF; margin: 0 0 8px 0; font-size: 16px;">✏️ ¿Necesitas actualizar tu información?</h3>
+                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #374151;">Tienes <strong>2 cambios disponibles</strong> para editar tu tarjeta digital.</p>
+                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #374151;">Tu código de edición es:</p>
+                        <div style="background-color: #1E3A5F; color: #FF8C00; font-size: 22px; font-weight: bold; text-align: center; padding: 14px 20px; border-radius: 8px; letter-spacing: 3px; font-family: monospace;">${edit_code}</div>
+                        <br/>
+                        <a href="https://contacto-qr.vercel.app/editar" style="background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Editar mi Tarjeta Digital →</a>
+                    </div>
+        ` : '';
+
         const mailOptions = {
             from: process.env.EMAIL_FROM || '"RegistraYa" <registrameya@cesarreyesjaramillo.com>',
             to: recipientEmail,
@@ -95,6 +107,7 @@ export async function POST(req: NextRequest) {
                     <br/>
                     <a href="${vcardUrl}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Descargar Contacto (.vcf)</a>
                     <br/><br/>
+                    ${editCodeSection}
                     <hr/>
                     <p style="font-size: 12px; color: #888;">TE RECORDAMOS. Al recibir este correo, has sido suscrito a nuestro boletín de noticias exclusivo para profesionales, donde compartiremos tips de networking y tecnología. Si deseas desuscribirte, responde a este correo.</p>
                 </div>

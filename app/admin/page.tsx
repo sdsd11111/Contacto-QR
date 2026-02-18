@@ -460,7 +460,7 @@ export default function AdminDashboard() {
             matchesStatus = r.status === statusFilter;
         }
 
-        const matchesSeller = !sellerIdFilter || Number(r.seller_id) === Number(sellerIdFilter);
+        const matchesSeller = !sellerIdFilter || Number(r.seller_id) === Number(sellerIdFilter) || Number(r.parent_id) === Number(sellerIdFilter);
         return matchesSearch && matchesStatus && matchesSeller;
     });
 
@@ -487,7 +487,8 @@ export default function AdminDashboard() {
                     qrUrl,
                     plan: registro.plan,
                     email: registro.email,
-                    nombre: registro.nombre
+                    nombre: registro.nombre,
+                    edit_code: registro.edit_code
                 })
             });
 
