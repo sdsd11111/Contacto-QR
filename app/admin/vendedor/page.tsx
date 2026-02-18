@@ -34,6 +34,12 @@ export default function SellerDashboard() {
     const [loginPass, setLoginPass] = useState("");
     const [isLoggingIn, setIsLoggingIn] = useState(false);
 
+    // Team State
+    const [team, setTeam] = useState<any[]>([]);
+    const [showTeamModal, setShowTeamModal] = useState(false);
+    const [isCreatingMember, setIsCreatingMember] = useState(false);
+    const [newMember, setNewMember] = useState({ nombre: '', email: '', password: '' });
+
     useEffect(() => {
         const savedSeller = localStorage.getItem("vcard_seller_data");
         if (savedSeller) {
@@ -41,8 +47,43 @@ export default function SellerDashboard() {
             setSeller(data);
             setIsAuthorized(true);
             fetchSellerSales(data.id);
+            fetchTeam(data.id);
         }
     }, []);
+
+    const fetchTeam = async (parentId: number) => {
+        try {
+            const res = await fetch(`/api/seller/team?parent_id=${parentId}`);
+            const data = await res.json();
+            if (data.data) setTeam(data.data);
+        } catch (err) {
+            console.error("Error fetching team:", err);
+        }
+    };
+
+    const handleCreateMember = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreatingMember(true);
+        try {
+            const res = await fetch("/api/seller/team", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...newMember, parent_id: seller.id })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert("Miembro agregado con éxito. Su código es: " + data.data.codigo);
+                setNewMember({ nombre: '', email: '', password: '' });
+                fetchTeam(seller.id);
+                setShowTeamModal(false);
+            } else {
+                alert(data.error || "Error al crear miembro");
+            }
+        } catch (err) {
+            alert("Error de conexión");
+        }
+        setIsCreatingMember(false);
+    };
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -214,6 +255,12 @@ export default function SellerDashboard() {
                             <Home size={18} /> Ir a Inicio
                         </Link>
                         <button
+                            onClick={() => setShowTeamModal(true)}
+                            className="bg-primary/20 text-primary border border-primary/20 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary/30 transition-all flex items-center gap-2 shadow-xl"
+                        >
+                            <Users size={18} /> Gestionar Equipo
+                        </button>
+                        <button
                             onClick={handleLogout}
                             className="bg-[#FF3E3E] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 cursor-pointer hover:scale-105 transition-all text-white flex items-center gap-2"
                         >
@@ -304,7 +351,8 @@ export default function SellerDashboard() {
                                     <th className="px-8 py-6">Fecha</th>
                                     <th className="px-8 py-6">Cliente / Plan</th>
                                     <th className="px-8 py-6">Contacto</th>
-                                    <th className="px-8 py-6">Estado / Venta</th>
+                                    <th className="px-8 py-6">Vendedor</th>
+                                    <th className="px-8 py-6 px-8 py-6">Estado / Venta</th>
                                     <th className="px-8 py-6 text-right">Pago / Comisión</th>
                                 </tr>
                             </thead>
@@ -342,6 +390,16 @@ export default function SellerDashboard() {
                                                 <p className="text-[10px] text-white/40 mt-1">{r.whatsapp}</p>
                                             </td>
                                             <td className="px-8 py-6">
+                                                <div className="flex flex-col gap-1">
+                                                    <p className="text-xs font-bold text-white/60 uppercase">
+                                                        {r.sold_by_name ? (r.sold_by_name === seller.nombre ? "Tú" : r.sold_by_name.split(' ')[0]) : "Tú"}
+                                                    </p>
+                                                    <span className="text-[8px] font-black uppercase tracking-widest text-white/20">
+                                                        {r.sold_by_code || seller.codigo}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6">
                                                 <div className="flex items-center gap-2">
                                                     <div className={cn(
                                                         "w-2 h-2 rounded-full",
@@ -370,6 +428,117 @@ export default function SellerDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Gestión de Equipo */}
+            <AnimatePresence>
+                {showTeamModal && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowTeamModal(false)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-4xl bg-[#0A1229] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+                        >
+                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                                <div>
+                                    <h3 className="text-2xl font-black uppercase italic tracking-tighter">Mi Equipo de Trabajo</h3>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-1">Gana comisión por las ventas de tus referidos</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowTeamModal(false)}
+                                    className="p-3 hover:bg-white/10 rounded-full transition-all"
+                                >
+                                    <LogOut className="rotate-180" size={24} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Lista de Miembros */}
+                                <div className="space-y-6">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">Miembros Activos ({team.length})</h4>
+                                    <div className="space-y-4">
+                                        {team.length === 0 ? (
+                                            <div className="text-center py-10 border border-dashed border-white/10 rounded-3xl">
+                                                <p className="text-sm font-bold text-white/20 uppercase tracking-widest">No hay miembros aún</p>
+                                            </div>
+                                        ) : (
+                                            team.map((m: any) => (
+                                                <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl flex justify-between items-center group hover:border-primary/20 transition-all">
+                                                    <div>
+                                                        <p className="font-bold text-sm uppercase italic tracking-tight">{m.nombre}</p>
+                                                        <p className="text-[10px] text-white/40 mt-1 uppercase font-black tracking-widest">{m.codigo}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-black uppercase text-primary mb-1">{m.ventas_pagadas} Ventas</p>
+                                                        <p className="text-[8px] text-white/20 uppercase">Total: {m.total_ventas}</p>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Formulario de Registro */}
+                                <div className="bg-white/[0.03] border border-white/10 p-8 rounded-3xl self-start">
+                                    <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-6">Agregar Nuevo Miembro</h4>
+                                    <form onSubmit={handleCreateMember} className="space-y-4">
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/30 ml-2">Nombre Completo</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={newMember.nombre}
+                                                onChange={(e) => setNewMember({ ...newMember, nombre: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-sm focus:border-primary/40 outline-none transition-all"
+                                                placeholder="Ej. Juan Pérez"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/30 ml-2">Correo Electrónico</label>
+                                            <input
+                                                type="email"
+                                                required
+                                                value={newMember.email}
+                                                onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-sm focus:border-primary/40 outline-none transition-all"
+                                                placeholder="juan@ejemplo.com"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/30 ml-2">Contraseña Temporal</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={newMember.password}
+                                                onChange={(e) => setNewMember({ ...newMember, password: e.target.value })}
+                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-sm focus:border-primary/40 outline-none transition-all"
+                                                placeholder="Min. 6 caracteres"
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={isCreatingMember}
+                                            className="w-full bg-primary hover:bg-[#FF8A33] py-4 rounded-xl font-black uppercase tracking-widest text-[#050B1C] transition-all shadow-lg active:scale-95 disabled:opacity-50 text-xs mt-4"
+                                        >
+                                            {isCreatingMember ? 'Procesando...' : 'Crear Acceso ahora'}
+                                        </button>
+                                    </form>
+                                    <p className="text-[9px] text-white/20 mt-6 leading-relaxed italic">
+                                        * Al crear un miembro, se le generará un código derivado del tuyo. Sus ventas se sumarán a tu total de nivel, pero él podrá ver sus propios registros.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

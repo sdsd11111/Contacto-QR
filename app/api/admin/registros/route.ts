@@ -21,15 +21,25 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        let query = 'SELECT * FROM registraya_vcard_registros';
-        const params = [];
+        let query = `
+            SELECT r.*, s.nombre as sold_by_name, s.codigo as sold_by_code
+            FROM registraya_vcard_registros r
+            LEFT JOIN registraya_vcard_sellers s ON r.seller_id = s.id
+        `;
+        const params: any[] = [];
 
         if (sellerId) {
-            query += ' WHERE seller_id = ?';
-            params.push(Number(sellerId));
+            // Find children IDs
+            const [children]: any = await pool.execute('SELECT id FROM registraya_vcard_sellers WHERE parent_id = ?', [sellerId]);
+            const childrenIds = (children as any[]).map(c => c.id);
+            const allIds = [Number(sellerId), ...childrenIds];
+
+            const placeholders = allIds.map(() => '?').join(', ');
+            query += ` WHERE r.seller_id IN (${placeholders})`;
+            params.push(...allIds);
         }
 
-        query += ' ORDER BY created_at DESC';
+        query += ' ORDER BY r.created_at DESC';
 
         const [rows]: any = await pool.execute(query, params);
         return NextResponse.json({ data: rows });
