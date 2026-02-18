@@ -42,7 +42,7 @@ export async function POST(req: Request) {
 
                 try {
                     await pool.execute(
-                        'UPDATE registraya_vcard_registros SET status = ? WHERE email = ?',
+                        'UPDATE registraya_vcard_registros SET status = ?, paid_at = NOW() WHERE email = ?',
                         ['pagado', email]
                     );
 

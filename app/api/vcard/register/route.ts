@@ -47,7 +47,8 @@ export async function POST(req: NextRequest) {
                         nombre=?, whatsapp=?, profesion=?, empresa=?, bio=?, direccion=?,
                         web=?, google_business=?, instagram=?, linkedin=?, facebook=?, tiktok=?,
                         productos_servicios=?, plan=?, foto_url=?, comprobante_url=?, galeria_urls=?,
-                        status=?, slug=?, etiquetas=?, seller_id=?,
+                        status=?, paid_at = CASE WHEN ? = 'pagado' AND (paid_at IS NULL) THEN NOW() ELSE paid_at END,
+                        slug=?, etiquetas=?, seller_id=?,
                         tipo_perfil=?, nombres=?, apellidos=?, nombre_negocio=?, contacto_nombre=?, contacto_apellido=?
                     WHERE email=?
                 `;
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
                     nombreLegacy, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok,
                     productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
-                    status || 'pendiente', slug || existingUser.slug, etiquetas, seller_id || null,
+                    status || 'pendiente', status, slug || existingUser.slug, etiquetas, seller_id || null,
                     tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || '',
                     email
                 ]);
@@ -67,21 +68,22 @@ export async function POST(req: NextRequest) {
                 // INSERT
                 const newId = uuidv4();
                 const now = new Date();
+                const isPaid = status === 'pagado';
 
                 const insertQuery = `
                     INSERT INTO registraya_vcard_registros (
                         id, created_at, nombre, email, whatsapp, profesion, empresa, bio, direccion,
                         web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
-                        plan, foto_url, comprobante_url, galeria_urls, status, slug, etiquetas,
+                        plan, foto_url, comprobante_url, galeria_urls, status, paid_at, slug, etiquetas,
                         commission_status, seller_id,
                         tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?)
                 `;
 
                 await pool.execute(insertQuery, [
                     newId, now, nombreLegacy, email, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
-                    plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', slug, etiquetas,
+                    plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', isPaid ? now : null, slug, etiquetas,
                     seller_id || null,
                     tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || ''
                 ]);

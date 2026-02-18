@@ -362,15 +362,28 @@ export default function RegisterWizard() {
 
         const attributionId = localStorage.getItem('vcard_attribution_id');
         if (attributionId) {
-            setFormData(prev => ({ ...prev, seller_id: attributionId }));
             console.log("Seller Attribution Active:", attributionId);
 
-            // Si ya tenemos un seller_id, intentar buscar su nombre para mostrarlo
-            fetch(`/api/vcard/validate-seller?id=${attributionId}`)
+            // Intentar validar ya sea por ID o por Código (ej: 001)
+            const paramName = (attributionId.length === 3 && /^\d+$/.test(attributionId)) ? 'code' : 'id';
+
+            fetch(`/api/vcard/validate-seller?${paramName}=${attributionId}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         setSellerName(data.nombre);
+                        setFormData(prev => ({ ...prev, seller_id: data.id }));
+                    } else {
+                        // Si falla, intentamos el otro por si acaso
+                        const otherParam = paramName === 'id' ? 'code' : 'id';
+                        return fetch(`/api/vcard/validate-seller?${otherParam}=${attributionId}`);
+                    }
+                })
+                .then(res => res?.json())
+                .then(data => {
+                    if (data?.success) {
+                        setSellerName(data.nombre);
+                        setFormData(prev => ({ ...prev, seller_id: data.id }));
                     }
                 })
                 .catch(err => console.error("Error fetching seller name:", err));

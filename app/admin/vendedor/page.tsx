@@ -142,6 +142,12 @@ export default function SellerDashboard() {
                             {!isLoggingIn && <LayoutDashboard className="group-hover:translate-x-1 transition-transform" size={20} />}
                         </button>
                     </form>
+
+                    <div className="mt-8 pt-8 border-t border-white/5">
+                        <Link href="/" className="text-white/30 hover:text-white font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
+                            <Home size={14} /> Volver al Inicio
+                        </Link>
+                    </div>
                 </motion.div>
             </div>
         );

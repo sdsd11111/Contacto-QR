@@ -60,6 +60,35 @@ export default function AdminDashboard() {
     const [isCreateSellerModalOpen, setIsCreateSellerModalOpen] = useState(false);
     const [newSeller, setNewSeller] = useState({ nombre: '', email: '', password: '', comision_porcentaje: 30 });
     const [isCreatingSeller, setIsCreatingSeller] = useState(false);
+    const [nextSellerCode, setNextSellerCode] = useState<string | null>(null);
+
+    const fetchNextCode = async () => {
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch('/api/admin/sellers?nextCode=true', {
+                headers: { 'x-admin-key': adminKey }
+            });
+            const data = await res.json();
+            if (data.nextCode) setNextSellerCode(data.nextCode);
+        } catch (err) {
+            console.error("Error fetching next code:", err);
+        }
+    };
+
+    const generatePassword = () => {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Evitando caracteres ambiguos
+        let pass = "";
+        for (let i = 0; i < 6; i++) {
+            pass += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        setNewSeller({ ...newSeller, password: pass });
+    };
+
+    useEffect(() => {
+        if (isCreateSellerModalOpen) {
+            fetchNextCode();
+        }
+    }, [isCreateSellerModalOpen]);
 
     useEffect(() => {
         const storedKey = localStorage.getItem('admin_access_key');
@@ -1285,16 +1314,25 @@ export default function AdminDashboard() {
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
-                                        <div>
+                                        <div className="relative">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Contraseña</label>
-                                            <input
-                                                required
-                                                type="text"
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all font-mono"
-                                                value={newSeller.password}
-                                                onChange={e => setNewSeller({ ...newSeller, password: e.target.value })}
-                                                placeholder="••••"
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    required
+                                                    type="text"
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl pl-6 pr-20 py-4 font-bold outline-none focus:border-primary/40 transition-all font-mono"
+                                                    value={newSeller.password}
+                                                    onChange={e => setNewSeller({ ...newSeller, password: e.target.value })}
+                                                    placeholder="••••"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={generatePassword}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-[8px] font-black uppercase tracking-widest transition-all"
+                                                >
+                                                    Generar
+                                                </button>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Comisión inicial (%)</label>
@@ -1307,6 +1345,12 @@ export default function AdminDashboard() {
                                             />
                                         </div>
                                     </div>
+                                    {nextSellerCode && (
+                                        <div className="bg-primary/10 border border-primary/20 p-4 rounded-2xl flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Código a asignar:</span>
+                                            <span className="text-xl font-black text-primary italic italic tracking-tighter">{nextSellerCode}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="pt-4 flex gap-4">
