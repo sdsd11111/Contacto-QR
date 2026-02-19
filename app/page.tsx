@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from 'next/link';
 import { motion } from "framer-motion";
 import {
@@ -23,6 +23,15 @@ import { Edit } from "lucide-react";
 export default function Home() {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  useEffect(() => {
+    // Check if URL has #editar and open modal
+    if (typeof window !== 'undefined' && window.location.hash === '#editar') {
+      setIsEditModalOpen(true);
+      // Clean up hash to avoid reopening on refresh if not desired, 
+      // but usually for direct links it's fine to keep it.
+    }
+  }, []);
 
   return (
     <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">

@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
                             <span style="font-family: 'Courier New', monospace; font-size: 28px; font-weight: 900; color: #1E3A8A; letter-spacing: 4px;">${edit_code}</span>
                         </div>
 
-                        <a href="https://contacto-qr.vercel.app/editar" style="background-color: #3B82F6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 800; display: inline-block; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Entrar a Editar Tarjeta →</a>
+                        <a href="https://contacto-qr.vercel.app/#editar" style="background-color: #3B82F6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 800; display: inline-block; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Entrar a Editar Tarjeta →</a>
                         
                         <p style="margin: 16px 0 0 0; font-size: 12px; color: #94A3B8; font-style: italic;">
                             Nota: Los primeros 2 cambios son gratuitos. A partir del 3er cambio, el costo es de <strong>$2.00 USD</strong> por actualización.
