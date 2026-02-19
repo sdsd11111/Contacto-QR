@@ -69,19 +69,20 @@ export async function POST(req: NextRequest) {
                 const newId = uuidv4();
                 const now = new Date();
                 const isPaid = status === 'pagado';
+                const editCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
                 const insertQuery = `
                     INSERT INTO registraya_vcard_registros (
                         id, created_at, nombre, email, whatsapp, profesion, empresa, bio, direccion,
                         web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                         plan, foto_url, comprobante_url, galeria_urls, status, paid_at, slug, etiquetas,
-                        commission_status, seller_id,
+                        commission_status, seller_id, edit_code, edit_uses_remaining,
                         tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, ?, 
-                        ?, ?, 
+                        ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?
                     )
                 `;
@@ -92,12 +93,13 @@ export async function POST(req: NextRequest) {
                     plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', isPaid ? now : null, slug, etiquetas,
                     'pending', // commission_status
                     seller_id || null,
+                    editCode, 2, // edit_code and uses
                     tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || ''
                 ];
 
                 await pool.execute(insertQuery, values);
 
-                return NextResponse.json({ success: true, action: 'created', id: newId });
+                return NextResponse.json({ success: true, action: 'created', id: newId, edit_code: editCode });
             }
 
         } catch (dbErr) {

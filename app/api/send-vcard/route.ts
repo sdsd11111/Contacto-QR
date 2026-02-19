@@ -85,13 +85,22 @@ export async function POST(req: NextRequest) {
 
         // Build edit code section if available
         const editCodeSection = edit_code ? `
-                    <div style="background-color: #F0F9FF; border: 2px solid #3B82F6; border-radius: 12px; padding: 20px; margin: 20px 0;">
-                        <h3 style="color: #1E40AF; margin: 0 0 8px 0; font-size: 16px;">✏️ ¿Necesitas actualizar tu información?</h3>
-                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #374151;">Tienes <strong>2 cambios disponibles</strong> para editar tu tarjeta digital.</p>
-                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #374151;">Tu código de edición es:</p>
-                        <div style="background-color: #1E3A5F; color: #FF8C00; font-size: 22px; font-weight: bold; text-align: center; padding: 14px 20px; border-radius: 8px; letter-spacing: 3px; font-family: monospace;">${edit_code}</div>
-                        <br/>
-                        <a href="https://contacto-qr.vercel.app/editar" style="background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Editar mi Tarjeta Digital →</a>
+                    <div style="background-color: #F8FAFC; border: 2px solid #3B82F6; border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center;">
+                        <h3 style="color: #1E3A8A; margin: 0 0 12px 0; font-size: 18px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">✏️ Actualiza tu Información</h3>
+                        <p style="margin: 0 0 16px 0; font-size: 15px; color: #475569; line-height: 1.5;">
+                            ¿Cambiaste de número o cargo? No te preocupes. Tu plan incluye <strong>2 cambios gratuitos</strong>.
+                        </p>
+                        
+                        <div style="background-color: #EEF2FF; border: 1px dashed #6366F1; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #6366F1; font-weight: bold; text-transform: uppercase;">Tu Código de Edición:</p>
+                            <span style="font-family: 'Courier New', monospace; font-size: 28px; font-weight: 900; color: #1E3A8A; letter-spacing: 4px;">${edit_code}</span>
+                        </div>
+
+                        <a href="https://contacto-qr.vercel.app/editar" style="background-color: #3B82F6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 800; display: inline-block; margin-bottom: 16px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Entrar a Editar Tarjeta →</a>
+                        
+                        <p style="margin: 16px 0 0 0; font-size: 12px; color: #94A3B8; font-style: italic;">
+                            Nota: Los primeros 2 cambios son gratuitos. A partir del 3er cambio, el costo es de <strong>$2.00 USD</strong> por actualización.
+                        </p>
                     </div>
         ` : '';
 
