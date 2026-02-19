@@ -109,7 +109,7 @@ TITLE:${data.profesion || ""}
 TEL;TYPE=CELL,VOICE:${data.whatsapp}
 EMAIL;TYPE=WORK,INTERNET:${data.email || ""}
 URL:${currentUrl}
-NOTE:${data.bio || "Experto en " + (data.etiquetas || "servicios profesionales")}. Generado por Regístrame Ya!`;
+NOTE:${data.bio || "Experto en " + (data.etiquetas || "servicios profesionales")}. Generado por ActivaQR`;
 
         // Agregar foto si existe
         if (photoBase64) {
@@ -295,7 +295,7 @@ ADR;TYPE=WORK:;;${data.direccion};;;;`;
 
                     <div className="inline-flex items-center gap-4 py-4 px-8 bg-white/5 border border-white/10 rounded-full">
                         <Zap size={16} className="text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Regístrame Ya! 2026</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest">ActivaQR 2026</span>
                     </div>
                 </motion.div>
             </div>

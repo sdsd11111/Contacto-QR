@@ -15,14 +15,14 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://registrameya.com'),
-  title: "Regístrame Ya! - Tu Contacto Profesional en 1 Clic",
+  metadataBase: new URL('https://www.activaqr.com'),
+  title: "ActivaQR - Tu Contacto Profesional en 1 Clic",
   description: "Deja de perder trabajos porque olviden cómo te registraron. Configuramos tu contacto estratégico para que siempre aparezcas primero.",
   openGraph: {
-    title: "Regístrame Ya! - Tu Contacto Profesional en 1 Clic",
+    title: "ActivaQR - Tu Contacto Profesional en 1 Clic",
     description: "Deja de ser un número anónimo. Asegura que tus clientes siempre te encuentren con tu foto y profesión.",
-    url: "https://registrameya.com",
-    siteName: "Regístrame Ya!",
+    url: "https://www.activaqr.com",
+    siteName: "ActivaQR",
     locale: "es_EC",
     type: "website",
     images: [
@@ -30,13 +30,13 @@ export const metadata: Metadata = {
         url: '/images/logo.png',
         width: 1200,
         height: 630,
-        alt: 'Regístrame Ya! Preview',
+        alt: 'ActivaQR Preview',
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Regístrame Ya! - Tu Contacto Profesional en 1 Clic",
+    title: "ActivaQR - Tu Contacto Profesional en 1 Clic",
     description: "Deja de perder trabajos porque olviden cómo te registraron.",
     images: ['/images/logo.png'],
   },
@@ -48,10 +48,13 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'Regístrame Ya!',
+    title: 'ActivaQR',
   },
   formatDetection: {
     telephone: false,
+  },
+  alternates: {
+    canonical: 'https://www.activaqr.com',
   },
 };
 
@@ -65,6 +68,29 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${montserrat.variable} font-sans antialiased bg-cream text-navy`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "ActivaQR",
+              "url": "https://www.activaqr.com",
+              "applicationCategory": "BusinessApplication",
+              "offers": {
+                "@type": "Offer",
+                "price": "20",
+                "priceCurrency": "USD"
+              },
+              "description": "Tu contacto profesional en 1 clic. Siempre aparece primero en el teléfono de tus clientes.",
+              "operatingSystem": "Web",
+              "brand": {
+                "@type": "Brand",
+                "name": "ActivaQR"
+              }
+            })
+          }}
+        />
         <PWARegistration />
         {children}
       </body>

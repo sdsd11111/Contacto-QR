@@ -192,7 +192,7 @@ TITLE:${formData.profession || ""}
 TEL;TYPE=CELL,VOICE:${formData.whatsapp}
 EMAIL;TYPE=WORK,INTERNET:${formData.email || ""}
 URL:${currentUrl}
-NOTE:${formData.bio || "Generado por Regístrame Ya!"}`;
+NOTE:${formData.bio || "Generado por ActivaQR"}`;
 
         if (photoBase64) {
             vcard += `

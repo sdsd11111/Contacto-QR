@@ -31,7 +31,7 @@ export default function HomeV2() {
             <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-navy/5">
                 <div className="max-w-7xl mx-auto px-6 h-16 md:h-20 flex items-center justify-between">
                     <div className="text-xl md:text-2xl font-black tracking-tighter text-navy flex items-center gap-2">
-                        <span className="text-primary">!</span>Regístrame Ya <span className="text-xs bg-navy text-white px-2 py-1 rounded ml-2">RESTAURANTES</span>
+                        ActivaQR <span className="text-xs bg-navy text-white px-2 py-1 rounded ml-2">RESTAURANTES</span>
                     </div>
                     <Link href="/diagnostico" className="bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-orange hover:scale-105 transition-transform flex items-center gap-2">
                         <Utensils size={16} /> Diagnóstico Gratis
@@ -168,7 +168,7 @@ export default function HomeV2() {
             </section>
 
             <footer className="py-12 text-center text-navy/40 text-xs font-bold uppercase tracking-widest border-t border-navy/5">
-                <p className="mb-2">© 2026 · Regístrame Ya</p>
+                <p className="mb-2">© 2026 · ActivaQR</p>
                 <p>Versión Beta: Funnel Restaurantes</p>
             </footer>
 

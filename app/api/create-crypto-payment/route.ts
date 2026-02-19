@@ -60,7 +60,7 @@ export async function POST(req: Request) {
                             amount: amount.toString()
                         }
                     ],
-                    redirectUrl: "https://registrameya.vercel.app/registro"
+                    redirectUrl: "https://www.activaqr.com/registro"
                 };
 
                 const response = await fetch(url, {

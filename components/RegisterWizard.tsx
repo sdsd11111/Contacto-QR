@@ -591,7 +591,7 @@ export default function RegisterWizard() {
             organization = data.company || "";
         }
 
-        let noteContent = `${data.bio}${data.products ? '\n\nProductos/Servicios:\n' + data.products : ''} - Generado con RegistrameYa`;
+        let noteContent = `${data.bio}${data.products ? '\n\nProductos/Servicios:\n' + data.products : ''} - Generado con ActivaQR`;
 
         const vcard = [
             'BEGIN:VCARD',
@@ -817,8 +817,8 @@ export default function RegisterWizard() {
                                 storeId: process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID,
                                 reference: `Pago Plan ${formData.plan.toUpperCase()} - ${formData.name}`,
                                 lang: "es",
-                                responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://registrameya.vercel.app/registro",
-                                cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://registrameya.vercel.app/registro",
+                                responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://www.activaqr.com/registro",
+                                cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://www.activaqr.com/registro",
                                 onComplete: async (model: any, actions: any) => {
                                     console.log("Pago completado con éxito:", model);
                                     handleFinalSubmit('pagado');
@@ -1606,7 +1606,7 @@ export default function RegisterWizard() {
                                                                         currency_code: "USD",
                                                                         value: currentPlanPrice.toString(),
                                                                     },
-                                                                    description: `Plan Profesional PRO - RegistrameYa`,
+                                                                    description: `Plan Profesional PRO - ActivaQR`,
                                                                     custom_id: formData.email
                                                                 },
                                                             ],
@@ -1668,7 +1668,7 @@ export default function RegisterWizard() {
                                 <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="w-24 h-24 bg-accent/20 text-accent rounded-full flex items-center justify-center mx-auto mb-10"
+                                    className="w-24 h-24 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-10"
                                 >
                                     <CheckCircle size={56} strokeWidth={2.5} />
                                 </motion.div>
@@ -1694,7 +1694,7 @@ export default function RegisterWizard() {
                                 </p>
 
                                 <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">
-                                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-accent to-primary" />
+                                    <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-primary-dark to-primary" />
                                     <div className="flex flex-col md:flex-row items-center gap-6 justify-center">
                                         <div className="flex items-center gap-4">
                                             <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
@@ -1730,7 +1730,7 @@ export default function RegisterWizard() {
                                                 href="https://g.page/r/CRWzEc2rIpGjEAI/review"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-orange hover:scale-105 transition-all"
+                                                className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-primary hover:scale-105 transition-all"
                                             >
                                                 <Star size={16} fill="currentColor" /> Dejar mi Reseña <ArrowRight size={16} />
                                             </a>
@@ -1747,7 +1747,7 @@ export default function RegisterWizard() {
                                 >
                                     <button
                                         onClick={() => window.location.href = '/'}
-                                        className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-orange hover:scale-105 transition-all"
+                                        className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-primary hover:scale-105 transition-all"
                                     >
                                         <ArrowLeft size={16} /> Volver al Inicio
                                     </button>
@@ -1777,7 +1777,7 @@ export default function RegisterWizard() {
                                     disabled={isSubmitting}
                                     className={cn(
                                         "px-12 py-6 rounded-button font-black text-xl shadow-lg flex items-center gap-4 transition-all hover:scale-105 active:scale-95",
-                                        step >= 4 ? "bg-primary text-white shadow-orange" : "bg-navy text-white",
+                                        step >= 4 ? "bg-primary text-white shadow-primary" : "bg-navy text-white",
                                         isSubmitting && "opacity-50 cursor-not-allowed"
                                     )}
                                 >

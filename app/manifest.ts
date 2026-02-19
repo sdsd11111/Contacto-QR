@@ -2,8 +2,8 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
     return {
-        name: 'Regístrame Ya! - Contacto Digital',
-        short_name: 'Regístrame Ya',
+        name: 'ActivaQR - Contacto Digital',
+        short_name: 'ActivaQR',
         description: 'Tu contacto profesional en 1 clic. Siempre aparece primero en el teléfono de tus clientes.',
         start_url: '/',
         display: 'standalone',
