@@ -845,9 +845,13 @@ export default function AdminDashboard() {
                                                 <div>
                                                     <p className="font-bold text-sm">{r.nombre}</p>
                                                     <p className="text-[10px] text-white/40">{r.email}</p>
-                                                    {r.paid_at && (
+                                                    {r.status === 'entregado' || r.auto_email_sent ? (
+                                                        <p className="text-[8px] text-green-500 font-black uppercase mt-1 flex items-center gap-1">
+                                                            <CheckCircle size={8} /> Enviado Digitalmente
+                                                        </p>
+                                                    ) : r.paid_at ? (
                                                         <p className="text-[8px] text-accent font-bold uppercase mt-1">💳 Pago: {new Date(r.paid_at).toLocaleString()}</p>
-                                                    )}
+                                                    ) : null}
                                                 </div>
                                             </div>
                                         </td>

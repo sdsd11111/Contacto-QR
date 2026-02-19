@@ -168,7 +168,7 @@ export default function RegisterWizard() {
 
                         // Restore and Submit
                         console.log("Restoring data for PayPhone completion...");
-                        // We pass the data directly to handleFinalSubmit to avoid waiting for setState
+                        setFormData(parsed); // Re-hidratar el estado para la UI
                         handleFinalSubmit('pagado', parsed);
                     } catch (err) {
                         console.error("Error parsing PayPhone backup:", err);
@@ -1739,9 +1739,9 @@ export default function RegisterWizard() {
                                             <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
                                                 <Mail size={32} />
                                             </div>
-                                            <div className="text-left">
+                                            <div className="text-left w-full overflow-hidden">
                                                 <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
-                                                <p className="text-sm font-bold text-navy/40 truncate max-w-[280px]">{formData.email}</p>
+                                                <p className="text-sm font-bold text-primary break-all">{formData.email}</p>
                                             </div>
                                         </div>
                                     </div>
