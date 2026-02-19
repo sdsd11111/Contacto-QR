@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
                     direccion as address, web, google_business, instagram, linkedin, 
                     facebook, tiktok, productos_servicios as products, etiquetas as categories, foto_url
                  FROM registraya_vcard_registros 
-                 WHERE edit_code = ?`,
+                 WHERE UPPER(edit_code) = UPPER(?)`,
                 [code]
             );
 

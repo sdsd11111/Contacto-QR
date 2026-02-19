@@ -44,7 +44,8 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
     });
 
     const validateCode = async () => {
-        if (!editCode.trim()) return;
+        const cleanedCode = editCode.trim().replace(/\s/g, '');
+        if (!cleanedCode) return;
         setLoading(true);
         setError('');
 
@@ -52,7 +53,7 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
             const res = await fetch('/api/edit/validate-code', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: editCode })
+                body: JSON.stringify({ code: cleanedCode })
             });
             const data = await res.json();
 

@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
                 const newId = uuidv4();
                 const now = new Date();
                 const isPaid = status === 'pagado';
-                const editCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+                const editCode = 'RYA-2026-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
                 const insertQuery = `
                     INSERT INTO registraya_vcard_registros (
