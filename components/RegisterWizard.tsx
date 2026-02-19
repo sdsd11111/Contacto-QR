@@ -115,6 +115,7 @@ export default function RegisterWizard() {
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [recordingTime, setRecordingTime] = useState(0);
     const [isProcessingInterview, setIsProcessingInterview] = useState(false);
+    const [transcriptionStatus, setTranscriptionStatus] = useState<'idle' | 'uploading' | 'processing' | 'extracting'>('idle');
 
     const startListening = (field: 'bio' | 'products') => {
         if (isListening) return; // Prevent double engagement
@@ -184,7 +185,10 @@ export default function RegisterWizard() {
     const startInterview = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const recorder = new MediaRecorder(stream);
+            // Optimize: Lower bitrate (16kbps is plenty for voice transcription)
+            const recorder = new MediaRecorder(stream, {
+                audioBitsPerSecond: 16000
+            });
             const audioChunks: Blob[] = [];
 
             recorder.ondataavailable = (event) => {
@@ -225,10 +229,12 @@ export default function RegisterWizard() {
 
     const processInterview = async (audioBlob: Blob) => {
         setIsProcessingInterview(true);
+        setTranscriptionStatus('uploading');
         try {
             const interviewFormData = new FormData();
             interviewFormData.append('audio', audioBlob, 'interview.webm');
 
+            setTranscriptionStatus('processing');
             const response = await fetch('/api/transcribe-interview', {
                 method: 'POST',
                 body: interviewFormData,
@@ -260,9 +266,10 @@ export default function RegisterWizard() {
             }
         } catch (error) {
             console.error('Error processing interview:', error);
-            alert('Hubo un error al procesar tu entrevista. Por favor, intenta de nuevo.');
+            alert('Hubo un problema al procesar la entrevista por voz. Por favor intenta de nuevo.');
         } finally {
             setIsProcessingInterview(false);
+            setTranscriptionStatus('idle');
         }
     };
 
@@ -1194,8 +1201,18 @@ export default function RegisterWizard() {
                                         {isProcessingInterview && (
                                             <div className="text-center py-4">
                                                 <Loader2 className="animate-spin text-primary mx-auto mb-3" size={40} />
-                                                <p className="text-sm font-black text-navy uppercase">Procesando tu entrevista...</p>
-                                                <p className="text-xs text-navy/50 font-medium mt-1">Transcribiendo y extrayendo información</p>
+                                                <p className="text-sm font-black text-navy uppercase">
+                                                    {transcriptionStatus === 'uploading' && 'Enviando audio...'}
+                                                    {transcriptionStatus === 'processing' && 'Transcribiendo entrevista...'}
+                                                    {transcriptionStatus === 'extracting' && 'Extrayendo información profesional...'}
+                                                    {(!transcriptionStatus || transcriptionStatus === 'idle') && 'Procesando entrevista...'}
+                                                </p>
+                                                <p className="text-xs text-navy/50 font-medium mt-1">
+                                                    {transcriptionStatus === 'uploading' && 'Estamos preparando el archivo para la IA'}
+                                                    {transcriptionStatus === 'processing' && 'Abordando tu respuesta con Whisper'}
+                                                    {transcriptionStatus === 'extracting' && 'Organizando tus datos con GPT-4'}
+                                                    {(!transcriptionStatus || transcriptionStatus === 'idle') && 'Un momento por favor...'}
+                                                </p>
                                             </div>
                                         )}
                                     </div>

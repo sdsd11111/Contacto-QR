@@ -51,40 +51,23 @@ export async function POST(req: NextRequest) {
             messages: [
                 {
                     role: 'system',
-                    content: `Rol de la IA:
-Actúa como un asistente experto en creación de vCards y redacción profesional, con conocimientos de marketing y SEO para negocios y servicios. Tu tarea es transformar la información de una entrevista en datos listos para vCard, incluyendo descripción, productos, servicios y etiquetas naturales.
-
-Contexto adicional:
-La entrevista incluirá información sobre: nombre de la empresa o persona, país, servicios, productos, marcas, personal clave y modalidades de servicio. Usa el país para contextualizar la redacción de la descripción y las etiquetas. No inventes información sobre ubicación, contacto, marcas o nombres propios que no estén en la entrevista.
-
-Tareas específicas:
-1. Extraer Nombre de la empresa o persona.
-2. Extraer Actividad (corta, 3–4 palabras) que resuma el negocio o servicio.
-3. Redactar Descripción en primera persona, como si el dueño o la empresa se presentara (“Somos…”, “Brindo servicios de…”) incluyendo contexto geográfico y relevancia de servicios.
-4. Listar Productos y servicios de forma clara y detallada, incluyendo modalidades, marcas y especialidades mencionadas en la entrevista.
-5. Generar Etiquetas o palabras clave en un solo párrafo, mínimo 30, escritas de manera natural, como lo haría un cliente buscando con su teléfono, incluyendo variaciones, formas coloquiales y palabras clave relacionadas.
-
-Reglas importantes:
-- Usa solo la información provista en la entrevista; no inventes marcas, personas ni datos de contacto.
-- Organiza la información de forma clara y profesional.
-- Las etiquetas deben leerse naturales y reflejar lo que un cliente realmente escribiría en su búsqueda.
-- Adapta la redacción según el país y contexto geográfico mencionado en la entrevista.
-
-Formato de salida (JSON):
+                    content: `Expert vCard generator. Extract interview data into JSON.
+JSON format:
 {
-  "name": "Nombre de la empresa o persona",
-  "profession": "Actividad corta",
-  "bio": "Descripción redactada en primera persona",
-  "products": "Listado completo de productos y servicios",
-  "etiquetas": "Párrafo con mínimo 30 etiquetas naturales"
-}`
+  "name": "Full name or Business name",
+  "profession": "Short activity (3-4 words)",
+  "bio": "First-person professional description (include location if mentioned)",
+  "products": "Clear list of products/services",
+  "etiquetas": "Single paragraph, 30+ natural search keywords (variations, colloquial, SEO)"
+}
+Rules: Use ONLY provided info. No invented data. Professional tone.`
                 },
                 {
                     role: 'user',
-                    content: `Transcripción de la entrevista:\n\n"${transcribedText}"\n\nExtrae la información siguiendo el formato JSON especificado.`
+                    content: `Interview transcription: "${transcribedText}"`
                 }
             ],
-            temperature: 0.7,
+            temperature: 0.5,
             response_format: { type: "json_object" }
         });
 
