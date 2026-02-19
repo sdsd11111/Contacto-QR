@@ -43,6 +43,7 @@ function cn(...inputs: ClassValue[]) {
 // Utilidad para detectar URLs de marcador de posición o no válidas
 const isPlaceholderUrl = (url: string | null | undefined) => {
     if (!url) return true;
+    if (url.startsWith('data:image')) return false; // Base64 is not a placeholder
     const placeholders = ['photo.com', 'example.com', 'placeholder.com', 'placehold.co'];
     return placeholders.some(p => url.toLowerCase().includes(p));
 };
@@ -790,6 +791,17 @@ export default function AdminDashboard() {
                             }, 0).toFixed(2)}
                         </p>
                     </div>
+
+                    <div className="bg-primary/5 border border-primary/20 rounded-[32px] p-6 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-primary"><Clock size={48} /></div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3">Cola de Correos</p>
+                        <p className="text-4xl font-black italic tracking-tighter text-primary">
+                            {registros.filter(r => r.status === 'pagado' && !r.auto_email_sent).length}
+                        </p>
+                        <p className="text-[10px] font-bold text-white/40 mt-2 italic">
+                            Envío automático en 24h
+                        </p>
+                    </div>
                 </div>
 
                 <div className="bg-white/5 border border-white/10 rounded-[40px] overflow-hidden">
@@ -833,6 +845,9 @@ export default function AdminDashboard() {
                                                 <div>
                                                     <p className="font-bold text-sm">{r.nombre}</p>
                                                     <p className="text-[10px] text-white/40">{r.email}</p>
+                                                    {r.paid_at && (
+                                                        <p className="text-[8px] text-accent font-bold uppercase mt-1">💳 Pago: {new Date(r.paid_at).toLocaleString()}</p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </td>

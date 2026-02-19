@@ -742,6 +742,7 @@ export default function RegisterWizard() {
                 foto_url: photoUrl,
                 comprobante_url: receiptUrl,
                 status: forcedStatus || 'pendiente',
+                paid_at: (forcedStatus === 'pagado' || dataToSubmit.status === 'pagado') ? new Date().toISOString() : null,
                 slug: slug,
                 etiquetas: finalCategories,
                 seller_id: dataToSubmit.seller_id
