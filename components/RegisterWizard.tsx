@@ -148,6 +148,38 @@ export default function RegisterWizard() {
         recognition.start();
     };
 
+    // --- PAYPHONE REDIRECT HANDLING ---
+    useEffect(() => {
+        const handlePayPhoneRedirect = async () => {
+            if (typeof window === 'undefined') return;
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get('id');
+            const clientTransactionId = params.get('clientTransactionId');
+
+            if (id && clientTransactionId) {
+                console.log("PayPhone Return Detected:", { id, clientTransactionId });
+                const savedData = localStorage.getItem('payphone_form_backup');
+                if (savedData) {
+                    try {
+                        const parsed = JSON.parse(savedData);
+                        // Clean URL
+                        window.history.replaceState({}, '', window.location.pathname);
+                        localStorage.removeItem('payphone_form_backup');
+
+                        // Restore and Submit
+                        console.log("Restoring data for PayPhone completion...");
+                        // We pass the data directly to handleFinalSubmit to avoid waiting for setState
+                        handleFinalSubmit('pagado', parsed);
+                    } catch (err) {
+                        console.error("Error parsing PayPhone backup:", err);
+                    }
+                }
+            }
+        };
+        handlePayPhoneRedirect();
+    }, []);
+    // ----------------------------------
+
     // Voice Interview Functions
     const startInterview = async () => {
         try {
@@ -620,7 +652,8 @@ export default function RegisterWizard() {
         return vcard;
     };
 
-    const handleFinalSubmit = async (forcedStatus?: string) => {
+    const handleFinalSubmit = async (forcedStatus?: string, overrideData?: any) => {
+        const dataToSubmit = overrideData || formData;
         setIsSubmitting(true);
         try {
             let photoUrl = null;
@@ -631,9 +664,9 @@ export default function RegisterWizard() {
 
             // 0. CALCULAR ETIQUETAS (Una sola vez para usar en Upsert y vCard)
             // Esto asegura consistencia y evita errores de procesamiento doble
-            const profession = formData.profession.toLowerCase().trim();
+            const profession = dataToSubmit.profession.toLowerCase().trim();
             const extraTags = INDUSTRY_TAGS[profession] || [];
-            const userTags = formData.categories.split(',').map((t: string) => t.trim()).filter(Boolean);
+            const userTags = dataToSubmit.categories.split(',').map((t: string) => t.trim()).filter(Boolean);
             const combinedTags = new Set([
                 ...userTags.map((t: string) => t.toLowerCase()),
                 ...extraTags.map((t: string) => t.toLowerCase())
@@ -645,7 +678,7 @@ export default function RegisterWizard() {
             // 1. Verificar si ya existe el usuario para mantener el slug
             let existingUser = null;
             try {
-                const lookupRes = await fetch(`/api/vcard/lookup?email=${encodeURIComponent(formData.email)}`);
+                const lookupRes = await fetch(`/api/vcard/lookup?email=${encodeURIComponent(dataToSubmit.email)}`);
                 if (lookupRes.ok) {
                     existingUser = await lookupRes.json();
                 }
@@ -653,67 +686,65 @@ export default function RegisterWizard() {
                 console.error("Error fetching existing user:", err);
             }
 
-            const slug = existingUser?.slug || generateSlug(formData);
+            const slug = existingUser?.slug || generateSlug(dataToSubmit);
 
             // 2. Subir imágenes (solo si hay nuevas)
             // 2. Subir imágenes localmente
             const uploadFile = async (file: File) => {
-                const formData = new FormData();
-                formData.append('file', file);
-                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', file);
+                const res = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
                 if (!res.ok) throw new Error('Upload failed');
                 const data = await res.json();
                 return data.url;
             };
 
-            if (formData.photo) {
+            if (dataToSubmit.photo) {
                 try {
-                    photoUrl = await uploadFile(formData.photo);
+                    photoUrl = await uploadFile(dataToSubmit.photo);
                     // Generate base64 for vCard
-                    photoBase64 = await fileToBase64(formData.photo);
+                    photoBase64 = await fileToBase64(dataToSubmit.photo);
                 } catch (e) { console.error("Error uploading photo", e); }
             } else if (existingUser) {
                 photoUrl = existingUser.foto_url;
             }
 
-            if (formData.receipt) {
+            if (dataToSubmit.receipt) {
                 try {
-                    receiptUrl = await uploadFile(formData.receipt);
+                    receiptUrl = await uploadFile(dataToSubmit.receipt);
                 } catch (e) { console.error("Error uploading receipt", e); }
             } else if (existingUser) {
                 receiptUrl = existingUser.comprobante_url;
             }
 
-
-
             // 3. UPSERT: Inserta o Actualiza por email
             const upsertData = {
-                tipo_perfil: formData.tipo_perfil,
-                nombres: formData.nombres,
-                apellidos: formData.apellidos,
-                nombre_negocio: formData.nombre_negocio,
-                contacto_nombre: formData.contacto_nombre,
-                contacto_apellido: formData.contacto_apellido,
-                whatsapp: formData.whatsapp,
-                email: formData.email,
-                profesion: formData.profession,
-                empresa: formData.company,
-                bio: formData.bio,
-                direccion: formData.address,
-                web: formData.web,
-                google_business: formData.google_business,
-                instagram: formData.instagram,
-                linkedin: formData.linkedin,
-                facebook: formData.facebook,
-                tiktok: formData.tiktok,
-                productos_servicios: formData.products,
-                plan: formData.plan,
+                tipo_perfil: dataToSubmit.tipo_perfil,
+                nombres: dataToSubmit.nombres,
+                apellidos: dataToSubmit.apellidos,
+                nombre_negocio: dataToSubmit.nombre_negocio,
+                contacto_nombre: dataToSubmit.contacto_nombre,
+                contacto_apellido: dataToSubmit.contacto_apellido,
+                whatsapp: dataToSubmit.whatsapp,
+                email: dataToSubmit.email,
+                profesion: dataToSubmit.profession,
+                empresa: dataToSubmit.company,
+                bio: dataToSubmit.bio,
+                direccion: dataToSubmit.address,
+                web: dataToSubmit.web,
+                google_business: dataToSubmit.google_business,
+                instagram: dataToSubmit.instagram,
+                linkedin: dataToSubmit.linkedin,
+                facebook: dataToSubmit.facebook,
+                tiktok: dataToSubmit.tiktok,
+                productos_servicios: dataToSubmit.products,
+                plan: dataToSubmit.plan,
                 foto_url: photoUrl,
                 comprobante_url: receiptUrl,
                 status: forcedStatus || 'pendiente',
                 slug: slug,
                 etiquetas: finalCategories,
-                seller_id: formData.seller_id
+                seller_id: dataToSubmit.seller_id
             };
 
             console.log("3. UPSERT: Enviando a Supabase...");
@@ -737,10 +768,10 @@ export default function RegisterWizard() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: formData.name,
-                        email: formData.email,
-                        whatsapp: formData.whatsapp,
-                        plan: formData.plan
+                        name: dataToSubmit.name,
+                        email: dataToSubmit.email,
+                        whatsapp: dataToSubmit.whatsapp,
+                        plan: dataToSubmit.plan
                     })
                 }).catch(err => console.error("Error silencioso en notificación WhatsApp:", err));
             } catch (notifyErr) {
@@ -806,6 +837,13 @@ export default function RegisterWizard() {
                         const amountInCents = currentPlanPrice * 100;
                         const transactionId = `reg_${Date.now()}_${formData.name.replace(/\s+/g, '_')}`;
 
+                        // GUARDAR RESPALDO ANTES DEL REDIRECT
+                        // Guardamos todo el texto. Las fotos no se guardan en localStorage por tamaño,
+                        // pero si el usuario vuelve podrá re-subirlas si falló algo.
+                        const backup = { ...formData };
+                        delete (backup as any).photo; // No serializable
+                        delete (backup as any).receipt; // No serializable
+                        localStorage.setItem('payphone_form_backup', JSON.stringify(backup));
 
                         try {
                             const ppb = new PBox({
@@ -817,8 +855,8 @@ export default function RegisterWizard() {
                                 storeId: process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID,
                                 reference: `Pago Plan ${formData.plan.toUpperCase()} - ${formData.name}`,
                                 lang: "es",
-                                responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://www.activaqr.com/registro",
-                                cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://www.activaqr.com/registro",
+                                responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://contacto-qr.vercel.app/registro",
+                                cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://contacto-qr.vercel.app/registro",
                                 onComplete: async (model: any, actions: any) => {
                                     console.log("Pago completado con éxito:", model);
                                     handleFinalSubmit('pagado');
