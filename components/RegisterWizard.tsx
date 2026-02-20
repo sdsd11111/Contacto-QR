@@ -89,6 +89,7 @@ export default function RegisterWizard() {
         linkedin: '',
         facebook: '',
         tiktok: '',
+        menu_digital: '',
         products: '',
         categories: '',
         plan: 'pro' as 'basic' | 'pro',
@@ -675,6 +676,7 @@ export default function RegisterWizard() {
             data.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin;LABEL=LinkedIn:${data.linkedin}` : '',
             data.facebook ? `X-SOCIALPROFILE;TYPE=facebook;LABEL=Facebook:${data.facebook}` : '',
             data.tiktok ? `X-SOCIALPROFILE;TYPE=tiktok;LABEL=TikTok:${data.tiktok}` : '',
+            data.menu_digital ? `URL;type=MenuDigital:${data.menu_digital}` : '',
             `X-SOCIALPROFILE;TYPE=whatsapp;LABEL=WhatsApp:https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}`,
             `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
             'END:VCARD'
@@ -768,6 +770,7 @@ export default function RegisterWizard() {
                 linkedin: dataToSubmit.linkedin,
                 facebook: dataToSubmit.facebook,
                 tiktok: dataToSubmit.tiktok,
+                menu_digital: dataToSubmit.menu_digital,
                 productos_servicios: dataToSubmit.products,
                 plan: dataToSubmit.plan,
                 foto_url: photoUrl,
@@ -1426,6 +1429,16 @@ export default function RegisterWizard() {
                                             value={formData.tiktok}
                                             onChange={(e) => updateForm('tiktok', e.target.value)}
                                             placeholder="https://tiktok.com/@tuusuario"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">🍽️ Menú Digital (Link)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.menu_digital}
+                                            onChange={(e) => updateForm('menu_digital', e.target.value)}
+                                            placeholder="https://menu.turestaurante.com"
                                             className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
                                         />
                                     </div>

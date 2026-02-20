@@ -127,6 +127,7 @@ ADR;TYPE=WORK:;;${data.direccion};;;;`;
         if (data.instagram) vcard += `\nURL;type=Instagram:${data.instagram}`;
         if (data.linkedin) vcard += `\nURL;type=LinkedIn:${data.linkedin}`;
         if (data.web) vcard += `\nURL;type=Website:${data.web}`;
+        if (data.menu_digital) vcard += `\nURL;type=MenuDigital:${data.menu_digital}`;
 
         vcard += `\nEND:VCARD`;
 
@@ -251,6 +252,15 @@ ADR;TYPE=WORK:;;${data.direccion};;;;`;
                                         <p className="font-bold text-sm">{data.empresa}</p>
                                     </div>
                                 </div>
+                            )}
+                            {data.menu_digital && (
+                                <a href={data.menu_digital} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 bg-cream rounded-2xl border border-navy/5 hover:border-primary/30 transition-colors">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-lg">🍽️</div>
+                                    <div className="text-left">
+                                        <p className="text-[10px] font-black text-navy/30 uppercase tracking-widest">Menú Digital</p>
+                                        <p className="font-bold text-sm text-primary">Ver Menú →</p>
+                                    </div>
+                                </a>
                             )}
                         </div>
 

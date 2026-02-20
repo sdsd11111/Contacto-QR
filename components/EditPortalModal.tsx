@@ -40,6 +40,7 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
         tiktok: '',
         products: '',
         categories: '',
+        menu_digital: '',
         foto_url: '' // For profile image update (base64)
     });
 
@@ -81,6 +82,7 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
                     tiktok: data.data.tiktok || '',
                     products: data.data.products || '',
                     categories: data.data.categories || '',
+                    menu_digital: data.data.menu_digital || '',
                     foto_url: '' // Keep empty on load, only set if changed. Use userData.foto_url for display.
                 });
                 setStep('edit');
@@ -210,6 +212,7 @@ ADR;TYPE=WORK:;;${formData.address};;;;`;
         if (formData.web) vcard += `\nURL;type=Website:${formData.web}`;
         if (formData.facebook) vcard += `\nURL;type=Facebook:${formData.facebook}`;
         if (formData.tiktok) vcard += `\nURL;type=TikTok:${formData.tiktok.startsWith('http') ? formData.tiktok : `https://tiktok.com/@${formData.tiktok.replace('@', '')}`}`;
+        if (formData.menu_digital) vcard += `\nURL;type=MenuDigital:${formData.menu_digital}`;
 
         vcard += `\nEND:VCARD`;
 
@@ -551,6 +554,15 @@ ADR;TYPE=WORK:;;${formData.address};;;;`;
                                             value={formData.linkedin}
                                             onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
                                             placeholder="https://linkedin.com/in/..."
+                                        />
+                                    </div>
+                                    <div className="col-span-full form-group">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">🍽️ Menú Digital (Link)</label>
+                                        <input
+                                            className="w-full border rounded-lg p-2 font-medium"
+                                            value={formData.menu_digital}
+                                            onChange={(e) => setFormData({ ...formData, menu_digital: e.target.value })}
+                                            placeholder="https://menu.turestaurante.com"
                                         />
                                     </div>
 

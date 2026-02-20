@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
             web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
             plan, foto_url, comprobante_url, galeria_urls,
             slug, etiquetas, seller_id, edit_code, // Added edit_code for verification
-            tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
+            tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
+            menu_digital
         } = body;
 
         // SECURITY: Never accept 'pagado' status from client. 
@@ -66,7 +67,8 @@ export async function POST(req: NextRequest) {
                         productos_servicios=?, plan=?, foto_url=?, comprobante_url=?, galeria_urls=?,
                         status=?, paid_at = CASE WHEN ? = 'pagado' AND (paid_at IS NULL) THEN NOW() ELSE paid_at END,
                         slug=?, etiquetas=?, seller_id=?,
-                        tipo_perfil=?, nombres=?, apellidos=?, nombre_negocio=?, contacto_nombre=?, contacto_apellido=?
+                        tipo_perfil=?, nombres=?, apellidos=?, nombre_negocio=?, contacto_nombre=?, contacto_apellido=?,
+                        menu_digital=?
                     WHERE email=?
                 `;
 
@@ -76,6 +78,7 @@ export async function POST(req: NextRequest) {
                     productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
                     finalStatus || 'pendiente', finalStatus, slug || existingUser.slug, etiquetas, seller_id || null,
                     tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || '',
+                    menu_digital || null,
                     email
                 ]);
 
@@ -100,13 +103,15 @@ export async function POST(req: NextRequest) {
                         web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                         plan, foto_url, comprobante_url, galeria_urls, status, paid_at, slug, etiquetas,
                         commission_status, seller_id, edit_code, edit_uses_remaining,
-                        tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
+                        tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
+                        menu_digital
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?,
+                        ?
                     )
                 `;
 
@@ -117,7 +122,8 @@ export async function POST(req: NextRequest) {
                     'pending', // commission_status
                     seller_id || null,
                     serverGeneratedEditCode, 2, // edit_code and uses
-                    tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || ''
+                    tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || '',
+                    menu_digital || null
                 ];
 
                 await pool.execute(insertQuery, values);

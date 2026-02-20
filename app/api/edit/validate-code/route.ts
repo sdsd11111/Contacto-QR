@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
                     nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
                     nombre, profesion as profession, empresa as company, whatsapp, email, bio, 
                     direccion as address, web, google_business, instagram, linkedin, 
-                    facebook, tiktok, productos_servicios as products, etiquetas as categories, foto_url
+                    facebook, tiktok, productos_servicios as products, etiquetas as categories, foto_url,
+                    menu_digital
                  FROM registraya_vcard_registros 
                  WHERE UPPER(edit_code) = UPPER(?)`,
                 [code]

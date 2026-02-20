@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
                     contacto_nombre = ?,
                     contacto_apellido = ?,
                     nombre = ?,
+                    menu_digital = ?,
                     edit_uses_remaining = edit_uses_remaining - 1,
                     last_edited_at = NOW()
             `;
@@ -83,7 +84,8 @@ export async function POST(req: NextRequest) {
                 data.nombre_negocio || '',
                 data.contacto_nombre || '',
                 data.contacto_apellido || '',
-                nombreLegacy
+                nombreLegacy,
+                data.menu_digital || null
             ];
 
             // If foto_url is provided (base64 from frontend), update it
