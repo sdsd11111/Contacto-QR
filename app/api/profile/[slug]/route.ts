@@ -11,9 +11,15 @@ export async function GET(
         const { slug } = await context.params;
 
         try {
-            // Search by slug or id
+            // Search by slug or id - ONLY returning public fields
             const [rows] = await pool.execute(
-                'SELECT * FROM registraya_vcard_registros WHERE slug = ? OR id = ?',
+                `SELECT 
+                    id, slug, nombre, profesion, empresa, bio, direccion, web, whatsapp, email, 
+                    google_business, instagram, linkedin, facebook, tiktok, productos_servicios, 
+                    plan, foto_url, galeria_urls, status, tipo_perfil, nombres, apellidos, 
+                    nombre_negocio, contacto_nombre, contacto_apellido, etiquetas, created_at
+                 FROM registraya_vcard_registros 
+                 WHERE slug = ? OR id = ?`,
                 [slug, slug]
             );
 

@@ -167,12 +167,36 @@ export default function RegisterWizard() {
                         window.history.replaceState({}, '', window.location.pathname);
                         localStorage.removeItem('payphone_form_backup');
 
-                        // Restore and Submit
-                        console.log("Restoring data for PayPhone completion...");
-                        setFormData(parsed); // Re-hidratar el estado para la UI
-                        handleFinalSubmit('pagado', parsed);
+                        // Restore for UI
+                        setFormData(parsed);
+
+                        // SECURITY: Use server-side verification instead of trusting the client
+                        setIsSubmitting(true);
+                        const verifyRes = await fetch('/api/payphone/verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                id,
+                                clientTransactionId,
+                                email: parsed.email
+                            })
+                        });
+
+                        const verifyData = await verifyRes.json();
+
+                        if (verifyRes.ok && verifyData.success) {
+                            console.log("PayPhone payment verified successfully!");
+                            // Success! The server already updated the status to 'pagado'
+                            setStep(5); // Move to Success step
+                        } else {
+                            console.error("Payment verification failed:", verifyData.error);
+                            alert("No pudimos confirmar tu pago automáticamente. Un asesor revisará tu caso pronto.");
+                            setStep(5); // Move to success step anyway, but it will show "pending" in the DB
+                        }
                     } catch (err) {
-                        console.error("Error parsing PayPhone backup:", err);
+                        console.error("Error processing PayPhone redirect:", err);
+                    } finally {
+                        setIsSubmitting(false);
                     }
                 }
             }
@@ -748,8 +772,6 @@ export default function RegisterWizard() {
                 plan: dataToSubmit.plan,
                 foto_url: photoUrl,
                 comprobante_url: receiptUrl,
-                status: forcedStatus || 'pendiente',
-                paid_at: (forcedStatus === 'pagado' || dataToSubmit.status === 'pagado') ? new Date().toISOString() : null,
                 slug: slug,
                 etiquetas: finalCategories,
                 seller_id: dataToSubmit.seller_id
@@ -866,8 +888,31 @@ export default function RegisterWizard() {
                                 responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://contacto-qr.vercel.app/registro",
                                 cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://contacto-qr.vercel.app/registro",
                                 onComplete: async (model: any, actions: any) => {
-                                    console.log("Pago completado con éxito:", model);
-                                    handleFinalSubmit('pagado');
+                                    console.log("Pago completado, verificando...", model);
+                                    setIsSubmitting(true);
+                                    try {
+                                        const res = await fetch('/api/payphone/verify', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                id: model.id,
+                                                clientTransactionId: model.clientTransactionId,
+                                                email: formData.email
+                                            })
+                                        });
+                                        const data = await res.json();
+                                        if (res.ok && data.success) {
+                                            setStep(5);
+                                        } else {
+                                            alert("Error confirmando pago: " + (data.error || "Desconocido"));
+                                            setStep(5);
+                                        }
+                                    } catch (err) {
+                                        console.error("Verification error:", err);
+                                        setStep(5);
+                                    } finally {
+                                        setIsSubmitting(false);
+                                    }
                                 },
                                 onCancel: (data: any) => {
                                     console.log("Pago cancelado por el usuario");

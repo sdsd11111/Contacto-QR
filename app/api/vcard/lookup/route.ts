@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     try {
         try {
             const [rows] = await pool.execute(
-                'SELECT slug, foto_url, comprobante_url, galeria_urls FROM registraya_vcard_registros WHERE email = ?',
+                'SELECT slug, foto_url, galeria_urls FROM registraya_vcard_registros WHERE email = ?',
                 [email]
             );
 

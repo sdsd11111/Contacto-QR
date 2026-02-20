@@ -61,16 +61,14 @@ export default function VideoStepGuide({ step, isVisible, onClose }: VideoStepGu
                     opacity: 1,
                     y: 0,
                     scale: 1,
-                    // Mobile: 160px width, Desktop: 300px width
-                    width: isMinimized ? "60px" : { base: "160px", md: "300px" } as any,
                 }}
                 exit={{ opacity: 0, y: 50, scale: 0.9 }}
-                style={{
-                    width: isMinimized ? "60px" : undefined // Handled by animate width above, but framer-motion width needs to be consistent
-                }}
+                style={{}}
                 className={cn(
-                    "fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[100] bg-navy/90 backdrop-blur-xl border border-white/10 rounded-2xl md:rounded-[2rem] shadow-2xl overflow-hidden shadow-primary/20 transition-all duration-500",
-                    isMinimized && "rounded-full cursor-pointer hover:scale-110"
+                    "fixed bottom-4 right-4 md:bottom-6 md:right-6 z-[100] bg-navy/90 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden shadow-primary/20 transition-all duration-500",
+                    isMinimized
+                        ? "w-[60px] h-[60px] rounded-full cursor-pointer hover:scale-110"
+                        : "w-[115px] md:w-[300px] rounded-2xl md:rounded-[2rem]"
                 )}
                 onClick={() => isMinimized && setIsMinimized(false)}
             >
@@ -83,16 +81,17 @@ export default function VideoStepGuide({ step, isVisible, onClose }: VideoStepGu
                         {/* Header Control */}
                         <div className="absolute top-3 right-3 z-[110] flex gap-2">
                             <button
-                                onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}
-                                className="w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                                className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
                             >
-                                <Minimize2 size={14} />
+                                <Minimize2 size={12} className="md:hidden" />
+                                <Minimize2 size={14} className="hidden md:block" />
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); setIsDismissed(true); }}
-                                className="w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                                className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
                             >
-                                <X size={14} />
+                                <X size={12} className="md:hidden" />
+                                <X size={14} className="hidden md:block" />
                             </button>
                         </div>
 
@@ -108,10 +107,10 @@ export default function VideoStepGuide({ step, isVisible, onClose }: VideoStepGu
                         </div>
 
                         {/* Caption Area */}
-                        <div className="p-4 pt-3 flex items-center gap-3 bg-navy">
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/80">
-                                Guía Alejandra: Paso {step}
+                        <div className="p-2 md:p-4 md:pt-3 flex items-center gap-2 md:gap-3 bg-navy">
+                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-primary animate-pulse" />
+                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/80 line-clamp-1">
+                                Guía: Paso {step}
                             </p>
                         </div>
                     </div>

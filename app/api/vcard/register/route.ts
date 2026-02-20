@@ -13,9 +13,17 @@ export async function POST(req: NextRequest) {
             nombre, email, profesion, empresa, bio, direccion,
             web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
             plan, foto_url, comprobante_url, galeria_urls,
-            status, slug, etiquetas, seller_id,
+            slug, etiquetas, seller_id, edit_code, // Added edit_code for verification
             tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
         } = body;
+
+        // SECURITY: Never accept 'pagado' status from client. 
+        // Only webhooks or admin can change status to paid.
+        let finalStatus = body.status;
+        if (finalStatus === 'pagado') {
+            console.warn(`SECURITY: Attempted status bypass for ${email}`);
+            finalStatus = 'pendiente';
+        }
 
         const whatsapp = formatPhoneEcuador(body.whatsapp || '');
 
@@ -32,7 +40,7 @@ export async function POST(req: NextRequest) {
         try {
             // Check if user exists (by email) to determine Insert or Update
             const [rows] = await pool.execute(
-                'SELECT id, slug FROM registraya_vcard_registros WHERE email = ?',
+                'SELECT id, slug, edit_code FROM registraya_vcard_registros WHERE email = ?',
                 [email]
             );
 
@@ -40,8 +48,17 @@ export async function POST(req: NextRequest) {
             const galeriaUrlsJson = JSON.stringify(galeria_urls || []);
 
             if ((rows as any[]).length > 0) {
-                // UPDATE
+                // UPDATE - Requires validation
                 const existingUser = (rows as any[])[0];
+
+                // SECURITY: If updating existing record, must provide correct edit_code
+                if (!edit_code || edit_code.toUpperCase() !== existingUser.edit_code.toUpperCase()) {
+                    return NextResponse.json({
+                        error: 'Este correo ya está registrado. Para actualizar tus datos, por favor usa tu Código de Edición o ve a la sección de edición.',
+                        is_existing: true
+                    }, { status: 403 });
+                }
+
                 const updateQuery = `
                     UPDATE registraya_vcard_registros SET
                         nombre=?, whatsapp=?, profesion=?, empresa=?, bio=?, direccion=?,
@@ -57,7 +74,7 @@ export async function POST(req: NextRequest) {
                     finalNombre, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok,
                     productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
-                    status || 'pendiente', status, slug || existingUser.slug, etiquetas, seller_id || null,
+                    finalStatus || 'pendiente', finalStatus, slug || existingUser.slug, etiquetas, seller_id || null,
                     tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || '',
                     email
                 ]);
@@ -68,8 +85,14 @@ export async function POST(req: NextRequest) {
                 // INSERT
                 const newId = uuidv4();
                 const now = new Date();
-                const isPaid = status === 'pagado';
-                const editCode = 'RYA-2026-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                const serverGeneratedEditCode = 'RYA-2026-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+                // Server-side slug generation if not provided
+                let finalSlug = slug;
+                if (!finalSlug) {
+                    const cleanName = finalNombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+                    finalSlug = `${cleanName}-${Math.random().toString(36).substring(2, 6)}`;
+                }
 
                 const insertQuery = `
                     INSERT INTO registraya_vcard_registros (
@@ -90,16 +113,16 @@ export async function POST(req: NextRequest) {
                 const values = [
                     newId, now, finalNombre, email, whatsapp, profesion, empresa, bio, direccion,
                     web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
-                    plan, foto_url, comprobante_url, galeriaUrlsJson, status || 'pendiente', isPaid ? now : null, slug, etiquetas,
+                    plan, foto_url, comprobante_url, galeriaUrlsJson, finalStatus || 'pendiente', null, finalSlug, etiquetas,
                     'pending', // commission_status
                     seller_id || null,
-                    editCode, 2, // edit_code and uses
+                    serverGeneratedEditCode, 2, // edit_code and uses
                     tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || ''
                 ];
 
                 await pool.execute(insertQuery, values);
 
-                return NextResponse.json({ success: true, action: 'created', id: newId, edit_code: editCode });
+                return NextResponse.json({ success: true, action: 'created', id: newId, edit_code: serverGeneratedEditCode });
             }
 
         } catch (dbErr) {

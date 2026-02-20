@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({
                 success: false,
                 error: 'Vendedor no encontrado o inactivo'
-            }, { status: 404 });
+            }, { status: 200 });
         }
     } catch (err: any) {
         console.error('Error validating seller code:', err);
