@@ -78,6 +78,13 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Nada que actualizar' }, { status: 400 });
         }
 
+        // Si galeria_urls viene como array, convertir a string JSON para MySQL
+        if (updateFields.galeria_urls && Array.isArray(updateFields.galeria_urls)) {
+            updateFields.galeria_urls = JSON.stringify(updateFields.galeria_urls);
+        } else if (updateFields.galeria_urls === null) {
+            updateFields.galeria_urls = JSON.stringify([]);
+        }
+
         // Construct dynamic UPDATE query
         const setClause = keys.map(key => `${key} = ?`).join(', ');
         const values = keys.map(key => updateFields[key]);

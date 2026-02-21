@@ -1,0 +1,15 @@
+TABLES: registraya_vcard_registros, registraya_vcard_sellers
+
+--- registraya_vcard_sellers ---
+id int(11)
+code varchar(50)
+parent_id int(11)
+nombre varchar(255)
+codigo varchar(10)
+email varchar(255)
+password varchar(255)
+role varchar(50)
+city varchar(100)
+comision_porcentaje decimal(5,2)
+activo tinyint(1)
+created_at timestamp
