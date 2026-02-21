@@ -271,7 +271,13 @@ export default function AdminDashboard() {
     };
 
     const handleEdit = (registro: any) => {
-        setEditingRegistro({ ...registro });
+        // galeria_urls puede venir como string JSON desde MySQL, hay que parsearlo
+        let galeriaUrls = registro.galeria_urls;
+        if (typeof galeriaUrls === 'string') {
+            try { galeriaUrls = JSON.parse(galeriaUrls); } catch { galeriaUrls = []; }
+        }
+        if (!Array.isArray(galeriaUrls)) galeriaUrls = [];
+        setEditingRegistro({ ...registro, galeria_urls: galeriaUrls });
         setIsEditModalOpen(true);
     };
 
