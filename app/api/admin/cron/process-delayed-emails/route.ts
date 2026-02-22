@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
             SELECT * FROM registraya_vcard_registros 
             WHERE status = 'pagado' 
             AND auto_email_sent = 0 
-            AND paid_at <= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            AND paid_at <= DATE_SUB(NOW(), INTERVAL 1 MINUTE)
             LIMIT 20
         `;
 

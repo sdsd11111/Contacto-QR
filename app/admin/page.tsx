@@ -958,7 +958,7 @@ export default function AdminDashboard() {
                             {registros.filter(r => r.status === 'pagado' && !r.auto_email_sent).length}
                         </p>
                         <p className="text-[10px] font-bold text-white/40 mt-2 italic">
-                            Envío automático en 24h
+                            Envío inmediato
                         </p>
                     </div>
                 </div>
