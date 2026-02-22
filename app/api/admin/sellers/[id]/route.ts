@@ -36,37 +36,42 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             return NextResponse.json({ error: "Vendedor no encontrado" }, { status: 404 });
         }
 
-        // NOTIFICACIÓN POR CORREO — No-bloqueante
+        // NOTIFICACIÓN POR CORREO
+        // IMPORTANTE: await bloqueante — Vercel termina el proceso al retornar la respuesta,
+        // por lo que fire-and-forget (.catch()) nunca completa en serverless.
         const origin = req.headers.get('origin') || 'https://contacto-qr.vercel.app';
         const dashboardUrl = `${origin}/admin/vendedor`;
 
-        sendMail({
-            to: email,
-            subject: '🔐 Actualización de Seguridad - Tu Cuenta ActivaQR',
-            html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #FF6B00;">¡Hola, ${nombre}!</h2>
-                    <p>Un administrador ha actualizado los datos de tu cuenta en ActivaQR. Aquí tienes tus credenciales actualizadas:</p>
-                    
-                    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>Usuario:</strong> ${email}</p>
-                        ${password ? `<p style="margin: 5px 0;"><strong>Nueva Contraseña:</strong> ${password}</p>` : '<p style="margin: 5px 0; color: #666;">Tu contraseña no ha sido modificada.</p>'}
+        try {
+            await sendMail({
+                to: email,
+                subject: '🔐 Actualización de Seguridad - Tu Cuenta ActivaQR',
+                html: `
+                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                        <h2 style="color: #FF6B00;">¡Hola, ${nombre}!</h2>
+                        <p>Un administrador ha actualizado los datos de tu cuenta en ActivaQR. Aquí tienes tus credenciales actualizadas:</p>
+                        
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Usuario:</strong> ${email}</p>
+                            ${password ? `<p style="margin: 5px 0;"><strong>Nueva Contraseña:</strong> ${password}</p>` : '<p style="margin: 5px 0; color: #666;">Tu contraseña no ha sido modificada.</p>'}
+                        </div>
+
+                        <p>Si no solicitaste este cambio, por favor contacta con soporte de inmediato.</p>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+                        <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático de ActivaQR.</p>
                     </div>
-
-                    <p>Si no solicitaste este cambio, por favor contacta con soporte de inmediato.</p>
-
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
-                    </div>
-
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
-                    <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático de ActivaQR.</p>
-                </div>
-            `
-        }).catch(emailErr => {
-            // No bloqueamos la respuesta si falla el correo
-            console.error('[sellers/[id]] Error al enviar correo de actualización:', emailErr);
-        });
+                `
+            });
+            console.log(`[sellers/[id]] ✅ Correo de actualización enviado a ${email}`);
+        } catch (emailErr: any) {
+            // No fallamos la respuesta si el correo falla — el vendedor ya fue actualizado
+            console.error('[sellers/[id]] ❌ Error al enviar correo de actualización:', emailErr.message);
+        }
 
         return NextResponse.json({ success: true, message: "Vendedor actualizado y notificado exitosamente" });
 

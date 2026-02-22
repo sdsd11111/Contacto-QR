@@ -86,43 +86,48 @@ export async function POST(req: NextRequest) {
             codigo
         ]);
 
-        // ENVIAR CORREO DE BIENVENIDA (no bloqueante)
+        // ENVIAR CORREO DE BIENVENIDA
+        // IMPORTANTE: usar await — Vercel termina el proceso al retornar la respuesta,
+        // por lo que fire-and-forget (.catch()) nunca completa en serverless.
         const origin = req.headers.get('origin') || 'https://contacto-qr.vercel.app';
         const dashboardUrl = `${origin}/admin/vendedor`;
         const referralUrl = `${origin}/registro?ref=${codigo}`;
 
-        sendMail({
-            to: email,
-            subject: '🎉 ¡Bienvenido al Equipo de Ventas de ActivaQR!',
-            html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #FF6B00;">¡Hola, ${nombre}!</h2>
-                    <p>Estamos muy emocionados de tenerte con nosotros. Aquí tienes tus credenciales para acceder a tu panel de control:</p>
-                    
-                    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>Usuario:</strong> ${email}</p>
-                        <p style="margin: 5px 0;"><strong>Contraseña:</strong> ${password}</p>
-                        <p style="margin: 5px 0;"><strong>Tu Código:</strong> <span style="font-size: 1.2em; color: #FF6B00; font-weight: bold;">${codigo}</span></p>
+        try {
+            await sendMail({
+                to: email,
+                subject: '🎉 ¡Bienvenido al Equipo de Ventas de ActivaQR!',
+                html: `
+                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                        <h2 style="color: #FF6B00;">¡Hola, ${nombre}!</h2>
+                        <p>Estamos muy emocionados de tenerte con nosotros. Aquí tienes tus credenciales para acceder a tu panel de control:</p>
+                        
+                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Usuario:</strong> ${email}</p>
+                            <p style="margin: 5px 0;"><strong>Contraseña:</strong> ${password}</p>
+                            <p style="margin: 5px 0;"><strong>Tu Código:</strong> <span style="font-size: 1.2em; color: #FF6B00; font-weight: bold;">${codigo}</span></p>
+                        </div>
+
+                        <p><strong>Tu enlace de ventas personalizado:</strong></p>
+                        <p style="background: #FFF7ED; border: 1px solid #FF6B00; padding: 10px; border-radius: 5px; word-break: break-all;">
+                            <a href="${referralUrl}" style="color: #FF6B00; font-weight: bold;">${referralUrl}</a>
+                        </p>
+                        <p style="font-size: 0.9em; color: #666;">Cualquier cliente que use este link se te asignará automáticamente.</p>
+
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
+                        </div>
+
+                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+                        <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático de ActivaQR. No respondas a este correo.</p>
                     </div>
-
-                    <p><strong>Tu enlace de ventas personalizado:</strong></p>
-                    <p style="background: #FFF7ED; border: 1px solid #FF6B00; padding: 10px; border-radius: 5px; word-break: break-all;">
-                        <a href="${referralUrl}" style="color: #FF6B00; font-weight: bold;">${referralUrl}</a>
-                    </p>
-                    <p style="font-size: 0.9em; color: #666;">Cualquier cliente que use este link se te asignará automáticamente.</p>
-
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
-                    </div>
-
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
-                    <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático de ActivaQR. No respondas a este correo.</p>
-                </div>
-            `
-        }).catch(emailErr => {
-            // No bloqueamos la respuesta del API si falla el correo — el vendedor ya fue creado.
-            console.error('[sellers/POST] ❌ Error al enviar correo de bienvenida:', emailErr);
-        });
+                `
+            });
+            console.log(`[sellers/POST] ✅ Correo de bienvenida enviado a ${email}`);
+        } catch (emailErr: any) {
+            // No fallamos la creación del vendedor si el correo falla
+            console.error('[sellers/POST] ❌ Error al enviar correo de bienvenida:', emailErr.message);
+        }
 
         return NextResponse.json({
             success: true,
