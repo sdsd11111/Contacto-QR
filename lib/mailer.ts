@@ -10,10 +10,11 @@ import nodemailer from 'nodemailer';
  * Lanza un error si faltan variables de entorno SMTP.
  */
 export function createMailTransporter() {
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+    // Sanitizar variables (limpiar comillas accidentales y espacios)
+    const host = process.env.SMTP_HOST?.trim().replace(/^["']|["']$/g, '');
+    const port = process.env.SMTP_PORT?.trim().replace(/^["']|["']$/g, '');
+    const user = process.env.SMTP_USER?.trim().replace(/^["']|["']$/g, '');
+    const pass = process.env.SMTP_PASS?.trim().replace(/^["']|["']$/g, '');
 
     if (!host || !port || !user || !pass) {
         const missing = { host: !!host, port: !!port, user: !!user, pass: !!pass };
@@ -21,10 +22,12 @@ export function createMailTransporter() {
         throw new Error(`Configuración SMTP incompleta. Variables faltantes: ${JSON.stringify(missing)}`);
     }
 
+    const isSecure = (process.env.SMTP_SECURE?.trim().replace(/^["']|["']$/g, '') === 'true');
+
     return nodemailer.createTransport({
         host,
         port: Number(port),
-        secure: process.env.SMTP_SECURE === 'true', // true para 465, false para 587/TLS
+        secure: isSecure, // true para 465, false para 587/TLS
         auth: { user, pass },
         // Opciones de debugging para desarrollo local
         ...(process.env.NODE_ENV === 'development' && {

@@ -16,56 +16,72 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    // Sanitizar variables (limpiar comillas accidentales y espacios)
+    const host = process.env.SMTP_HOST?.trim().replace(/^["']|["']$/g, '');
+    const user = process.env.SMTP_USER?.trim().replace(/^["']|["']$/g, '');
+    const pass = process.env.SMTP_PASS?.trim().replace(/^["']|["']$/g, '');
+    const originalPort = process.env.SMTP_PORT?.trim().replace(/^["']|["']$/g, '');
+
     const config = {
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT || 465),
-        secure: process.env.SMTP_SECURE === 'true',
-        user: process.env.SMTP_USER,
+        host,
+        user,
         from: process.env.EMAIL_FROM,
-        node_env: process.env.NODE_ENV,
-        // No mostrar la contraseña completa, solo si está definida
-        pass_defined: !!process.env.SMTP_PASS,
-        pass_length: process.env.SMTP_PASS?.length,
+        originalPort,
+        pass_defined: !!pass,
+        pass_length: pass?.length,
     };
 
-    try {
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT || 465),
-            secure: process.env.SMTP_SECURE === 'true',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-            tls: { rejectUnauthorized: false },
-        });
+    const portsToTry = [
+        { port: 465, secure: true },
+        { port: 587, secure: false }
+    ];
 
-        // 1. Verificar conexión
-        await transporter.verify();
+    const attempts = [];
 
-        // 2. Enviar correo de prueba
-        const info = await transporter.sendMail({
-            from: process.env.EMAIL_FROM || process.env.SMTP_USER,
-            to: to!,
-            subject: '✅ Test SMTP ActivaQR — Diagnóstico',
-            html: `<p>Si recibes esto, el SMTP funciona correctamente desde <strong>${process.env.NODE_ENV}</strong>.</p>
-                   <p>Host: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}</p>`,
-        });
+    for (const setup of portsToTry) {
+        try {
+            const transporter = nodemailer.createTransport({
+                host,
+                port: setup.port,
+                secure: setup.secure,
+                auth: { user, pass },
+                tls: { rejectUnauthorized: false },
+                connectionTimeout: 5000, // 5 segundos para no colgar el request
+            });
 
-        return NextResponse.json({
-            success: true,
-            message: '✅ SMTP funciona correctamente',
-            messageId: info.messageId,
-            config,
-        });
+            await transporter.verify();
 
-    } catch (error: any) {
-        return NextResponse.json({
-            success: false,
-            error: error.message,
-            code: error.code,
-            command: error.command,
-            config,
-        }, { status: 500 });
+            // Si llega aquí, funcionó
+            const info = await transporter.sendMail({
+                from: process.env.EMAIL_FROM || user,
+                to: to!,
+                subject: `✅ Test SMTP ActivaQR — Puerto ${setup.port}`,
+                html: `<p>SMTP funcionando en <strong>Puerto ${setup.port}</strong>.</p>
+                       <p>Host: ${host}</p>`,
+            });
+
+            return NextResponse.json({
+                success: true,
+                message: `✅ SMTP funciona correctamente en puerto ${setup.port}`,
+                messageId: info.messageId,
+                config: { ...config, usedPort: setup.port, usedSecure: setup.secure },
+                attempts
+            });
+
+        } catch (error: any) {
+            attempts.push({
+                port: setup.port,
+                secure: setup.secure,
+                error: error.message,
+                code: error.code
+            });
+        }
     }
+
+    return NextResponse.json({
+        success: false,
+        error: 'Fallaron todos los intentos de conexión SMTP',
+        attempts,
+        config
+    }, { status: 500 });
 }
