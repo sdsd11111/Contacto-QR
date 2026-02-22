@@ -30,7 +30,9 @@ import {
     QrCode,
     BarChart3,
     Users,
-    ChevronDown
+    ChevronDown,
+    Info,
+    Settings
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -70,6 +72,17 @@ export default function AdminDashboard() {
     const [isCreatingSeller, setIsCreatingSeller] = useState(false);
     const [nextSellerCode, setNextSellerCode] = useState<string | null>(null);
     const [isLive, setIsLive] = useState(false);
+
+    // Estados para edición de vendedor
+    const [isEditSellerModalOpen, setIsEditSellerModalOpen] = useState(false);
+    const [editingSeller, setEditingSeller] = useState<any>(null);
+    const [isSavingSeller, setIsSavingSeller] = useState(false);
+
+    // Estados para migración de equipo
+    const [isMigrateModalOpen, setIsMigrateModalOpen] = useState(false);
+    const [migratingLeader, setMigratingLeader] = useState<any>(null);
+    const [targetLeaderId, setTargetLeaderId] = useState<number>(0);
+    const [isMigratingTeam, setIsMigratingTeam] = useState(false);
 
     const fetchNextCode = async () => {
         const adminKey = localStorage.getItem('admin_access_key') || '';
@@ -182,6 +195,103 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleEditSeller = (seller: any) => {
+        setEditingSeller({ ...seller }); // Clone seller object to avoid direct mutation
+        setIsEditSellerModalOpen(true);
+    };
+
+    const handleSaveSellerEdit = async () => {
+        if (!editingSeller) return;
+        setIsSavingSeller(true);
+        try {
+            const token = localStorage.getItem("admin_access_key");
+            if (!token) throw new Error("No token admin");
+
+            const res = await fetch(`/api/admin/sellers/${editingSeller.id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "x-admin-key": token
+                },
+                body: JSON.stringify(editingSeller)
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Error al actualizar vendedor");
+
+            alert("Vendedor actualizado correctamente");
+            setIsEditSellerModalOpen(false);
+            setEditingSeller(null);
+            fetchSellers(); // Refresh the list
+        } catch (err: any) {
+            alert(err.message || "Error de conexión");
+        }
+        setIsSavingSeller(false);
+    };
+
+    const handleDeleteSeller = async (id: number) => {
+        const seller = sellers.find(s => s.id === id);
+        if (!seller) return;
+
+        if (seller.team_count > 0) {
+            setMigratingLeader(seller);
+            setIsMigrateModalOpen(true);
+            return;
+        }
+
+        if (!confirm(`¿Estás seguro de eliminar a ${seller.nombre}? Esta acción no se puede deshacer.`)) return;
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch(`/api/admin/sellers?id=${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': adminKey }
+            });
+            if (res.ok) {
+                alert("Vendedor eliminado con éxito");
+                fetchSellers();
+            } else {
+                const data = await res.json();
+                alert("Error: " + (data.error || "No se pudo eliminar"));
+            }
+        } catch (err: any) {
+            alert("Error: " + err.message);
+        }
+    };
+
+    const handleMigrateTeam = async () => {
+        if (!migratingLeader) return;
+        setIsMigratingTeam(true);
+
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch('/api/admin/sellers/migrate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify({
+                    fromLeaderId: migratingLeader.id,
+                    toLeaderId: targetLeaderId === 0 ? null : targetLeaderId
+                })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message);
+                setIsMigrateModalOpen(false);
+                setMigratingLeader(null);
+                fetchSellers(); // Refresh to allow deletion now
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (err: any) {
+            alert("Error: " + err.message);
+        } finally {
+            setIsMigratingTeam(false);
+        }
+    };
+
     useEffect(() => {
         if (isAuthorized) {
             fetchRegistros();
@@ -209,27 +319,39 @@ export default function AdminDashboard() {
 
     const updateCommissionStatus = async (id: string, currentStatus: string) => {
         if (pendingIds.has(id)) return;
-        setPendingIds(prev => new Set(prev).add(id));
 
-        const newStatus = currentStatus === 'paid' ? 'pending' : 'paid';
+        // El administrador solo puede marcar como 'paid_to_leader' si está 'pending'
+        // o revertir a 'pending' si está 'paid_to_leader'.
+        // 'completed' solo lo puede poner el vendedor final.
+        let newStatus = '';
+        if (currentStatus === 'pending') newStatus = 'paid_to_leader';
+        else if (currentStatus === 'paid_to_leader') newStatus = 'pending';
+        else return; // No permitir cambios manuales si ya está 'completed'
+
+        if (!confirm(`¿Confirmas cambiar el estado a: ${newStatus === 'paid_to_leader' ? 'ENVIADO AL LÍDER' : 'PENDIENTE'}?`)) return;
+
+        setPendingIds(prev => new Set(prev).add(id));
         const adminKey = localStorage.getItem('admin_access_key') || '';
         try {
+            const body: any = { id, commission_status: newStatus };
+            if (newStatus === 'paid_to_leader') body.leader_paid_at = new Date().toISOString();
+
             const res = await fetch('/api/admin/registros', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-admin-key': adminKey
                 },
-                body: JSON.stringify({ id, commission_status: newStatus })
+                body: JSON.stringify(body)
             });
             if (res.ok) {
-                setRegistros(prev => prev.map(r => r.id === id ? { ...r, commission_status: newStatus } : r));
+                setRegistros(prev => prev.map(r => r.id === id ? { ...r, commission_status: newStatus, leader_paid_at: body.leader_paid_at || r.leader_paid_at } : r));
             } else {
                 const result = await res.json();
-                alert("Error al actualizar comisión: " + (result.error || 'Error desconocido'));
+                alert("Error: " + (result.error || 'Error desconocido'));
             }
         } catch {
-            alert("Error al actualizar comisión.");
+            alert("Error al conectar con el servidor.");
         } finally {
             setPendingIds(prev => {
                 const next = new Set(prev);
@@ -460,9 +582,11 @@ export default function AdminDashboard() {
         if (statusFilter === "clientes_pendientes") {
             matchesStatus = r.status === "pendiente";
         } else if (statusFilter === "comisiones_pendientes") {
-            matchesStatus = !!(r.seller_id && r.commission_status !== "paid" && (r.status === "pagado" || r.status === "entregado"));
+            // Pendiente de pago inicial o enviado a líder pero no confirmado 
+            matchesStatus = !!(r.seller_id && (r.commission_status === "pending" || r.commission_status === "paid_to_leader") && (r.status === "pagado" || r.status === "entregado"));
         } else if (statusFilter === "comisiones_pagadas") {
-            matchesStatus = !!(r.seller_id && r.commission_status === "paid");
+            // Solo las que el vendedor ya confirmó (Ciclo completo)
+            matchesStatus = !!(r.seller_id && r.commission_status === "completed");
         } else if (statusFilter !== "todos") {
             matchesStatus = r.status === statusFilter;
         }
@@ -563,7 +687,7 @@ export default function AdminDashboard() {
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
                     <div>
                         <h1 className="text-4xl font-black uppercase italic tracking-tighter">Admin Dashboard</h1>
-                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">Gestión de vCards RegistraYa!</p>
+                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">Gestión de vCards ActivaQR</p>
                     </div>
 
                     <div className="flex gap-4">
@@ -595,6 +719,18 @@ export default function AdminDashboard() {
 
                 {/* Resumen de Vendedores */}
                 <div className="mb-12">
+                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 mb-8 flex gap-4 items-start shadow-inner">
+                        <Info className="text-primary flex-shrink-0 mt-1" size={24} />
+                        <div>
+                            <h3 className="text-primary font-black uppercase italic tracking-widest text-sm mb-2">Manual de Jerarquía Comercial</h3>
+                            <ul className="text-white/60 text-xs space-y-2 list-disc ml-4">
+                                <li><strong>Tú (Admin):</strong> Creas a los <span className="text-white font-bold">Vendedores Oficiales (Socios)</span> desde aquí. Ellos tienen trato directo contigo.</li>
+                                <li><strong>Vendedores Oficiales:</strong> Ellos crean a sus propios <span className="text-white font-bold">Sub-vendedores</span> desde su propio panel (Gestionar Equipo).</li>
+                                <li><strong>Sub-vendedores:</strong> Cobran un 30% fijo. Sus ventas suben de nivel a su Vendedor Oficial. <em>No los crees aquí.</em></li>
+                            </ul>
+                        </div>
+                    </div>
+
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
                             <Users className="text-primary" size={24} />
@@ -665,23 +801,40 @@ export default function AdminDashboard() {
                                             <p className="p-4 text-center text-[10px] font-bold text-white/40 uppercase tracking-widest">No hay otros vendedores</p>
                                         ) : (
                                             sellers.filter(s => s.nombre !== 'Cesar Reyes').map(s => (
-                                                <button
-                                                    key={s.id}
-                                                    onClick={() => {
-                                                        setSellerIdFilter(s.id);
-                                                        setIsSellersDropdownOpen(false);
-                                                    }}
-                                                    className={cn(
-                                                        "w-full text-left px-6 py-4 rounded-2xl transition-all flex flex-col hover:bg-white/5",
-                                                        sellerIdFilter === s.id ? "bg-white/10" : ""
-                                                    )}
-                                                >
-                                                    <span className="font-black text-xs uppercase tracking-tighter truncate">{s.nombre}</span>
-                                                    <div className="flex justify-between items-center mt-1">
-                                                        <span className="text-[9px] font-black text-primary uppercase">Código: {s.codigo}</span>
-                                                        <span className="text-[9px] font-bold text-white/40">{s.total_ventas} Ventas</span>
+                                                <div key={s.id} className="relative group">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSellerIdFilter(s.id);
+                                                            setIsSellersDropdownOpen(false);
+                                                        }}
+                                                        className={cn(
+                                                            "w-full text-left px-6 py-4 rounded-2xl transition-all flex flex-col hover:bg-white/5",
+                                                            sellerIdFilter === s.id ? "bg-white/10" : ""
+                                                        )}
+                                                    >
+                                                        <span className="font-black text-xs uppercase tracking-tighter truncate pr-16">{s.nombre}</span>
+                                                        <div className="flex justify-between items-center mt-1">
+                                                            <span className="text-[9px] font-black text-primary uppercase font-mono">#{s.codigo}</span>
+                                                            <span className="text-[9px] font-bold text-white/40">{s.total_ventas} Ventas</span>
+                                                        </div>
+                                                    </button>
+                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleEditSeller(s); }}
+                                                            className="p-2 bg-white/5 hover:bg-white/20 text-white/40 hover:text-white rounded-lg transition-all"
+                                                            title="Editar Vendedor"
+                                                        >
+                                                            <Settings size={12} />
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteSeller(s.id); }}
+                                                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500/40 hover:text-red-500 rounded-lg transition-all"
+                                                            title="Eliminar Vendedor"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
                                                     </div>
-                                                </button>
+                                                </div>
                                             ))
                                         )}
                                     </motion.div>
@@ -965,19 +1118,42 @@ export default function AdminDashboard() {
 
                                                 {/* Botón Comisión (Socio) */}
                                                 {r.seller_id && (
-                                                    <button
-                                                        onClick={() => updateCommissionStatus(r.id, r.commission_status)}
-                                                        disabled={pendingIds.has(r.id)}
-                                                        className={cn(
-                                                            "p-3 rounded-xl transition-all shadow-lg",
-                                                            r.commission_status === 'paid'
-                                                                ? "bg-green-500 text-white shadow-green-500/20"
-                                                                : "bg-white/5 text-white/20 border border-white/10 hover:bg-white/10"
+                                                    <div className="relative group/comm">
+                                                        <button
+                                                            onClick={() => updateCommissionStatus(r.id, r.commission_status)}
+                                                            disabled={pendingIds.has(r.id)}
+                                                            className={cn(
+                                                                "p-3 rounded-xl transition-all shadow-lg",
+                                                                r.commission_status === 'completed'
+                                                                    ? "bg-green-500 text-white shadow-green-500/20"
+                                                                    : r.commission_status === 'paid_to_leader'
+                                                                        ? "bg-brand text-white shadow-brand/20"
+                                                                        : "bg-white/5 text-white/20 border border-white/10 hover:bg-white/10"
+                                                            )}
+                                                            title={
+                                                                r.commission_status === 'completed' ? "Pago Confirmado por Vendedor ✅" :
+                                                                    r.commission_status === 'paid_to_leader' ? "Enviado al Líder (Esperando Confirmación) 🚚" :
+                                                                        "Marcar como PAGADO AL LÍDER"
+                                                            }
+                                                        >
+                                                            <ShieldCheck size={18} />
+                                                        </button>
+
+                                                        {/* Alerta de retraso > 48h */}
+                                                        {r.commission_status === 'paid_to_leader' && r.leader_paid_at && (
+                                                            (() => {
+                                                                const paidDate = new Date(r.leader_paid_at).getTime();
+                                                                const now = new Date().getTime();
+                                                                const hoursPassed = (now - paidDate) / (1000 * 60 * 60);
+                                                                if (hoursPassed > 48) {
+                                                                    return (
+                                                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-navy rounded-full animate-pulse shadow-lg shadow-red-500/50" />
+                                                                    );
+                                                                }
+                                                                return null;
+                                                            })()
                                                         )}
-                                                        title={r.commission_status === 'paid' ? "Marcar Comisión como PENDIENTE" : "Marcar Comisión como PAGADA"}
-                                                    >
-                                                        <ShieldCheck size={18} />
-                                                    </button>
+                                                    </div>
                                                 )}
 
                                                 <button
@@ -1283,7 +1459,38 @@ export default function AdminDashboard() {
                                                     </div>
                                                 </div>
 
-                                                {/* Opción 2: Perfil Digital (Desactivado por ahora) */}
+                                                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Opción 2: Gestión de Comisión</p>
+                                                    <div className="space-y-4">
+                                                        <div>
+                                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Estado del Pago</label>
+                                                            <select
+                                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 font-bold text-xs outline-none focus:border-primary/40 transition-all appearance-none"
+                                                                value={editingRegistro.commission_status || 'pending'}
+                                                                onChange={e => {
+                                                                    const val = e.target.value;
+                                                                    setEditingRegistro({
+                                                                        ...editingRegistro,
+                                                                        commission_status: val,
+                                                                        leader_paid_at: val === 'paid_to_leader' ? new Date().toISOString() : editingRegistro.leader_paid_at
+                                                                    });
+                                                                }}
+                                                            >
+                                                                <option value="pending" className="bg-navy">Pendiente</option>
+                                                                <option value="paid_to_leader" className="bg-navy">Enviada a Líder 🚚</option>
+                                                                <option value="completed" className="bg-navy">Confirmada por Vendedor ✅</option>
+                                                            </select>
+                                                        </div>
+                                                        {editingRegistro.commission_status === 'paid_to_leader' && editingRegistro.leader_paid_at && (
+                                                            <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                                                                <Clock size={14} className="text-amber-500" />
+                                                                <p className="text-[9px] font-bold text-amber-200 uppercase tracking-tight">
+                                                                    Pagado al líder el: {new Date(editingRegistro.leader_paid_at).toLocaleString()}
+                                                                </p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -1361,13 +1568,19 @@ export default function AdminDashboard() {
                             onClick={e => e.stopPropagation()}
                         >
                             <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Nuevo Vendedor</h3>
+                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Nuevo Vendedor Oficial</h3>
                                 <button onClick={() => setIsCreateSellerModalOpen(false)} className="text-white/20 hover:text-white transition-colors">
                                     <X size={24} />
                                 </button>
                             </div>
 
                             <form onSubmit={handleCreateSeller} className="p-10 space-y-8">
+                                <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex gap-3 shadow-inner">
+                                    <Info className="text-primary flex-shrink-0" size={20} />
+                                    <p className="text-primary text-[10px] font-bold leading-relaxed uppercase tracking-widest">
+                                        🛑 ATENCIÓN: Solo usa esto para crear SOCIOS DIRECTOS. Los sub-vendedores deben ser creados por sus líderes.
+                                    </p>
+                                </div>
                                 <div className="space-y-6">
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre Completo</label>
@@ -1448,6 +1661,161 @@ export default function AdminDashboard() {
                                     </button>
                                 </div>
                             </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Editar Vendedor */}
+            <AnimatePresence>
+                {isEditSellerModalOpen && editingSeller && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="w-full max-w-lg bg-navy rounded-[48px] border border-white/10 shadow-3xl overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Editar Vendedor</h3>
+                                <button onClick={() => setIsEditSellerModalOpen(false)} className="text-white/20 hover:text-white transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={(e) => { e.preventDefault(); handleSaveSellerEdit(); }} className="p-10 space-y-8">
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre Completo</label>
+                                        <input
+                                            required
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                            value={editingSeller.nombre || ''}
+                                            onChange={e => setEditingSeller({ ...editingSeller, nombre: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Email</label>
+                                        <input
+                                            required
+                                            type="email"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                            value={editingSeller.email || ''}
+                                            onChange={e => setEditingSeller({ ...editingSeller, email: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="relative">
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nueva Contraseña</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all font-mono"
+                                                value={editingSeller.password || ''}
+                                                onChange={e => setEditingSeller({ ...editingSeller, password: e.target.value })}
+                                                placeholder="(Ignorar si no cambia)"
+                                            />
+                                            <p className="text-[8px] text-white/30 italic ml-2 mt-2">Déjalo vacío si no cambia</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Comisión (%)</label>
+                                            <input
+                                                required
+                                                type="number"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                value={editingSeller.comision_porcentaje || 0}
+                                                onChange={e => setEditingSeller({ ...editingSeller, comision_porcentaje: Number(e.target.value) })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="pt-4 flex gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditSellerModalOpen(false)}
+                                        className="flex-1 px-8 py-4 rounded-2xl bg-white/5 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSavingSeller}
+                                        className="flex-1 px-8 py-4 rounded-2xl bg-primary shadow-orange font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all text-navy flex items-center justify-center gap-2"
+                                    >
+                                        {isSavingSeller ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
+                                        {isSavingSeller ? 'Guardando...' : 'Guardar Cambios'}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Migrar Equipo */}
+            <AnimatePresence>
+                {isMigrateModalOpen && migratingLeader && (
+                    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="w-full max-w-lg bg-navy rounded-[48px] border border-white/10 shadow-3xl overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Rescatar Equipo</h3>
+                                <button onClick={() => setIsMigrateModalOpen(false)} className="text-white/20 hover:text-white transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="p-10 space-y-8">
+                                <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-3xl">
+                                    <p className="text-sm text-amber-200">
+                                        <span className="font-bold">{migratingLeader.nombre}</span> tiene <span className="font-bold">{migratingLeader.team_count} sub-vendedores</span> a su cargo.
+                                        Para poder eliminar este líder, primero debes reasignar a su equipo.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nuevo Líder de Destino</label>
+                                        <select
+                                            value={targetLeaderId}
+                                            onChange={(e) => setTargetLeaderId(Number(e.target.value))}
+                                            className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand font-bold text-white appearance-none"
+                                        >
+                                            <option value={0} className="bg-navy">Convertir en Oficiales (Admin)</option>
+                                            {sellers
+                                                .filter(s => s.id !== migratingLeader.id)
+                                                .map(s => (
+                                                    <option key={s.id} value={s.id} className="bg-navy">
+                                                        {s.nombre}
+                                                    </option>
+                                                ))
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 pt-4">
+                                    <button
+                                        onClick={() => setIsMigrateModalOpen(false)}
+                                        className="flex-1 px-8 py-5 border border-white/10 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-white/5 transition-all text-white/40 hover:text-white"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleMigrateTeam}
+                                        disabled={isMigratingTeam}
+                                        className="flex-1 px-8 py-5 bg-brand rounded-2xl font-black uppercase tracking-widest text-xs text-white hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/20 disabled:opacity-50"
+                                    >
+                                        {isMigratingTeam ? <RefreshCw size={14} className="animate-spin" /> : <Users size={14} />}
+                                        {isMigratingTeam ? 'Migrando...' : 'Traspasar Equipo'}
+                                    </button>
+                                </div>
+                            </div>
                         </motion.div>
                     </div>
                 )}

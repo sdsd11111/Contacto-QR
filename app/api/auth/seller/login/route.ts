@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
         const connection = await pool.getConnection();
         try {
             const [rows]: any = await connection.execute(
-                'SELECT id, nombre, email, role, comision_porcentaje FROM registraya_vcard_sellers WHERE email = ? AND password = ? AND activo = 1',
+                'SELECT id, nombre, email, role, comision_porcentaje, parent_id FROM registraya_vcard_sellers WHERE email = ? AND password = ? AND activo = 1',
                 [email, password]
             );
 
@@ -29,7 +29,8 @@ export async function POST(request: NextRequest) {
                     nombre: seller.nombre,
                     email: seller.email,
                     role: seller.role,
-                    comision: seller.comision_porcentaje
+                    comision: seller.comision_porcentaje,
+                    parent_id: seller.parent_id
                 }
             });
 

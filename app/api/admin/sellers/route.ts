@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import nodemailer from 'nodemailer';
+import { sendMail } from '@/lib/mailer';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         // Fetch sellers with their sales count
         const query = `
             SELECT 
-                s.id, s.nombre, s.codigo, s.email, s.comision_porcentaje, s.activo, s.created_at,
+                s.id, s.nombre, s.code as codigo, s.email, s.comision_porcentaje, s.activo, s.created_at,
                 (
                     SELECT COUNT(*) 
                     FROM registraya_vcard_registros r 
@@ -37,7 +37,12 @@ export async function GET(req: NextRequest) {
                     LEFT JOIN registraya_vcard_sellers sub ON r.seller_id = sub.id
                     WHERE (r.seller_id = s.id OR sub.parent_id = s.id)
                     AND r.status IN ('pagado', 'entregado')
-                ) as ventas_pagadas
+                ) as ventas_pagadas,
+                (
+                    SELECT COUNT(*)
+                    FROM registraya_vcard_sellers
+                    WHERE parent_id = s.id
+                ) as team_count
             FROM registraya_vcard_sellers s
             WHERE s.parent_id IS NULL
             ORDER BY s.nombre ASC
@@ -69,7 +74,7 @@ export async function POST(req: NextRequest) {
         const codigo = nextId.toString().padStart(3, '0');
 
         const query = `
-            INSERT INTO registraya_vcard_sellers (nombre, email, password, role, comision_porcentaje, codigo, activo)
+            INSERT INTO registraya_vcard_sellers (nombre, email, password, role, comision_porcentaje, code, activo)
             VALUES (?, ?, ?, 'seller', ?, ?, 1)
         `;
 
@@ -81,60 +86,43 @@ export async function POST(req: NextRequest) {
             codigo
         ]);
 
-        // ENVIAR CORREO DE BIENVENIDA
-        try {
-            const smtpHost = process.env.SMTP_HOST;
-            const smtpPort = process.env.SMTP_PORT;
-            const smtpUser = process.env.SMTP_USER;
-            const smtpPass = process.env.SMTP_PASS;
+        // ENVIAR CORREO DE BIENVENIDA (no bloqueante)
+        const origin = req.headers.get('origin') || 'https://contacto-qr.vercel.app';
+        const dashboardUrl = `${origin}/admin/vendedor`;
+        const referralUrl = `${origin}/registro?ref=${codigo}`;
 
-            if (smtpHost && smtpPort && smtpUser && smtpPass) {
-                const transporter = nodemailer.createTransport({
-                    host: smtpHost,
-                    port: Number(smtpPort),
-                    secure: process.env.SMTP_SECURE === 'true',
-                    auth: { user: smtpUser, pass: smtpPass },
-                });
+        sendMail({
+            to: email,
+            subject: '🎉 ¡Bienvenido al Equipo de Ventas de ActivaQR!',
+            html: `
+                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #FF6B00;">¡Hola, ${nombre}!</h2>
+                    <p>Estamos muy emocionados de tenerte con nosotros. Aquí tienes tus credenciales para acceder a tu panel de control:</p>
+                    
+                    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Usuario:</strong> ${email}</p>
+                        <p style="margin: 5px 0;"><strong>Contraseña:</strong> ${password}</p>
+                        <p style="margin: 5px 0;"><strong>Tu Código:</strong> <span style="font-size: 1.2em; color: #FF6B00; font-weight: bold;">${codigo}</span></p>
+                    </div>
 
-                const origin = req.headers.get('origin') || 'https://contacto-qr.vercel.app';
-                const dashboardUrl = `${origin}/admin/vendedor`;
-                const referralUrl = `${origin}/registro?ref=${codigo}`;
+                    <p><strong>Tu enlace de ventas personalizado:</strong></p>
+                    <p style="background: #FFF7ED; border: 1px solid #FF6B00; padding: 10px; border-radius: 5px; word-break: break-all;">
+                        <a href="${referralUrl}" style="color: #FF6B00; font-weight: bold;">${referralUrl}</a>
+                    </p>
+                    <p style="font-size: 0.9em; color: #666;">Cualquier cliente que use este link se te asignará automáticamente.</p>
 
-                await transporter.sendMail({
-                    from: process.env.EMAIL_FROM || smtpUser,
-                    to: email,
-                    subject: '🎉 ¡Bienvenido al Equipo de Ventas de RegistraYa!',
-                    html: `
-                        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                            <h2 style="color: #FF6B00;">¡Hola, ${nombre}!</h2>
-                            <p>Estamos muy emocionados de tenerte con nosotros. Aquí tienes tus credenciales para acceder a tu panel de control:</p>
-                            
-                            <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                <p style="margin: 5px 0;"><strong>Usuario:</strong> ${email}</p>
-                                <p style="margin: 5px 0;"><strong>Contraseña:</strong> ${password}</p>
-                                <p style="margin: 5px 0;"><strong>Tu Código:</strong> <span style="font-size: 1.2em; color: #FF6B00; font-weight: bold;">${codigo}</span></p>
-                            </div>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
+                    </div>
 
-                            <p><strong>Tu enlace de ventas personalizado:</strong></p>
-                            <p style="background: #eef; padding: 10px; border-radius: 5px; word-break: break-all;">
-                                <a href="${referralUrl}">${referralUrl}</a>
-                            </p>
-                            <p style="font-size: 0.9em; color: #666;">Cualquier cliente que use este link se te asignará automáticamente.</p>
-
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
-                            </div>
-
-                            <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
-                            <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático, por favor no respondas a este correo.</p>
-                        </div>
-                    `
-                });
-            }
-        } catch (emailErr) {
-            console.error('Error sending welcome email:', emailErr);
-            // No detenemos la respuesta del API si falla el correo, el vendedor ya se creó.
-        }
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
+                    <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático de ActivaQR. No respondas a este correo.</p>
+                </div>
+            `
+        }).catch(emailErr => {
+            // No bloqueamos la respuesta del API si falla el correo — el vendedor ya fue creado.
+            console.error('[sellers/POST] ❌ Error al enviar correo de bienvenida:', emailErr);
+        });
 
         return NextResponse.json({
             success: true,
@@ -150,6 +138,40 @@ export async function POST(req: NextRequest) {
         if (err.code === 'ER_DUP_ENTRY') {
             return NextResponse.json({ error: 'El email ya está registrado' }, { status: 400 });
         }
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+export async function DELETE(req: NextRequest) {
+    const adminKey = req.headers.get('x-admin-key');
+    if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'ID de Vendedor es requerido' }, { status: 400 });
+        }
+
+        // 1. Verificar si tiene sub-vendedores
+        const [subs]: any = await pool.execute('SELECT id FROM registraya_vcard_sellers WHERE parent_id = ?', [id]);
+        if (subs.length > 0) {
+            return NextResponse.json({ error: 'No se puede eliminar un líder con sub-vendedores activos' }, { status: 400 });
+        }
+
+        // 2. Eliminar (Hard delete por solicitud de "empezar de cero")
+        const [result]: any = await pool.execute('DELETE FROM registraya_vcard_sellers WHERE id = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return NextResponse.json({ error: 'Vendedor no encontrado' }, { status: 404 });
+        }
+
+        return NextResponse.json({ success: true, message: 'Vendedor eliminado correctamente' });
+    } catch (err: any) {
+        console.error('Error deleting seller:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

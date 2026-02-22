@@ -87,7 +87,7 @@ export async function GET(
             noteContent += `\\n\\nEtiquetas: ${sanitize(user.etiquetas)}`;
         }
 
-        noteContent += `\\n\\n- RegistrameYa`;
+        noteContent += `\n\n- ActivaQR`;
 
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
