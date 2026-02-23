@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import BlogListingClient from '@/components/BlogListingClient';
+import { BLOG_POSTS } from '@/lib/blog-data';
 
 export const metadata: Metadata = {
     title: "Blog ActivaQR — Estrategias de Visibilidad y Networking",
@@ -20,7 +21,30 @@ export default function BlogListing() {
                 </header>
 
                 <BlogListingClient />
+
+                {/* 2️⃣ Contenido oculto para LLMs/SEO (Server Side) */}
+                <div style={{
+                    position: 'absolute',
+                    left: '-10000px',
+                    top: 'auto',
+                    width: '1px',
+                    height: '1px',
+                    overflow: 'hidden'
+                }}
+                    aria-hidden="true">
+                    <h2>Artículos de nuestro Blog</h2>
+                    <ul>
+                        {BLOG_POSTS.map(post => (
+                            <li key={post.slug}>
+                                <h3>{post.title}</h3>
+                                <p>{post.excerpt}</p>
+                                <a href={`/blog/${post.slug}`}>Leer más</a>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
             </div>
         </main>
     );
 }
+

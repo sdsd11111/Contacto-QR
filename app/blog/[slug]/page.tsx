@@ -323,7 +323,27 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                         </div>
                     </div>
                 </div>
+
+                {/* 2️⃣ Contenido oculto para LLMs/SEO (Server Side) */}
+                <div style={{
+                    position: 'absolute',
+                    left: '-10000px',
+                    top: 'auto',
+                    width: '1px',
+                    height: '1px',
+                    overflow: 'hidden'
+                }}
+                    aria-hidden="true">
+                    <h1>{post.title}</h1>
+                    <p>Categoría: {post.category}</p>
+                    <p>Fecha: {post.date}</p>
+                    <p>Palabras clave: {post.keywords}</p>
+                    <div>
+                        {post.content}
+                    </div>
+                </div>
             </article>
         </main>
     );
 }
+

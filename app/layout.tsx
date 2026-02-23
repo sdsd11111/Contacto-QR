@@ -58,6 +58,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.activaqr.com',
   },
+  verification: {
+    google: "C2O4fJj326ms7H7Tl3_lsdfGcTvbGomwgR84STld7bI",
+  },
 };
 
 export default function RootLayout({
