@@ -1,8 +1,14 @@
 "use client";
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+    const pathname = usePathname();
+    const isAdmin = pathname?.startsWith('/admin');
+
+    if (isAdmin) return null;
+
     return (
         <footer className="py-12 text-center text-white/60 text-xs font-bold uppercase tracking-widest bg-navy border-t border-white/10">
             <p className="mb-4">© 2026 · Activa<span className="bg-[#66bf19] text-white px-1 rounded ml-0.5">QR</span></p>

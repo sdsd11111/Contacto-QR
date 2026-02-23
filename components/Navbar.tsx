@@ -1,8 +1,14 @@
 "use client";
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
+    const pathname = usePathname();
+    const isAdmin = pathname?.startsWith('/admin');
+
+    if (isAdmin) return null;
+
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-navy/5">
             <div className="max-w-6xl mx-auto px-8 md:px-12 h-16 md:h-18 flex items-center justify-between">

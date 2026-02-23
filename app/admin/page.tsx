@@ -320,15 +320,20 @@ export default function AdminDashboard() {
     const updateCommissionStatus = async (id: string, currentStatus: string) => {
         if (pendingIds.has(id)) return;
 
-        // El administrador solo puede marcar como 'paid_to_leader' si está 'pending'
-        // o revertir a 'pending' si está 'paid_to_leader'.
-        // 'completed' solo lo puede poner el vendedor final.
+        // Ciclo: pending -> paid_to_leader -> completed -> pending
         let newStatus = '';
         if (currentStatus === 'pending') newStatus = 'paid_to_leader';
-        else if (currentStatus === 'paid_to_leader') newStatus = 'pending';
-        else return; // No permitir cambios manuales si ya está 'completed'
+        else if (currentStatus === 'paid_to_leader') newStatus = 'completed';
+        else if (currentStatus === 'completed') newStatus = 'pending';
+        else newStatus = 'pending';
 
-        if (!confirm(`¿Confirmas cambiar el estado a: ${newStatus === 'paid_to_leader' ? 'ENVIADO AL LÍDER' : 'PENDIENTE'}?`)) return;
+        const statusLabels: Record<string, string> = {
+            'pending': 'PENDIENTE ⏳',
+            'paid_to_leader': 'ENVIADO AL LÍDER 🚚',
+            'completed': 'COMISIÓN PAGADA ✅'
+        };
+
+        if (!confirm(`¿Confirmas cambiar el estado a: ${statusLabels[newStatus]}?`)) return;
 
         setPendingIds(prev => new Set(prev).add(id));
         const adminKey = localStorage.getItem('admin_access_key') || '';
@@ -690,7 +695,14 @@ export default function AdminDashboard() {
                         <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">Gestión de vCards ActivaQR</p>
                     </div>
 
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 items-center flex-wrap">
+                        <Link
+                            href="/admin/marketing"
+                            className="bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 hover:scale-105 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(0,200,83,0.1)]"
+                        >
+                            <BarChart3 size={16} />
+                            Marketing & Enablement
+                        </Link>
                         <button
                             onClick={() => setIsLive(!isLive)}
                             className={cn(
@@ -884,7 +896,10 @@ export default function AdminDashboard() {
                                 const totalIngreso = registros.reduce((acc, r) => (r.status === 'pagado' || r.status === 'entregado') ? acc + (r.plan === 'pro' ? 20 : 10) : acc, 0);
                                 const totalComisiones = registros.reduce((acc, r) => {
                                     if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id) {
-                                        return acc + (r.plan === 'pro' ? 10 : 5);
+                                        const seller = sellers.find(s => s.id === r.seller_id);
+                                        const percentage = seller ? parseFloat(seller.comision_porcentaje) : 0;
+                                        const price = r.plan === 'pro' ? 20 : 10;
+                                        return acc + (price * percentage / 100);
                                     }
                                     return acc;
                                 }, 0);
@@ -921,14 +936,17 @@ export default function AdminDashboard() {
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Comisiones x Pagar</p>
                         <p className="text-4xl font-black italic tracking-tighter text-white">
                             ${registros.reduce((acc, r) => {
-                                if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && r.commission_status !== 'paid') {
-                                    return acc + (r.plan === 'pro' ? 10 : 5);
+                                if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && (r.commission_status === 'pending' || !r.commission_status)) {
+                                    const seller = sellers.find(s => s.id === r.seller_id);
+                                    const percentage = seller ? parseFloat(seller.comision_porcentaje) : 0;
+                                    const price = r.plan === 'pro' ? 20 : 10;
+                                    return acc + (price * percentage / 100);
                                 }
                                 return acc;
                             }, 0).toFixed(2)}
                         </p>
                         <p className="text-[10px] font-bold text-white/40 mt-2">
-                            {registros.filter(r => r.seller_id && r.commission_status !== 'paid' && (r.status === 'pagado' || r.status === 'entregado')).length} comisiones pendientes
+                            {registros.filter(r => r.seller_id && (r.commission_status === 'pending' || !r.commission_status) && (r.status === 'pagado' || r.status === 'entregado')).length} comisiones pendientes
                         </p>
                     </div>
 
@@ -943,8 +961,11 @@ export default function AdminDashboard() {
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-500 mb-3">Comis. Pagadas</p>
                         <p className="text-4xl font-black italic tracking-tighter text-green-500">
                             ${registros.reduce((acc, r) => {
-                                if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && r.commission_status === 'paid') {
-                                    return acc + (r.plan === 'pro' ? 10 : 5);
+                                if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && (r.commission_status === 'paid_to_leader' || r.commission_status === 'completed')) {
+                                    const seller = sellers.find(s => s.id === r.seller_id);
+                                    const percentage = seller ? parseFloat(seller.comision_porcentaje) : 0;
+                                    const price = r.plan === 'pro' ? 20 : 10;
+                                    return acc + (price * percentage / 100);
                                 }
                                 return acc;
                             }, 0).toFixed(2)}
@@ -1055,9 +1076,9 @@ export default function AdminDashboard() {
                                                     </span>
                                                     <span className={cn(
                                                         "text-[8px] font-black uppercase tracking-tighter text-left",
-                                                        r.commission_status === 'paid' ? "text-green-500" : "text-white/20"
+                                                        (r.commission_status === 'completed' || r.commission_status === 'paid_to_leader') ? "text-green-500" : "text-white/20"
                                                     )}>
-                                                        {r.commission_status === 'paid' ? 'Comisión Pagada' : 'Pago Pendiente'}
+                                                        {(r.commission_status === 'completed' || r.commission_status === 'paid_to_leader') ? 'Comisión Pagada' : 'Pago Pendiente'}
                                                     </span>
                                                 </button>
                                             ) : (

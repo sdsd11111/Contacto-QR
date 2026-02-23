@@ -96,30 +96,37 @@ export async function POST(req: NextRequest) {
         try {
             await sendMail({
                 to: email,
-                subject: '🎉 ¡Bienvenido al Equipo de Ventas de ActivaQR!',
+                subject: 'Bienvenido al Equipo de Ventas ActivaQR',
                 html: `
-                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                        <h2 style="color: #FF6B00;">¡Hola, ${nombre}!</h2>
-                        <p>Estamos muy emocionados de tenerte con nosotros. Aquí tienes tus credenciales para acceder a tu panel de control:</p>
-                        
-                        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 5px 0;"><strong>Usuario:</strong> ${email}</p>
-                            <p style="margin: 5px 0;"><strong>Contraseña:</strong> ${password}</p>
-                            <p style="margin: 5px 0;"><strong>Tu Código:</strong> <span style="font-size: 1.2em; color: #FF6B00; font-weight: bold;">${codigo}</span></p>
+                    <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #334155; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+                        <div style="padding: 20px 0; text-align: center;">
+                            <h2 style="color: #FF6B00; margin: 0; font-size: 24px; font-weight: 800;">¡Hola, ${nombre}!</h2>
+                            <p style="font-size: 16px; color: #64748b; margin-top: 8px;">Estamos muy emocionados de tenerte con nosotros. Aquí tienes tus credenciales para acceder a tu panel de control:</p>
                         </div>
+                        
+                        <div style="background: #f8fafc; border-radius: 20px; padding: 25px; border: 1px solid #e2e8f0; margin: 20px 0;">
+                            <div style="margin-bottom: 20px;">
+                                <p style="margin: 5px 0; font-size: 14px;"><strong>Usuario:</strong> ${email}</p>
+                                <p style="margin: 5px 0; font-size: 14px;"><strong>Contraseña:</strong> ${password}</p>
+                                <p style="margin: 5px 0; font-size: 14px;"><strong>Tu Código:</strong> <span style="font-size: 1.1em; color: #FF6B00; font-weight: bold;">${codigo}</span></p>
+                            </div>
 
-                        <p><strong>Tu enlace de ventas personalizado:</strong></p>
-                        <p style="background: #FFF7ED; border: 1px solid #FF6B00; padding: 10px; border-radius: 5px; word-break: break-all;">
-                            <a href="${referralUrl}" style="color: #FF6B00; font-weight: bold;">${referralUrl}</a>
-                        </p>
-                        <p style="font-size: 0.9em; color: #666;">Cualquier cliente que use este link se te asignará automáticamente.</p>
+                            <p style="font-weight: bold; font-size: 14px; margin-bottom: 10px;">Tu enlace de ventas personalizado:</p>
+                            <div style="background: #FFF7ED; border: 1px solid #FF6B00; padding: 12px; border-radius: 8px; word-break: break-all; margin-bottom: 20px;">
+                                <a href="${referralUrl}" style="color: #FF6B00; font-weight: bold; text-decoration: none; font-size: 13px;">${referralUrl}</a>
+                            </div>
+                            <p style="font-size: 11px; color: #64748b; font-style: italic;">Cualquier cliente que use este link se te asignará automáticamente.</p>
+                        </div>
 
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
+                            <a href="${dashboardUrl}" style="background: #FF6B00; color: white; padding: 15px 30px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
                         </div>
 
-                        <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
-                        <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático de ActivaQR. No respondas a este correo.</p>
+                        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 11px;">
+                            <p style="margin-bottom: 4px;"><strong>ActivaQR - Soporte a Vendedores</strong></p>
+                            <p style="margin-bottom: 12px;">César Reyes Jaramillo | Gestión de Afiliados</p>
+                            <p>Este es un mensaje automático de ActivaQR. Por favor, no respondas a este correo.</p>
+                        </div>
                     </div>
                 `
             });

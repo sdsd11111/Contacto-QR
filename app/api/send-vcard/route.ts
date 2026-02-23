@@ -76,18 +76,27 @@ export async function POST(req: NextRequest) {
 
         const info = await sendMail({
             to: recipientEmail,
-            subject: '¡Tu Contacto Digital está Listo! 🚀',
+            subject: 'ActivaQR: Tu Contacto Digital está listo',
             html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-                    <h1 style="color: #FF6B00;">¡Hola ${recipientName}!</h1>
-                    <p>Tu Contacto Digital profesional ha sido aprobado y generado exitosamente.</p>
-                    <p>Adjunto encontrarás tu código QR para compartir.</p>
-                    <br/>
-                    <a href="${vcardUrl}" style="background-color: #FF6B00; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Descargar Contacto (.vcf)</a>
-                    <br/><br/>
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #334155; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+                    <div style="padding: 20px 0; text-align: center;">
+                        <h1 style="color: #FF6B00; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">¡Hola ${recipientName}!</h1>
+                        <p style="font-size: 16px; color: #64748b; margin-top: 8px;">Tu Contacto Digital profesional ha sido aprobado y generado exitosamente.</p>
+                    </div>
+
+                    <div style="background: #f8fafc; border-radius: 20px; padding: 30px; border: 1px solid #e2e8f0; text-align: center;">
+                        <p style="margin-bottom: 24px;">Adjunto a este correo encontrarás tu <strong>Código QR</strong> oficial para compartir de inmediato.</p>
+                        
+                        <a href="${vcardUrl}" style="background-color: #FF6B00; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; box-shadow: 0 4px 12px rgba(255,107,0,0.25);">Descargar Contacto (.vcf)</a>
+                    </div>
+                    
                     ${editCodeSection}
-                    <hr/>
-                    <p style="font-size: 12px; color: #888;">Te recordamos que al recibir este correo, has sido suscrito a nuestro boletín exclusivo para profesionales. Si deseas desuscribirte, responde a este correo.</p>
+
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 11px;">
+                        <p style="margin-bottom: 4px;"><strong>ActivaQR - Tecnologías de Contacto Profesional</strong></p>
+                        <p style="margin-bottom: 12px;">Servicio proporcionado por César Reyes Jaramillo | Ecuador</p>
+                        <p>Recibes este correo porque adquiriste un servicio en activaqr.com. <br/> Si deseas no recibir más correos informativos, puedes responder a este mensaje con la palabra "Baja".</p>
+                    </div>
                 </div>
             `,
             attachments

@@ -29,23 +29,27 @@ export async function POST(req: NextRequest) {
 
         await sendMail({
             to: user.email,
-            subject: '🔑 Recuperación de Credenciales - ActivaQR',
+            subject: 'Recuperación de Credenciales - ActivaQR',
             html: `
-                <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #FF6B00;">Hola, ${user.nombre}</h2>
-                    <p>Has solicitado recuperar tus credenciales de acceso para tu panel de vendedor.</p>
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; color: #334155; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 30px; border-radius: 20px;">
+                    <h2 style="color: #FF6B00; margin: 0 0 16px 0; font-size: 24px; font-weight: 800;">Hola, ${user.nombre}</h2>
+                    <p style="font-size: 16px; margin-bottom: 24px;">Has solicitado recuperar tus credenciales de acceso para tu panel de vendedor.</p>
                     
-                    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #FF6B00;">
-                        <p style="margin: 5px 0;"><strong>Tu Contraseña Actual es:</strong> <span style="font-size: 1.2em; font-weight: bold; font-family: monospace;">${user.password}</span></p>
+                    <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #FF6B00;">
+                        <p style="margin: 0; font-size: 14px; color: #64748b; font-weight: bold; text-transform: uppercase;">Tu Contraseña Actual:</p>
+                        <p style="margin: 8px 0 0 0; font-size: 24px; font-weight: bold; font-family: monospace; color: #0A1229; letter-spacing: 1px;">${user.password}</p>
                     </div>
 
-                    <p>Si no has sido tú, te recomendamos iniciar sesión de inmediato y cambiar tu contraseña desde la pestaña "Mi Perfil" (Ícono de engranaje) en tu Dashboard.</p>
+                    <p style="font-size: 14px; color: #64748b;">Si no has solicitado este correo, te recomendamos iniciar sesión y cambiar tu contraseña desde la pestaña "Mi Perfil" en tu Dashboard de inmediato.</p>
 
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${dashboardUrl}" style="background: #0A1229; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Acceder a Mi Panel</a>
+                    <div style="text-align: center; margin: 32px 0;">
+                        <a href="${dashboardUrl}" style="background: #0A1229; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Entrar al Panel →</a>
                     </div>
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0;" />
-                    <p style="font-size: 0.8em; color: #888;">Este es un mensaje automático de ActivaQR. No respondas a este correo.</p>
+                    
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 11px;">
+                        <p style="margin-bottom: 4px;"><strong>ActivaQR - Seguridad</strong></p>
+                        <p>Este es un mensaje automático de seguridad. Por favor, no respondas a este correo.</p>
+                    </div>
                 </div>
             `
         });
