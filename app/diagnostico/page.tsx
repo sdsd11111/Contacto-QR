@@ -36,7 +36,7 @@ const QUESTIONS = {
             { id: "c", label: "Les digo 'búscanos en Instagram'", value: 15, archetype: "caos" },
             { id: "d", label: "Escanean mi QR y se guarda automático", value: 30, archetype: "lider" }
         ],
-        image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1000" // Prompt: Waiter stressed looking for card
+        image: "/images/diagnostico/waiter-stressed.jpg"
     },
     P2: {
         id: "P2",
@@ -88,7 +88,7 @@ const QUESTIONS = {
         title: "Analizando tu ADN Gastronómico...",
         description: "Calculando tu arquetipo digital...",
         options: [], // Fix TS error
-        image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=1000" // Prompt: Digital Success
+        image: "/images/diagnostico/success.jpg"
     }
 };
 

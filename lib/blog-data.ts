@@ -17,7 +17,7 @@ export const BLOG_POSTS: BlogPost[] = [
         title: 'vCard vs Linktree vs Tarjeta Digital: No son lo mismo y te explico por qué',
         excerpt: '¿Crees que un Linktree es una tarjeta digital? Estás perdiendo clientes. Descubre por qué un archivo de contacto QR es la verdadera llave del networking.',
         date: '2026-02-19',
-        image: 'https://images.unsplash.com/photo-1556742044-3c52d6e88c62?w=800&q=80',
+        image: '/images/blog/vcard-vs-linktree.jpg',
         category: 'Educación',
         keywords: 'tarjeta digital vs linktree',
         content: `
@@ -70,7 +70,7 @@ Si te están ofreciendo tarjetas NFC como "lo último", te recomendamos leer nue
         title: 'La Guía Definitiva: Código QR para Negocios en 2026',
         excerpt: 'Desde menús hasta contactos directos. Aprende cómo el código QR está revolucionando la forma en que los negocios cierran ventas hoy.',
         date: '2026-02-20',
-        image: 'https://images.unsplash.com/photo-1595079676339-1534801ad6cf?w=800&q=80',
+        image: '/images/blog/qr-guide.jpg',
         category: 'Negocios',
         keywords: 'código QR para negocios',
         content: `
@@ -110,7 +110,7 @@ No es lo mismo. Muchos confunden una página web con un contacto real guardado e
         title: 'Contacto QR para Restaurantes: Más allá del menú digital',
         excerpt: 'No permitas que tus clientes se olviden de ti después de pagar. Haz que te guarden en su agenda y vuelvan siempre.',
         date: '2026-02-21',
-        image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80',
+        image: '/images/blog/restaurant.jpg',
         category: 'Industrias',
         keywords: 'contacto QR restaurantes',
         content: `

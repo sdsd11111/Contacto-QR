@@ -82,9 +82,9 @@ export default function Home() {
 
           {/* Social Proof Avatars */}
           <div className="flex justify-center -space-x-4 mb-8">
-            <img className="w-10 h-10 rounded-full border-2 border-white" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop" alt="Emprendedor utilizando ActivaQR" />
-            <img className="w-10 h-10 rounded-full border-2 border-white" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop" alt="Profesional con tarjeta digital" />
-            <img className="w-10 h-10 rounded-full border-2 border-white" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="Dueña de negocio usando código QR" />
+            <img className="w-10 h-10 rounded-full border-2 border-white" src="/images/user-1.jpg" alt="Emprendedor utilizando ActivaQR" />
+            <img className="w-10 h-10 rounded-full border-2 border-white" src="/images/user-2.jpg" alt="Profesional con tarjeta digital" />
+            <img className="w-10 h-10 rounded-full border-2 border-white" src="/images/user-3.jpg" alt="Dueña de negocio usando código QR" />
             <div className="w-10 h-10 rounded-full border-2 border-white bg-navy text-white flex items-center justify-center text-xs font-bold">+500</div>
           </div>
 
