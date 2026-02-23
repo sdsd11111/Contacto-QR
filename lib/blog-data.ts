@@ -148,7 +148,7 @@ Si ya tienes un QR para el menú o los pagos, estás a medio camino. Pero hay un
         title: 'Contacto QR para Abogados: Genera urgencia y confianza visual',
         excerpt: 'En el mundo legal, el primero que aparece es el que se queda con el caso. Asegúrate de ser tú.',
         date: '2026-02-22',
-        image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&q=80',
+        image: '/images/blog/abogados.jpg',
         category: 'Industrias',
         keywords: 'contacto QR abogados',
         content: `
@@ -186,7 +186,7 @@ Quizás te han ofrecido tarjetas con chip NFC. Antes de decidir, lee nuestra com
         title: 'Tarjeta Digital con QR vs Tarjeta NFC: ¿Cuál conviene más?',
         excerpt: 'Analizamos las dos tecnologías más populares. Descubre por qué el QR sigue siendo el rey de la compatibilidad.',
         date: '2026-02-23',
-        image: 'https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&q=80',
+        image: '/images/blog/nfc-vs-qr.jpg',
         category: 'Educación',
         keywords: 'tarjeta digital vs NFC',
         content: `
@@ -224,7 +224,7 @@ Si quieres entender a fondo cómo funciona el archivo que se descarga al escanea
         title: 'Qué es una vCard y por qué NO es una página web',
         excerpt: 'Descubre el secreto técnico detrás de ActivaQR. Aprende qué es un archivo vCard y por qué es la forma más rápida de entrar en la agenda de tus clientes.',
         date: '2026-02-24',
-        image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80',
+        image: '/images/blog/vcard-tech.jpg',
         category: 'Educación',
         keywords: 'qué es una vCard',
         content: `
@@ -260,7 +260,7 @@ Si quieres ver cómo se compara esto con otras herramientas populares, te invita
         title: '5 razones para dejar de gastar en tarjetas de papel',
         excerpt: '¿Sigues repartiendo cartones que terminan en la basura? Es hora de digitalizar tu primera impresión y ahorrar dinero.',
         date: '2026-02-25',
-        image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&q=80',
+        image: '/images/blog/no-paper.jpg',
         category: 'Educación',
         keywords: 'dejar tarjetas de papel',
         content: `
@@ -302,7 +302,7 @@ Muchos profesionales dicen "ya tengo" una solución digital refiriéndose a un l
         title: 'Cómo funciona un código QR de contacto (paso a paso)',
         excerpt: '¿Te preguntas qué pasa exactamente cuando alguien escanea tu código? Te explicamos el proceso que convierte un escaneo en una venta.',
         date: '2026-02-26',
-        image: 'https://images.unsplash.com/photo-1595079676339-1534801ad6cf?w=800&q=80',
+        image: '/images/blog/how-it-works.jpg',
         category: 'Educación',
         keywords: 'cómo funciona QR contacto',
         content: `
@@ -336,7 +336,7 @@ Si quieres profundizar en los tipos de QR que existen para esto, no te pierdas: 
         title: 'QR dinámico vs estático: ¿cuál necesitas?',
         excerpt: 'No todos los códigos QR son iguales. Aprende la diferencia técnica que puede salvar tu marketing y darte datos reales de escaneo.',
         date: '2026-02-27',
-        image: 'https://images.unsplash.com/photo-1620288627223-53302f4e8c74?w=800&q=80',
+        image: '/images/blog/dynamic-qr.jpg',
         category: 'Educación',
         keywords: 'QR dinámico vs estático',
         content: `
@@ -373,7 +373,7 @@ Aprende más sobre cómo aplicar esto en tu estrategia en nuestra [Guía Definit
         title: '10 usos de códigos QR que hacen crecer tu negocio',
         excerpt: '¿Crees que el QR es solo para el menú? Te abrimos los ojos con 10 aplicaciones prácticas para vender más hoy mismo.',
         date: '2026-02-28',
-        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80',
+        image: '/images/blog/10-uses.jpg',
         category: 'Negocios',
         keywords: 'usos código QR negocio',
         content: `
@@ -406,7 +406,7 @@ Muchos negocios confunden un QR de pago con uno de contacto. Es un error común.
         title: 'Cómo imprimir tu QR: tamaños, materiales y ubicaciones',
         excerpt: 'No falles en lo más básico. Una guía técnica para que tu código QR se lea siempre a la primera en cualquier lugar.',
         date: '2026-03-01',
-        image: 'https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?w=800&q=80',
+        image: '/images/blog/printing.jpg',
         category: 'Negocios',
         keywords: 'cómo imprimir código QR',
         content: `
@@ -445,7 +445,7 @@ A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), un QR
         title: 'Código QR para WhatsApp Business: guía completa',
         excerpt: 'Convierte tus visitas físicas en conversaciones de WhatsApp en segundos. Aprende a integrar tu QR con tu herramienta de ventas favorita.',
         date: '2026-03-02',
-        image: 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800&q=80',
+        image: '/images/blog/whatsapp-business.jpg',
         category: 'Negocios',
         keywords: 'código QR WhatsApp Business',
         content: `
@@ -480,7 +480,7 @@ Aprende más sobre cómo destacar en el mundo de los negocios modernos en nuestr
         title: 'QR de pago vs QR de contacto: ¿cuál necesita tu negocio?',
         excerpt: 'No confundas herramientas. Uno sirve para cobrar y otro para que no te olviden. Te explicamos por qué necesitas ambos.',
         date: '2026-03-03',
-        image: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?w=800&q=80',
+        image: '/images/blog/payment-vs-contact.jpg',
         category: 'Negocios',
         keywords: 'QR pago vs QR contacto',
         content: `
@@ -512,7 +512,7 @@ Si aún tienes dudas sobre cómo este formato se diferencia de otras soluciones 
         title: '5 errores de networking que te hacen perder clientes',
         excerpt: 'Hacer contactos no es solo dar la mano. Descubre los errores más comunes que impiden que tus prospectos te contacten después de conocerte.',
         date: '2026-03-04',
-        image: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&q=80',
+        image: '/images/blog/networking-errors.jpg',
         category: 'Educación',
         keywords: 'errores networking profesional',
         content: `
@@ -548,7 +548,7 @@ Aprende cómo aparecer siempre primero en nuestra guía: [Cómo aparecer primero
         title: 'Cómo aparecer primero cuando buscan tu servicio en el celular',
         excerpt: 'Domina el buscador interno de contactos de tus clientes. Aprende el truco técnico para que tu nombre sea el primero en salir.',
         date: '2026-03-05',
-        image: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?w=800&q=80',
+        image: '/images/blog/rank-first.jpg',
         category: 'Educación',
         keywords: 'aparecer en contactos celular',
         content: `
@@ -579,7 +579,7 @@ Nada genera más confianza que ver tu **foto profesional** aparecer en la pantal
         title: 'Tu foto profesional en la agenda del cliente: por qué importa',
         excerpt: 'Una imagen vale más que mil palabras, y en la agenda de tu cliente, vale ventas reales. Aprende cómo el reconocimiento visual cierra tratos.',
         date: '2026-03-06',
-        image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800&q=80',
+        image: '/images/blog/pro-photo.jpg',
         category: 'Educación',
         keywords: 'foto profesional contacto',
         content: `
@@ -610,7 +610,7 @@ A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), nuest
         title: '“Todos me conocen” — por qué los negocios exitosos igual pierden clientes',
         excerpt: 'El exceso de confianza es el enemigo #1 de las ventas recurrentes. Descubre por qué incluso si eres famoso en tu zona, necesitas estar en el celular de tus clientes.',
         date: '2026-03-07',
-        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80',
+        image: '/images/blog/lost-clients.jpg',
         category: 'Negocios',
         keywords: 'perder clientes negocio',
         content: `
@@ -640,7 +640,7 @@ No te confíes en tu reputación local. Asegúrate de que cada interacción se c
         title: 'Marca personal para profesionales independientes en 2026',
         excerpt: 'En la era de la IA y el exceso de información, tu nombre es tu mayor activo. Aprende cómo destacar usando herramientas de contacto inteligentes.',
         date: '2026-03-08',
-        image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&q=80',
+        image: '/images/blog/personal-brand.jpg',
         category: 'Negocios',
         keywords: 'marca personal profesional',
         content: `
@@ -671,7 +671,7 @@ Si te presentas con una tarjeta de papel vieja o con un link genérico que no se
         title: 'Contacto QR para Doctores: Mejora la relación médico-paciente',
         excerpt: 'Un paciente tranquilo es el que tiene a su doctor a un clic de distancia. Asegura que tus pacientes siempre tengan tu contacto real.',
         date: '2026-03-09',
-        image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=800&q=80',
+        image: '/images/blog/doctors.jpg',
         category: 'Industrias',
         keywords: 'contacto QR doctores',
         content: `
@@ -703,7 +703,7 @@ A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), nuest
         title: 'Contacto QR para Técnicos y Servicios: No seas un número olvidado',
         excerpt: 'Plomeros, electricistas y servicios a domicilio: si no están guardados como "El Experto", están perdiendo dinero. Aprende a ser el primero en ser llamado.',
         date: '2026-03-10',
-        image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&q=80',
+        image: '/images/blog/techs.jpg',
         category: 'Industrias',
         keywords: 'contacto QR técnicos',
         content: `
@@ -735,7 +735,7 @@ Mira cómo esta misma estrategia ayuda a los restaurantes en: [Contacto QR para 
         title: 'Contacto QR para Vendedores y Agentes: Cierra más tratos',
         excerpt: 'Como vendedor, tu red es tu patrimonio. Aprende cómo asegurarte de que cada cliente potencial te tenga guardado correctamente en su teléfono.',
         date: '2026-03-11',
-        image: 'https://images.unsplash.com/photo-1552581234-26160f608093?w=800&q=80',
+        image: '/images/blog/sellers.jpg',
         category: 'Industrias',
         keywords: 'contacto QR vendedores',
         content: `

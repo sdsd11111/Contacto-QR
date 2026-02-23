@@ -47,7 +47,7 @@ const QUESTIONS = {
             { id: "b", label: "Es funcional, pero no 'abre el apetito'", value: 15, archetype: "caos" },
             { id: "c", label: "Sí, se ve tan profesional como mi servicio", value: 30, archetype: "lider" }
         ],
-        image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&q=80&w=1000" // Prompt: Gourmet dish vs broken phone
+        image: "/images/diagnostico/gourmet.jpg"
     },
     // Pregunta 3 removida/simplificada para flujo rápido
     P3: {
@@ -59,7 +59,7 @@ const QUESTIONS = {
             { id: "b", label: "No me tienen guardado", value: 0, archetype: "fantasma" },
             { id: "c", label: "Con nombre, logo y foto de perfil", value: 30, archetype: "lider" }
         ],
-        image: "https://images.unsplash.com/photo-1512428559087-560fa5ce7d5b?auto=format&fit=crop&q=80&w=1000" // Prompt: Generic contact list
+        image: "/images/diagnostico/contacts.jpg"
     },
     P4: {
         id: "P4",
@@ -70,7 +70,7 @@ const QUESTIONS = {
             { id: "b", label: "A mí, porque tiene mi contacto a mano", value: 30, archetype: "lider" },
             { id: "c", label: "Busca en Google y se pierde", value: 10, archetype: "fantasma" }
         ],
-        image: "https://images.unsplash.com/photo-1550966871-3ed3c47e2ce2?auto=format&fit=crop&q=80&w=1000" // Prompt: Customer looking at competitor
+        image: "/images/diagnostico/competitor.jpg"
     },
     P5: {
         id: "P5",
@@ -81,7 +81,7 @@ const QUESTIONS = {
             { id: "b", label: "Teléfono fijo (si alguien contesta)", value: 5, archetype: "fantasma" },
             { id: "c", label: "Sistema digital / Business automatizado", value: 30, archetype: "lider" }
         ],
-        image: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&q=80&w=1000" // Prompt: Empty vs Full tables
+        image: "/images/diagnostico/tables.jpg"
     },
     P_FINAL: {
         id: "PANTALLA_FINAL",
@@ -99,21 +99,21 @@ const ARCHETYPES = {
         description: "Tu comida es increíble, pero digitalmente eres invisible. Pierdes el 40% de reservas porque los clientes no encuentran tu número rápido.",
         color: "text-slate-500",
         icon: Users,
-        image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&q=80&w=1000"
+        image: "/images/diagnostico/chef-digital.jpg"
     },
     caos: {
         title: "El Chef Caótico",
         description: "Tienes redes y ganas, pero tu proceso de reserva es fricción pura. El cliente se frustra antes de pedir.",
         color: "text-orange-500",
         icon: AlertCircle,
-        image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=1000"
+        image: "/images/diagnostico/chef-chaos.jpg"
     },
     lider: {
         title: "El Magnate Digital",
         description: "Tienes el control. Tus mesas se llenan porque es FACIL encontrarte y reservarte. Solo necesitas escalar.",
         color: "text-primary",
         icon: Star,
-        image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?auto=format&fit=crop&q=80&w=1000"
+        image: "/images/diagnostico/chef-digital.jpg"
     }
 };
 

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import PWARegistration from "@/components/PWARegistration";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -92,7 +94,9 @@ export default function RootLayout({
           }}
         />
         <PWARegistration />
+        <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );

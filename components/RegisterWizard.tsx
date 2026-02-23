@@ -150,6 +150,51 @@ export default function RegisterWizard() {
         recognition.start();
     };
 
+    // --- AUTOSAVE TO LOCALSTORAGE ---
+    useEffect(() => {
+        // Restaurar estado al montar
+        if (typeof window !== 'undefined') {
+            const savedState = localStorage.getItem('vcard_register_backup');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    // Si completó el flujo (step 5), no restaurantes
+                    if (parsed.step < 5) {
+                        setStep(parsed.step);
+                        // Mezclar formData actual (que tiene defaults) con el guardado
+                        setFormData(prev => ({ ...prev, ...parsed.formData, photo: null, receipt: null }));
+                    } else {
+                        localStorage.removeItem('vcard_register_backup');
+                    }
+                } catch (e) {
+                    console.error("Error parsing saved register state", e);
+                }
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        // Guardar estado cuando cambie formData o step
+        if (typeof window !== 'undefined') {
+            if (step === 5) {
+                // Limpiar cuando termine el proceso con éxito
+                localStorage.removeItem('vcard_register_backup');
+            } else {
+                const dataToSave = {
+                    step,
+                    // Evitar guardar objetos tipo File que rompen el stringify
+                    formData: {
+                        ...formData,
+                        photo: null,
+                        receipt: null
+                    }
+                };
+                localStorage.setItem('vcard_register_backup', JSON.stringify(dataToSave));
+            }
+        }
+    }, [formData, step]);
+    // --------------------------------
+
     // --- PAYPHONE REDIRECT HANDLING ---
     useEffect(() => {
         const handlePayPhoneRedirect = async () => {

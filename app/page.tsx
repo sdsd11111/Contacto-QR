@@ -36,22 +36,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
 
-      {/* Navbar Minimalista */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-navy/5">
-        <div className="max-w-6xl mx-auto px-8 md:px-12 h-16 md:h-18 flex items-center justify-between">
-          <Link href="/" className="flex items-center">
-            <img
-              src="/images/logo_header.png"
-              alt="ActivaQR"
-              className="h-10 md:h-12 w-auto object-contain"
-            />
-          </Link>
-          <a href="/registro" className="bg-primary text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-primary hover:scale-105 transition-transform">
-            Crear mi Contacto
-          </a>
-        </div>
-      </nav>
-
       {/* Hero Section: Full Screen Video (Alternative) */}
       <section className="relative h-screen min-h-[800px] w-full overflow-hidden flex items-center justify-center">
         {/* Video Background Full Screen */}
@@ -599,18 +583,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Footer Mejorado */}
-      <footer className="py-12 text-center text-white/60 text-xs font-bold uppercase tracking-widest bg-navy border-t border-white/10">
-        <p className="mb-4">© 2026 · Activa<span className="bg-[#66bf19] text-white px-1 rounded ml-0.5">QR</span></p>
-        <div className="flex justify-center gap-6 mb-4">
-          <Link href="/blog" className="hover:text-primary transition-colors italic">Ver Blog</Link>
-          <Link href="/registro" className="hover:text-primary transition-colors">Registro</Link>
-        </div>
-        <p className="text-[10px] opacity-50 hover:opacity-100 transition-opacity">
-          Diseñado por <a href="https://www.cesarreyesjaramillo.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">César Reyes Jaramillo</a>
-        </p>
-      </footer>
 
       <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} videoId="Iy69aXd7MFI" />
       <PopupManager />

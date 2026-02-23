@@ -4,6 +4,7 @@ import { ChevronLeft, Calendar, User, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import React from 'react';
+import MarketingCTA from '@/components/MarketingCTA';
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
     const slug = (await params).slug;
@@ -65,6 +66,82 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     // Get related posts for "read more" section
     const relatedPosts = BLOG_POSTS.filter(p => p.slug !== slug).slice(0, 2);
 
+    // Parse Markdown by block more robustly since some entries use single newlines
+    const lines = post.content.split('\n');
+    const blocks: string[] = [];
+    let currentBlock: string[] = [];
+    let inList = false;
+
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+
+        if (!trimmedLine) {
+            if (currentBlock.length > 0) {
+                blocks.push(currentBlock.join('\n'));
+                currentBlock = [];
+            }
+            inList = false;
+            continue;
+        }
+
+        if (trimmedLine.startsWith('# ') || trimmedLine.startsWith('## ') || trimmedLine.startsWith('### ') || trimmedLine === '---') {
+            if (currentBlock.length > 0) {
+                blocks.push(currentBlock.join('\n'));
+                currentBlock = [];
+            }
+            blocks.push(trimmedLine);
+            inList = false;
+        } else if (trimmedLine.startsWith('* ') || trimmedLine.startsWith('- ') || /^\d+\.\s/.test(trimmedLine)) {
+            if (!inList && currentBlock.length > 0) {
+                blocks.push(currentBlock.join('\n'));
+                currentBlock = [];
+            }
+            inList = true;
+            currentBlock.push(trimmedLine);
+        } else if (trimmedLine.startsWith('|')) {
+            // Table
+            if (!currentBlock.some(l => l.startsWith('|')) && currentBlock.length > 0) {
+                blocks.push(currentBlock.join('\n'));
+                currentBlock = [];
+            }
+            currentBlock.push(trimmedLine);
+        } else {
+            // Normal paragraph line
+            if (inList) {
+                blocks.push(currentBlock.join('\n'));
+                currentBlock = [];
+                inList = false;
+            }
+            if (currentBlock.length > 0 && currentBlock[0].startsWith('|')) {
+                blocks.push(currentBlock.join('\n'));
+                currentBlock = [];
+            }
+            currentBlock.push(trimmedLine);
+        }
+    }
+    if (currentBlock.length > 0) {
+        blocks.push(currentBlock.join('\n'));
+    }
+
+    // Determine CTA position (before the second H2)
+    let h2Count = 0;
+    let ctaIndex = -1;
+
+    // Buscamos el segundo '## ' (usualmente después de explicar el dolor)
+    for (let i = 0; i < blocks.length; i++) {
+        if (blocks[i].startsWith('## ')) {
+            h2Count++;
+            if (h2Count === 2) {
+                ctaIndex = i;
+                break;
+            }
+        }
+    }
+    if (ctaIndex === -1) {
+        ctaIndex = blocks.findIndex(b => b === '---');
+        if (ctaIndex === -1) ctaIndex = blocks.length - 1;
+    }
+
     return (
         <main className="min-h-screen bg-cream py-24 px-6 md:px-0">
             <article className="max-w-3xl mx-auto bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-navy/5">
@@ -80,9 +157,9 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
                         <span className="bg-primary text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6">
                             {post.category}
                         </span>
-                        <h1 className="text-4xl md:text-6xl font-black text-navy leading-tight tracking-tighter mb-8">
+                        <h1 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tighter mb-8 drop-shadow-xl">
                             {post.title.split(/(QR)/).map((part, i) => (
-                                part === 'QR' ? <span key={i} className="text-primary">QR</span> : part
+                                part === 'QR' ? <span key={i} className="text-primary drop-shadow-none">QR</span> : part
                             ))}
                         </h1>
                     </div>
@@ -101,88 +178,115 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
 
                     {/* Content Renderer */}
                     <div className="text-navy/80 space-y-6 leading-relaxed text-lg font-medium">
-                        {post.content.split('\n\n').map((block, i) => {
-                            const trimmed = block.trim();
-                            if (!trimmed) return null;
+                        {blocks.map((trimmed, i) => {
+                            const isCtaPosition = i === ctaIndex;
+                            const ctaComponent = isCtaPosition ? (
+                                <MarketingCTA
+                                    title="¿Ya notaste el problema?"
+                                    description="Seguir compartiendo links o tarjetas de papel te hace perder oportunidades. Asegúrate de estar siempre en su agenda."
+                                />
+                            ) : null;
 
                             // Skip H1 (shown in hero)
-                            if (trimmed.startsWith('# ') && !trimmed.startsWith('## ')) return null;
+                            if (trimmed.startsWith('# ') && !trimmed.startsWith('## ')) return <React.Fragment key={i}>{ctaComponent}</React.Fragment>;
 
                             // H2
                             if (trimmed.startsWith('## ')) {
-                                return <h2 key={i} className="text-3xl font-black text-navy tracking-tight uppercase border-l-4 border-primary pl-6 pt-4">{trimmed.replace('## ', '')}</h2>;
+                                return (
+                                    <React.Fragment key={i}>
+                                        {ctaComponent}
+                                        <h2 className="text-3xl font-black text-navy tracking-tight uppercase border-l-4 border-primary pl-6 pt-4">{renderInline(trimmed.replace('## ', ''))}</h2>
+                                    </React.Fragment>
+                                );
                             }
                             // H3
                             if (trimmed.startsWith('### ')) {
-                                return <h3 key={i} className="text-2xl font-bold text-navy">{trimmed.replace('### ', '')}</h3>;
+                                return (
+                                    <React.Fragment key={i}>
+                                        {ctaComponent}
+                                        <h3 className="text-2xl font-bold text-navy">{renderInline(trimmed.replace('### ', ''))}</h3>
+                                    </React.Fragment>
+                                );
                             }
 
                             // HR
                             if (trimmed === '---') {
-                                return <hr key={i} className="border-t-2 border-navy/10 my-8" />;
+                                return (
+                                    <React.Fragment key={i}>
+                                        {ctaComponent}
+                                        <hr className="border-t-2 border-navy/10 my-8" />
+                                    </React.Fragment>
+                                );
                             }
 
                             // Table
                             if (trimmed.includes('|') && trimmed.split('\n').length > 2) {
                                 const rows = trimmed.split('\n').filter(r => !r.match(/^[\|\s-]+$/));
                                 return (
-                                    <div key={i} className="overflow-x-auto my-8">
-                                        <table className="w-full border-collapse bg-navy/5 rounded-2xl overflow-hidden">
-                                            <tbody>
-                                                {rows.map((row, ri) => (
-                                                    <tr key={ri} className={ri === 0 ? "bg-navy text-white font-bold" : "border-b border-navy/10"}>
-                                                        {row.split('|').filter(c => c.trim()).map((cell, ci) => (
-                                                            <td key={ci} className="p-4 text-sm">{renderInline(cell.trim())}</td>
-                                                        ))}
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <React.Fragment key={i}>
+                                        {ctaComponent}
+                                        <div className="overflow-x-auto my-8">
+                                            <table className="w-full border-collapse bg-navy/5 rounded-2xl overflow-hidden">
+                                                <tbody>
+                                                    {rows.map((row, ri) => (
+                                                        <tr key={ri} className={ri === 0 ? "bg-navy text-white font-bold" : "border-b border-navy/10"}>
+                                                            {row.split('|').filter(c => c.trim()).map((cell, ci) => (
+                                                                <td key={ci} className="p-4 text-sm">{renderInline(cell.trim())}</td>
+                                                            ))}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </React.Fragment>
                                 );
                             }
 
                             // Unordered list
                             if (trimmed.split('\n').every(l => l.trim().startsWith('* ') || l.trim().startsWith('- '))) {
                                 return (
-                                    <ul key={i} className="space-y-3 list-none">
-                                        {trimmed.split('\n').map((li, liidx) => (
-                                            <li key={liidx} className="flex items-start gap-3">
-                                                <span className="text-primary mt-1">●</span>
-                                                <span>{renderInline(li.replace(/^[\*-]\s*/, ''))}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
+                                    <React.Fragment key={i}>
+                                        {ctaComponent}
+                                        <ul className="space-y-3 list-none">
+                                            {trimmed.split('\n').map((li, liidx) => (
+                                                <li key={liidx} className="flex items-start gap-3">
+                                                    <span className="text-primary mt-1">●</span>
+                                                    <span>{renderInline(li.replace(/^[\*-]\s*/, ''))}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </React.Fragment>
                                 );
                             }
 
                             // Ordered list
                             if (trimmed.split('\n').every(l => /^\d+\.\s/.test(l.trim()))) {
                                 return (
-                                    <ol key={i} className="space-y-4">
-                                        {trimmed.split('\n').map((li, liidx) => (
-                                            <li key={liidx} className="flex items-start gap-4">
-                                                <span className="bg-primary text-white w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shrink-0">{liidx + 1}</span>
-                                                <span className="pt-1">{renderInline(li.replace(/^\d+\.\s*/, ''))}</span>
-                                            </li>
-                                        ))}
-                                    </ol>
+                                    <React.Fragment key={i}>
+                                        {ctaComponent}
+                                        <ol className="space-y-4">
+                                            {trimmed.split('\n').map((li, liidx) => (
+                                                <li key={liidx} className="flex items-start gap-4">
+                                                    <span className="bg-primary text-white w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shrink-0">{liidx + 1}</span>
+                                                    <span className="pt-1">{renderInline(li.replace(/^\d+\.\s*/, ''))}</span>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </React.Fragment>
                                 );
                             }
 
                             // Generic paragraph with inline formatting
-                            return <p key={i}>{renderInline(trimmed)}</p>;
+                            return (
+                                <React.Fragment key={i}>
+                                    {ctaComponent}
+                                    <p className="mb-6">{renderInline(trimmed)}</p>
+                                </React.Fragment>
+                            );
                         })}
                     </div>
 
-                    {/* CTA Banner */}
-                    <div className="bg-primary p-8 rounded-[2rem] text-white shadow-primary my-12 text-center">
-                        <h4 className="text-2xl font-black uppercase mb-4">¿Listo para destacar?</h4>
-                        <p className="mb-8 font-bold italic opacity-90">Deja de ser un link olvidado y conviértete en un contacto guardado.</p>
-                        <Link href="/registro" className="inline-flex items-center gap-3 bg-white text-primary px-8 py-4 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-transform">
-                            Crear mi Contacto QR <ArrowRight size={18} />
-                        </Link>
-                    </div>
+
 
                     {/* Related Posts */}
                     {relatedPosts.length > 0 && (
