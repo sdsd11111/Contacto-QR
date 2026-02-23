@@ -590,6 +590,26 @@ export default function Home() {
       {/* Edit Portal Modal */}
       <EditPortalModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
 
+      {/* Floating Support Button (Top Left - below Header) */}
+      <motion.a
+        href="https://wa.me/593983237491?text=Hola,%20necesito%20soporte%20con%20ActivaQR"
+        target="_blank"
+        rel="noopener noreferrer"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="fixed top-20 left-6 z-40 bg-white/90 backdrop-blur-md border border-navy/10 text-navy px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 group hover:bg-white transition-colors"
+      >
+        <div className="w-10 h-10 bg-green-500/10 rounded-full flex items-center justify-center shrink-0 group-hover:bg-green-500 group-hover:text-white transition-colors">
+          <Phone size={20} className="text-green-500 group-hover:text-white transition-colors" />
+        </div>
+        <div className="text-left hidden sm:block">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-navy/50">¿Necesitas ayuda?</p>
+          <p className="text-xs font-black text-navy uppercase leading-tight">Soporte WhatsApp</p>
+        </div>
+      </motion.a>
+
       {/* Floating Edit Button (Bottom Left) */}
       <motion.button
         initial={{ opacity: 0, scale: 0.8 }}
