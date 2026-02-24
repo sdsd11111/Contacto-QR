@@ -394,7 +394,7 @@ export default function HomeClient() {
                                         <Star size={16} fill="currentColor" />
                                     </div>
                                     <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
-                                        &quot;Tener un botón de 'Agendar Cita' directo en el contacto ahorró horas de chat. Nuestros clientes valoran la rapidez. Ha sido la mejor inversión para profesionalizar nuestra marca.&quot;
+                                        &quot;La facilidad para enviar mi contacto por WhatsApp con un solo clic es increíble. Mis clientes valoran la rapidez y la presentación profesional. Ha sido clave para nuestra imagen.&quot;
                                     </p>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
