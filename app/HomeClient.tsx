@@ -583,10 +583,10 @@ export default function HomeClient() {
                                     <QrCode size={18} className="text-primary shrink-0" /> Código QR Dinámico
                                 </li>
                                 <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <Smartphone size={18} className="text-primary shrink-0" /> Botones de Contacto
+                                    <Smartphone size={18} className="text-primary shrink-0" /> Guardado en agenda con 1 clic
                                 </li>
                                 <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Galería de Fotos
+                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Etiquetas para búsqueda rápida
                                 </li>
                                 <li className="flex items-center gap-3 text-navy font-medium text-sm">
                                     <ShieldCheck size={18} className="text-primary shrink-0" /> Soporte WhatsApp
@@ -682,7 +682,7 @@ export default function HomeClient() {
                                     <Users size={18} className="text-primary shrink-0" /> Para franquicias y sucursales
                                 </li>
                                 <li className="flex items-center gap-3 text-white/80 font-medium text-sm">
-                                    <BarChart3 size={18} className="text-primary shrink-0" /> Reportes consolidados
+                                    <BarChart3 size={18} className="text-primary shrink-0" /> Gestión de perfiles por sucursal
                                 </li>
                                 <li className="flex items-center gap-3 text-white/80 font-medium text-sm">
                                     <ShieldCheck size={18} className="text-primary shrink-0" /> Soporte VIP Dedicado
