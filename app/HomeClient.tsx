@@ -126,7 +126,7 @@ export default function HomeClient() {
 
             {/* Sección Separadora con Imagen Fija (Fixed Background) */}
             <section
-                className="relative h-screen md:h-[500px] w-full bg-fixed bg-center bg-cover bg-no-repeat"
+                className="relative h-screen md:h-[500px] w-full bg-fixed bg-left md:bg-center bg-cover bg-no-repeat"
                 style={{ backgroundImage: 'url("/images/ActivaQR_hero.webp")' }}
             >
             </section>
@@ -203,16 +203,26 @@ export default function HomeClient() {
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] shadow-xl border border-white/5 relative group"
+                            className="bg-white/5 backdrop-blur-md rounded-[2.5rem] shadow-xl border border-white/10 relative group overflow-hidden flex flex-col"
                         >
-                            <div className="bg-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500 text-primary">
-                                <QrCode size={32} />
+                            <div className="aspect-[4/3] w-full overflow-hidden relative">
+                                <img
+                                    src="/images/scanning_qr.png"
+                                    alt="Hombre escaneando QR"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-transparent opacity-60"></div>
                             </div>
-                            <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Paso 1: Escaneo</h3>
-                            <p className="text-white/60 leading-relaxed font-medium italic">
-                                &quot;Tu cliente apunta con su cámara al código QR en tu local, contacto o mostrador. Sin descargar nada.&quot;
-                            </p>
-                            <div className="absolute top-8 right-8 text-4xl font-black text-white/5">01</div>
+                            <div className="p-8 pt-4">
+                                <div className="bg-primary/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                    <QrCode size={24} />
+                                </div>
+                                <h3 className="text-xl font-black text-white mb-3 uppercase tracking-tight">Paso 1: Escaneo</h3>
+                                <p className="text-white/60 leading-relaxed font-medium italic text-sm">
+                                    "Tu cliente apunta con su cámara al código QR en tu local, contacto o mostrador. Sin descargar nada."
+                                </p>
+                            </div>
+                            <div className="absolute top-4 right-6 text-4xl font-black text-white/10">01</div>
                         </motion.div>
 
                         <motion.div
@@ -220,16 +230,26 @@ export default function HomeClient() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] shadow-xl border border-white/5 relative group"
+                            className="bg-white/5 backdrop-blur-md rounded-[2.5rem] shadow-xl border border-white/10 relative group overflow-hidden flex flex-col"
                         >
-                            <div className="bg-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-white transition-all duration-500 text-primary">
-                                <CheckCircle2 size={32} />
+                            <div className="aspect-[4/3] w-full overflow-hidden relative">
+                                <img
+                                    src="/images/mockup de guardado.jpeg"
+                                    alt="Mockup de guardado de contacto"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-transparent opacity-60"></div>
                             </div>
-                            <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Paso 2: Guardado</h3>
-                            <p className="text-white/60 leading-relaxed font-medium italic">
-                                &quot;Con un solo toque, toda tu información profesional (foto, nombre, servicios) se guarda directamente en su agenda.&quot;
-                            </p>
-                            <div className="absolute top-8 right-8 text-4xl font-black text-white/5">02</div>
+                            <div className="p-8 pt-4">
+                                <div className="bg-primary/20 w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
+                                    <CheckCircle2 size={24} />
+                                </div>
+                                <h3 className="text-xl font-black text-white mb-3 uppercase tracking-tight">Paso 2: Guardado</h3>
+                                <p className="text-white/60 leading-relaxed font-medium italic text-sm">
+                                    "Con un solo toque, toda tu información profesional (foto, nombre, servicios) se guarda directamente en su agenda."
+                                </p>
+                            </div>
+                            <div className="absolute top-4 right-6 text-4xl font-black text-white/10">02</div>
                         </motion.div>
 
                         <motion.div
@@ -237,18 +257,26 @@ export default function HomeClient() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.2 }}
-                            className="bg-primary p-8 rounded-[2.5rem] shadow-xl border-4 border-white/20 relative group overflow-hidden"
+                            className="bg-primary rounded-[2.5rem] shadow-xl border border-white/20 relative group overflow-hidden flex flex-col"
                         >
-                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/20 rounded-full blur-3xl"></div>
-
-                            <div className="bg-white w-16 h-16 rounded-2xl flex items-center justify-center mb-8 text-primary shadow-lg">
-                                <Star size={32} fill="currentColor" />
+                            <div className="aspect-[4/3] w-full overflow-hidden relative">
+                                <img
+                                    src="/images/estado de whatsapp.jpeg"
+                                    alt="Mockup viendo estados de WhatsApp"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-primary via-transparent to-transparent opacity-40"></div>
                             </div>
-                            <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Paso 3: Presencia</h3>
-                            <p className="text-white leading-relaxed font-bold italic">
-                                &quot;¡Listo! Ahora verá tus estados de WhatsApp y aparecerás TÚ cuando busque tu servicio en su buscador de contactos.&quot;
-                            </p>
-                            <div className="absolute top-8 right-8 text-4xl font-black text-white/10">03</div>
+                            <div className="p-8 pt-4">
+                                <div className="bg-white w-12 h-12 rounded-xl flex items-center justify-center mb-4 text-primary shadow-lg">
+                                    <Star size={24} fill="currentColor" />
+                                </div>
+                                <h3 className="text-xl font-black text-white mb-3 uppercase tracking-tight">Paso 3: Presencia</h3>
+                                <p className="text-white leading-relaxed font-bold italic text-sm">
+                                    "¡Listo! Ahora verá tus estados de WhatsApp y aparecerás TÚ cuando busque tu servicio en su buscador de contactos."
+                                </p>
+                            </div>
+                            <div className="absolute top-4 right-6 text-4xl font-black text-white/20">03</div>
                         </motion.div>
                     </div>
                 </div>
@@ -281,7 +309,16 @@ export default function HomeClient() {
 
                     {/* Desktop: Grid | Mobile: Carousel (Slide Horizontal) */}
                     <div className="relative">
-                        <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible pb-12 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
+                        <motion.div
+                            className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible pb-12 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0"
+                            animate={{ x: [0, -20, 0] }}
+                            transition={{
+                                duration: 10,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                                repeatType: "reverse"
+                            }}
+                        >
                             {/* Caso 1: Yessy (Enfermería) */}
                             <motion.div
                                 initial={{ opacity: 0, scale: 0.95 }}
@@ -406,7 +443,7 @@ export default function HomeClient() {
                                     </div>
                                 </div>
                             </motion.div>
-                        </div>
+                        </motion.div>
                     </div>
 
                     <div className="mt-16 text-center">
@@ -452,7 +489,7 @@ export default function HomeClient() {
                         <div className="bg-white/10 p-8 rounded-3xl backdrop-blur-sm border border-white/5">
                             <div className="bg-primary w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-6 text-2xl">🚀</div>
                             <h3 className="text-xl font-bold mb-3">Descarga Cloud</h3>
-                            <p className="text-white/60 text-sm leading-relaxed">Tus clientes descargan tu contacto directo desde la nube. Siempre actualizado, siempre disponible.</p>
+                            <p className="text-white/60 text-sm leading-relaxed">Ttus clientes descargan tu contacto directo desde nuestro servidor. Siempre actualizado, siempre disponible.</p>
                         </div>
                     </div>
                 </div>
@@ -597,7 +634,7 @@ export default function HomeClient() {
                                 Empezar
                             </a>
                             <p className="text-[10px] text-center text-navy/40 leading-tight font-medium mt-3">
-                                Renovación anual de $10
+                                Renovación anual de $20
                             </p>
                         </motion.div>
 
@@ -647,7 +684,7 @@ export default function HomeClient() {
                                     Elegir Equipo
                                 </a>
                                 <p className="text-[10px] text-center text-navy/40 leading-tight font-medium mt-3">
-                                    Renovación anual de $50
+                                    Renovación anual de $80
                                 </p>
                             </div>
                         </motion.div>
@@ -693,7 +730,7 @@ export default function HomeClient() {
                                 Contactar Ventas
                             </a>
                             <p className="text-[10px] text-center text-white/40 leading-tight font-medium mt-3">
-                                Renovación anual de $80
+                                Renovación anual de $140
                             </p>
                         </motion.div>
                     </div>
@@ -730,7 +767,7 @@ export default function HomeClient() {
                                 <div className="inline-block bg-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-8">
                                     🔴 Situación Actual
                                 </div>
-                                <h3 className="text-3xl font-black text-white/30 mb-6 uppercase italic tracking-tighter">&quot;¿Dónde anoté su número?&quot;</h3>
+                                <h3 className="text-3xl font-black text-white/30 mb-6 uppercase italic tracking-tighter">¿Dónde anoté su número?</h3>
                                 <p className="text-white/40 font-medium leading-relaxed mb-10">
                                     Tu cliente te buscó hace una semana, pero tu número está perdido entre cientos de mensajes o en un papel que terminó en la basura.
                                 </p>
@@ -826,7 +863,7 @@ export default function HomeClient() {
                             },
                             {
                                 q: "¿Tengo que pagar mensualidades?",
-                                a: "No. Es un pago anual de $20 que incluye hosting, mantenimiento y actualizaciones. La renovación es de solo $10 al año."
+                                a: "No. Es un pago anual de $20 que incluye hosting, mantenimiento y actualizaciones. La renovación es del 100% al año."
                             }
                         ].map((item, i) => (
                             <details key={i} className="group bg-gray-50 rounded-2xl p-6 cursor-pointer border border-gray-100 hover:bg-gray-100 transition-colors">
@@ -881,7 +918,7 @@ export default function HomeClient() {
                     <p className="text-xs font-black text-navy uppercase leading-tight">Solicita tu modificación</p>
                 </div>
             </motion.button>
-        </main>
+        </main >
     );
 }
 
