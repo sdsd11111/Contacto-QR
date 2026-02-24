@@ -44,6 +44,15 @@ export async function GET(
         }
 
         // 1b. Formatear Notas con Galería, Productos y Redes
+        const escapeVCardValue = (text: string) => {
+            if (!text) return '';
+            return text
+                .replace(/\\/g, '\\\\')
+                .replace(/,/g, '\\,')
+                .replace(/;/g, '\\;')
+                .replace(/\r?\n/g, '\\n');
+        };
+
         const sanitize = (text: string) => text ? text.replace(/\r?\n/g, '\\n') : '';
 
         // Safe JSON parse for gallery
@@ -87,20 +96,32 @@ export async function GET(
             noteContent += `\\n\\nEtiquetas: ${sanitize(user.etiquetas)}`;
         }
 
-        noteContent += `\n\n- ActivaQR`;
+        noteContent += "\\n\\n- ActivaQR";
 
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
 
         // Función para line folding (obligatorio en vCard para líneas largas)
+        // Según RFC 6350: Las líneas no deben exceder 75 octetos. 
+        // Si se excede, se debe insertar CRLF seguido de un espacio.
         const foldLine = (line: string) => {
+            if (!line) return '';
             const maxLength = 75;
             if (line.length <= maxLength) return line;
-            let folded = '';
-            for (let i = 0; i < line.length; i += maxLength) {
-                folded += (i > 0 ? ' ' : '') + line.substring(i, i + maxLength) + '\r\n';
+
+            let result = '';
+            let currentLine = line.substring(0, maxLength);
+            let remaining = line.substring(maxLength);
+
+            result = currentLine;
+
+            while (remaining.length > 0) {
+                const chunk = remaining.substring(0, maxLength - 1);
+                remaining = remaining.substring(maxLength - 1);
+                result += '\r\n ' + chunk;
             }
-            return folded.trim();
+
+            return result;
         };
 
         // 2. Generar vCard con todos los campos (Version 3.0 - Estándar moderno)
@@ -128,21 +149,21 @@ export async function GET(
         const vcardLines = [
             'BEGIN:VCARD',
             'VERSION:3.0',
-            `FN:${fullName}`,
-            `N:${structuredName}`,
-            user.profesion ? `TITLE:${user.profesion}` : '',
-            `ORG:${organization}`,
+            `FN:${escapeVCardValue(fullName)}`,
+            `N:${escapeVCardValue(structuredName)}`,
+            user.profesion ? `TITLE:${escapeVCardValue(user.profesion)}` : '',
+            `ORG:${escapeVCardValue(organization)}`,
             `TEL;TYPE=CELL,VOICE:${cleanWhatsApp}`,
-            `EMAIL;TYPE=WORK,INTERNET:${user.email}`,
-            user.direccion ? `ADR;TYPE=WORK:;;${user.direccion};;;;` : '',
-            user.web ? `URL:${user.web}` : '',
-            user.google_business ? `URL;type=GOOGLE_BUSINESS:${user.google_business}` : '',
-            `NOTE:${noteContent}${user.google_business ? '\\n\\nUbicación/Google Maps: ' + user.google_business : ''}`,
+            `EMAIL;TYPE=WORK,INTERNET:${escapeVCardValue(user.email)}`,
+            user.direccion ? `ADR;TYPE=WORK:;;${escapeVCardValue(user.direccion)};;;;` : '',
+            user.web ? `URL:${escapeVCardValue(user.web)}` : '',
+            user.google_business ? `URL;type=GOOGLE_BUSINESS:${escapeVCardValue(user.google_business)}` : '',
+            `NOTE:${escapeVCardValue(noteContent + (user.google_business ? '\n\nUbicación/Google Maps: ' + user.google_business : ""))}`,
             // Redes Sociales como URL en vCard 3.0
-            user.instagram ? `URL;type=INSTAGRAM:${user.instagram}` : '',
-            user.facebook ? `URL;type=FACEBOOK:${user.facebook}` : '',
-            user.linkedin ? `URL;type=LINKEDIN:${user.linkedin}` : '',
-            user.tiktok ? `URL;type=TIKTOK:${user.tiktok}` : '',
+            user.instagram ? `URL;type=INSTAGRAM:${escapeVCardValue(user.instagram)}` : '',
+            user.facebook ? `URL;type=FACEBOOK:${escapeVCardValue(user.facebook)}` : '',
+            user.linkedin ? `URL;type=LINKEDIN:${escapeVCardValue(user.linkedin)}` : '',
+            user.tiktok ? `URL;type=TIKTOK:${escapeVCardValue(user.tiktok)}` : '',
         ];
 
         // Procesar foto
@@ -153,7 +174,7 @@ export async function GET(
                     const buffer = await photoResp.arrayBuffer();
                     const b64 = Buffer.from(buffer).toString('base64');
                     // vCard 3.0 PHOTO syntax
-                    vcardLines.push(foldLine(`PHOTO;ENCODING=b;TYPE=JPEG:${b64}`));
+                    vcardLines.push(`PHOTO;ENCODING=b;TYPE=JPEG:${b64}`);
                 }
             } catch (e) {
                 console.error("Error inline photo:", e);
@@ -163,8 +184,22 @@ export async function GET(
 
         vcardLines.push('END:VCARD');
 
-        // Filtramos líneas vacías y unimos con \r\n
-        const vcard = vcardLines.filter(Boolean).join('\r\n');
+        // Filtramos líneas vacías y aplicamos foldLine a cada una, uniendo con \r\n
+        const vcard = vcardLines
+            .filter(Boolean)
+            .map(line => foldLine(line))
+            .join('\r\n');
+
+        // Debug: Check for literal newlines (other than \r\n separators)
+        const vcardDEBUG = vcard.replace(/\r\n/g, '[CRLF]');
+        if (vcardDEBUG.includes('\n')) {
+            console.error("VCard contains literal LF!");
+            const pos = vcardDEBUG.indexOf('\n');
+            console.log("Context:", vcardDEBUG.substring(pos - 20, pos + 20));
+        }
+        if (vcardDEBUG.includes('\r')) {
+            console.error("VCard contains literal CR!");
+        }
 
         // 3. Retornar con headers estándar
         return new NextResponse(vcard, {
