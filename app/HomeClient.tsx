@@ -454,6 +454,98 @@ export default function HomeClient() {
                 </div>
             </section>
 
+            {/* Sección: Logos de Clientes (Confianza Institucional) */}
+            <section className="py-20 bg-white overflow-hidden border-y border-navy/5">
+                <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
+                    <h3 className="text-xl md:text-2xl font-black text-navy uppercase tracking-tighter italic">
+                        Más de <span className="text-primary italic">500 negocios y profesionales</span> ya usan ActivaQR
+                    </h3>
+                </div>
+
+                {/* Contenedor de Carruseles */}
+                <div className="flex flex-col gap-8 relative">
+                    {/* Fila 1: Derecha a Izquierda */}
+                    <div className="flex overflow-hidden group">
+                        <motion.div
+                            animate={{ x: ["0%", "-50%"] }}
+                            transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+                            className="flex gap-8 whitespace-nowrap py-4"
+                        >
+                            {[
+                                "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
+                                "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
+                                "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
+                                "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg"
+                            ].map((logo, i) => (
+                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                    <img
+                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
+                                        alt={`Cliente ActivaQR ${i}`}
+                                        className="w-full h-full object-cover rounded-full"
+                                    />
+                                </div>
+                            ))}
+                            {/* Duplicar para el scroll infinito */}
+                            {[
+                                "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
+                                "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
+                                "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
+                                "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg"
+                            ].map((logo, i) => (
+                                <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                    <img
+                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
+                                        alt={`Cliente ActivaQR ${i}`}
+                                        className="w-full h-full object-cover rounded-full"
+                                    />
+                                </div>
+                            ))}
+                        </motion.div>
+                    </div>
+
+                    {/* Fila 2: Izquierda a Derecha */}
+                    <div className="flex overflow-hidden group">
+                        <motion.div
+                            animate={{ x: ["-50%", "0%"] }}
+                            transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+                            className="flex gap-8 whitespace-nowrap py-4"
+                        >
+                            {[
+                                "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
+                                "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
+                                "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
+                            ].map((logo, i) => (
+                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                    <img
+                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
+                                        alt={`Cliente ActivaQR ${i}`}
+                                        className="w-full h-full object-cover rounded-full"
+                                    />
+                                </div>
+                            ))}
+                            {/* Duplicar para el scroll infinito */}
+                            {[
+                                "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
+                                "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
+                                "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
+                            ].map((logo, i) => (
+                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                    <img
+                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
+                                        alt={`Cliente ActivaQR ${i}`}
+                                        className="w-full h-full object-cover rounded-full"
+                                    />
+                                </div>
+                            ))}
+                        </motion.div>
+                    </div>
+
+                    {/* Gradientes laterales para suavizar el scroll */}
+                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+                </div>
+            </section>
+
             {/* Pricing Section */}
             <section className="py-24 bg-cream" id="precios" style={{ position: 'relative', zIndex: 10 }}>
                 <div className="max-w-7xl mx-auto px-6">
