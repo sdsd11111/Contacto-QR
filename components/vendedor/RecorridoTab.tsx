@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { QRCodeCanvas } from "qrcode.react";
 import {
     Plus, ChevronRight, ChevronLeft, Mic, MicOff,
     CheckCircle, X, Clock, Briefcase, Lightbulb,
@@ -293,29 +294,25 @@ export default function RecorridoTab({ seller }: { seller: any }) {
 
     return (
         <div className="space-y-8">
+
             {/* ── QR SECTION ── */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#0A1229] border border-primary/30 rounded-[24px] p-5 flex flex-col items-center gap-3 shadow-lg shadow-primary/10">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">📲 Demo</span>
-                    <div className="bg-white p-2 rounded-xl">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={demoQrUrl} alt="QR Demo" width={130} height={130} className="rounded-lg" />
+            <div className="flex justify-center">
+                <div className="bg-[#0A1229] border border-green-500/30 rounded-[24px] p-5 flex flex-col items-center gap-3 shadow-lg shadow-green-500/10 max-w-xs w-full">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-green-400">📲 Tarjeta ActivaQR</span>
+                    <div className="bg-white p-3 rounded-xl">
+                        <QRCodeCanvas
+                            value="https://activaqr.com/api/vcard/activaqr-9ag4"
+                            size={180}
+                            level="H"
+                            includeMargin={false}
+                        />
                     </div>
                     <p className="text-white/50 text-[10px] text-center leading-snug">
-                        Muéstralo al cliente<br /><span className="text-white/80 font-bold">Ve cómo funciona</span>
-                    </p>
-                </div>
-                <div className="bg-[#0A1229] border border-green-500/30 rounded-[24px] p-5 flex flex-col items-center gap-3 shadow-lg shadow-green-500/10">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-green-400">👋 Soporte</span>
-                    <div className="bg-white p-2 rounded-xl">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={contactQrUrl} alt="QR Soporte" width={130} height={130} className="rounded-lg" />
-                    </div>
-                    <p className="text-white/50 text-[10px] text-center leading-snug">
-                        Pídele que lo escanee<br /><span className="text-green-400 font-bold">Te agrega en WhatsApp</span>
+                        Muéstrale al cliente esta tarjeta<br /><span className="text-green-400 font-bold">para que vea cómo funciona ActivaQR</span>
                     </p>
                 </div>
             </div>
+
 
             {/* ── BOTÓN REGISTRAR ── */}
             <motion.button

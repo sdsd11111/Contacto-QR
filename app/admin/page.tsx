@@ -46,7 +46,7 @@ function cn(...inputs: ClassValue[]) {
 const isPlaceholderUrl = (url: string | null | undefined) => {
     if (!url) return true;
     if (url.startsWith('data:image')) return false; // Base64 is not a placeholder
-    const placeholders = ['photo.com', 'example.com', 'placeholder.com', 'placehold.co'];
+    const placeholders = ['photo.com', 'example.com', 'placeholder.com', 'placehold.co', 'placeholder.supabase.co', 'supabase.co/storage'];
     return placeholders.some(p => url.toLowerCase().includes(p));
 };
 
@@ -489,17 +489,11 @@ export default function AdminDashboard() {
 
         setIsSaving(true);
         try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${editingRegistro.id}/photo_${Math.random()}.${fileExt}`;
-            const { error } = await supabase.storage
-                .from('vcards')
-                .upload(fileName, file);
-
-            if (error) throw error;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('vcards')
-                .getPublicUrl(fileName);
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+            if (!uploadRes.ok) throw new Error('Error subiendo foto al servidor');
+            const { url: publicUrl } = await uploadRes.json();
 
             setEditingRegistro({ ...editingRegistro, foto_url: publicUrl });
 
@@ -518,7 +512,6 @@ export default function AdminDashboard() {
             setIsSaving(false);
         }
     };
-
     const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || !editingRegistro || files.length === 0) return;
@@ -528,18 +521,11 @@ export default function AdminDashboard() {
             const newUrls = [...(editingRegistro.galeria_urls || [])];
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${editingRegistro.id}/gallery_${Math.random()}.${fileExt}`;
-                const { error } = await supabase.storage
-                    .from('vcards')
-                    .upload(fileName, file);
-
-                if (error) throw error;
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('vcards')
-                    .getPublicUrl(fileName);
-
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', file);
+                const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+                if (!uploadRes.ok) throw new Error(`Error subiendo imagen #${i + 1} al servidor`);
+                const { url: publicUrl } = await uploadRes.json();
                 newUrls.push(publicUrl);
             }
 
@@ -1457,6 +1443,7 @@ export default function AdminDashboard() {
                                                 <QrCode size={16} /> GESTIÓN DE CÓDIGOS QR
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {/* QR DE DESCARGA VCF */}
                                                 <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
                                                     <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Opción 1: Descarga Directa (Archivo .vcf)</p>
                                                     <div className="flex items-center gap-6">
@@ -1480,37 +1467,59 @@ export default function AdminDashboard() {
                                                     </div>
                                                 </div>
 
+                                                {/* QR DE PERFIL DIGITAL */}
                                                 <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Opción 2: Gestión de Comisión</p>
-                                                    <div className="space-y-4">
-                                                        <div>
-                                                            <label className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Estado del Pago</label>
-                                                            <select
-                                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3 font-bold text-xs outline-none focus:border-primary/40 transition-all appearance-none"
-                                                                value={editingRegistro.commission_status || 'pending'}
-                                                                onChange={e => {
-                                                                    const val = e.target.value;
-                                                                    setEditingRegistro({
-                                                                        ...editingRegistro,
-                                                                        commission_status: val,
-                                                                        leader_paid_at: val === 'paid_to_leader' ? new Date().toISOString() : editingRegistro.leader_paid_at
-                                                                    });
-                                                                }}
-                                                            >
-                                                                <option value="pending" className="bg-navy">Pendiente</option>
-                                                                <option value="paid_to_leader" className="bg-navy">Enviada a Líder 🚚</option>
-                                                                <option value="completed" className="bg-navy">Confirmada por Vendedor ✅</option>
-                                                            </select>
+                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Opción 2: Perfil Digital (Visualización)</p>
+                                                    <div className="flex items-center gap-6">
+                                                        <div className="bg-white p-3 rounded-2xl">
+                                                            <img
+                                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                                alt="QR Perfil"
+                                                                className="w-20 h-20"
+                                                            />
                                                         </div>
-                                                        {editingRegistro.commission_status === 'paid_to_leader' && editingRegistro.leader_paid_at && (
-                                                            <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                                                                <Clock size={14} className="text-amber-500" />
-                                                                <p className="text-[9px] font-bold text-amber-200 uppercase tracking-tight">
-                                                                    Pagado al líder el: {new Date(editingRegistro.leader_paid_at).toLocaleString()}
-                                                                </p>
-                                                            </div>
-                                                        )}
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] font-bold text-white/60 leading-tight">Muestra el perfil completo con fotos y botones. El cliente elige cuándo guardar el contacto.</p>
+                                                            <a
+                                                                href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
+                                                                target="_blank"
+                                                                className="inline-flex items-center gap-2 text-primary text-[10px] font-black uppercase hover:underline"
+                                                            >
+                                                                <ExternalLink size={12} /> Descargar QR Alta Res.
+                                                            </a>
+                                                        </div>
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            {/* GESTIÓN DE COMISIONES (SUBIDA DE QR DE GESTIÓN) */}
+                                            <div className="mt-8 pt-8 border-t border-white/10">
+                                                <div className="max-w-md">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-4 block ml-1">Estado de la Comisión (Socio)</label>
+                                                    <select
+                                                        className="w-full bg-white/5 border border-white/10 rounded-[24px] px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none"
+                                                        value={editingRegistro.commission_status || 'pending'}
+                                                        onChange={e => {
+                                                            const val = e.target.value;
+                                                            setEditingRegistro({
+                                                                ...editingRegistro,
+                                                                commission_status: val,
+                                                                leader_paid_at: val === 'paid_to_leader' ? new Date().toISOString() : editingRegistro.leader_paid_at
+                                                            });
+                                                        }}
+                                                    >
+                                                        <option value="pending" className="bg-navy">⏳ Pendiente</option>
+                                                        <option value="paid_to_leader" className="bg-navy">🚚 Enviada a Líder</option>
+                                                        <option value="completed" className="bg-navy">✅ Confirmada por Vendedor</option>
+                                                    </select>
+                                                    {editingRegistro.commission_status === 'paid_to_leader' && editingRegistro.leader_paid_at && (
+                                                        <div className="mt-4 flex items-center gap-3 p-4 bg-primary/10 rounded-2xl border border-primary/20">
+                                                            <Clock size={16} className="text-primary" />
+                                                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                                                                Pagado al líder el: {new Date(editingRegistro.leader_paid_at).toLocaleString()}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

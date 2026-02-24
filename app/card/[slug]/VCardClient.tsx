@@ -222,7 +222,9 @@ ADR;TYPE=WORK:;;${data.direccion};;;;`;
                     </div>
 
                     <div className="pt-16 pb-12 px-10 text-center">
-                        <h1 className="text-3xl font-black tracking-tighter leading-none mb-2 uppercase italic">{data.nombre}</h1>
+                        <h1 className="text-3xl font-black tracking-tighter leading-none mb-2 uppercase italic">
+                            {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
+                        </h1>
                         <p className="text-xs font-black text-primary uppercase tracking-[0.2em] mb-8">{data.profesion}</p>
 
                         <div className="space-y-4 mb-10">
@@ -293,7 +295,7 @@ ADR;TYPE=WORK:;;${data.direccion};;;;`;
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-8 italic">Tu Código QR Estratégico</p>
                     <div className="inline-block p-6 bg-white rounded-[40px] shadow-2xl mb-8">
                         <QRCodeCanvas
-                            value={currentUrl}
+                            value={`${typeof window !== 'undefined' ? window.location.origin : ''}/api/vcard/${data.slug || data.id}`}
                             size={200}
                             level="H"
                             includeMargin={false}
