@@ -53,9 +53,6 @@ export async function GET(
                 .replace(/\r?\n/g, '\\n');
         };
 
-        const sanitize = (text: string) => text ? text.replace(/\r?\n/g, '\\n') : '';
-
-        // Safe JSON parse for gallery
         const getGalleryArray = (data: any) => {
             if (!data) return [];
             if (Array.isArray(data)) return data;
@@ -74,36 +71,34 @@ export async function GET(
         const whatsapp = user.whatsapp || '';
         const nombre = user.nombre || 'Usuario';
 
-        let noteContent = `${sanitize(bio)}`;
+        let noteContent = bio;
         if (user.productos_servicios) {
-            noteContent += `\\n\\nProductos/Servicios:\\n${sanitize(user.productos_servicios)}`;
+            noteContent += `\n\nProductos/Servicios:\n${user.productos_servicios}`;
         }
 
         if (user.instagram || user.facebook || user.linkedin || user.tiktok) {
-            noteContent += `\\n\\nRedes Sociales:`;
-            if (user.facebook) noteContent += `\\nFB: ${user.facebook}`;
-            if (user.instagram) noteContent += `\\nIG: ${user.instagram}`;
-            if (user.tiktok) noteContent += `\\nTK: ${user.tiktok}`;
-            if (user.linkedin) noteContent += `\\nLI: ${user.linkedin}`;
+            noteContent += `\n\nRedes Sociales:`;
+            if (user.facebook) noteContent += `\nFB: ${user.facebook}`;
+            if (user.instagram) noteContent += `\nIG: ${user.instagram}`;
+            if (user.tiktok) noteContent += `\nTK: ${user.tiktok}`;
+            if (user.linkedin) noteContent += `\nLI: ${user.linkedin}`;
         }
 
         const gallery = getGalleryArray(user.galeria_urls);
         if (gallery.length > 0) {
-            noteContent += `\\n\\nMis Trabajos:\\n${gallery.join('\\n')}`;
+            noteContent += `\n\nMis Trabajos:\n${gallery.join('\n')}`;
         }
 
         if (user.etiquetas) {
-            noteContent += `\\n\\nEtiquetas: ${sanitize(user.etiquetas)}`;
+            noteContent += `\n\nEtiquetas: ${user.etiquetas}`;
         }
 
-        noteContent += "\\n\\n- ActivaQR";
+        noteContent += "\n\n- ActivaQR";
 
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
 
         // Función para line folding (obligatorio en vCard para líneas largas)
-        // Según RFC 6350: Las líneas no deben exceder 75 octetos. 
-        // Si se excede, se debe insertar CRLF seguido de un espacio.
         const foldLine = (line: string) => {
             if (!line) return '';
             const maxLength = 75;
@@ -124,7 +119,7 @@ export async function GET(
             return result;
         };
 
-        // 2. Generar vCard con todos los campos (Version 3.0 - Estándar moderno)
+        // 2. Generar vCard con todos los campos (Version 3.0)
         let fullName = '';
         let structuredName = ''; // Campo N:
         let organization = '';   // Campo ORG:
@@ -133,7 +128,7 @@ export async function GET(
             fullName = user.nombre_negocio || nombre;
             organization = user.nombre_negocio || nombre;
             if (user.contacto_nombre || user.contacto_apellido) {
-                structuredName = `${user.contacto_apellido || ''};${user.contacto_nombre || ''};;;`;
+                structuredName = `${escapeVCardValue(user.contacto_apellido || '')};${escapeVCardValue(user.contacto_nombre || '')};;;`;
             } else {
                 structuredName = ';;;;';
             }
@@ -142,7 +137,7 @@ export async function GET(
             const firstName = user.nombres || nombre.split(' ')[0] || '';
             const lastName = user.apellidos || nombre.split(' ').slice(1).join(' ') || '';
             fullName = `${firstName} ${lastName}`.trim() || nombre;
-            structuredName = `${lastName};${firstName};;;`;
+            structuredName = `${escapeVCardValue(lastName)};${escapeVCardValue(firstName)};;;`;
             organization = user.empresa || "";
         }
 
@@ -150,7 +145,7 @@ export async function GET(
             'BEGIN:VCARD',
             'VERSION:3.0',
             `FN:${escapeVCardValue(fullName)}`,
-            `N:${escapeVCardValue(structuredName)}`,
+            `N:${structuredName}`, // Ya escapado individualmente
             user.profesion ? `TITLE:${escapeVCardValue(user.profesion)}` : '',
             `ORG:${escapeVCardValue(organization)}`,
             `TEL;TYPE=CELL,VOICE:${cleanWhatsApp}`,
@@ -178,7 +173,6 @@ export async function GET(
                 }
             } catch (e) {
                 console.error("Error inline photo:", e);
-                // Si falla la foto, el archivo sigue siendo válido
             }
         }
 
@@ -189,17 +183,6 @@ export async function GET(
             .filter(Boolean)
             .map(line => foldLine(line))
             .join('\r\n');
-
-        // Debug: Check for literal newlines (other than \r\n separators)
-        const vcardDEBUG = vcard.replace(/\r\n/g, '[CRLF]');
-        if (vcardDEBUG.includes('\n')) {
-            console.error("VCard contains literal LF!");
-            const pos = vcardDEBUG.indexOf('\n');
-            console.log("Context:", vcardDEBUG.substring(pos - 20, pos + 20));
-        }
-        if (vcardDEBUG.includes('\r')) {
-            console.error("VCard contains literal CR!");
-        }
 
         // 3. Retornar con headers estándar
         return new NextResponse(vcard, {
