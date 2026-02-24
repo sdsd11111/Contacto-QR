@@ -98,26 +98,7 @@ export async function GET(
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
 
-        // Función para line folding (obligatorio en vCard para líneas largas)
-        const foldLine = (line: string) => {
-            if (!line) return '';
-            const maxLength = 75;
-            if (line.length <= maxLength) return line;
-
-            let result = '';
-            let currentLine = line.substring(0, maxLength);
-            let remaining = line.substring(maxLength);
-
-            result = currentLine;
-
-            while (remaining.length > 0) {
-                const chunk = remaining.substring(0, maxLength - 1);
-                remaining = remaining.substring(maxLength - 1);
-                result += '\r\n ' + chunk;
-            }
-
-            return result;
-        };
+        // Función para line folding (removida para campos de texto por problemas en Android)
 
         // 2. Generar vCard con todos los campos (Version 3.0)
         let fullName = '';
@@ -168,8 +149,10 @@ export async function GET(
                 if (photoResp.ok) {
                     const buffer = await photoResp.arrayBuffer();
                     const b64 = Buffer.from(buffer).toString('base64');
-                    // vCard 3.0 PHOTO syntax
-                    vcardLines.push(`PHOTO;ENCODING=b;TYPE=JPEG:${b64}`);
+
+                    // Fold base64 string every 74 characters to be safe for vCard specification
+                    const foldedB64 = b64.match(/.{1,74}/g)?.join('\r\n ') || b64;
+                    vcardLines.push(`PHOTO;ENCODING=b;TYPE=JPEG:${foldedB64}`);
                 }
             } catch (e) {
                 console.error("Error inline photo:", e);
@@ -178,10 +161,11 @@ export async function GET(
 
         vcardLines.push('END:VCARD');
 
-        // Filtramos líneas vacías y aplicamos foldLine a cada una, uniendo con \r\n
+        // Unimos las líneas con \r\n, sin hacer foldLine a los campos de texto
+        // porque el corte arbitrario rompe caracteres Unicode y secuencias de escape
+        // en analizadores de Android/iOS.
         const vcard = vcardLines
             .filter(Boolean)
-            .map(line => foldLine(line))
             .join('\r\n');
 
         // 3. Retornar con headers estándar
