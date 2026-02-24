@@ -291,7 +291,7 @@ export default function HomeClient() {
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
                                     <img
-                                        src="/logos_clientes/clientes%20de%20Activa%20QR/Yessy%202026.png"
+                                        src="/logos_clientes/clientes%20de%20Activa%20QR/Yessy%202026.jpg"
                                         alt="Yessy - Enfermería a domicilio"
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
@@ -480,7 +480,7 @@ export default function HomeClient() {
                                 "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
                                 "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
                                 "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
-                                "Yessy 2026.png"
+                                "Yessy 2026.jpg"
                             ].map((logo, i) => (
                                 <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <img
@@ -496,7 +496,7 @@ export default function HomeClient() {
                                 "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
                                 "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
                                 "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
-                                "Yessy 2026.png"
+                                "Yessy 2026.jpg"
                             ].map((logo, i) => (
                                 <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <img
