@@ -1886,7 +1886,7 @@ export default function RegisterWizard() {
                                                 Ayúdanos a crecer con una reseña en Google y te regalamos la mitad del costo de tu renovación el próximo año. ¡Solo te toma 15 segundos!
                                             </p>
                                             <a
-                                                href="https://g.page/r/CRWzEc2rIpGjEAI/review"
+                                                href="https://g.page/r/CecvMNpTAC7lEBM/review"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-black text-sm uppercase tracking-widest shadow-primary hover:scale-105 transition-all"
