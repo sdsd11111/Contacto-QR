@@ -234,7 +234,7 @@ export default function HomeClient() {
                         >
                             <div className="aspect-[4/3] w-full overflow-hidden relative">
                                 <img
-                                    src="/images/mockup de guardado.jpeg"
+                                    src="/images/mockup de guardado.png"
                                     alt="Mockup de guardado de contacto"
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                 />
@@ -261,7 +261,7 @@ export default function HomeClient() {
                         >
                             <div className="aspect-[4/3] w-full overflow-hidden relative">
                                 <img
-                                    src="/images/estado de whatsapp.jpeg"
+                                    src="/images/estado de whatsapp.png"
                                     alt="Mockup viendo estados de WhatsApp"
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                                 />
