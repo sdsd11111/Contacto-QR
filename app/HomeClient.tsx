@@ -291,7 +291,7 @@ export default function HomeClient() {
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
                                     <img
-                                        src="/logos_clientes/clientes de Activa QR/@pily_vanss.webp"
+                                        src="/logos_clientes/clientes de Activa QR/Yessy 2026.png"
                                         alt="Yessy - Enfermería a domicilio"
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
