@@ -20,6 +20,16 @@ import PopupManager from "@/components/PopupManager";
 import EditPortalModal from "@/components/EditPortalModal";
 
 export default function HomeClient() {
+    useEffect(() => {
+        // Estilos para ocultar scrollbars pero mantener funcionalidad
+        const style = document.createElement('style');
+        style.textContent = `
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        `;
+        document.head.append(style);
+        return () => style.remove();
+    }, []);
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
@@ -64,9 +74,9 @@ export default function HomeClient() {
                     {/* Social Proof Avatars */}
                     <div className="flex justify-center -space-x-4 mb-8">
                         <img className="w-10 h-10 rounded-full border-2 border-white" src="/images/user-1.jpg" alt="Emprendedor utilizando ActivaQR" />
-                        <img className="w-10 h-10 rounded-full border-2 border-white" src="/images/user-2.jpg" alt="Profesional con tarjeta digital" />
+                        <img className="w-10 h-10 rounded-full border-2 border-white" src="/images/user-2.jpg" alt="Profesional con contacto digital" />
                         <img className="w-10 h-10 rounded-full border-2 border-white" src="/images/user-3.jpg" alt="Dueña de negocio usando código QR" />
-                        <div className="w-10 h-10 rounded-full border-2 border-white bg-navy text-white flex items-center justify-center text-xs font-bold">+500</div>
+                        <div className="w-10 h-10 rounded-full border-2 border-white bg-navy text-white flex items-center justify-center text-xs font-bold">+50</div>
                     </div>
 
                     <motion.h1
@@ -200,7 +210,7 @@ export default function HomeClient() {
                             </div>
                             <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tight">Paso 1: Escaneo</h3>
                             <p className="text-white/60 leading-relaxed font-medium italic">
-                                &quot;Tu cliente apunta con su cámara al código QR en tu local, tarjeta o mostrador. Sin descargar nada.&quot;
+                                &quot;Tu cliente apunta con su cámara al código QR en tu local, contacto o mostrador. Sin descargar nada.&quot;
                             </p>
                             <div className="absolute top-8 right-8 text-4xl font-black text-white/5">01</div>
                         </motion.div>
@@ -265,144 +275,138 @@ export default function HomeClient() {
                             Profesionales que ya <span className="text-primary italic">están facturando más</span>
                         </h2>
                         <p className="text-navy/60 max-w-2xl mx-auto text-lg font-medium">
-                            No es solo una tarjeta, es la seguridad de que tus clientes te tienen a un toque de distancia cuando más te necesitan.
+                            No es solo un enlace, es la seguridad de que tus clientes te tienen a un toque de distancia cuando más te necesitan.
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {/* Caso 1: Yessy (Enfermería) */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            className="bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
-                        >
-                            <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
-                                <img
-                                    src="/images/yessy_enfermera.jpg"
-                                    alt="Yessy - Enfermería a domicilio"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
-                                <div className="absolute bottom-6 left-6 right-6">
-                                    <p className="text-white font-black text-xl uppercase tracking-tighter">Yessy</p>
-                                    <p className="text-primary text-xs font-bold uppercase tracking-widest">Enfermería Pro</p>
+                    {/* Desktop: Grid | Mobile: Carousel (Slide Horizontal) */}
+                    <div className="relative">
+                        <div className="flex md:grid md:grid-cols-3 gap-6 overflow-x-auto md:overflow-visible pb-12 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
+                            {/* Caso 1: Yessy (Enfermería) */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                            >
+                                <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
+                                    <img
+                                        src="/logos_clientes/clientes de Activa QR/@pily_vanss.webp"
+                                        alt="Yessy - Enfermería a domicilio"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <p className="text-white font-black text-xl uppercase tracking-tighter">Yessy</p>
+                                        <p className="text-primary text-xs font-bold uppercase tracking-widest">Enfermería Pro</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="px-6 pb-8">
-                                <div className="flex gap-1 mb-4 text-yellow-500">
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                </div>
-                                <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
-                                    &quot;Muchos pacientes perdían mi número entre sus chats. Ahora, apenas los visito, escanean mi QR y aparezco primero en su agenda con mi foto. ¡Es impresionante la confianza que da!&quot;
-                                </p>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
-                                            <CheckCircle2 size={16} />
+                                <div className="px-6 pb-8">
+                                    <div className="flex gap-1 mb-4 text-yellow-500">
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                    </div>
+                                    <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                        &quot;Muchos pacientes perdían mi número entre sus chats. Ahora, apenas los visito, escanean mi QR y aparezco primero en su agenda con mi foto. ¡Es impresionante la confianza que da!&quot;
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
+                                                <CheckCircle2 size={16} />
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
-                                    </div>
-                                    <div className="bg-navy/5 px-3 py-1 rounded-full">
-                                        <span className="text-[10px] font-black text-navy/60">+150 Escaneos</span>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
+                            </motion.div>
 
-                        {/* Caso 2: Técnico / Servicio */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.1 }}
-                            className="bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
-                        >
-                            <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
-                                <img
-                                    src="/images/user-2.jpg"
-                                    alt="Servicio Técnico especializado"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
-                                <div className="absolute bottom-6 left-6 right-6">
-                                    <p className="text-white font-black text-xl uppercase tracking-tighter">Roberto M.</p>
-                                    <p className="text-primary text-xs font-bold uppercase tracking-widest">Servicios Técnicos</p>
+                            {/* Caso 2: Las Costillas del Veci (Restaurante) */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.1 }}
+                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                            >
+                                <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
+                                    <img
+                                        src="/logos_clientes/clientes de Activa QR/Las costillas del veci.jpg"
+                                        alt="Las Costillas del Veci - Restaurante"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <p className="text-white font-black text-xl uppercase tracking-tighter">Costillas del Veci</p>
+                                        <p className="text-primary text-xs font-bold uppercase tracking-widest">Gastronomía</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="px-6 pb-8">
-                                <div className="flex gap-1 mb-4 text-yellow-500">
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                </div>
-                                <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
-                                    &quot;Antes daba tarjetas de papel que terminaban en la basura. Con ActivaQR, mis clientes me recomiendan enviando mi contacto por WhatsApp. Mi agenda se llenó en el primer mes.&quot;
-                                </p>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
-                                            <CheckCircle2 size={16} />
+                                <div className="px-6 pb-8">
+                                    <div className="flex gap-1 mb-4 text-yellow-500">
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                    </div>
+                                    <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                        &quot;Antes entregábamos volantes que terminaban en el suelo. Ahora, los clientes guardan nuestro contacto directo para pedidos a domicilio. La recurrencia de pedidos ha subido notablemente.&quot;
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
+                                                <CheckCircle2 size={16} />
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
-                                    </div>
-                                    <div className="bg-navy/5 px-3 py-1 rounded-full">
-                                        <span className="text-[10px] font-black text-navy/60">+85 Recomendaciones</span>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
+                            </motion.div>
 
-                        {/* Caso 3: Emprendedora */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.2 }}
-                            className="bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
-                        >
-                            <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
-                                <img
-                                    src="/images/user-3.jpg"
-                                    alt="Emprendedora local"
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
-                                <div className="absolute bottom-6 left-6 right-6">
-                                    <p className="text-white font-black text-xl uppercase tracking-tighter">Sofía C.</p>
-                                    <p className="text-primary text-xs font-bold uppercase tracking-widest">Especialista en Estética</p>
+                            {/* Caso 3: Loja Garden (Servicios) */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                whileInView={{ opacity: 1, scale: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: 0.2 }}
+                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                            >
+                                <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
+                                    <img
+                                        src="/logos_clientes/clientes de Activa QR/Loja Garden.jpg"
+                                        alt="Loja Garden"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
+                                    <div className="absolute bottom-6 left-6 right-6">
+                                        <p className="text-white font-black text-xl uppercase tracking-tighter">Loja Garden</p>
+                                        <p className="text-primary text-xs font-bold uppercase tracking-widest">Servicios / Eventos</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="px-6 pb-8">
-                                <div className="flex gap-1 mb-4 text-yellow-500">
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                    <Star size={16} fill="currentColor" />
-                                </div>
-                                <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
-                                    &quot;Tener un botón de 'Agendar Cita' directo en el contacto ahorró horas de chat. Mis clientes valoran la rapidez y la profesionalidad. Es la mejor inversión de $20 que he hecho.&quot;
-                                </p>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
-                                            <CheckCircle2 size={16} />
+                                <div className="px-6 pb-8">
+                                    <div className="flex gap-1 mb-4 text-yellow-500">
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                        <Star size={16} fill="currentColor" />
+                                    </div>
+                                    <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                        &quot;Tener un botón de 'Agendar Cita' directo en el contacto ahorró horas de chat. Nuestros clientes valoran la rapidez. Ha sido la mejor inversión para profesionalizar nuestra marca.&quot;
+                                    </p>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
+                                                <CheckCircle2 size={16} />
+                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
                                         </div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
-                                    </div>
-                                    <div className="bg-navy/5 px-3 py-1 rounded-full">
-                                        <span className="text-[10px] font-black text-navy/60">ROI 500%</span>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
+                            </motion.div>
+                        </div>
                     </div>
 
                     <div className="mt-16 text-center">
@@ -458,7 +462,7 @@ export default function HomeClient() {
             <section className="py-20 bg-white overflow-hidden border-y border-navy/5">
                 <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
                     <h3 className="text-xl md:text-2xl font-black text-navy uppercase tracking-tighter italic">
-                        Más de <span className="text-primary italic">500 negocios y profesionales</span> ya usan ActivaQR
+                        <span className="text-primary italic">Decenas de negocios y profesionales</span> ya usan ActivaQR
                     </h3>
                 </div>
 
@@ -571,13 +575,13 @@ export default function HomeClient() {
 
                             <ul className="space-y-3 mb-8 flex-1">
                                 <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Tarjeta Digital con Foto
+                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Contacto Digital con Foto
                                 </li>
                                 <li className="flex items-center gap-3 text-navy font-medium text-sm">
                                     <QrCode size={18} className="text-primary shrink-0" /> Código QR Dinámico
                                 </li>
                                 <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Botones de Contacto
+                                    <Smartphone size={18} className="text-primary shrink-0" /> Botones de Contacto
                                 </li>
                                 <li className="flex items-center gap-3 text-navy font-medium text-sm">
                                     <CheckCircle2 size={18} className="text-primary shrink-0" /> Galería de Fotos
