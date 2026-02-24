@@ -249,6 +249,186 @@ export default function HomeClient() {
                 </div>
             </section>
 
+            {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
+            <section className="py-24 bg-cream relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
+                    <div className="text-center mb-16">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="inline-flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-green-600 border border-green-500/20 mb-6"
+                        >
+                            <Star size={14} fill="currentColor" /> Resultados Reales
+                        </motion.div>
+                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase mb-6">
+                            Profesionales que ya <span className="text-primary italic">están facturando más</span>
+                        </h2>
+                        <p className="text-navy/60 max-w-2xl mx-auto text-lg font-medium">
+                            No es solo una tarjeta, es la seguridad de que tus clientes te tienen a un toque de distancia cuando más te necesitan.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        {/* Caso 1: Yessy (Enfermería) */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            className="bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                        >
+                            <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
+                                <img
+                                    src="/images/yessy_enfermera.jpg"
+                                    alt="Yessy - Enfermería a domicilio"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
+                                <div className="absolute bottom-6 left-6 right-6">
+                                    <p className="text-white font-black text-xl uppercase tracking-tighter">Yessy</p>
+                                    <p className="text-primary text-xs font-bold uppercase tracking-widest">Enfermería Pro</p>
+                                </div>
+                            </div>
+                            <div className="px-6 pb-8">
+                                <div className="flex gap-1 mb-4 text-yellow-500">
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                </div>
+                                <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                    &quot;Muchos pacientes perdían mi número entre sus chats. Ahora, apenas los visito, escanean mi QR y aparezco primero en su agenda con mi foto. ¡Es impresionante la confianza que da!&quot;
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
+                                            <CheckCircle2 size={16} />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
+                                    </div>
+                                    <div className="bg-navy/5 px-3 py-1 rounded-full">
+                                        <span className="text-[10px] font-black text-navy/60">+150 Escaneos</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Caso 2: Técnico / Servicio */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.1 }}
+                            className="bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                        >
+                            <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
+                                <img
+                                    src="/images/user-2.jpg"
+                                    alt="Servicio Técnico especializado"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
+                                <div className="absolute bottom-6 left-6 right-6">
+                                    <p className="text-white font-black text-xl uppercase tracking-tighter">Roberto M.</p>
+                                    <p className="text-primary text-xs font-bold uppercase tracking-widest">Servicios Técnicos</p>
+                                </div>
+                            </div>
+                            <div className="px-6 pb-8">
+                                <div className="flex gap-1 mb-4 text-yellow-500">
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                </div>
+                                <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                    &quot;Antes daba tarjetas de papel que terminaban en la basura. Con ActivaQR, mis clientes me recomiendan enviando mi contacto por WhatsApp. Mi agenda se llenó en el primer mes.&quot;
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
+                                            <CheckCircle2 size={16} />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
+                                    </div>
+                                    <div className="bg-navy/5 px-3 py-1 rounded-full">
+                                        <span className="text-[10px] font-black text-navy/60">+85 Recomendaciones</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Caso 3: Emprendedora */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                        >
+                            <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
+                                <img
+                                    src="/images/user-3.jpg"
+                                    alt="Emprendedora local"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
+                                <div className="absolute bottom-6 left-6 right-6">
+                                    <p className="text-white font-black text-xl uppercase tracking-tighter">Sofía C.</p>
+                                    <p className="text-primary text-xs font-bold uppercase tracking-widest">Especialista en Estética</p>
+                                </div>
+                            </div>
+                            <div className="px-6 pb-8">
+                                <div className="flex gap-1 mb-4 text-yellow-500">
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                    <Star size={16} fill="currentColor" />
+                                </div>
+                                <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                    &quot;Tener un botón de 'Agendar Cita' directo en el contacto ahorró horas de chat. Mis clientes valoran la rapidez y la profesionalidad. Es la mejor inversión de $20 que he hecho.&quot;
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
+                                            <CheckCircle2 size={16} />
+                                        </div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
+                                    </div>
+                                    <div className="bg-navy/5 px-3 py-1 rounded-full">
+                                        <span className="text-[10px] font-black text-navy/60">ROI 500%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+
+                    <div className="mt-16 text-center">
+                        <div className="inline-flex flex-col sm:flex-row items-center gap-6 p-6 bg-white/50 backdrop-blur-md rounded-3xl border border-navy/5 shadow-inner">
+                            <div className="flex -space-x-3">
+                                {[1, 2, 3, 4, 5].map((i) => (
+                                    <img key={i} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" src={`/images/user-${i < 4 ? i : 1}.jpg`} alt="Reviewer" />
+                                ))}
+                            </div>
+                            <div className="text-left">
+                                <p className="text-sm font-black text-navy uppercase tracking-tighter">Basado en opiniones reales en Google</p>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex text-yellow-500"><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /></div>
+                                    <p className="text-xs font-bold text-navy/50">4.9 / 5.0 Rating General</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="absolute top-1/2 left-0 w-full h-full pointer-events-none opacity-50">
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px]"></div>
+                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-navy/5 rounded-full blur-[150px]"></div>
+                </div>
+            </section>
+
             {/* Sección: Beneficios */}
             <section className="py-24 bg-navy text-white relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
