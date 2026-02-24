@@ -229,6 +229,27 @@ export default function AdminDashboard() {
         setIsSavingSeller(false);
     };
 
+    const handleDeleteRegistro = async (id: number, nombre: string) => {
+        if (!confirm(`¿Estás seguro de eliminar permanentemente a ${nombre}? Esta acción borrara todos los datos asociados (incluyendo el slug) y no se puede deshacer.`)) return;
+
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const res = await fetch(`/api/admin/registros?id=${id}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': adminKey }
+            });
+            if (res.ok) {
+                alert("Registro eliminado con éxito");
+                fetchRegistros();
+            } else {
+                const data = await res.json();
+                alert("Error: " + (data.error || "No se pudo eliminar el registro"));
+            }
+        } catch (err: any) {
+            alert("Error: " + err.message);
+        }
+    };
+
     const handleDeleteSeller = async (id: number) => {
         const seller = sellers.find(s => s.id === id);
         if (!seller) return;
@@ -1122,6 +1143,15 @@ export default function AdminDashboard() {
                                                         <XCircle size={18} />
                                                     </button>
                                                 )}
+
+                                                {/* Botón Eliminar Físico */}
+                                                <button
+                                                    onClick={() => handleDeleteRegistro(r.id, r.nombre)}
+                                                    className="p-3 bg-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/30"
+                                                    title="Eliminar Registro (Permanente)"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
 
                                                 {/* Botón Comisión (Socio) */}
                                                 {r.seller_id && (

@@ -101,3 +101,31 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
+
+/**
+ * DELETE: Eliminar un registro permanentemente (requiere admin key)
+ */
+export async function DELETE(req: NextRequest) {
+    const adminKey = req.headers.get('x-admin-key');
+    if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    try {
+        const { searchParams } = new URL(req.url);
+        const id = searchParams.get('id');
+
+        if (!id) {
+            return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
+        }
+
+        const query = `DELETE FROM registraya_vcard_registros WHERE id = ?`;
+        await pool.execute(query, [id]);
+
+        return NextResponse.json({ message: 'Registro eliminado exitosamente' });
+
+    } catch (err: any) {
+        console.error('Error deleting registro:', err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
