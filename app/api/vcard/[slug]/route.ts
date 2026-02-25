@@ -81,8 +81,7 @@ export async function GET(
             noteContent += `\n\nMis Trabajos:\n${gallery.join('\n')}`;
         }
 
-        // Removed Redes Sociales, Etiquetas, and Creado por from here
-        // as they are now handled by specific vCard fields for better compatibility.
+        noteContent += "\n\n- Realizado por www.activaqr.com";
 
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
@@ -98,6 +97,7 @@ export async function GET(
             fullName = user.nombre_negocio || nombre;
             organization = user.nombre_negocio || nombre;
             if (user.contacto_nombre || user.contacto_apellido) {
+                // To display First Name Last Name correctly on phones, it must be: LastName;FirstName;;;
                 structuredName = `${escapeVCardValue(user.contacto_apellido || '')};${escapeVCardValue(user.contacto_nombre || '')};;;`;
             } else {
                 structuredName = ';;;;';
@@ -123,13 +123,9 @@ export async function GET(
             user.direccion ? `ADR;TYPE=WORK:;;${escapeVCardValue(user.direccion)};;;;` : '',
             user.web ? `URL:${escapeVCardValue(user.web)}` : '',
             `NOTE:${escapeVCardValue(noteContent)}`, // Simplified notes
-            // Custom Labels for iOS and Android
-            user.google_business ? `item1.URL:${escapeVCardValue(user.google_business)}` : '',
-            user.google_business ? `item1.X-ABLabel:Ubicación` : '',
-            user.review_url ? `item2.URL:${escapeVCardValue(user.review_url)}` : '',
-            user.review_url ? `item2.X-ABLabel:Deja tu opinión` : '',
-            `item3.URL:https://www.activaqr.com`,
-            `item3.X-ABLabel:Realizado por`,
+            // Standard generic URLs instead of itemX to guarantee Android support
+            user.google_business ? `URL:${escapeVCardValue(user.google_business)}` : '',
+            user.review_url ? `URL:${escapeVCardValue(user.review_url)}` : '',
             // Categories (Tags)
             user.etiquetas ? `CATEGORIES:${escapeVCardValue(user.etiquetas)}` : '',
             // Standard URLs (fallback) and explicit X-SOCIALPROFILE for better iOS integration
