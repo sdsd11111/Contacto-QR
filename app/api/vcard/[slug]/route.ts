@@ -81,6 +81,10 @@ export async function GET(
             noteContent += `\n\nMis Trabajos:\n${gallery.join('\n')}`;
         }
 
+        if (user.etiquetas) {
+            noteContent += `\n\nEtiquetas: ${user.etiquetas}`;
+        }
+
         noteContent += "\n\n- Realizado por www.activaqr.com";
 
         // Limpiar WhatsApp para el campo TEL
