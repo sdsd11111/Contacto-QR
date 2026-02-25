@@ -94,13 +94,16 @@ export async function GET(
         let organization = '';   // Campo ORG:
 
         if (user.tipo_perfil === 'negocio') {
-            fullName = user.nombre_negocio || nombre;
             organization = user.nombre_negocio || nombre;
             if (user.contacto_nombre || user.contacto_apellido) {
                 // To display First Name Last Name correctly on phones, it must be: LastName;FirstName;;;
                 structuredName = `${escapeVCardValue(user.contacto_apellido || '')};${escapeVCardValue(user.contacto_nombre || '')};;;`;
+                // Set Formatted Name (FN) to: Business Name - Contact Name 
+                const contactFullName = `${user.contacto_nombre || ''} ${user.contacto_apellido || ''}`.trim();
+                fullName = `${organization} - ${contactFullName}`;
             } else {
                 structuredName = ';;;;';
+                fullName = organization;
             }
         } else {
             // Caso Persona (o legacy)
