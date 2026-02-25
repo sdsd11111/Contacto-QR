@@ -76,24 +76,13 @@ export async function GET(
             noteContent += `\n\nProductos/Servicios:\n${user.productos_servicios}`;
         }
 
-        if (user.instagram || user.facebook || user.linkedin || user.tiktok) {
-            noteContent += `\n\nRedes Sociales:`;
-            if (user.facebook) noteContent += `\nFB: ${user.facebook}`;
-            if (user.instagram) noteContent += `\nIG: ${user.instagram}`;
-            if (user.tiktok) noteContent += `\nTK: ${user.tiktok}`;
-            if (user.linkedin) noteContent += `\nLI: ${user.linkedin}`;
-        }
-
         const gallery = getGalleryArray(user.galeria_urls);
         if (gallery.length > 0) {
             noteContent += `\n\nMis Trabajos:\n${gallery.join('\n')}`;
         }
 
-        if (user.etiquetas) {
-            noteContent += `\n\nEtiquetas: ${user.etiquetas}`;
-        }
-
-        noteContent += "\n\n- Creado por www.activaqr.com";
+        // Removed Redes Sociales, Etiquetas, and Creado por from here
+        // as they are now handled by specific vCard fields for better compatibility.
 
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
@@ -133,12 +122,23 @@ export async function GET(
             `EMAIL;TYPE=WORK,INTERNET:${escapeVCardValue(user.email)}`,
             user.direccion ? `ADR;TYPE=WORK:;;${escapeVCardValue(user.direccion)};;;;` : '',
             user.web ? `URL:${escapeVCardValue(user.web)}` : '',
-            user.google_business ? `URL;type=GOOGLE_BUSINESS:${escapeVCardValue(user.google_business)}` : '',
-            `NOTE:${escapeVCardValue(noteContent + (user.google_business ? '\n\nUbicación/Google Maps: ' + user.google_business : ""))}`,
-            // Redes Sociales como URL en vCard 3.0
+            `NOTE:${escapeVCardValue(noteContent)}`, // Simplified notes
+            // Custom Labels for iOS and Android
+            user.google_business ? `item1.URL:${escapeVCardValue(user.google_business)}` : '',
+            user.google_business ? `item1.X-ABLabel:Ubicación` : '',
+            user.review_url ? `item2.URL:${escapeVCardValue(user.review_url)}` : '',
+            user.review_url ? `item2.X-ABLabel:Deja tu opinión` : '',
+            `item3.URL:https://www.activaqr.com`,
+            `item3.X-ABLabel:Realizado por`,
+            // Categories (Tags)
+            user.etiquetas ? `CATEGORIES:${escapeVCardValue(user.etiquetas)}` : '',
+            // Standard URLs (fallback) and explicit X-SOCIALPROFILE for better iOS integration
             user.instagram ? `URL;type=INSTAGRAM:${escapeVCardValue(user.instagram)}` : '',
+            user.instagram ? `X-SOCIALPROFILE;type=instagram:${escapeVCardValue(user.instagram)}` : '',
             user.facebook ? `URL;type=FACEBOOK:${escapeVCardValue(user.facebook)}` : '',
+            user.facebook ? `X-SOCIALPROFILE;type=facebook:${escapeVCardValue(user.facebook)}` : '',
             user.linkedin ? `URL;type=LINKEDIN:${escapeVCardValue(user.linkedin)}` : '',
+            user.linkedin ? `X-SOCIALPROFILE;type=linkedin:${escapeVCardValue(user.linkedin)}` : '',
             user.tiktok ? `URL;type=TIKTOK:${escapeVCardValue(user.tiktok)}` : '',
         ];
 
