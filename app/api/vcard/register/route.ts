@@ -73,11 +73,11 @@ export async function POST(req: NextRequest) {
                 `;
 
                 await pool.execute(updateQuery, [
-                    finalNombre, whatsapp, profesion, empresa, bio, direccion,
-                    web, google_business, instagram, linkedin, facebook, tiktok,
-                    productos_servicios, plan, foto_url, comprobante_url, galeriaUrlsJson,
-                    finalStatus || 'pendiente', finalStatus, slug || existingUser.slug, etiquetas, seller_id || null,
-                    tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || '',
+                    finalNombre, whatsapp, profesion || null, empresa || null, bio || null, direccion || null,
+                    web || null, google_business || null, instagram || null, linkedin || null, facebook || null, tiktok || null,
+                    productos_servicios || null, plan || null, foto_url || null, comprobante_url || null, galeriaUrlsJson,
+                    finalStatus || 'pendiente', finalStatus, slug || existingUser.slug, etiquetas || null, seller_id || null,
+                    tipo_perfil || 'persona', nombres || null, apellidos || null, nombre_negocio || null, contacto_nombre || null, contacto_apellido || null,
                     menu_digital || null,
                     email
                 ]);
@@ -116,13 +116,13 @@ export async function POST(req: NextRequest) {
                 `;
 
                 const values = [
-                    newId, now, finalNombre, email, whatsapp, profesion, empresa, bio, direccion,
-                    web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
-                    plan, foto_url, comprobante_url, galeriaUrlsJson, finalStatus || 'pendiente', null, finalSlug, etiquetas,
+                    newId, now, finalNombre, email, whatsapp, profesion || null, empresa || null, bio || null, direccion || null,
+                    web || null, google_business || null, instagram || null, linkedin || null, facebook || null, tiktok || null, productos_servicios || null,
+                    plan || null, foto_url || null, comprobante_url || null, galeriaUrlsJson, finalStatus || 'pendiente', null, finalSlug, etiquetas || null,
                     'pending', // commission_status
                     seller_id || null,
                     serverGeneratedEditCode, 2, // edit_code and uses
-                    tipo_perfil || 'persona', nombres || '', apellidos || '', nombre_negocio || '', contacto_nombre || '', contacto_apellido || '',
+                    tipo_perfil || 'persona', nombres || null, apellidos || null, nombre_negocio || null, contacto_nombre || null, contacto_apellido || null,
                     menu_digital || null
                 ];
 

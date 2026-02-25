@@ -23,6 +23,9 @@ export async function GET(req: NextRequest) {
                 contact_name as contactName,
                 result,
                 location_sector as sector,
+                latitude as lat,
+                longitude as lng,
+                foto_url as fotoUrl,
                 created_at as date
             FROM registraya_vcard_field_visits 
             WHERE seller_id = ? 
@@ -56,7 +59,8 @@ export async function POST(req: NextRequest) {
             highTicket,
             lat,
             lng,
-            followUpDate // From UI
+            followUpDate, // From UI
+            fotoUrl
         } = body;
 
         if (!sellerId || !businessName || !category || !result) {
@@ -68,9 +72,9 @@ export async function POST(req: NextRequest) {
             INSERT INTO registraya_vcard_field_visits (
                 seller_id, business_name, contact_name, business_category, 
                 result, main_objection, notes, high_ticket_signal, 
-                location_sector, latitude, longitude
+                location_sector, latitude, longitude, foto_url
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const [visitResult]: any = await connection.execute(insertVisitQuery, [
@@ -84,7 +88,8 @@ export async function POST(req: NextRequest) {
             highTicket ? 1 : 0,
             sector || null,
             lat || null,
-            lng || null
+            lng || null,
+            fotoUrl || null
         ]);
 
         const visitId = visitResult.insertId;

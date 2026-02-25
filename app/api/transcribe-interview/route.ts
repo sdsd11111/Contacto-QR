@@ -51,16 +51,17 @@ export async function POST(req: NextRequest) {
             messages: [
                 {
                     role: 'system',
-                    content: `Expert vCard generator. Extract interview data into JSON.
+                    content: `Expert vCard generator and business interviewer. Extract interview data into JSON.
+The interview covers the business history, story, products, and services.
 JSON format:
 {
   "name": "Full name or Business name",
   "profession": "Short activity (3-4 words)",
-  "bio": "First-person professional description (include location if mentioned)",
-  "products": "Clear list of products/services",
+  "bio": "Professional 'About Me' or 'Business Story'. Mention history and value proposition.",
+  "products": "Detailed list of products and services offered.",
   "etiquetas": "Single paragraph, 30+ natural search keywords (variations, colloquial, SEO)"
 }
-Rules: Use ONLY provided info. No invented data. Professional tone.`
+Rules: Use ONLY provided info. Maintain a professional yet inviting tone.`
                 },
                 {
                     role: 'user',

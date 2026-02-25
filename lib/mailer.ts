@@ -42,7 +42,7 @@ export function createMailTransporter() {
 }
 
 /** Remitente "from" por defecto usando la variable EMAIL_FROM del .env */
-export const EMAIL_FROM = process.env.EMAIL_FROM || '"ActivaQR" <activaqr@cesarreyesjaramillo.com>';
+export const EMAIL_FROM = process.env.EMAIL_FROM || '"ActivaQR" <registro@activaqr.com>';
 
 /**
  * Función de ayuda que crea un transporter y envía un correo.

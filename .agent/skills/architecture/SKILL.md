@@ -14,7 +14,7 @@ Este documento es la **fuente de verdad técnica** para el proyecto ActivaQR. Do
 | **Frontend** | Next.js 16 (App Router) + React 19 |
 | **Estilos** | Tailwind CSS 4 + Framer Motion (Animaciones) |
 | **Base de Datos** | MySQL (Shared Hosting / cPanel via `mysql2/promise`) |
-| **Autenticación** | Custom (Basada en API Keys y tablas de Sellers) |
+| **IA / ML** | OpenAI Whisper (Transcripción) + GPT-4o-mini (Extracción) |
 | **Email** | Nodemailer (Centralizado en `lib/mailer.ts`) |
 
 ---
@@ -36,6 +36,11 @@ Datos de las tarjetas generadas y estado de pago.
 - `status`: 'pendiente', 'pagado'.
 - `auto_email_sent`: Booleano (1/0) para control de la cola de correos.
 - `paid_at`: Timestamp de pago.
+- **Política de Pago**: Ya no se permite el registro "Fiado". Todo registro nuevo debe ser marcado como `pagado`.
+- **Marca de Agua**: Toda vCard pública y archivo .vcf debe incluir el texto *"Creado por www.activaqr.com"*.
+
+### 3. `registraya_vcard_field_visits` (Mapa de Rutas)
+- `foto_url`: (OPCIONAL) URL de la imagen de la fachada o visita guardada en Supabase Storage.
 
 ---
 
@@ -63,9 +68,15 @@ Toda la lógica de envío debe pasar por `sendMail()` en `lib/mailer.ts`. NO cre
 - **Lógica**: Busca registros pagados donde `auto_email_sent = 0` y el tiempo transcurrido es mayor al intervalo configurado.
 - **Intervalo**: Configurable en el SQL del cron (Ej: `INTERVAL 1 MINUTE` en pruebas, `24 HOUR` en producción).
 
-### 3. Gestión de Jerarquías
-- Los líderes pueden tener sub-vendedores vinculados vía `parent_id`.
-- Si un líder es eliminado, existe una lógica de "Migración de Equipo" (ver `implementation_plan.md`) para rescatar a los vendedores.
+### 3. Gestión de Jerarquías y Comisiones
+- **Niveles**: 30% (Base), 40% (Plata), 50% (Oro).
+- **Cálculo de Tiers**: Estrictamente por **Mes Calendario**. Se reinicia el primer día de cada mes.
+- **VVP Estricto**: Para ganar diferenciales de equipo, un líder debe cumplir su cuota personal en el mes actual.
+
+### 4. Asistente de Entrevista con IA
+- **Endpoint**: `/api/transcribe-interview`.
+- **Lógica**: Toma un audio del vendedor, lo transcribe con Whisper y usa GPT para extraer un objeto JSON con `bio`, `products` y `etiquetas` SEO optimizadas.
+- **UX**: Integrado en `SupportModal.tsx` y en el `DirectVCardRegistration.tsx`.
 
 ---
 

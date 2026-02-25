@@ -160,30 +160,84 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
+    let connection;
     try {
         const { searchParams } = new URL(req.url);
         const id = searchParams.get('id');
+        const targetLeaderIdRaw = searchParams.get('targetLeaderId');
 
         if (!id) {
             return NextResponse.json({ error: 'ID de Vendedor es requerido' }, { status: 400 });
         }
 
-        // 1. Verificar si tiene sub-vendedores
-        const [subs]: any = await pool.execute('SELECT id FROM registraya_vcard_sellers WHERE parent_id = ?', [id]);
-        if (subs.length > 0) {
-            return NextResponse.json({ error: 'No se puede eliminar un líder con sub-vendedores activos' }, { status: 400 });
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+
+        if (targetLeaderIdRaw !== null) {
+            // El usuario solicitó MIGRAR TODO y luedo ELIMINAR
+            const targetParentId = (targetLeaderIdRaw === '0' || !targetLeaderIdRaw) ? null : Number(targetLeaderIdRaw);
+
+            // 1. Heredar Sub-Vendedores
+            await connection.execute('UPDATE registraya_vcard_sellers SET parent_id = ? WHERE parent_id = ?', [targetParentId, id]);
+
+            // Si el Admin (0) rescata, el target para los datos no puede ser NULL (porque field_visits exige un INT).
+            // Requerimos que indique a UN líder específico (ej. el propio Admin si está registrado como seller, u otro socio).
+            if (targetParentId === null) {
+                // Para simplificar, si el Admin no selecciona a otro vendedor, no podemos migrar visitas (porque exigen seller_id NOT NULL).
+                // Pero un Admin sí debe seleccionar a alquien. Bloqueamos esta acción si no hay target.
+                throw new Error("Para migrar clientes y visitas, debes seleccionar un Socio o Vendedor específico (no puedes dejarlo vacío).");
+            }
+
+            // Nota de auditoría
+            const [origin]: any = await connection.execute('SELECT nombre FROM registraya_vcard_sellers WHERE id = ?', [id]);
+            const sellerName = origin.length > 0 ? origin[0].nombre : 'Desconocido';
+            const note = `\n\n[Sistema]: Registro rescatado permanentemente del vendedor eliminado: ${sellerName} en fecha ${new Date().toLocaleDateString('es-ES')}`;
+
+            // 2. Heredar Clientes/Ventas (Reasignar seller_id y añadir nota al historial)
+            await connection.execute(`
+                UPDATE registraya_vcard_registros 
+                SET seller_id = ?, bio = CONCAT(IFNULL(bio, ''), ?)
+                WHERE seller_id = ?
+            `, [targetParentId, note, id]);
+
+            // 3. Heredar Visitas
+            await connection.execute('UPDATE registraya_vcard_field_visits SET seller_id = ? WHERE seller_id = ?', [targetParentId, id]);
+
+            // 4. Heredar Seguimientos
+            await connection.execute('UPDATE registraya_vcard_follow_ups SET seller_id = ? WHERE seller_id = ?', [targetParentId, id]);
+
+        } else {
+            // Hard Delete Flow Directo de Administrador (Sin rescate)
+            // Verificar si tiene sub-vendedores
+            const [subs]: any = await connection.execute('SELECT id FROM registraya_vcard_sellers WHERE parent_id = ?', [id]);
+            if (subs.length > 0) {
+                await connection.rollback();
+                return NextResponse.json({ error: 'No se puede eliminar un líder con sub-vendedores activos. Usa la opción de rescate.' }, { status: 400 });
+            }
+            await connection.execute('DELETE FROM registraya_vcard_field_visits WHERE seller_id = ?', [id]);
+            await connection.execute('DELETE FROM registraya_vcard_follow_ups WHERE seller_id = ?', [id]);
+            await connection.execute('DELETE FROM registraya_vcard_registros WHERE seller_id = ?', [id]);
         }
 
-        // 2. Eliminar (Hard delete por solicitud de "empezar de cero")
-        const [result]: any = await pool.execute('DELETE FROM registraya_vcard_sellers WHERE id = ?', [id]);
+        // Finalmente, Eliminar al vendedor
+        const [result]: any = await connection.execute('DELETE FROM registraya_vcard_sellers WHERE id = ?', [id]);
 
         if (result.affectedRows === 0) {
+            await connection.rollback();
             return NextResponse.json({ error: 'Vendedor no encontrado' }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, message: 'Vendedor eliminado correctamente' });
+        await connection.commit();
+        return NextResponse.json({ success: true, message: 'Vendedor eliminado y portafolio gestionado correctamente.' });
     } catch (err: any) {
-        console.error('Error deleting seller:', err);
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error('Error deleting seller transaction:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 }

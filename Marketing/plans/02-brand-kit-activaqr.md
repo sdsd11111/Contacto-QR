@@ -265,7 +265,7 @@ Al crear el logo, considera:
 |                                  |
 |  📱 +593 99 123 4567            |
 |  💬 +593 99 123 4567            |
-|  ✉️ hola@activaqr.com            |
+|  ✉️ registro@activaqr.com        |
 |  🌐 www.activaqr.com             |
 |                                  |
 |  "Tu cliente te tiene en su       |
@@ -320,7 +320,7 @@ Al crear el logo, considera:
 |                                  |
 |  CONTACTO                        |
 |  WhatsApp: +593 99 123 4567      |
-|  Email: hola@activaqr.com       |
+|  Email: registro@activaqr.com   |
 +----------------------------------+
 ```
 
@@ -332,7 +332,7 @@ Juan Pérez
 Asesor de Ventas | ActivaQR
 
 📱 +593 99 123 4567
-✉️ juan@activaqr.com
+✉️ registro@activaqr.com
 🌐 www.activaqr.com
 
 "Tu cliente te tiene en su teléfono"

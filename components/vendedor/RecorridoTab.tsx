@@ -8,8 +8,10 @@ import {
     CheckCircle, X, Clock, Briefcase, Lightbulb,
     Utensils, Stethoscope, Scissors, ShirtIcon, Wrench,
     Pill, Building2, GraduationCap, HelpCircle,
-    AlertCircle, MessageSquare, History, ChevronDown
+    AlertCircle, MessageSquare, History, ChevronDown, List, Map, Camera
 } from "lucide-react";
+
+import RouteMap from "./RouteMap";
 
 // ────────────────────────────────────────────
 // TIPOS
@@ -35,6 +37,7 @@ interface VisitForm {
     notes: string;
     latitude: number | null;
     longitude: number | null;
+    photo: File | null;
 }
 
 interface FollowUp {
@@ -129,12 +132,14 @@ export default function RecorridoTab({ seller }: { seller: any }) {
         businessName: "", contactName: "", businessCategory: "", sector: "",
         contactRole: "", result: "", qrShared: null, mainObjection: "",
         followUpDate: getTomorrow(), highTicketSignal: null,
-        notes: "", latitude: null, longitude: null,
+        notes: "", latitude: null, longitude: null, photo: null
     });
 
     // ────────────────────────────────────────────
     // FETCH DATA
     // ────────────────────────────────────────────
+    const [historyViewMode, setHistoryViewMode] = useState<"list" | "map">("list");
+
     useEffect(() => {
         if (!seller?.id) return;
 
@@ -184,7 +189,7 @@ export default function RecorridoTab({ seller }: { seller: any }) {
             businessName: "", contactName: "", businessCategory: "", sector: "",
             contactRole: "", result: "", qrShared: null, mainObjection: "",
             followUpDate: getTomorrow(), highTicketSignal: null,
-            notes: "", latitude: null, longitude: null,
+            notes: "", latitude: null, longitude: null, photo: null
         });
         setStrategicCard(null);
         setCurrentStep(1);
@@ -225,6 +230,19 @@ export default function RecorridoTab({ seller }: { seller: any }) {
             }
         } catch { /* sin GPS = no bloqueante */ }
 
+        let fotoUrl: string | null = null;
+        if (form.photo) {
+            try {
+                const uploadFormData = new FormData();
+                uploadFormData.append('file', form.photo);
+                const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+                if (uploadRes.ok) {
+                    const uploadData = await uploadRes.json();
+                    fotoUrl = uploadData.url;
+                }
+            } catch (e) { console.error("Error uploading photo", e); }
+        }
+
         const sellerName = seller?.nombre?.split(" ")[0] || "";
 
         try {
@@ -243,7 +261,8 @@ export default function RecorridoTab({ seller }: { seller: any }) {
                     highTicket: form.highTicketSignal,
                     lat: lat,
                     lng: lng,
-                    followUpDate: form.followUpDate
+                    followUpDate: form.followUpDate,
+                    fotoUrl: fotoUrl
                 })
             });
             const data = await res.json();
@@ -364,7 +383,30 @@ export default function RecorridoTab({ seller }: { seller: any }) {
 
                 {/* HISTORIAL */}
                 {activeSection === "historial" && (
-                    <HistorialSection history={history} />
+                    <div>
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-black uppercase italic tracking-tighter text-white/50 border-l-4 border-primary/50 pl-4">Mi Historial</h3>
+                            <div className="flex bg-[#0A1229] border border-white/10 rounded-xl overflow-hidden p-1">
+                                <button
+                                    onClick={() => setHistoryViewMode("list")}
+                                    className={`flex justify-center items-center gap-2 px-3 sm:px-4 py-2 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-lg transition-all flex-1 ${historyViewMode === "list" ? "bg-primary text-[#050B1C]" : "text-white/40 hover:text-white/70"}`}
+                                >
+                                    <List size={14} /> Lista
+                                </button>
+                                <button
+                                    onClick={() => setHistoryViewMode("map")}
+                                    className={`flex justify-center items-center gap-2 px-3 sm:px-4 py-2 font-black text-[9px] sm:text-[10px] uppercase tracking-widest rounded-lg transition-all flex-1 ${historyViewMode === "map" ? "bg-primary text-[#050B1C]" : "text-white/40 hover:text-white/70"}`}
+                                >
+                                    <Map size={14} /> Mapa
+                                </button>
+                            </div>
+                        </div>
+                        {historyViewMode === "list" ? (
+                            <HistorialSection history={history} />
+                        ) : (
+                            <RouteMap visits={history} />
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -669,6 +711,21 @@ function Step3({ form, setForm, isRecording, setIsRecording }: {
                         </button>
                     ))}
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <label className="text-[11px] font-black uppercase tracking-widest text-white/40">📸 Foto del Fachada o Cliente</label>
+                <label className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl border font-black text-base uppercase tracking-widest transition-all bg-white/5 border-white/10 text-white/60 hover:border-primary/50 cursor-pointer">
+                    <Camera size={22} className={form.photo ? "text-primary" : ""} />
+                    {form.photo ? "Foto Adjunta ✓" : "Subir Foto"}
+                    <input type="file" accept="image/*" className="hidden"
+                        onChange={e => {
+                            if (e.target.files && e.target.files.length > 0) {
+                                setForm(f => ({ ...f, photo: e.target.files![0] }));
+                            }
+                        }} />
+                </label>
+                <p className="text-white/20 text-[10px] text-center">Una historia visual te ayudará a recordarlos y a nutrir la campaña local.</p>
             </div>
 
             <div className="space-y-2">

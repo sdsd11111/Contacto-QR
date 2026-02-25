@@ -109,7 +109,7 @@ TITLE:${data.profesion || ""}
 TEL;TYPE=CELL,VOICE:${data.whatsapp}
 EMAIL;TYPE=WORK,INTERNET:${data.email || ""}
 URL:${currentUrl}
-NOTE:${data.bio || "Experto en " + (data.etiquetas || "servicios profesionales")}. Generado por ActivaQR`;
+NOTE:${data.bio || "Experto en " + (data.etiquetas || "servicios profesionales")}. Generado por www.activaqr.com`;
 
         // Agregar foto si existe
         if (photoBase64) {
@@ -305,10 +305,10 @@ ADR;TYPE=WORK:;;${data.direccion};;;;`;
                         Escanea este código para compartir tu perfil al instante o vuelve a esta página para descargar tu vCard.
                     </p>
 
-                    <div className="inline-flex items-center gap-4 py-4 px-8 bg-white/5 border border-white/10 rounded-full">
+                    <a href="https://www.activaqr.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-4 py-4 px-8 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors">
                         <Zap size={16} className="text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">ActivaQR 2026</span>
-                    </div>
+                        <span className="text-[10px] items-center font-black uppercase tracking-widest hover:text-primary transition-colors">Creado por www.activaqr.com</span>
+                    </a>
                 </motion.div>
             </div>
         </main>

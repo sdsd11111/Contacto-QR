@@ -254,55 +254,37 @@ export default function AdminDashboard() {
         const seller = sellers.find(s => s.id === id);
         if (!seller) return;
 
-        if (seller.team_count > 0) {
-            setMigratingLeader(seller);
-            setIsMigrateModalOpen(true);
+        // Siempre abrir el modal de rescate para asegurar que los clientes/visitas no queden huérfanos
+        setMigratingLeader(seller);
+        setIsMigrateModalOpen(true);
+    };
+
+    const handleMigrateAndConfirmDelete = async () => {
+        if (!migratingLeader) return;
+
+        if (targetLeaderId === 0) {
+            alert("Para heredar clientes y mapas, debes seleccionar a un Socio o Vendedor Oficial. (Si eres tú mismo, selecciónate en la lista).");
             return;
         }
 
-        if (!confirm(`¿Estás seguro de eliminar a ${seller.nombre}? Esta acción no se puede deshacer.`)) return;
-        const adminKey = localStorage.getItem('admin_access_key') || '';
-        try {
-            const res = await fetch(`/api/admin/sellers?id=${id}`, {
-                method: 'DELETE',
-                headers: { 'x-admin-key': adminKey }
-            });
-            if (res.ok) {
-                alert("Vendedor eliminado con éxito");
-                fetchSellers();
-            } else {
-                const data = await res.json();
-                alert("Error: " + (data.error || "No se pudo eliminar"));
-            }
-        } catch (err: any) {
-            alert("Error: " + err.message);
-        }
-    };
+        if (!confirm(`¿Estás absolutamente seguro de ELIMINAR a ${migratingLeader.nombre} y TRANSFERIR permanentemente todo su portafolio al vendedor seleccionado?`)) return;
 
-    const handleMigrateTeam = async () => {
-        if (!migratingLeader) return;
         setIsMigratingTeam(true);
 
         const adminKey = localStorage.getItem('admin_access_key') || '';
         try {
-            const res = await fetch('/api/admin/sellers/migrate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-admin-key': adminKey
-                },
-                body: JSON.stringify({
-                    fromLeaderId: migratingLeader.id,
-                    toLeaderId: targetLeaderId === 0 ? null : targetLeaderId
-                })
+            const res = await fetch(`/api/admin/sellers?id=${migratingLeader.id}&targetLeaderId=${targetLeaderId}`, {
+                method: 'DELETE',
+                headers: { 'x-admin-key': adminKey }
             });
 
             const data = await res.json();
             if (res.ok) {
-                alert(data.message);
+                alert(data.message || "Vendedor eliminado y portafolio heredado con éxito.");
                 setIsMigrateModalOpen(false);
                 setMigratingLeader(null);
-                fetchSellers(); // Refresh to allow deletion now
+                fetchSellers();
+                fetchRegistros(); // Refrescar registros heredados
             } else {
                 alert("Error: " + data.error);
             }
@@ -1824,17 +1806,19 @@ export default function AdminDashboard() {
                             onClick={e => e.stopPropagation()}
                         >
                             <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-                                <h3 className="text-2xl font-black uppercase italic tracking-tighter">Rescatar Equipo</h3>
+                                <h3 className="text-2xl font-black uppercase italic tracking-tighter text-red-400">Eliminar y Rescatar</h3>
                                 <button onClick={() => setIsMigrateModalOpen(false)} className="text-white/20 hover:text-white transition-colors">
                                     <X size={24} />
                                 </button>
                             </div>
 
                             <div className="p-10 space-y-8">
-                                <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-3xl">
-                                    <p className="text-sm text-amber-200">
-                                        <span className="font-bold">{migratingLeader.nombre}</span> tiene <span className="font-bold">{migratingLeader.team_count} sub-vendedores</span> a su cargo.
-                                        Para poder eliminar este líder, primero debes reasignar a su equipo.
+                                <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl space-y-2">
+                                    <p className="text-sm text-red-200">
+                                        Estás a punto de eliminar a <span className="font-bold">{migratingLeader.nombre}</span> permanentemente.
+                                    </p>
+                                    <p className="text-sm text-red-200 opacity-80">
+                                        Sus clientes activos, pines geográficos y equipo de venta (si los tiene) <strong>quedarán huérfanos</strong>. Para asegurarlos, elige al Socio que recibirá este portafolio:
                                     </p>
                                 </div>
 
@@ -1846,7 +1830,7 @@ export default function AdminDashboard() {
                                             onChange={(e) => setTargetLeaderId(Number(e.target.value))}
                                             className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand font-bold text-white appearance-none"
                                         >
-                                            <option value={0} className="bg-navy">Convertir en Oficiales (Admin)</option>
+                                            <option value={0} className="bg-navy">-- SELECCIONA A QUIÉN TRANSFERIR --</option>
                                             {sellers
                                                 .filter(s => s.id !== migratingLeader.id)
                                                 .map(s => (
@@ -1867,12 +1851,12 @@ export default function AdminDashboard() {
                                         Cancelar
                                     </button>
                                     <button
-                                        onClick={handleMigrateTeam}
+                                        onClick={handleMigrateAndConfirmDelete}
                                         disabled={isMigratingTeam}
-                                        className="flex-1 px-8 py-5 bg-brand rounded-2xl font-black uppercase tracking-widest text-xs text-white hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/20 disabled:opacity-50"
+                                        className="flex-1 px-8 py-5 bg-red-600 rounded-2xl font-black uppercase tracking-widest text-xs text-white hover:bg-red-500 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 disabled:opacity-50"
                                     >
-                                        {isMigratingTeam ? <RefreshCw size={14} className="animate-spin" /> : <Users size={14} />}
-                                        {isMigratingTeam ? 'Migrando...' : 'Traspasar Equipo'}
+                                        {isMigratingTeam ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                                        {isMigratingTeam ? 'Procesando...' : 'Traspasar y Eliminar'}
                                     </button>
                                 </div>
                             </div>

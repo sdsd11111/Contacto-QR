@@ -93,7 +93,7 @@ export async function GET(
             noteContent += `\n\nEtiquetas: ${user.etiquetas}`;
         }
 
-        noteContent += "\n\n- ActivaQR";
+        noteContent += "\n\n- Creado por www.activaqr.com";
 
         // Limpiar WhatsApp para el campo TEL
         const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números

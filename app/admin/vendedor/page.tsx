@@ -3,6 +3,9 @@
 import RecorridoTab from "@/components/vendedor/RecorridoTab";
 
 import { useEffect, useState } from "react";
+import DirectVCardRegistration from "@/components/vendedor/DirectVCardRegistration";
+import SupportModal from "@/components/vendedor/SupportModal";
+import ContractModal from "@/components/vendedor/ContractModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     LayoutDashboard,
@@ -37,7 +40,7 @@ export default function SellerDashboard() {
     // TODO: Restaurar autenticación mañana al integrar BD
     const MOCK_SELLER = { id: 1, nombre: "Abel", email: "abel@activaqr.com", role: "seller", comision: 30, codigo: "001" };
     const [isAuthorized, setIsAuthorized] = useState(false);
-    const [activeTab, setActiveTab] = useState<"ventas" | "recorrido">("recorrido");
+    const [activeTab, setActiveTab] = useState<"ventas" | "recorrido" | "generar" | "soporte">("recorrido");
     const [seller, setSeller] = useState<any>(null); // Inicia como null para forzar login real
     const [registros, setRegistros] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -345,25 +348,83 @@ export default function SellerDashboard() {
         );
     }
 
+    if (seller && !seller.terminos_aceptados_en) {
+        return (
+            <ContractModal
+                seller={seller}
+                onAccept={() => {
+                    const updatedSeller = { ...seller, terminos_aceptados_en: new Date().toISOString() };
+                    setSeller(updatedSeller);
+                    localStorage.setItem('vcard_seller_data', JSON.stringify(updatedSeller));
+                }}
+            />
+        );
+    }
+
+    const isSubSeller = !!(seller?.parent_id);
+
+    // Filtro estricto por mes calendario actual para calcular Cuotas y Rangos
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const registrosThisMonth = registros.filter(r => {
+        if (!r.created_at) return false;
+        const d = new Date(r.created_at);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    // Separación de Ventas Personales (VVP) y de Equipo del MES ACTUAL
+    const personalRegistros = registrosThisMonth.filter(r => r.seller_id === seller?.id);
+    const teamRegistros = registrosThisMonth.filter(r => r.seller_id !== seller?.id);
+
+    const personalPaidSales = personalRegistros.filter(r => r.status === 'pagado' || r.status === 'entregado').length;
+    const teamPaidSales = teamRegistros.filter(r => r.status === 'pagado' || r.status === 'entregado').length;
+    const totalPaidSales = personalPaidSales + teamPaidSales;
+
     const totalSales = registros.filter(r => r.status !== 'cancelado').length;
     const pendingSales = registros.filter(r => r.status === 'pendiente').length;
-    const paidSales = registros.filter(r => r.status === 'pagado' || r.status === 'entregado').length;
 
-    // Lógica de Comisiones Dinámicas
+    // Lógica de Comisiones Dinámicas (Anti-Freeloader)
     const getCommissionTier = (salesCount: number) => {
         if (salesCount >= 200) return { percentage: 50, nextTier: null, goal: 200, currentTierMin: 200 };
         if (salesCount >= 100) return { percentage: 40, nextTier: 200, goal: 100, currentTierMin: 100 };
         return { percentage: 30, nextTier: 100, goal: 0, currentTierMin: 0 };
     };
 
-    const tier = getCommissionTier(paidSales);
-    const currentPercentage = tier.percentage;
+    let tier;
+    let earnsTeamOverride = false;
 
-    // Comisiones Pagadas (según lo marcado por el admin)
+    if (isSubSeller) {
+        // Asesores siempre ganan basados en sus propias ventas
+        tier = getCommissionTier(personalPaidSales);
+    } else {
+        // Líderes: Regla "La Llave de Oro" (Mínimo 30 ventas directas)
+        if (personalPaidSales >= 30) {
+            tier = getCommissionTier(totalPaidSales); // Suma equipo
+            earnsTeamOverride = true;
+        } else {
+            tier = getCommissionTier(personalPaidSales); // Solo cuenta VVP
+            earnsTeamOverride = false;
+        }
+    }
+
+    const currentPercentage = tier.percentage;
+    const eligiblePaidSales = earnsTeamOverride ? totalPaidSales : personalPaidSales;
+
+    // Comisiones Pagadas
     const paidCommissions = registros.reduce((acc, r) => {
         if ((r.status === 'pagado' || r.status === 'entregado') && r.commission_status === 'paid') {
             const price = r.plan === 'pro' ? 20 : 10;
-            return acc + (price * (currentPercentage / 100));
+            const isPersonalSale = r.seller_id === seller?.id;
+
+            if (isPersonalSale) {
+                return acc + (price * (currentPercentage / 100));
+            } else {
+                if (!earnsTeamOverride) return acc; // Líder Inactivo pierde el diferencial
+                // Diferencial: Asumimos que sub-vendedor gana su 30% base. Líder gana la diferencia.
+                const overridePercentage = Math.max(0, currentPercentage - 30);
+                return acc + (price * (overridePercentage / 100));
+            }
         }
         return acc;
     }, 0);
@@ -372,15 +433,21 @@ export default function SellerDashboard() {
     const pendingCommissions = registros.reduce((acc, r) => {
         if ((r.status === 'pagado' || r.status === 'entregado') && r.commission_status !== 'paid') {
             const price = r.plan === 'pro' ? 20 : 10;
-            return acc + (price * (currentPercentage / 100));
+            const isPersonalSale = r.seller_id === seller?.id;
+
+            if (isPersonalSale) {
+                return acc + (price * (currentPercentage / 100));
+            } else {
+                if (!earnsTeamOverride) return acc;
+                const overridePercentage = Math.max(0, currentPercentage - 30);
+                return acc + (price * (overridePercentage / 100));
+            }
         }
         return acc;
     }, 0);
 
     // Valor Total Histórico
     const totalCommission = paidCommissions + pendingCommissions;
-    // Rol del seller: sub-vendedor tiene parent_id, líder no
-    const isSubSeller = !!(seller?.parent_id);
 
     // Soporte Centralizado (Número del Admin)
     const SUPPORT_NUMBER = "593962657270"; // César Reyes (Admin)
@@ -417,11 +484,13 @@ export default function SellerDashboard() {
                                 <Users size={18} /> Gestionar Equipo
                             </button>
                         )}
-                        <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer"
+                        <button onClick={() => {
+                            setActiveTab("soporte");
+                        }}
                             className="bg-green-500/10 text-green-500 border border-green-500/20 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-500/20 transition-all flex items-center gap-2 shadow-xl"
                         >
                             <HelpCircle size={18} /> Soporte
-                        </a>
+                        </button>
                         <button onClick={handleLogout}
                             className="bg-[#FF3E3E] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 cursor-pointer hover:scale-105 transition-all text-white flex items-center gap-2"
                         >
@@ -450,7 +519,28 @@ export default function SellerDashboard() {
                     >
                         💰 Mis Ventas
                     </button>
+                    <button
+                        onClick={() => setActiveTab("generar")}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === "generar"
+                            ? "bg-green-500/20 text-green-400 shadow-lg shadow-green-500/10 border border-green-500/30"
+                            : "text-white/40 hover:text-white/70"
+                            }`}
+                    >
+                        ⚡ Generar vCard
+                    </button>
                 </div>
+
+                {/* ── CONTENIDO DEL TAB GENERAR ── */}
+                {activeTab === "generar" && (
+                    <DirectVCardRegistration
+                        seller={seller}
+                        onSuccess={() => {
+                            setActiveTab("ventas");
+                            fetchSellerSales(seller.id);
+                        }}
+                        onCancel={() => setActiveTab("recorrido")}
+                    />
+                )}
 
                 {/* ── CONTENIDO DEL TAB RECORRIDO ── */}
                 {activeTab === "recorrido" && (
@@ -484,13 +574,13 @@ export default function SellerDashboard() {
                                             <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">Tu Nivel de Comisión: <span className="text-primary">{currentPercentage}%</span></h2>
                                             <p className="text-white/40 text-[11px] font-black uppercase tracking-widest">
                                                 {tier.nextTier
-                                                    ? `¡Estás a ${tier.nextTier - paidSales} ventas de subir al ${currentPercentage + 10}%!`
+                                                    ? `¡Estás a ${tier.nextTier - eligiblePaidSales} ventas de subir al ${currentPercentage + 10}%!`
                                                     : "¡HAS ALCANZADO EL NIVEL MÁXIMO DE COMISIÓN! 🚀"}
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Ventas Confirmadas</p>
-                                            <p className="text-3xl font-black italic tracking-tighter text-white">{paidSales} / {tier.nextTier || '∞'}</p>
+                                            <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Volumen Comisionable</p>
+                                            <p className="text-3xl font-black italic tracking-tighter text-white">{eligiblePaidSales} / {tier.nextTier || '∞'}</p>
                                         </div>
                                     </div>
 
@@ -498,15 +588,15 @@ export default function SellerDashboard() {
                                     <div className="h-6 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-1">
                                         <motion.div
                                             initial={{ width: 0 }}
-                                            animate={{ width: `${tier.nextTier ? Math.min(100, ((paidSales - tier.currentTierMin) / (tier.nextTier - tier.currentTierMin)) * 100) : 100}%` }}
+                                            animate={{ width: `${tier.nextTier ? Math.min(100, ((eligiblePaidSales - tier.currentTierMin) / (tier.nextTier - tier.currentTierMin)) * 100) : 100}%` }}
                                             className="h-full bg-gradient-to-r from-primary to-[#FF8A33] rounded-full shadow-[0_0_20px_rgba(255,107,0,0.4)]"
                                         />
                                     </div>
 
                                     <div className="flex justify-between mt-4 text-[10px] font-black uppercase tracking-widest">
-                                        <span className={cn(paidSales >= 0 ? "text-primary" : "text-white/20")}>Nivel 1 (30%)</span>
-                                        <span className={cn(paidSales >= 100 ? "text-primary" : "text-white/20")}>Nivel 2 (40%)</span>
-                                        <span className={cn(paidSales >= 200 ? "text-primary" : "text-white/20")}>Nivel Pro (50%)</span>
+                                        <span className={cn(eligiblePaidSales >= 0 ? "text-primary" : "text-white/20")}>Nivel 1 (30%)</span>
+                                        <span className={cn(eligiblePaidSales >= 100 ? "text-primary" : "text-white/20")}>Nivel 2 (40%)</span>
+                                        <span className={cn(eligiblePaidSales >= 200 ? "text-primary" : "text-white/20")}>Nivel Pro (50%)</span>
                                     </div>
                                 </div>
                             </div>
@@ -540,7 +630,7 @@ export default function SellerDashboard() {
                             <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-accent"><DollarSign size={48} /></div>
                                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-3">Ventas Confirmadas</p>
-                                <p className="text-4xl font-black italic tracking-tighter text-accent">{paidSales}</p>
+                                <p className="text-4xl font-black italic tracking-tighter text-accent">{totalPaidSales}</p>
                             </div>
                             <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-green-500"><CheckCircle size={48} /></div>
@@ -800,6 +890,12 @@ export default function SellerDashboard() {
                         </div>
                     )}
                 </AnimatePresence>
+
+                <SupportModal
+                    isOpen={activeTab === "soporte"}
+                    onClose={() => setActiveTab("recorrido")}
+                    seller={seller}
+                />
             </div>{/* max-w-7xl */}
 
             {/* Modal de Mi Perfil */}
