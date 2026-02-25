@@ -391,10 +391,18 @@ export default function SellerDashboard() {
         return { percentage: 30, nextTier: 100, goal: 0, currentTierMin: 0 };
     };
 
+    // Si el vendedor tiene comisión 0% en DB (Socio), respetamos eso.
+    // De lo contrario, usamos la lógica de niveles dinámicos.
+    const dbCommission = seller ? parseFloat(seller.comision_porcentaje) : 0;
+    const isPartner = dbCommission === 0;
+
     let tier;
     let earnsTeamOverride = false;
 
-    if (isSubSeller) {
+    if (isPartner) {
+        tier = { percentage: 0, nextTier: null, goal: 0, currentTierMin: 0 };
+        earnsTeamOverride = true; // El socio siempre ve todo el equipo
+    } else if (isSubSeller) {
         // Asesores siempre ganan basados en sus propias ventas
         tier = getCommissionTier(personalPaidSales);
     } else {
@@ -408,7 +416,7 @@ export default function SellerDashboard() {
         }
     }
 
-    const currentPercentage = tier.percentage;
+    const currentPercentage = isPartner ? 0 : tier.percentage;
     const eligiblePaidSales = earnsTeamOverride ? totalPaidSales : personalPaidSales;
 
     // Comisiones Pagadas
