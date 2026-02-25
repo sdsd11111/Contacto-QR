@@ -469,64 +469,64 @@ export default function SellerDashboard() {
                         <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">Este es tu resumen de ventas y comisiones</p>
                     </div>
 
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-3 sm:gap-4 w-full md:w-auto">
                         <Link href="/"
                             onClick={() => localStorage.setItem("vcard_attribution_id", seller.id)}
-                            className="bg-white/5 border border-white/10 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 shadow-xl"
+                            className="flex-1 sm:flex-none justify-center bg-white/5 border border-white/10 px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 shadow-xl"
                         >
-                            <Home size={18} /> Ir a Inicio
+                            <Home size={16} className="shrink-0" /> <span className="whitespace-nowrap">Ir a Inicio</span>
                         </Link>
                         {/* Gestionar Equipo: solo el líder lo ve */}
                         {!isSubSeller && (
                             <button onClick={() => setShowTeamModal(true)}
-                                className="bg-primary/20 text-primary border border-primary/20 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary/30 transition-all flex items-center gap-2 shadow-xl"
+                                className="flex-1 sm:flex-none justify-center bg-primary/20 text-primary border border-primary/20 px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-primary/30 transition-all flex items-center gap-2 shadow-xl"
                             >
-                                <Users size={18} /> Gestionar Equipo
+                                <Users size={16} className="shrink-0" /> <span className="whitespace-nowrap">Equipo</span>
                             </button>
                         )}
                         <button onClick={() => {
                             setActiveTab("soporte");
                         }}
-                            className="bg-green-500/10 text-green-500 border border-green-500/20 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-green-500/20 transition-all flex items-center gap-2 shadow-xl"
+                            className="flex-1 sm:flex-none justify-center bg-green-500/10 text-green-500 border border-green-500/20 px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-500/20 transition-all flex items-center gap-2 shadow-xl"
                         >
-                            <HelpCircle size={18} /> Soporte
+                            <HelpCircle size={16} className="shrink-0" /> <span className="whitespace-nowrap">Soporte</span>
                         </button>
                         <button onClick={handleLogout}
-                            className="bg-[#FF3E3E] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 cursor-pointer hover:scale-105 transition-all text-white flex items-center gap-2"
+                            className="bg-[#FF3E3E] px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 cursor-pointer hover:scale-105 transition-all text-white flex items-center gap-2 ml-auto sm:ml-0"
                         >
-                            <LogOut size={18} /> Salir
+                            <LogOut size={16} className="shrink-0" /> <span className="whitespace-nowrap">Salir</span>
                         </button>
                     </div>
                 </header>
 
                 {/* ── TABS DE NAVEGACIÓN ── */}
-                <div className="flex gap-2 mb-10 bg-white/5 rounded-2xl p-1.5 border border-white/10">
+                <div className="flex gap-1.5 sm:gap-2 mb-10 bg-white/5 rounded-2xl p-1.5 border border-white/10 overflow-x-auto no-scrollbar">
                     <button
                         onClick={() => setActiveTab("recorrido")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === "recorrido"
+                        className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${activeTab === "recorrido"
                             ? "bg-primary text-[#050B1C] shadow-lg shadow-primary/30"
                             : "text-white/40 hover:text-white/70"
                             }`}
                     >
-                        🗺️ Mi Recorrido
+                        <span className="sm:inline">🗺️</span> <span className="whitespace-nowrap">Recorrido</span>
                     </button>
                     <button
                         onClick={() => setActiveTab("ventas")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === "ventas"
+                        className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${activeTab === "ventas"
                             ? "bg-white/15 text-white shadow"
                             : "text-white/40 hover:text-white/70"
                             }`}
                     >
-                        💰 Mis Ventas
+                        <span className="sm:inline">💰</span> <span className="whitespace-nowrap">Mis Ventas</span>
                     </button>
                     <button
                         onClick={() => setActiveTab("generar")}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activeTab === "generar"
+                        className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${activeTab === "generar"
                             ? "bg-green-500/20 text-green-400 shadow-lg shadow-green-500/10 border border-green-500/30"
                             : "text-white/40 hover:text-white/70"
                             }`}
                     >
-                        ⚡ Generar vCard
+                        <span className="sm:inline">⚡</span> <span className="whitespace-nowrap">Generar vCard</span>
                     </button>
                 </div>
 
@@ -952,6 +952,16 @@ export default function SellerDashboard() {
                                             placeholder="Nueva contraseña (opcional)"
                                         />
                                         <p className="text-[9px] text-white/30 italic ml-2 mt-1">Déjalo en blanco si no quieres cambiarla</p>
+                                    </div>
+
+                                    <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl flex gap-3 items-start">
+                                        <ShieldCheck className="text-yellow-500 shrink-0 mt-0.5" size={16} />
+                                        <div className="space-y-1">
+                                            <p className="text-yellow-500 font-bold text-[10px] uppercase tracking-widest">Seguridad de Pagos</p>
+                                            <p className="text-[9px] text-white/50 leading-tight">
+                                                Tus datos bancarios para el cobro de comisiones solo pueden ser modificados por la Administración Central de <span className="uppercase">ActivaQR</span>.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
 

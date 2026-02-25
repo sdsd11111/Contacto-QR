@@ -29,6 +29,13 @@ export default function manifest(): MetadataRoute.Manifest {
         ],
         shortcuts: [
             {
+                name: 'Panel Vendedor',
+                short_name: 'Mi Panel',
+                description: 'Acceso directo al panel de ventas y comisiones',
+                url: '/admin/vendedor',
+                icons: [{ src: '/favicon.ico', sizes: '192x192' }]
+            },
+            {
                 name: 'Panel Administrador',
                 short_name: 'Admin',
                 description: 'Acceso directo al panel de gestión de vCards',

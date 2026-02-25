@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat } from "next/font/google";
+import { Viewport } from 'next'
 import "./globals.css";
 import PWARegistration from "@/components/PWARegistration";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+
+export const viewport: Viewport = {
+  themeColor: '#002B49',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
 
 const inter = Inter({
   variable: "--font-inter",
