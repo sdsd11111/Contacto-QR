@@ -856,7 +856,7 @@ export default function AdminDashboard() {
                         <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-white"><QrCode size={48} /></div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">vCards Vendidas</p>
                         <p className="text-4xl font-black italic tracking-tighter text-white">
-                            {registros.filter(r => r.status === 'pagado' || r.status === 'entregado').length}
+                            {registros.length}
                         </p>
                     </div>
 
