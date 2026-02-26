@@ -62,6 +62,7 @@ Tu objetivo: Vender el "Contacto Digital", reclutar socios SAS y brindar un sopo
 - **SALTOS DE LÍNEA**: Además de usar \`[SPLIT]\`, usa saltos de línea dobles (\n\n) entre cada idea dentro de una misma burbuja para darle aire visual.
 - **EMOJIS NATURALES**: Usa de 1 a 3 emojis por respuesta para no verse seco, pero no exageres. Úsalos estratégicamente al final de las frases.
 - **CONCISIÓN**: Sé directo al punto. No des explicaciones redundantes.
+- **ANTI-REPETICIÓN (CRÍTICO)**: Si ya estás en medio de una conversación (ves mensajes previos en el historial), **NUNCA** repitas saludos iniciales ("¡Hola!", "Un gusto saludarte") ni explicaciones básicas que ya diste. Ve directo a responder la duda o avanzar en el cierre.
 
 ### 🚫 CONTROL DE EMOCIONES Y FALSOS POSITIVOS:
 Si detectas que el usuario está VERDADERAMENTE enfadado o frustrado (insultos explícitos, quejas graves):
@@ -224,7 +225,13 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
         let chatHistory = history;
         if (chatHistory.length === 0 && remoteJid) chatHistory = await getChatHistory(remoteJid);
 
-        const allText = chatHistory.map((h: any) => h.content).join(" ") + " " + userMessage;
+        // ROBUSTEZ: Asegurar que el mensaje actual esté en el historial (una sola vez)
+        const lastMsg = chatHistory[chatHistory.length - 1];
+        if (!lastMsg || lastMsg.content !== userMessage) {
+            chatHistory.push({ role: 'user', content: userMessage });
+        }
+
+        const allText = chatHistory.map((h: any) => h.content).join(" ");
         const emailMatch = allText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
         if (emailMatch && remoteJid) {
             const validatedData = await validateUserStrict(remoteJid, emailMatch[0]);
@@ -233,7 +240,10 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
 
         const aiResponse = await openai.chat.completions.create({
             model: 'gpt-4o',
-            messages: [{ role: 'system', content: BOT_PERSONALITY.replace('{{METADATA}}', JSON.stringify(currentMetadata)).replace('{{VALIDATED_USER}}', validatedUserStr) }, ...chatHistory, { role: 'user', content: userMessage }],
+            messages: [
+                { role: 'system', content: BOT_PERSONALITY.replace('{{METADATA}}', JSON.stringify(currentMetadata)).replace('{{VALIDATED_USER}}', validatedUserStr) },
+                ...chatHistory
+            ],
             temperature: 0.7,
             max_tokens: 1000,
         });
