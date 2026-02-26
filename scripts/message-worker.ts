@@ -2,7 +2,7 @@ import http from 'http';
 import mysql from 'mysql2/promise';
 import * as dotenv from 'dotenv';
 import { resolve } from 'path';
-import { getBotResponse } from './openai-bot';
+import { getBotResponse } from '../lib/openai-bot';
 
 // Cargar variables de entorno desde .env.local
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
