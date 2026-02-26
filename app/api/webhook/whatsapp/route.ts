@@ -58,16 +58,12 @@ export async function POST(request: Request) {
 
         // --- ENCOLADO / DEBOUNCE (25 SEGUNDOS) ---
         // Guardamos en la cola para acumular mensajes fragmentados
-        const processAt = new Date(Date.now() + 25 * 1000); // Ventana de 25s
+        // Cada mensaje nuevo es una fila nueva, el Worker se encarga de unirlos y borrarlos atómicamente
 
         await pool.execute(
-            `INSERT INTO registraya_whatsapp_message_queue (jid, combined_content, process_at, processed)
-             VALUES (?, ?, ?, 0)
-             ON DUPLICATE KEY UPDATE 
-                combined_content = CONCAT(combined_content, ' ', VALUES(combined_content)),
-                process_at = VALUES(process_at),
-                processed = 0`,
-            [remoteJid, content.trim(), processAt]
+            `INSERT INTO registraya_whatsapp_message_queue (jid, combined_content, processed)
+             VALUES (?, ?, 0)`,
+            [remoteJid, content.trim()]
         );
 
         return NextResponse.json({ success: true, message: "Message queued for accumulation" });
