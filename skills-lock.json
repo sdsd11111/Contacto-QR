@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-orchestration-multi-agent-optimize": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "d286862817ad75a7e1b9375bc59fff5c160049e627d04c2f26f6f78996c36b52"
+    },
+    "ai-agent-development": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "b0c6bcc51a0188cb7ad4d221ac0b5d850351130cfd89b8870beb58e7eba14f6a"
+    },
+    "ai-agents-architect": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "bc57a5e3ba9d54e6e34d5e0e806c142b6a69f9504e2600d3e3d9dc6893148e5a"
+    },
+    "skill-creator": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "efb6cfee4d700aefa97c954e1876fa9d81569c3f21d3d4c815c4c341b59c53df"
+    },
+    "using-superpowers": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "27541e99e878e952309a4440eeb743869fd41da7b87b94cfe7fc9b1cf2ed8878"
+    }
+  }
+}

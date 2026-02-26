@@ -6,35 +6,28 @@ const openai = new OpenAI({
 });
 
 /**
- * Busca información de una vCard por número de WhatsApp O Email
+ * Busca información de una vCard
  */
 export async function lookupUserData(identifier: string) {
     try {
-        // Limpiar el identificador (quitar @s.whatsapp.net si es JID)
         const cleanId = identifier.replace('@s.whatsapp.net', '').replace(/\D/g, '');
-
         const query = `
             SELECT nombre, email, whatsapp, edit_code, edit_uses_remaining, status, slug 
             FROM registraya_vcard_registros 
             WHERE whatsapp LIKE ? OR email = ?
             LIMIT 1
         `;
-
         const [rows] = await pool.execute(query, [`%${cleanId}%`, identifier]);
         const results = rows as any[];
-
-        if (results.length > 0) {
-            return results[0];
-        }
-        return null;
+        return results.length > 0 ? results[0] : null;
     } catch (error) {
-        console.error("Error looking up user data:", error);
+        console.error("Error lookupUserData:", error);
         return null;
     }
 }
 
 /**
- * Busca información validando AMBOS datos para mayor seguridad (WhatsApp y Email)
+ * Validación estricta
  */
 export async function validateUserStrict(whatsapp: string, email: string) {
     try {
@@ -49,56 +42,65 @@ export async function validateUserStrict(whatsapp: string, email: string) {
         const results = rows as any[];
         return results.length > 0 ? results[0] : null;
     } catch (error) {
-        console.error("Error in strict validation:", error);
+        console.error("Error validateUserStrict:", error);
         return null;
     }
 }
 
 const BOT_PERSONALITY = `
-Eres el asistente amable y humano de ActivaQR. 🌟
-Tu objetivo es que los usuarios se sientan muy bien atendidos. Usa emojis de forma natural para transmitir calidez y cercanía. ✨
+Eres el "Asesor Estratégico" de ActivaQR. 🚀
+Tu objetivo: Vender el "Contacto Digital", reclutar socios SAS y brindar un soporte experto y RESPETUOSO.
 
-### ESTRUCTURA DE BIENVENIDA (SOLO AL SALUDAR):
-Si el usuario dice "Hola", "Buenos días", o inicia la conversación, responde con calidez y presenta estas 2 opciones:
+### 🎭 TONO Y PERSONALIDAD:
+- **Semiprofesional y Cercano**: Usa un lenguaje educado pero cálido. Evita el "voseo" excesivo o la confianza exagerada. Trata al usuario con respeto ("Usted" o un "Tú" muy profesional).
+- **No seas un robot**: Responde de forma fluida. Si el usuario envía varios mensajes, asúmelo como una sola idea.
+- **Ecuador/Loja**: Conoces el contexto local. Eres amable y servicial.
 
-1. *Soporte y Registro QR* 📱 (Ayuda con tu vCard o código de edición).
-2. *Información para Revendedores* 🤝 (Gana el 50% de comisión con nuestro sistema SAS).
+### 🚫 CONTROL DE EMOCIONES:
+Si detectas que el usuario está enfadado o frustrado (insultos, desesperación):
+1. **Pausa total**: No intentes vender nada más.
+2. **Disculpa Sincera**: "Lamento mucho que esté pasando por este inconveniente. No es nuestra intención causarle molestias."
+3. **Handoff Inmediato**: "Para solucionarlo de la mejor manera, voy a transferirle ahora mismo con César, nuestro director, para que le atienda personalmente."
+4. **Tag**: Incluye [TRANSFER_SUPPORT] y un [SUMMARY: El cliente está muy molesto con X].
 
-🚨 IMPORTANTE: NUNCA repitas este menú de opciones si el usuario ya respondió "1" o "2".
+### 💰 ESTRATEGIA ABC & ENGAGEMENT:
+- Término clave: **"Contacto Digital"**.
+- Cierra con **preguntas abiertas** para generar interacción y feedback:
+  - "¿Cómo cree que el Contacto Digital podría facilitarle el cierre de ventas en su día a día?"
+  - "De lo que hemos conversado, ¿qué es lo que más le llama la atención para su tipo de negocio?"
+  - "¿Le gustaría que le guíe ahora mismo para activar el suyo o prefiere que un experto coordine con usted?"
 
----
+### 🤝 ALIANZA SAS (REVENDEDORES):
+- Comisiones: "Gana hasta el 50%".
+- Aclara: "Se empieza con un excelente 30% y se escala según su red de ventas".
 
-### REGLAS DE LAS RAMAS (ACCIONES AL RECIBIR '1' O '2'):
+### 📋 EJEMPLOS DE TONO (FEW-SHOT):
+- Usuario: "Hola, ¿cómo funciona eso?"
+- Bot: "¡Qué tal! Un gusto saludarle. El Contacto Digital es una herramienta que guarda sus datos directamente en el celular de su cliente con un solo escaneo. ¿En qué área trabaja usted actualmente? Así puedo decirle cómo le sacaría el mayor provecho."
 
-**SI EL USUARIO RESPONDE "1" (SOPORTE Y REGISTRO QR):** 
-- Responde: "¡Claro que sí! 📱 ¿En qué te puedo ayudar con tu vCard hoy? (Por ejemplo: consultar el estado de tu registro, obtener tu código de edición, etc.)"
-- Tu prioridad de ahí en adelante es ayudar con los QR y vCards. 
-- Puedes informar sobre: Estado del registro, Código de Edición e Intentos restantes.
-- **SEGURIDAD PARA DATOS SENSIBLES**: 
-  - Si pide el **Código de Edición** o datos privados, por seguridad DEBES PEDIRLE su **número de WhatsApp y el Correo Electrónico** de registro.
-  - Una vez te dé ambos datos, si coinciden en el sistema (ver {{VALIDATED_USER}}), entrégale la información.
-  - Si ya te dio sus datos antes, ¡no se los pidas de nuevo!
-- Si no puedes resolver su duda, ofrécele pasarle con un *humano*.
+### REGLAS TÉCNICAS (SÓLO PARA TI):
+Al final de CADA respuesta, incluye el bloque [DATA] JSON. No lo olvides nunca.
+[DATA]
+{
+  "state": "buying | reseller | help | angry",
+  "lead": {
+    "nombre": "string", "negocio": "string", "profesion": "string", "ciudad": "string", "canton": "string",
+    "edad": "string", "estado_civil": "string", "horarios": "string",
+    "potencial_web": boolean, "potencial_auto": boolean, "puntuacion_calidad": 1-10,
+    "notas": "string (detalles extra importantes)"
+  },
+  "summary": "Resumen breve para César",
+  "transfer": "SUPPORT | RESELLER | NONE"
+}
+[/DATA]
 
-**SI EL USUARIO RESPONDE "2" (REVENDEDORES):** 🤝
-- Responde: "¡Excelente! 🤝 Con nuestro sistema SAS puedes ganar un 50% de comisión. Te comento que un humano se pondrá en contacto pronto contigo para darte todos los detalles y habilitarte. ¿Tienes alguna pregunta rápida mientras tanto?"
-
----
-
-### REGLAS DE ORO:
-- **Humanidad**: Saluda siempre con alegría. 😊
-- **No repitas**: Si el usuario elige "1" o "2", NO le des el menú de nuevo, interactúa directamente con su elección.
-- **Validación**: Para dar el Código de Edición, es obligatorio que el usuario proporcione su WhatsApp y Email de registro.
-- **Limitaciones**: No puedes modificar la base de datos.
-- **Silencio**: Si un humano interviene, tú te quedas en silencio por 24h.
-
-### DATOS DEL SISTEMA:
-- **Usuario detectado por WhatsApp**: {{DETECTED_BY_WHATSAPP}}
-- **Usuario validado (WhatsApp + Email)**: {{VALIDATED_USER}}
+### BIENVENIDA:
+1. Crear mi Contacto Digital (Registro Rápido) 📱
+2. Alianza SAS (Ganar hasta el 50%) 🤝
 `;
 
 /**
- * Recupera los últimos 10 mensajes de la conversación para dar memoria al bot
+ * Historial
  */
 export async function getChatHistory(jid: string, limit: number = 10) {
     try {
@@ -106,84 +108,101 @@ export async function getChatHistory(jid: string, limit: number = 10) {
             'SELECT role, content FROM registraya_whatsapp_history WHERE jid = ? ORDER BY created_at DESC LIMIT ?',
             [jid, limit]
         );
-        // Invertir para que estén en orden cronológico
         return (rows as any[]).reverse();
-    } catch (error) {
-        console.error("Error retrieving chat history:", error);
-        return [];
-    }
+    } catch (e) { return []; }
 }
 
 /**
- * Guarda un mensaje en el historial
+ * Guardar mensaje
  */
-export async function saveMessage(jid: string, role: 'user' | 'assistant' | 'system', content: string) {
+export async function saveMessage(jid: string, role: string, content: string) {
     try {
-        await pool.execute(
-            'INSERT INTO registraya_whatsapp_history (jid, role, content) VALUES (?, ?, ?)',
-            [jid, role, content]
-        );
-    } catch (error) {
-        console.error("Error saving message to history:", error);
-    }
+        await pool.execute('INSERT INTO registraya_whatsapp_history (jid, role, content) VALUES (?, ?, ?)', [jid, role, content]);
+    } catch (e) { }
+}
+
+/**
+ * Upsert Lead
+ */
+export async function upsertLeadData(jid: string, leadData: any, state: string) {
+    try {
+        const query = `
+            INSERT INTO registraya_whatsapp_leads 
+            (jid, nombre, negocio, profesion, ciudad, canton, edad_propietario, estado_civil, horarios, potencial_web, potencial_auto, interes, estado_conversacion, puntuacion_calidad, deep_profile, notas)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE 
+            nombre = VALUES(nombre), negocio = VALUES(negocio), profesion = VALUES(profesion), ciudad = VALUES(ciudad), canton = VALUES(canton),
+            edad_propietario = VALUES(edad_propietario), estado_civil = VALUES(estado_civil), horarios = VALUES(horarios),
+            potencial_web = VALUES(potencial_web), potencial_auto = VALUES(potencial_auto), interes = VALUES(interes),
+            estado_conversacion = VALUES(estado_conversacion), puntuacion_calidad = VALUES(puntuacion_calidad), deep_profile = VALUES(deep_profile), notas = VALUES(notas)
+        `;
+        const interesMap: any = { buying: 'VENTA_DIRECTA', reseller: 'RESELLER' };
+        await pool.execute(query, [jid, leadData.nombre || null, leadData.negocio || null, leadData.profesion || null, leadData.ciudad || null, leadData.canton || null, leadData.edad || null, leadData.estado_civil || null, leadData.horarios || null, leadData.potencial_web ? 1 : 0, leadData.potencial_auto ? 1 : 0, interesMap[state] || 'UNKNOWN', state || null, leadData.puntuacion_calidad || 0, JSON.stringify(leadData), leadData.notas || null]);
+    } catch (e) { console.error("upsertLeadData error", e); }
+}
+
+/**
+ * Metadata Sesión
+ */
+export async function updateSessionMetadata(jid: string, state: string, metadata: any) {
+    try {
+        await pool.execute('UPDATE registraya_whatsapp_sessions SET bot_state = ?, bot_metadata = ? WHERE jid = ?', [state, JSON.stringify(metadata), jid]);
+    } catch (e) { }
 }
 
 export async function getBotResponse(userMessage: string, remoteJid?: string, history: any[] = []) {
     try {
-        let detectedUserStr = "No identificado aún.";
-        let validatedUserStr = "Aún no se han validado ambos datos (WhatsApp + Email).";
+        let validatedUserStr = "No validado.";
+        let currentMetadata = {};
 
-        // 1. Identificación básica por el número que escribe (auto-identificación)
         if (remoteJid) {
-            const userData = await lookupUserData(remoteJid);
-            if (userData) {
-                detectedUserStr = `${userData.nombre} (${userData.email})`;
-            }
+            const [sessionRows] = await pool.execute('SELECT bot_state, bot_metadata FROM registraya_whatsapp_sessions WHERE jid = ?', [remoteJid]);
+            const sessions = sessionRows as any[];
+            if (sessions.length > 0) currentMetadata = sessions[0].bot_metadata || {};
         }
 
-        // 2. Obtener historial si no se proporciona (Memoria)
         let chatHistory = history;
-        if (chatHistory.length === 0 && remoteJid) {
-            chatHistory = await getChatHistory(remoteJid);
-        }
+        if (chatHistory.length === 0 && remoteJid) chatHistory = await getChatHistory(remoteJid);
 
-        // 3. Intentar validación estricta si el usuario proporcionó un email en la conversación
         const allText = chatHistory.map((h: any) => h.content).join(" ") + " " + userMessage;
         const emailMatch = allText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-
         if (emailMatch && remoteJid) {
-            const email = emailMatch[0];
-            const validatedData = await validateUserStrict(remoteJid, email);
-            if (validatedData) {
-                validatedUserStr = `✓ VALIDADO: 
-- Nombre: ${validatedData.nombre}
-- Código: ${validatedData.edit_code}
-- Email: ${validatedData.email}
-- WhatsApp: ${validatedData.whatsapp}
-- Estado: ${validatedData.status}
-- Intentos: ${validatedData.edit_uses_remaining}
-- URL: https://activaqr.com/p/${validatedData.slug}`;
-            }
+            const validatedData = await validateUserStrict(remoteJid, emailMatch[0]);
+            if (validatedData) validatedUserStr = `✓ ${validatedData.nombre} (${validatedData.email})`;
         }
 
-        const personality = BOT_PERSONALITY
-            .replace('{{DETECTED_BY_WHATSAPP}}', detectedUserStr)
-            .replace('{{VALIDATED_USER}}', validatedUserStr);
-
-        const response = await openai.chat.completions.create({
+        const aiResponse = await openai.chat.completions.create({
             model: 'gpt-4o',
-            messages: [
-                { role: 'system', content: personality },
-                ...chatHistory,
-                { role: 'user', content: userMessage },
-            ],
+            messages: [{ role: 'system', content: BOT_PERSONALITY.replace('{{METADATA}}', JSON.stringify(currentMetadata)).replace('{{VALIDATED_USER}}', validatedUserStr) }, ...chatHistory, { role: 'user', content: userMessage }],
             temperature: 0.7,
-            max_tokens: 600,
+            max_tokens: 1000,
         });
 
-        return response.choices[0]?.message?.content || "¡Hola! 😊 ¿Cómo puedo ayudarte?";
-    } catch (error) {
-        console.error("Error in OpenAI Bot Logic:", error);
-        return "¡Hola! 😊 Gracias por escribirnos. Un humano te ayudará pronto.";
-    }
+        let botReply = aiResponse.choices[0]?.message?.content || "";
+        const dataMatch = botReply.match(/\[DATA\]([\s\S]*?)\[\/DATA\]/);
+
+        if (dataMatch && remoteJid) {
+            try {
+                const extracted = JSON.parse(dataMatch[1]);
+                botReply = botReply.replace(/\[DATA\][\s\S]*?\[\/DATA\]/, "").trim();
+                await updateSessionMetadata(remoteJid, extracted.state, extracted.lead);
+                await upsertLeadData(remoteJid, extracted.lead, extracted.state);
+
+                if (extracted.summary) botReply += ` [SUMMARY:${extracted.summary}]`;
+
+                // FAIL-SAFE: Si el estado es 'angry' o 'help' o incluye palabras clave de handoff
+                const lowerReply = botReply.toLowerCase();
+                const needsHuman = ["cesar", "director", "asesor personal", "experto", "solucionar personalmente"].some(k => lowerReply.includes(k));
+
+                if (extracted.transfer === "SUPPORT" || extracted.state === "angry" || needsHuman) {
+                    botReply += " [TRANSFER_SUPPORT]";
+                }
+                if (extracted.transfer === "RESELLER") {
+                    botReply += " [TRANSFER_RESELLER]";
+                }
+            } catch (err) { }
+        }
+
+        return botReply || "¡Hola! ¿Cómo puedo ayudarle hoy?";
+    } catch (e) { return "Un asesor le ayudará pronto."; }
 }
