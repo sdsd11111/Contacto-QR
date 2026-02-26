@@ -115,16 +115,13 @@ async function getChatHistory(jid: string) {
 async function processQueue() {
     try {
         const now = new Date();
-        const accumulationCutoff = new Date(Date.now() - ACCUMULATION_WINDOW_MS);
-
-        // 1. Buscar mensajes NO procesados cuya ventana de 25s YA haya cerrado
+        // 1. Buscar mensajes NO procesados cuya ventana de 25s YA haya cerrado (calculado en DB para evitar bugs de Zona Horaria)
         const [rows] = await pool.execute(
             `SELECT id, jid, combined_content 
              FROM registraya_whatsapp_message_queue 
-             WHERE processed = 0 AND created_at <= ? 
+             WHERE processed = 0 AND created_at <= DATE_SUB(NOW(), INTERVAL 25 SECOND)
              GROUP BY jid 
-             ORDER BY MIN(created_at) ASC`,
-            [accumulationCutoff]
+             ORDER BY MIN(created_at) ASC`
         );
         const pending = rows as { id: number; jid: string; combined_content: string }[];
 
