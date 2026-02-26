@@ -1,0 +1,82 @@
+[
+  {
+    "id": 11,
+    "nombre": "Cesar Reyes",
+    "email": "objetivo.cesar@gmail.com",
+    "code": "001",
+    "comision_porcentaje": "0.00",
+    "parent_id": null,
+    "role": "seller",
+    "activo": 1
+  },
+  {
+    "id": 12,
+    "nombre": "Asesor ActivaQR",
+    "email": "asesor.demo@activaqr.com",
+    "code": "001-B",
+    "comision_porcentaje": "30.00",
+    "parent_id": 11,
+    "role": "seller",
+    "activo": 0
+  },
+  {
+    "id": 22,
+    "nombre": "Boita 1",
+    "email": "aromademontana919@gmail.com",
+    "code": "013-M5UD",
+    "comision_porcentaje": "30.00",
+    "parent_id": 11,
+    "role": "seller",
+    "activo": 1
+  },
+  {
+    "id": 23,
+    "nombre": "Abelito",
+    "email": "metodoapuestaspremiun@gmail.com",
+    "code": "001-0AGX",
+    "comision_porcentaje": "30.00",
+    "parent_id": 11,
+    "role": "seller",
+    "activo": 0
+  },
+  {
+    "id": 26,
+    "nombre": "Abelito Quiñonez",
+    "email": "youtube@incahd.com",
+    "code": "001-HPR1",
+    "comision_porcentaje": "30.00",
+    "parent_id": 11,
+    "role": "seller",
+    "activo": 0
+  },
+  {
+    "id": 27,
+    "nombre": "abelito prueba",
+    "email": "marthitaaromamontana@gmail.com",
+    "code": "001-BZB8",
+    "comision_porcentaje": "30.00",
+    "parent_id": 11,
+    "role": "seller",
+    "activo": 0
+  },
+  {
+    "id": 29,
+    "nombre": "Juan Pèrez",
+    "email": "incahdecuador@gmail.com",
+    "code": "001-KRYA",
+    "comision_porcentaje": "30.00",
+    "parent_id": 11,
+    "role": "seller",
+    "activo": 0
+  },
+  {
+    "id": 31,
+    "nombre": "anibal Ayora",
+    "email": "cristhopheryeah113@gmail.com",
+    "code": "001-LXE6",
+    "comision_porcentaje": "30.00",
+    "parent_id": 11,
+    "role": "seller",
+    "activo": 1
+  }
+]

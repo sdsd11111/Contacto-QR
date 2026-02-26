@@ -1,0 +1,96 @@
+﻿[dotenv@17.3.1] injecting env (31) from .env.local -- tip: ÔÜÖ´©Å  suppress all logs with { quiet: true }
+=== EXPLORING SUPABASE ===
+ÔØî Table "registros": Could not find the table 'public.registros' in the schema cache
+Ô£à Table "registraya_vcard_registros" found! Records: 33
+
+Using Supabase table: "registraya_vcard_registros"
+Supabase total records: 33
+
+=== SUPABASE SCHEMA ===
+Columns: id, slug, created_at, nombre, whatsapp, email, profesion, empresa, bio, etiquetas, plan, foto_url, comprobante_url, status, delivery_deadline, direccion, web, instagram, linkedin, galeria_urls, facebook, tiktok, productos_servicios, google_business, tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido
+
+=== FETCHING MYSQL RECORDS ===
+MySQL total records: 30
+
+=== SUPABASE RECORDS ===
+  [SB-1] email=maricelitacueva@gmail.com | slug=maricela-cueva-p8mh | nombre=Maricela Cueva | status=pagado
+  [SB-2] email=michaelconde830@gmail.com | slug=las-costillas-del-veci-72z1 | nombre=Las costillas del veci | status=pagado
+  [SB-3] email=email@hosteriasantapetrona.com | slug=hosteria-santa-petrona-5dq5 | nombre=Hosteria Santa petrona | status=pagado
+  [SB-4] email=negocios@cesarreyesjaramillo.com | slug=cesar-reyes-jaramillo-eu0t | nombre=C├®sar Reyes Jaramillo | status=entregado
+  [SB-5] email=n.elvia@hotmail.es | slug=nelvia-sarmiento-montero-5dvy | nombre=Nelvia Sarmiento Montero | status=pagado
+  [SB-6] email=julietgallegos2018@gmail.com | slug=julieta-gallegos-taec | nombre=Julieta  Gallegos | status=pagado
+  [SB-7] email=jellen2013@hotmail.com | slug=estetica-marielena-cabrera-teu3 | nombre=Marielena  Cabrera | status=pendiente
+  [SB-8] email=2objetivo.cesar@gmail.com | slug=manuel-perez-bf90 | nombre=Manuel P├®rez | status=pagado
+  [SB-9] email=naluzloja2023@gmail.com | slug=daniel-rojas-tp3b | nombre=Daniel Rojas | status=pagado
+  [SB-10] email=astridcita1980@gmail.com | slug=astrid-davila-6bj6 | nombre=ASTRID DAVILA | status=entregado
+  [SB-11] email=reyescesarenloja@gmail.com | slug=tapiceria-brito-9pgl | nombre=Tapicer├¡a Brito | status=pagado
+  [SB-12] email=cristhopheryeah113@gmail.com | slug=sas-ykmx | nombre=sas | status=pagado
+  [SB-13] email=yessenia_251990@hotmail.com | slug=yessy-gomez-ramirez-fi6r | nombre=Yessy G├│mez Ram├¡rez | status=entregado
+  [SB-14] email=glorita_mar@hotmail.com | slug=l-exclusivite-jugc | nombre=L'exclusivite | status=pagado
+  [SB-15] email=ramiro.coronelp@gmail.com | slug=kaweh-coffee-shop-xq4k | nombre=Kaweh - Coffee Shop | status=entregado
+  [SB-16] email=dulctradicion@gmail.com | slug=dulce-tradicion-9bgw | nombre=Dulce Tradici├│n | status=pagado
+  [SB-17] email=miangelcastillo77@gmail.com | slug=lojanias-l1qg | nombre=Lojan├¡as | status=pagado
+  [SB-18] email=camilareyesproduccionecu@gmail.com | slug=camila-reyes-foto-y-video-btb4 | nombre=Camila Reyes - Foto y video | status=entregado
+  [SB-19] email=quezadanelson37@gmail.com | slug=talleres-fahac-9pki | nombre=Talleres Fahac | status=pagado
+  [SB-20] email=N/A | slug=saremi-loja-t56h | nombre=N/A | status=pendiente
+  [SB-21] email=sanbernardo.vet@gmail.com | slug=veterinaria-san-bernardo-9ztb | nombre=Veterinaria San Bernardo | status=pendiente
+  [SB-22] email=2reyescesarenloja@gmail.com | slug=hotel-la-dehesa-qfm0 | nombre=Hotel La Dehesa | status=pendiente
+  [SB-23] email=3reyescesarenloja@gmail.com | slug=pily-vans-7xbi | nombre=Pily Vans | status=pendiente
+  [SB-24] email=aotello2@gmail.com | slug=la-casa-de-la-tia-omaira-9wv2 | nombre=La Casa de la Tia Omaira | status=pendiente
+  [SB-25] email=arias5080@gmail.com | slug=punto-smart-072j | nombre=Punto Smart | status=pendiente
+  [SB-26] email=marianasuarez_68@yahoo.es | slug=sur-bike-u83d | nombre=Sur Bike | status=pendiente
+  [SB-27] email=multidistribuciones@hotmail.com | slug=multidistribuciones-lvm4 | nombre=Multidistribuciones | status=pendiente
+  [SB-28] email=5reyescesarenloja@gmail.com | slug=gaby-vera-g39u | nombre=Gaby Vera | status=pendiente
+  [SB-29] email=covatexloja@gmail.com | slug=jose-arevalo-apkm | nombre=Jos├®  Ar├®valo | status=pendiente
+  [SB-30] email=200millasloja@gmail.com | slug=restaurante-200-millas-ysn3 | nombre=Restaurante 200 millas | status=pendiente
+  [SB-31] email=juanreyescesarenloja@gmail.com | slug=juan-raul-quizhpe-torres-sd8v | nombre=Juan Ra├║l Quizhpe Torres | status=pendiente
+  [SB-32] email=fornodifango@hotmail.com | slug=forno-d-fango-8i55 | nombre=Forno di Fango | status=pendiente
+  [SB-33] email=calefonesloja@hotmail.com | slug=calefones-loja-qodk | nombre=Calefones Loja | status=pagado
+
+=== MYSQL RECORDS ===
+  [MY-1] email=maricelitacueva@gmail.com | slug=maricela-cueva-p8mh | nombre=Maricela Cueva | status=pagado
+  [MY-2] email=michaelconde830@gmail.com | slug=las-costillas-del-veci-72z1 | nombre=Las costillas del veci | status=pagado
+  [MY-3] email=email@hosteriasantapetrona.com | slug=hosteria-santa-petrona-5dq5 | nombre=Hosteria Santa petrona | status=pagado
+  [MY-4] email=negocios@cesarreyesjaramillo.com | slug=cesar-reyes-jaramillo-eu0t | nombre=C├®sar Reyes Jaramillo | status=pagado
+  [MY-5] email=n.elvia@hotmail.es | slug=nelvia-sarmiento-montero-5dvy | nombre=Nelvia Sarmiento Montero | status=pagado
+  [MY-6] email=julietgallegos2018@gmail.com | slug=julieta-gallegos-taec | nombre=Julieta Gallegos | status=pagado
+  [MY-7] email=jellen2013@hotmail.com | slug=estetica-marielena-cabrera-teu3 | nombre=Est├®tica Marielena Cabrera | status=pagado
+  [MY-8] email=2objetivo.cesar@gmail.com | slug=manuel-perez-bf90 | nombre=Manuel P├®rez | status=pagado
+  [MY-9] email=naluzloja2023@gmail.com | slug=daniel-rojas-tp3b | nombre=Daniel Rojas | status=pagado
+  [MY-10] email=astridcita1980@gmail.com | slug=astrid-davila-6bj6 | nombre=ASTRID DAVILA | status=pagado
+  [MY-11] email=reyescesarenloja@gmail.com | slug=tapiceria-brito-9pgl | nombre=Tapicer├¡a Brito | status=pagado
+  [MY-12] email=yessenia_251990@hotmail.com | slug=yessy-gomez-ramirez-fi6r | nombre=Yessy G├│mez Ram├¡rez | status=pagado
+  [MY-13] email=glorita_mar@hotmail.com | slug=l-exclusivite-jugc | nombre=L'exclusivite | status=pagado
+  [MY-14] email=ramiro.coronelp@gmail.com | slug=kaweh-coffee-shop-xq4k | nombre=Kaweh - Coffee Shop | status=pagado
+  [MY-15] email=dulctradicion@gmail.com | slug=dulce-tradicion-9bgw | nombre=Dulce Tradici├│n | status=pagado
+  [MY-16] email=miangelcastillo77@gmail.com | slug=lojanias-l1qg | nombre=Lojan├¡as | status=pagado
+  [MY-17] email=camilareyesproduccionecu@gmail.com | slug=camila-reyes-foto-y-video-btb4 | nombre=Camila Reyes - Foto y video | status=pagado
+  [MY-18] email=quezadanelson37@gmail.com | slug=talleres-fahac-9pki | nombre=Talleres Fahac | status=pagado
+  [MY-19] email=1reyescesarenloja@gmail.com | slug=saremi-loja-t56h | nombre=Saremi Loja | status=pagado
+  [MY-20] email=sanbernardo.vet@gmail.com | slug=veterinaria-san-bernardo-9ztb | nombre=Veterinaria San Bernardo | status=pagado
+  [MY-21] email=2reyescesarenloja@gmail.com | slug=hotel-la-dehesa-qfm0 | nombre=Hotel La Dehesa | status=pagado
+  [MY-22] email=3reyescesarenloja@gmail.com | slug=pily-vans-7xbi | nombre=Pily Vans | status=pagado
+  [MY-23] email=aotello2@gmail.com | slug=la-casa-de-la-tia-omaira-lgbm | nombre=La casa de la t├¡a Omaira | status=pagado
+  [MY-24] email=arias5080@gmail.com | slug=punto-smart-072j | nombre=Punto Smart | status=pagado
+  [MY-25] email=marianasuarez_68@yahoo.es | slug=sur-bike-u83d | nombre=Sur Bike | status=pagado
+  [MY-26] email=youtube@incahd.com | slug=abdanal-surinzae-2e8u | nombre=Abdanal Surinzae | status=entregado
+  [MY-27] email=cristhopheryeah113@gmail.com | slug=samirr-raiz-z9gc | nombre=samirr raiz | status=entregado
+  [MY-28] email=sdxd2677@gmail.com | slug=ferreteria-card-6q8h | nombre=Ferreteria Card | status=entregado
+  [MY-29] email=sqwerswer@gmail.com | slug=raws-sarui-kvg3 | nombre=Raws Sarui | status=entregado
+  [MY-30] email=swerrsqer@gmail.com | slug=asdweq-asdqweqw-6drr | nombre=asdweq asdqweqw | status=entregado
+
+=== MISSING FROM MYSQL ===
+ÔÜá´©Å Found 8 records in Supabase that are NOT in MySQL:
+  [MISSING-1] email= | slug=saremi-loja-t56h | nombre=undefined | status=pendiente ÔÜá´©Å SLUG CONFLICT!
+  [MISSING-2] email=multidistribuciones@hotmail.com | slug=multidistribuciones-lvm4 | nombre=Multidistribuciones | status=pendiente Ô£à slug available
+  [MISSING-3] email=5reyescesarenloja@gmail.com | slug=gaby-vera-g39u | nombre=Gaby Vera | status=pendiente Ô£à slug available
+  [MISSING-4] email=covatexloja@gmail.com | slug=jose-arevalo-apkm | nombre=Jos├®  Ar├®valo | status=pendiente Ô£à slug available
+  [MISSING-5] email=200millasloja@gmail.com | slug=restaurante-200-millas-ysn3 | nombre=Restaurante 200 millas | status=pendiente Ô£à slug available
+  [MISSING-6] email=juanreyescesarenloja@gmail.com | slug=juan-raul-quizhpe-torres-sd8v | nombre=Juan Ra├║l Quizhpe Torres | status=pendiente Ô£à slug available
+  [MISSING-7] email=fornodifango@hotmail.com | slug=forno-d-fango-8i55 | nombre=Forno di Fango | status=pendiente Ô£à slug available
+  [MISSING-8] email=calefonesloja@hotmail.com | slug=calefones-loja-qodk | nombre=Calefones Loja | status=pagado Ô£à slug available
+
+=== SLUG MISMATCHES (same email, different slug = QR DANGER) ===
+  ÔÜá´©Å email=cristhopheryeah113@gmail.com: Supabase slug="sas-ykmx" vs MySQL slug="samirr-raiz-z9gc"
+  ÔÜá´©Å email=aotello2@gmail.com: Supabase slug="la-casa-de-la-tia-omaira-9wv2" vs MySQL slug="la-casa-de-la-tia-omaira-lgbm"
+ÔÜá´©Å 2 slug mismatches found! These QR codes may break.

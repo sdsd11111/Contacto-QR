@@ -1,0 +1,10 @@
+VERIFICACION DE MIGRACION
+OK|registraya_vcard_field_visits|OLD=4|NEW=4
+OK|registraya_vcard_follow_ups|OLD=1|NEW=1
+OK|registraya_vcard_registros|OLD=30|NEW=30
+OK|registraya_vcard_sellers|OLD=8|NEW=8
+OK|registraya_vcard_strategic_cards|OLD=2|NEW=2
+OK|registraya_whatsapp_messages|OLD=0|NEW=0
+OK|registraya_whatsapp_sessions|OLD=0|NEW=0
+SLUG_ERR|Table 'Activaqrbasededatos-35303936889f.registraya_vcards' doesn't exist
+RESULT=PERFECTO

@@ -47,6 +47,5 @@ vercel-env.json
 next-env.d.ts
 
 # local scripts & migration logs
-/scripts/
 *.sql
 *.log

@@ -1,0 +1,13 @@
+﻿Total filas en registros: 30
+
+Distribuci├│n por status:
+  status="pagado" -> 15 filas
+  status="cancelado" -> 10 filas
+  status="pendiente" -> 4 filas
+  status="entregado" -> 1 filas
+
+Total status pagado/entregado: 16
+
+Valores ├║nicos de status: [ 'pagado', 'cancelado', 'pendiente', 'entregado' ]
+
+Total sellers: 8
