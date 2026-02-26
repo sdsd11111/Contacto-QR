@@ -143,8 +143,8 @@ async function processQueue() {
 
             // 3. Concatenar contenido acumulado
             const [allMsgsRows] = await pool.execute(
-                'SELECT combined_content FROM registraya_whatsapp_message_queue WHERE id IN (?) ORDER BY created_at ASC',
-                [ids]
+                `SELECT combined_content FROM registraya_whatsapp_message_queue WHERE id IN (${ids.map(() => '?').join(',')}) ORDER BY created_at ASC`,
+                ids
             );
             const fullMessage = (allMsgsRows as any[]).map(r => r.combined_content).join(' ');
 
