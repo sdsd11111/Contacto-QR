@@ -89,6 +89,8 @@ export default function RegisterWizard() {
         linkedin: '',
         facebook: '',
         tiktok: '',
+        youtube: '',
+        x: '',
         menu_digital: '',
         products: '',
         categories: '',
@@ -204,6 +206,8 @@ export default function RegisterWizard() {
                             tiktok: d.tiktok || prev.tiktok,
                             facebook: d.facebook || prev.facebook,
                             linkedin: d.linkedin || prev.linkedin,
+                            youtube: d.youtube || prev.youtube,
+                            x: d.x || prev.x,
                         }));
 
                         // Si ya completó los 3 bloques en WhatsApp, saltamos directo al diseño (Paso 3)
@@ -768,6 +772,8 @@ export default function RegisterWizard() {
             data.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin;LABEL=LinkedIn:${data.linkedin}` : '',
             data.facebook ? `X-SOCIALPROFILE;TYPE=facebook;LABEL=Facebook:${data.facebook}` : '',
             data.tiktok ? `X-SOCIALPROFILE;TYPE=tiktok;LABEL=TikTok:${data.tiktok}` : '',
+            data.youtube ? `X-SOCIALPROFILE;TYPE=youtube;LABEL=YouTube:${data.youtube}` : '',
+            data.x ? `X-SOCIALPROFILE;TYPE=twitter;LABEL=X:${data.x}` : '',
             data.menu_digital ? `URL;type=MenuDigital:${data.menu_digital}` : '',
             `X-SOCIALPROFILE;TYPE=whatsapp;LABEL=WhatsApp:https://wa.me/${data.whatsapp.replace(/[^0-9]/g, '')}`,
             `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
@@ -1521,6 +1527,26 @@ export default function RegisterWizard() {
                                             value={formData.tiktok}
                                             onChange={(e) => updateForm('tiktok', e.target.value)}
                                             placeholder="https://tiktok.com/@tuusuario"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">YouTube (Canal)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.youtube}
+                                            onChange={(e) => updateForm('youtube', e.target.value)}
+                                            placeholder="https://youtube.com/@tucanal"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">X / Twitter (Link)</label>
+                                        <input
+                                            type="url"
+                                            value={formData.x}
+                                            onChange={(e) => updateForm('x', e.target.value)}
+                                            placeholder="https://x.com/tuusuario"
                                             className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
                                         />
                                     </div>
