@@ -186,16 +186,26 @@ async function processQueue() {
                     botReply = botReply.replace(/\[SUMMARY:.*?\]/g, '').trim();
                 }
 
-                // 9. Enviar respuesta (dividida si hay menú con "1.")
-                const splitIndex = botReply.search(/\n1\./);
-                const messagesToSend = splitIndex !== -1
-                    ? [botReply.substring(0, splitIndex).trim(), botReply.substring(splitIndex).trim()].filter(Boolean)
-                    : [botReply];
+                // 9. Enviar respuesta (separada en múltiples globos de chat)
+                let messagesToSend: string[] = [];
+                if (botReply.includes('[SPLIT]')) {
+                    messagesToSend = botReply.split('[SPLIT]').map(m => m.trim()).filter(Boolean);
+                } else {
+                    const splitIndex = botReply.search(/\n1\./);
+                    messagesToSend = splitIndex !== -1
+                        ? [botReply.substring(0, splitIndex).trim(), botReply.substring(splitIndex).trim()].filter(Boolean)
+                        : [botReply];
+                }
 
-                for (const text of messagesToSend) {
+                for (let i = 0; i < messagesToSend.length; i++) {
+                    const text = messagesToSend[i];
                     await sendText(jid, text);
                     await saveMessage(jid, 'assistant', text);
-                    if (messagesToSend.length > 1) await new Promise(r => setTimeout(r, 800));
+
+                    if (i < messagesToSend.length - 1) {
+                        await new Promise(r => setTimeout(r, 1500));
+                        await sendTyping(jid); // Volver a mostrar "Escribiendo..." para la siguiente burbuja
+                    }
                 }
 
                 // 10. Notificar admins si hay transferencia
