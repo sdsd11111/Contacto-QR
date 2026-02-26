@@ -173,6 +173,53 @@ export default function RegisterWizard() {
         }
     }, []);
 
+    // --- MAGIC LINK CONCIERGE ---
+    useEffect(() => {
+        const handleMagicLink = async () => {
+            if (typeof window === 'undefined') return;
+            const params = new URLSearchParams(window.location.search);
+            const magic = params.get('magic');
+
+            if (magic) {
+                console.log("Magic Link Detected:", magic);
+                try {
+                    const res = await fetch(`/api/vcard/get-draft?magic=${magic}`);
+                    if (!res.ok) return;
+                    const json = await res.json();
+
+                    if (json.success && json.data) {
+                        const d = json.data;
+                        setFormData(prev => ({
+                            ...prev,
+                            nombres: d.nombre || prev.nombres,
+                            nombre_negocio: d.negocio || prev.nombre_negocio,
+                            company: d.negocio || prev.company,
+                            profession: d.profesion || prev.profession,
+                            bio: d.bio || prev.bio,
+                            address: `${d.direccion || ''} ${d.ciudad || ''}`.trim() || prev.address,
+                            google_business: d.maps_link || prev.google_business,
+                            email: d.email || prev.email,
+                            web: d.website || prev.web,
+                            instagram: d.instagram || prev.instagram,
+                            tiktok: d.tiktok || prev.tiktok,
+                            facebook: d.facebook || prev.facebook,
+                            linkedin: d.linkedin || prev.linkedin,
+                        }));
+
+                        // Si ya completó los 3 bloques en WhatsApp, saltamos directo al diseño (Paso 3)
+                        if (json.step === 'COMPLETED') {
+                            setStep(3);
+                            alert("¡Bienvenido! He pre-llenado su información del chat. Ahora solo suba su foto para finalizar.");
+                        }
+                    }
+                } catch (err) {
+                    console.error("Error loading magic link draft:", err);
+                }
+            }
+        };
+        handleMagicLink();
+    }, []);
+
     useEffect(() => {
         // Guardar estado cuando cambie formData o step
         if (typeof window !== 'undefined') {
