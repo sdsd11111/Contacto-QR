@@ -2,6 +2,7 @@ import http from 'http';
 import mysql from 'mysql2/promise';
 import * as dotenv from 'dotenv';
 import { resolve } from 'path';
+import { getBotResponse } from './openai-bot';
 
 // Cargar variables de entorno desde .env.local
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
@@ -163,8 +164,7 @@ async function processQueue() {
                 // 6. Guardar en historial
                 await saveMessage(jid, 'user', fullMessage);
 
-                // 7. Llamar a la IA (importación dinámica para evitar problemas de módulos)
-                const { getBotResponse } = await import('./openai-bot.js');
+                // 7. Llamar a la IA
                 let botReply = await getBotResponse(fullMessage, jid);
 
                 // 8. Extraer Tags de Control
