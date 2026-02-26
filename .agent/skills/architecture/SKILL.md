@@ -54,6 +54,21 @@ Toda la lógica de envío debe pasar por `sendMail()` en `lib/mailer.ts`. NO cre
 2. **Sanitización**: El módulo limpia automáticamente comillas (`"`) y espacios de las variables SMTP para evitar errores de autenticación 535.
 3. **Diagnóstico**: `/api/admin/test-smtp` es la herramienta oficial para probar la conexión en producción.
 
+## 🤖 Inteligencia Artificial (Arquitectura CRM v2 y Ventas)
+
+### 1. Arquitectura Desacoplada (Vercel + Render)
+Para evitar bloqueos (Timeouts de 10s en Vercel) y múltiples ejecuciones paralelas por mensajes rápidos:
+- **Ingesta (Vercel)**: El Webhook de Evolution API (`app/api/webhook/whatsapp/route.ts`) solo ENCOLA los mensajes en la tabla `registraya_whatsapp_message_queue`. No llama a la IA.
+- **Procesamiento (Render)**: Un Background Worker ejecutado con TypeScript puro (`tsx ./scripts/message-worker.ts`) corre de forma persistente.
+- **Acumulación (Debounce 25s)**: El Worker espera 25 segundos desde el último mensaje de un usuario para concatenar todos los mensajes (ideas fragmentadas) en un solo "pensamiento" antes de enviarlo a OpenAI.
+
+### 2. Psicología de Ventas en la IA (El "Closer")
+El bot (`lib/openai-bot.ts`) no es un simple informante, es una máquina estructurada de ventas:
+- **Cierre Presuntivo (Amarre)**: Cuando detecta alta intención (pedir proyecciones matemáticas o hablar de métodos de pago), NUNCA hace el handoff de forma directa. Hace que el usuario dé el **"Sí"** con preguntas cerradas (ej. "¿Te gustaría que César te haga una propuesta?").
+- **Handoff Post-Sí**: Solo cuando el usuario acepta, el bot se despide definitivamente y usa el tag `[TRANSFER_RESELLER]`, sin caer en bucles de más preguntas.
+- **Prevención de Falsos Positivos**: Discutir precios o ganancias NO se cataloga como "Enojo", sino como "Alta Intención", lo que fuerza un `puntuacion_calidad` (Lead Score) de 8, 9 o 10.
+- **Humanización (Multi-Bubble)**: La IA usa la etiqueta silenciosa `[SPLIT]` para separar párrafos largos. El Worker intercepta esto y envía múltiples burbujas de WhatsApp con una pausa artificial de "Escribiendo..." (1.5s) entre cada una.
+
 ---
 
 ## ⚙️ Flujos de Trabajo (Core Workflows)
