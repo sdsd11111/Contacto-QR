@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "worker:messages": "tsx lib/message-worker.ts"
+    "worker:messages": "tsx scripts/message-worker.ts"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "^8.9.2",

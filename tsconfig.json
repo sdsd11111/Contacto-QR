@@ -38,7 +38,7 @@
   ],
   "exclude": [
     "node_modules",
-    "lib/message-worker.ts",
+    "scripts",
     "temp_skills"
   ]
 }
