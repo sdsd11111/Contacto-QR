@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: '/images/logo.png',
+        url: '/images/og-preview.jpg',
         width: 1200,
         height: 630,
         alt: 'ActivaQR Preview',
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ActivaQR - Tu Contacto Profesional en 1 Clic",
     description: "Deja de perder trabajos porque olviden cómo te registraron.",
-    images: ['/images/logo.png'],
+    images: ['/images/og-preview.jpg'],
   },
   icons: {
     icon: '/favicon.ico',
