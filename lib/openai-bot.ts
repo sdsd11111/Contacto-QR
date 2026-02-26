@@ -94,23 +94,50 @@ Si detectas que el usuario está altamente motivado (ej. pide cálculos matemát
    - Si el usuario dice **"SÍ"** (o "avancemos", "transferencia", etc.): ¡Cerraste la venta! Despídete inmediatamente con la frase exacta: *"Te comunico con César y bienvenido a nuestra familia. Gracias y un abrazo."*, añade el tag \`[TRANSFER_RESELLER]\` o \`[TRANSFER_SUPPORT]\` y NO VUELVAS A ESCRIBIR MÁS.
    - Si el usuario dice **"NO"** (o "lo voy a pensar"): Responde de forma relajada: *"Listo, piénsalo y ya tienes nuestros números, nos escribes cuando decidas."* y añade el tag \`[TRANSFER_NONE]\`.
 
+### 📋 RUTA INFORMATIVA (THE COMMERCIAL STEERER):
+Cuando el usuario haga preguntas abiertas sobre el producto o el negocio (ej: "¿De qué trata?", "¿Cómo funciona?"):
+1. **Informa y Confirma**: Responde de forma clara y humana. [SPLIT] Al final de tu explicación, SIEMPRE pregunta: *"¿Lo ha comprendido todo o necesita más información sobre algún punto?"*.
+2. **Redirección si "SÍ"**: Si el usuario confirma que entendió, transiciona INMEDIATAMENTE a la parte comercial. Ej: *"Excelente. [SPLIT] Ahora que conoce el valor del Contacto Digital, ¿le gustaría que activemos el suyo para empezar a profesionalizar su red?"*.
+3. **Persistencia si "NO/SOLO MIRO"**: Si el usuario declina o dice que solo pregunta, sé elegante pero persistente: *"Comprendo perfectamente. [SPLIT] Mi objetivo es que no se quede con ninguna duda. ¿Hubo algo que no quedó claro o prefiere que le cuente sobre los planes específicos para su negocio?"*.
+4. **Límite de 5 Intentos**: Tienes un máximo de **5 intentos** de cierre comercial por sesión. Si después de 5 intentos el usuario sigue declinando, acepta su posición y queda a disposición de forma pasiva.
+
 ### 📋 EJEMPLOS DE TONO (FEW-SHOT):
 - Usuario: "Hola, ¿cómo funciona eso?"
-- Bot: "¡Qué tal! Un gusto saludarle. El Contacto Digital es una herramienta que guarda sus datos directamente en el celular de su cliente con un solo escaneo. ¿En qué área trabaja usted actualmente? Así puedo decirle cómo le sacaría el mayor provecho."
+- Bot: "¡Qué tal! Un gusto saludarle. El Contacto Digital es una herramienta que guarda sus datos directamente en el celular de su cliente con un solo escaneo. [SPLIT] ¿Lo ha comprendido todo o necesita más información? Así podemos ver qué plan le conviene más."
+- Usuario: "Sí, todo claro."
+- Bot: "¡Perfecto! [SPLIT] Entonces, ¿le parece si iniciamos con su registro ahora mismo para que su negocio no pierda más clientes?"
+
+### 🤖 CONCIERGE DE REGISTRO (MODO WIZARD):
+Cuando el usuario confirme que desea registrarse (ej: "Sí, quiero mi QR"), entra en modo **CONCIERGE**. Tu misión es recolectar TODOS los datos agrupados en estos 3 bloques para que sea rápido pero completo:
+
+1. **Bloque 1 (Identidad)**: Pregunta su *Nombre Completo*, *Profesión* y *Nombre de su Negocio*.
+2. **Bloque 2 (Bio y Ubicación)**: Pregunta su *Biografía/Descripción de servicios*, *Ciudad* y *Dirección física (o link de Google Maps)*.
+3. **Bloque 3 (Contacto y Redes)**: Pregunta su *Email*, *Sitio Web* y sus Redes Sociales (*Instagram, TikTok, Facebook, LinkedIn, YouTube, X*). [SPLIT] Explícale que si no tiene alguna, puede dejarla en blanco.
+
+**REGLA DE ORO**: Si el usuario ignora algún campo en su respuesta, déjalo en blanco y pasa al siguiente bloque. No seas insistente. Al terminar los 3 bloques, dile que estás procesando su "Enlace Mágico" de finalización.
+
+### 📋 EJEMPLOS DE TONO (FEW-SHOT):
+- Usuario: "Sí, quiero mi contacto QR ahora."
+- Bot: "¡Excelente decisión! 🎉 Vamos a preparar su borrador profesional ahora mismo para que solo tenga que subir su foto y pagar. [SPLIT] Para empezar, dígame: ¿Cuál es su Nombre completo, su Profesión y el Nombre de su Negocio?"
 
 ### REGLAS TÉCNICAS (SÓLO PARA TI):
-Al final de CADA respuesta, incluye el bloque [DATA] JSON. No lo olvides nunca.
+Al final de CADA respuesta, incluye el bloque [DATA] JSON.
 [DATA]
 {
-  "state": "buying | reseller | help | angry",
+  "state": "buying | reseller | help | angry | concierge",
+  "bot_mode": "LEAD_GEN | CONCIERGE",
+  "registration_step": "IDLE | STEP_1 | STEP_2 | STEP_3 | COMPLETED",
   "lead": {
     "nombre": "string", "negocio": "string", "profesion": "string", "ciudad": "string", "canton": "string",
-    "edad": "string", "estado_civil": "string", "horarios": "string",
-    "potencial_web": boolean, "potencial_auto": boolean, 
-    "puntuacion_calidad": 1-10, // SI EL CLIENTE HABLA DE NEGOCIOS, VENTAS, PAGOS O MATEMÁTICAS, DEBES PONER 8, 9 o 10.
-    "notas": "string (detalles extra importantes)"
+    "puntuacion_calidad": 1-10, "notas": "string"
   },
-  "summary": "Resumen breve para César",
+  "registration_data": {
+    "nombre": "string", "profesion": "string", "negocio": "string",
+    "bio": "string", "ciudad": "string", "direccion": "string", "maps_link": "string",
+    "email": "string", "website": "string",
+    "instagram": "string", "tiktok": "string", "facebook": "string", "linkedin": "string", "youtube": "string", "x": "string"
+  },
+  "summary": "Resumen para César",
   "transfer": "SUPPORT | RESELLER | NONE"
 }
 [/DATA]
@@ -145,20 +172,26 @@ export async function saveMessage(jid: string, role: string, content: string) {
 /**
  * Upsert Lead
  */
-export async function upsertLeadData(jid: string, leadData: any, state: string) {
+export async function upsertLeadData(jid: string, extracted: any) {
     try {
+        const { lead, state, bot_mode, registration_step, registration_data } = extracted;
         const query = `
             INSERT INTO registraya_whatsapp_leads 
-            (jid, nombre, negocio, profesion, ciudad, canton, edad_propietario, estado_civil, horarios, potencial_web, potencial_auto, interes, estado_conversacion, puntuacion_calidad, deep_profile, notas)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (jid, nombre, negocio, profesion, ciudad, canton, puntuacion_calidad, notas, bot_mode, registration_step, registration_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE 
             nombre = VALUES(nombre), negocio = VALUES(negocio), profesion = VALUES(profesion), ciudad = VALUES(ciudad), canton = VALUES(canton),
-            edad_propietario = VALUES(edad_propietario), estado_civil = VALUES(estado_civil), horarios = VALUES(horarios),
-            potencial_web = VALUES(potencial_web), potencial_auto = VALUES(potencial_auto), interes = VALUES(interes),
-            estado_conversacion = VALUES(estado_conversacion), puntuacion_calidad = VALUES(puntuacion_calidad), deep_profile = VALUES(deep_profile), notas = VALUES(notas)
+            puntuacion_calidad = VALUES(puntuacion_calidad), notas = VALUES(notas),
+            bot_mode = VALUES(bot_mode), registration_step = VALUES(registration_step), registration_json = VALUES(registration_json)
         `;
-        const interesMap: any = { buying: 'VENTA_DIRECTA', reseller: 'RESELLER' };
-        await pool.execute(query, [jid, leadData.nombre || null, leadData.negocio || null, leadData.profesion || null, leadData.ciudad || null, leadData.canton || null, leadData.edad || null, leadData.estado_civil || null, leadData.horarios || null, leadData.potencial_web ? 1 : 0, leadData.potencial_auto ? 1 : 0, interesMap[state] || 'UNKNOWN', state || null, leadData.puntuacion_calidad || 0, JSON.stringify(leadData), leadData.notas || null]);
+        await pool.execute(query, [
+            jid,
+            lead.nombre || null, lead.negocio || null, lead.profesion || null, lead.ciudad || null, lead.canton || null,
+            lead.puntuacion_calidad || 0, lead.notes || null,
+            bot_mode || 'LEAD_GEN',
+            registration_step || 'IDLE',
+            registration_data ? JSON.stringify(registration_data) : null
+        ]);
     } catch (e) { console.error("upsertLeadData error", e); }
 }
 
@@ -177,9 +210,15 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
         let currentMetadata = {};
 
         if (remoteJid) {
-            const [sessionRows] = await pool.execute('SELECT bot_state, bot_metadata FROM registraya_whatsapp_sessions WHERE jid = ?', [remoteJid]);
-            const sessions = sessionRows as any[];
-            if (sessions.length > 0) currentMetadata = sessions[0].bot_metadata || {};
+            const [leadRows] = await pool.execute('SELECT bot_mode, registration_step, registration_json FROM registraya_whatsapp_leads WHERE jid = ?', [remoteJid]);
+            const leads = leadRows as any[];
+            if (leads.length > 0) {
+                currentMetadata = {
+                    bot_mode: leads[0].bot_mode,
+                    registration_step: leads[0].registration_step,
+                    registration_data: leads[0].registration_json ? JSON.parse(leads[0].registration_json) : {}
+                };
+            }
         }
 
         let chatHistory = history;
@@ -206,10 +245,16 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
             try {
                 const extracted = JSON.parse(dataMatch[1]);
                 botReply = botReply.replace(/\[DATA\][\s\S]*?\[\/DATA\]/, "").trim();
-                await updateSessionMetadata(remoteJid, extracted.state, extracted.lead);
-                await upsertLeadData(remoteJid, extracted.lead, extracted.state);
+
+                await upsertLeadData(remoteJid, extracted);
 
                 if (extracted.summary) botReply += ` [SUMMARY:${extracted.summary}]`;
+
+                // Magic Link Generation if COMPLETED
+                if (extracted.registration_step === 'COMPLETED') {
+                    const magicLink = `https://www.activaqr.com/registro?magic=${Buffer.from(remoteJid).toString('base64')}`;
+                    botReply += `\n\n✨ *¡Borrador listo!* ✨\nUse este enlace para subir su foto y pagar: ${magicLink}`;
+                }
 
                 // FAIL-SAFE: Si el estado es 'angry' o 'help' o incluye palabras clave de handoff
                 const lowerReply = botReply.toLowerCase();
