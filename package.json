@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "worker:messages": "ts-node --esm lib/message-worker.ts"
+    "lint": "next lint",
+    "worker:messages": "tsx lib/message-worker.ts"
   },
   "dependencies": {
     "@paypal/react-paypal-js": "^8.9.2",
@@ -45,6 +45,7 @@
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
