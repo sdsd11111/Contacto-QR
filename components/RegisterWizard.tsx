@@ -197,15 +197,27 @@ export default function RegisterWizard() {
                         const d = json.data;
                         setFormData(prev => ({
                             ...prev,
-                            nombres: d.nombre || prev.nombres,
+                            // Tipo de perfil (persona o negocio)
+                            tipo_perfil: (d.tipo_perfil === 'negocio' ? 'negocio' : 'persona') as 'persona' | 'negocio',
+                            // Identidad - Persona
+                            nombres: d.nombres || prev.nombres,
+                            apellidos: d.apellidos || prev.apellidos,
+                            // Identidad - Negocio
                             nombre_negocio: d.negocio || prev.nombre_negocio,
-                            company: d.negocio || prev.company,
+                            contacto_nombre: d.contacto_nombre || prev.contacto_nombre,
+                            contacto_apellido: d.contacto_apellido || prev.contacto_apellido,
+                            // Perfil Profesional
                             profession: d.profesion || prev.profession,
+                            company: d.empresa || d.negocio || prev.company,
                             bio: d.bio || prev.bio,
-                            address: `${d.direccion || ''} ${d.ciudad || ''}`.trim() || prev.address,
+                            products: d.productos || prev.products,
+                            categories: d.etiquetas || prev.categories,
+                            address: d.direccion || prev.address,
                             google_business: d.maps_link || prev.google_business,
+                            // Contacto y Redes
                             email: d.email || prev.email,
                             web: d.website || prev.web,
+                            menu_digital: d.menu_digital || prev.menu_digital,
                             instagram: d.instagram || prev.instagram,
                             tiktok: d.tiktok || prev.tiktok,
                             facebook: d.facebook || prev.facebook,
