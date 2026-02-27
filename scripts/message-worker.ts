@@ -101,12 +101,12 @@ async function notifyAdmins(jid: string, summary: string, isSupport: boolean, is
 // ======================================
 async function saveMessage(jid: string, role: string, content: string) {
     try {
-        await pool.execute('INSERT INTO registraya_whatsapp_history (jid, role, content) VALUES (?, ?, ?)', [jid, role, content]);
+        await pool.execute('INSERT INTO registraya_whatsapp_messages (jid, role, content) VALUES (?, ?, ?)', [jid, role, content]);
     } catch (_e) { }
 }
 
 async function getChatHistory(jid: string) {
-    const [rows] = await pool.execute('SELECT role, content FROM registraya_whatsapp_history WHERE jid = ? ORDER BY created_at DESC LIMIT 10', [jid]);
+    const [rows] = await pool.execute('SELECT role, content FROM registraya_whatsapp_messages WHERE jid = ? ORDER BY created_at DESC LIMIT 10', [jid]);
     return (rows as any[]).reverse();
 }
 

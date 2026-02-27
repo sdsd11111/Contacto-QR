@@ -57,13 +57,14 @@ Eres el "Asesor Estratégico" de ActivaQR. 🚀
 Tu objetivo: Vender el "Contacto Digital", reclutar socios SAS y realizar el registro interactivo (Concierge).
 
 ### 🎭 TONO Y PERSONALIDAD:
-- **SALUDO OBLIGATORIO**: Siempre que inicies una conversación o saludes, usa: **"¡Hola! Gracias por comunicarte con ActivaQR. 😊"** (O variantes muy similares que incluyan el agradecimiento).
-- **Semiprofesional y Cercano**: Usa un lenguaje educado pero cálido. Evita el "voseo" excesivo. Respeta al usuario.
+- **SALUDO ÚNICO (CRÍTICO)**: 
+  - Si el historial de mensajes está vacío o solo contiene el mensaje inicial del usuario, saluda con: **"¡Hola! Gracias por comunicarte con ActivaQR. 😊"**.
+  - Si YA hay mensajes previos del asistente en el historial, **ESTÁ TOTALMENTE PROHIBIDO SALUDAR DE NUEVO**. Nada de "¿En qué puedo ayudarte?", ni "Un gusto saludarte". Ve directo al grano.
 - **FLUJO SIN REPETICIONES (CRÍTICO)**: 
-  - Si el historial ya tiene mensajes previos, **NO SALUDES DE NUEVO**. 
-  - Si ya respondiste una pregunta, **NO REPITAS LA EXPLICACIÓN**. 
+  - Si ya respondiste una pregunta o pediste un dato, **NO REPITAS LA EXPLICACIÓN**. 
   - Sé extremadamente directo. Si el usuario te da datos, procésalos y pasa al siguiente paso sin rodeos.
-- **No seas un robot**: Responde de forma fluida.
+  - **PRESERVACIÓN DE DATOS**: En cada bloque [DATA] que generes, DEBES mantener todos los campos de 'registration_data' que ya fueron llenados anteriormente. No los dejes vacíos si ya tenías el valor.
+- **Semiprofesional y Cercano**: Usa un lenguaje educado pero cálido. Evita el "voseo" excesivo. Respeta al usuario.
 - **Ecuador/Loja**: Conoces el contexto local. Eres amable y servicial.
 
 ### 📝 REGLAS ESTRICTAS DE FORMATO (¡CRÍTICO PARA WHATSAPP!):
@@ -178,7 +179,7 @@ Al final de CADA respuesta, incluye el bloque [DATA] JSON. **DEBES mantener los 
 export async function getChatHistory(jid: string, limit: number = 10) {
     try {
         const [rows] = await pool.execute(
-            'SELECT role, content FROM registraya_whatsapp_history WHERE jid = ? ORDER BY created_at DESC LIMIT ?',
+            'SELECT role, content FROM registraya_whatsapp_messages WHERE jid = ? ORDER BY created_at DESC LIMIT ?',
             [jid, limit]
         );
         return (rows as any[]).reverse();
@@ -190,7 +191,7 @@ export async function getChatHistory(jid: string, limit: number = 10) {
  */
 export async function saveMessage(jid: string, role: string, content: string) {
     try {
-        await pool.execute('INSERT INTO registraya_whatsapp_history (jid, role, content) VALUES (?, ?, ?)', [jid, role, content]);
+        await pool.execute('INSERT INTO registraya_whatsapp_messages (jid, role, content) VALUES (?, ?, ?)', [jid, role, content]);
     } catch (e) { }
 }
 
@@ -291,15 +292,20 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
 
                 if (extracted.summary) botReply += ` [SUMMARY:${extracted.summary}]`;
 
-                // Magic Link Generation if COMPLETED
-                if (extracted.registration_step === 'COMPLETED') {
+                // Magic Link Generation if started or completed
+                const hasValidStep = ['STEP_1', 'STEP_2', 'STEP_3', 'COMPLETED'].includes(extracted.registration_step);
+                if (hasValidStep && remoteJid) {
                     const magicLink = `https://www.activaqr.com/registro?magic=${Buffer.from(remoteJid).toString('base64')}`;
-                    botReply += `\n\n✨ *¡Borrador listo!* ✨\nUse este enlace para subir su foto y pagar: ${magicLink}`;
+                    if (extracted.registration_step === 'COMPLETED') {
+                        botReply += `\n\n✨ *¡Borrador listo!* ✨\nUse este enlace para subir su foto y pagar: ${magicLink}`;
+                    } else if (!botReply.includes(magicLink)) {
+                        botReply += `\n\n💡 *Tip*: Si prefiere, puede terminar su registro manualmente aquí: ${magicLink}`;
+                    }
                 }
 
-                // FAIL-SAFE: Si el estado es 'angry' o 'help' o incluye palabras clave de handoff
+                // FAIL-SAFE: Si el estado es 'angry' o 'help' o incluye frases explícitas de handoff
                 const lowerReply = botReply.toLowerCase();
-                const needsHuman = ["cesar", "director", "asesor personal", "experto", "solucionar personalmente"].some(k => lowerReply.includes(k));
+                const needsHuman = ["director", "asesor personal", "experto", "solucionar personalmente"].some(k => lowerReply.includes(k));
 
                 if (extracted.transfer === "SUPPORT" || extracted.state === "angry" || needsHuman) {
                     botReply += " [TRANSFER_SUPPORT]";

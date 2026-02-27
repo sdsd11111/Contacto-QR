@@ -1,7 +1,6 @@
 [
-  "registraya_vcard_field_visits",
-  "registraya_vcard_follow_ups",
-  "registraya_vcard_registros",
-  "registraya_vcard_sellers",
-  "registraya_vcard_strategic_cards"
+  "registraya_whatsapp_leads",
+  "registraya_whatsapp_message_queue",
+  "registraya_whatsapp_messages",
+  "registraya_whatsapp_sessions"
 ]
