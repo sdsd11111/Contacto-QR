@@ -19,7 +19,7 @@ async function checkColumns() {
         );
 
         console.log('Columnas de registraya_vcard_registros:');
-        console.log(rows.map(r => r.COLUMN_NAME).join(', '));
+        rows.forEach(r => console.log(r.COLUMN_NAME));
 
     } catch (error) {
         console.error('Error:', error);

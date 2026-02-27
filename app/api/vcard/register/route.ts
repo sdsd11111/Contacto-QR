@@ -97,19 +97,45 @@ export async function POST(req: NextRequest) {
                     finalSlug = `${cleanName}-${Math.random().toString(36).substring(2, 6)}`;
                 }
 
+                // --- FOOTPRINT ATTRIBUTION LOGIC ---
+                let finalSellerId = seller_id || null;
+                let isFootprintAttributed = 0;
+
+                try {
+                    // Search for a visit in the last 30 days with a matching phone or email
+                    // Priority: Footprint overrides manual seller_id
+                    const [footprintRows]: any = await pool.execute(`
+                        SELECT seller_id 
+                        FROM registraya_vcard_field_visits 
+                        WHERE (contact_phone = ? OR (contact_email IS NOT NULL AND contact_email = ?))
+                          AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                        ORDER BY created_at DESC 
+                        LIMIT 1
+                    `, [whatsapp, email]);
+
+                    if (footprintRows.length > 0) {
+                        finalSellerId = footprintRows[0].seller_id;
+                        isFootprintAttributed = 1;
+                        console.log(`ATTRIBUTION: Footprint found for ${email}. Attributed to seller ${finalSellerId}`);
+                    }
+                } catch (attributionErr) {
+                    console.error("Error checking footprint attribution:", attributionErr);
+                }
+                // -----------------------------------
+
                 const insertQuery = `
                     INSERT INTO registraya_vcard_registros (
                         id, created_at, nombre, email, whatsapp, profesion, empresa, bio, direccion,
                         web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
                         plan, foto_url, comprobante_url, galeria_urls, status, paid_at, slug, etiquetas,
-                        commission_status, seller_id, edit_code, edit_uses_remaining,
+                        commission_status, seller_id, attributed_by_footprint, edit_code, edit_uses_remaining,
                         tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
                         menu_digital
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, ?, 
-                        ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
                         ?
                     )
@@ -120,7 +146,8 @@ export async function POST(req: NextRequest) {
                     web || null, google_business || null, instagram || null, linkedin || null, facebook || null, tiktok || null, productos_servicios || null,
                     plan || null, foto_url || null, comprobante_url || null, galeriaUrlsJson, finalStatus || 'pendiente', null, finalSlug, etiquetas || null,
                     'pending', // commission_status
-                    seller_id || null,
+                    finalSellerId,
+                    isFootprintAttributed,
                     serverGeneratedEditCode, 2, // edit_code and uses
                     tipo_perfil || 'persona', nombres || null, apellidos || null, nombre_negocio || null, contacto_nombre || null, contacto_apellido || null,
                     menu_digital || null

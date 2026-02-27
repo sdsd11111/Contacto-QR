@@ -8,9 +8,11 @@ import {
     CheckCircle, X, Clock, Briefcase, Lightbulb,
     Utensils, Stethoscope, Scissors, ShirtIcon, Wrench,
     Pill, Building2, GraduationCap, HelpCircle,
-    AlertCircle, MessageSquare, History, ChevronDown, List, Map, Camera
+    AlertCircle, MessageSquare, History, ChevronDown, List, Map, Camera,
+    User
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import RouteMap from "./RouteMap";
 
 // ────────────────────────────────────────────
@@ -26,6 +28,9 @@ type ContactRole = "dueño" | "encargado" | "empleado";
 interface VisitForm {
     businessName: string;
     contactName: string;
+    contactPhone: string; // NEW
+    contactEmail: string; // NEW
+    contactCedula: string; // NEW
     businessCategory: BusinessCategory | "";
     sector: string;
     contactRole: ContactRole | "";
@@ -38,6 +43,7 @@ interface VisitForm {
     latitude: number | null;
     longitude: number | null;
     photo: File | null;
+    entityType: 'persona' | 'empresa';
 }
 
 interface FollowUp {
@@ -49,6 +55,7 @@ interface FollowUp {
     scheduledDate: string;
     whatsappMessage: string;
     status: "pendiente" | "completado" | "descartado";
+    entityType?: 'persona' | 'empresa';
 }
 
 interface VisitHistory {
@@ -59,6 +66,7 @@ interface VisitHistory {
     category: BusinessCategory;
     result: VisitResult;
     sector: string;
+    entityType?: 'persona' | 'empresa';
 }
 
 interface StrategicCard {
@@ -129,10 +137,13 @@ export default function RecorridoTab({ seller }: { seller: any }) {
     const [strategicCard, setStrategicCard] = useState<StrategicCard | null>(null);
 
     const [form, setForm] = useState<VisitForm>({
-        businessName: "", contactName: "", businessCategory: "", sector: "",
+        businessName: "", contactName: "",
+        contactPhone: "", contactEmail: "", contactCedula: "", // NEW
+        businessCategory: "", sector: "",
         contactRole: "", result: "", qrShared: null, mainObjection: "",
         followUpDate: getTomorrow(), highTicketSignal: null,
-        notes: "", latitude: null, longitude: null, photo: null
+        notes: "", latitude: null, longitude: null, photo: null,
+        entityType: 'persona'
     });
 
     // ────────────────────────────────────────────
@@ -186,10 +197,13 @@ export default function RecorridoTab({ seller }: { seller: any }) {
 
     const resetForm = () => {
         setForm({
-            businessName: "", contactName: "", businessCategory: "", sector: "",
+            businessName: "", contactName: "",
+            contactPhone: "", contactEmail: "", contactCedula: "", // NEW
+            businessCategory: "", sector: "",
             contactRole: "", result: "", qrShared: null, mainObjection: "",
             followUpDate: getTomorrow(), highTicketSignal: null,
-            notes: "", latitude: null, longitude: null, photo: null
+            notes: "", latitude: null, longitude: null, photo: null,
+            entityType: 'persona'
         });
         setStrategicCard(null);
         setCurrentStep(1);
@@ -253,6 +267,9 @@ export default function RecorridoTab({ seller }: { seller: any }) {
                     sellerId: seller.id,
                     businessName: form.businessName,
                     contactName: form.contactName,
+                    contactPhone: form.contactPhone,   // NEW
+                    contactEmail: form.contactEmail,   // NEW
+                    contactCedula: form.contactCedula, // NEW
                     category: form.businessCategory,
                     sector: form.sector,
                     result: form.result,
@@ -262,13 +279,13 @@ export default function RecorridoTab({ seller }: { seller: any }) {
                     lat: lat,
                     lng: lng,
                     followUpDate: form.followUpDate,
-                    fotoUrl: fotoUrl
+                    fotoUrl: fotoUrl,
+                    entityType: form.entityType
                 })
             });
             const data = await res.json();
             if (data.success) {
-                // TODO: Refresh history / follow-ups
-                // Fetch Historial again (or append to local state)
+                // Refresh history / follow-ups
                 fetch(`/api/field-visits?seller_id=${seller.id}`).then(r => r.json()).then(d => d.success && setHistory(d.data));
                 fetch(`/api/follow-ups?seller_id=${seller.id}`).then(r => r.json()).then(d => d.success && setFollowUps(d.data.map((r: any) => ({
                     id: r.id,
@@ -280,14 +297,20 @@ export default function RecorridoTab({ seller }: { seller: any }) {
                     whatsappMessage: r.whatsapp_message || "",
                     status: r.status
                 }))));
+
+                setIsSaving(false);
+                setVisitSaved(true);
+                setTimeout(() => { setVisitSaved(false); setShowRegisterModal(false); resetForm(); }, 2200);
+            } else {
+                console.error("API error saving visit:", data.error);
+                alert("Error al guardar: " + data.error);
+                setIsSaving(false);
             }
         } catch (e) {
             console.error("Error saving visit", e);
+            alert("Error de conexión al guardar.");
+            setIsSaving(false);
         }
-
-        setIsSaving(false);
-        setVisitSaved(true);
-        setTimeout(() => { setVisitSaved(false); setShowRegisterModal(false); resetForm(); }, 2200);
     };
 
     const handleFollowUpAction = async (id: number, action: "completado" | "descartado") => {
@@ -304,7 +327,11 @@ export default function RecorridoTab({ seller }: { seller: any }) {
     };
 
     const canGoNext = () => {
-        if (currentStep === 1) return form.businessName.trim() !== "" && form.contactName.trim() !== "" && form.businessCategory !== "";
+        if (currentStep === 1) return (
+            (form.businessName.trim() !== "" || form.contactName.trim() !== "") &&
+            form.contactPhone.trim() !== "" &&
+            form.businessCategory !== ""
+        );
         if (currentStep === 2) return form.contactRole !== "" && form.result !== "" && form.qrShared !== null;
         return true;
     };
@@ -509,23 +536,74 @@ function Step1({ form, setForm, onCategorySelect, strategicCard }: {
 
     return (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-5">
-            {/* Nombre del negocio */}
+            {/* Tipo de Entidad (Persona vs Empresa) */}
+            <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10">
+                <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, entityType: 'persona' }))}
+                    className={cn(
+                        "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                        form.entityType === 'persona' ? "bg-primary text-[#050B1C]" : "text-white/40 hover:text-white/60"
+                    )}
+                >
+                    <User size={14} /> Persona Natural
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, entityType: 'empresa' }))}
+                    className={cn(
+                        "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                        form.entityType === 'empresa' ? "bg-primary text-[#050B1C]" : "text-white/40 hover:text-white/60"
+                    )}
+                >
+                    <Building2 size={14} /> Empresa / Negocio
+                </button>
+            </div>
+
+            {/* Nombre del Negocio */}
             <div className="space-y-1">
-                <label className="text-[11px] font-black uppercase tracking-widest text-white/40">Nombre del negocio *</label>
+                <label className="text-[11px] font-black uppercase tracking-widest text-white/40 italic">
+                    {form.entityType === 'empresa' ? "Nombre de la Empresa / Establecimiento *" : "Nombre del Negocio (Opcional)"}
+                </label>
                 <input type="text" value={form.businessName}
                     onChange={e => setForm(f => ({ ...f, businessName: e.target.value }))}
-                    placeholder="Ej: Restaurante El Buen Sabor"
+                    placeholder={form.entityType === 'empresa' ? "Ej: Restaurante El Buen Sabor" : "Ej: Su local de ropa (opcional)"}
                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-base font-medium focus:border-primary/50 outline-none transition-all placeholder:text-white/20" />
             </div>
 
             {/* Con quién hablaste */}
-            <div className="space-y-1">
-                <label className="text-[11px] font-black uppercase tracking-widest text-primary/70">👤 ¿Con quién hablaste? *</label>
-                <input type="text" value={form.contactName}
-                    onChange={e => setForm(f => ({ ...f, contactName: e.target.value }))}
-                    placeholder="Ej: Don Carlos, María, el dueño..."
-                    className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 text-base font-medium focus:border-primary/50 outline-none transition-all placeholder:text-white/20" />
-                <p className="text-white/20 text-[10px] ml-2">Para dirigirte bien en el seguimiento</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-primary/70">👤 Nombre Contacto *</label>
+                    <input type="text" value={form.contactName}
+                        onChange={e => setForm(f => ({ ...f, contactName: e.target.value }))}
+                        placeholder="Ej: Don Carlos"
+                        className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-5 py-4 text-base font-medium focus:border-primary/50 outline-none transition-all placeholder:text-white/20" />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-[#25D366]/70">📲 WhatsApp / Celular *</label>
+                    <input type="tel" value={form.contactPhone}
+                        onChange={e => setForm(f => ({ ...f, contactPhone: e.target.value }))}
+                        placeholder="Ej: 0999999999"
+                        className="w-full bg-[#25D366]/5 border border-[#25D366]/20 rounded-2xl px-5 py-4 text-base font-medium focus:border-[#25D366]/50 outline-none transition-all placeholder:text-white/20" />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-white/40">📧 Email (Opcional)</label>
+                    <input type="email" value={form.contactEmail}
+                        onChange={e => setForm(f => ({ ...f, contactEmail: e.target.value }))}
+                        placeholder="cliente@email.com"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-base font-medium focus:border-primary/50 outline-none transition-all placeholder:text-white/20" />
+                </div>
+                <div className="space-y-1">
+                    <label className="text-[11px] font-black uppercase tracking-widest text-white/40">🆔 Cédula (Opcional)</label>
+                    <input type="text" value={form.contactCedula}
+                        onChange={e => setForm(f => ({ ...f, contactCedula: e.target.value }))}
+                        placeholder="17xxxxxxxx"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-base font-medium focus:border-primary/50 outline-none transition-all placeholder:text-white/20" />
+                </div>
             </div>
 
             {/* Categoría */}
@@ -777,7 +855,14 @@ function HistorialSection({ history }: { history: VisitHistory[] }) {
                                         <span className="text-lg">{rc.emoji}</span>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-black text-sm uppercase italic tracking-tight truncate">{v.businessName}</p>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-white truncate">{v.businessName}</h4>
+                                            {v.entityType === 'empresa' ? (
+                                                <Building2 size={12} className="text-primary/60 shrink-0" />
+                                            ) : (
+                                                <User size={12} className="text-white/40 shrink-0" />
+                                            )}
+                                        </div>
                                         <p className="text-white/40 text-[11px] font-medium">
                                             {v.contactName && <span className="text-white/60">👤 {v.contactName} · </span>}
                                             {v.sector}
@@ -811,10 +896,15 @@ function FollowUpCard({ followUp, onAction }: {
             className="bg-[#0A1229] border border-yellow-500/20 rounded-[24px] p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                    <p className="font-black text-base uppercase italic tracking-tighter">{followUp.businessName}</p>
-                    {followUp.contactName && (
-                        <p className="text-primary/70 text-[11px] font-bold mt-0.5">👤 {followUp.contactName}</p>
-                    )}
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-white font-black uppercase text-xs tracking-wider truncate">{followUp.businessName}</h3>
+                        {followUp.entityType === 'empresa' ? (
+                            <Building2 size={12} className="text-primary/60" />
+                        ) : (
+                            <User size={12} className="text-white/40" />
+                        )}
+                    </div>
+                    <p className="text-[10px] text-white/40 font-medium truncate italic">{followUp.contactName}</p>
                     {followUp.objection && (
                         <p className="text-white/40 text-[11px] mt-1 font-medium">💬 &ldquo;{followUp.objection}&rdquo;</p>
                     )}

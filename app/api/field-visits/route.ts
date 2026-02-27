@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import OpenAI from 'openai';
+import { formatPhoneEcuador } from '@/lib/utils';
 
 const openai = new OpenAI();
 
@@ -21,11 +22,13 @@ export async function GET(req: NextRequest) {
                 id,
                 business_name as businessName,
                 contact_name as contactName,
+                business_category as category,
                 result,
                 location_sector as sector,
                 latitude as lat,
                 longitude as lng,
                 foto_url as fotoUrl,
+                entity_type as entityType,
                 created_at as date
             FROM registraya_vcard_field_visits 
             WHERE seller_id = ? 
@@ -51,6 +54,9 @@ export async function POST(req: NextRequest) {
             sellerId,
             businessName,
             contactName,
+            contactPhone,  // NEW
+            contactEmail,  // NEW
+            contactCedula, // NEW
             category,
             sector,
             result,
@@ -60,27 +66,34 @@ export async function POST(req: NextRequest) {
             lat,
             lng,
             followUpDate, // From UI
-            fotoUrl
+            fotoUrl,
+            entityType // NEW
         } = body;
 
-        if (!sellerId || !businessName || !category || !result) {
+        if (!sellerId || (!businessName && !contactName) || !category || !result || !contactPhone) {
             return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
         }
 
         // 1. Insert Field Visit
         const insertVisitQuery = `
             INSERT INTO registraya_vcard_field_visits (
-                seller_id, business_name, contact_name, business_category, 
+                seller_id, business_name, contact_name, 
+                contact_phone, contact_email, contact_cedula,
+                business_category, 
                 result, main_objection, notes, high_ticket_signal, 
-                location_sector, latitude, longitude, foto_url
+                location_sector, latitude, longitude, foto_url,
+                entity_type
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         const [visitResult]: any = await connection.execute(insertVisitQuery, [
             sellerId,
-            businessName,
+            businessName || (entityType === 'empresa' ? 'Empresa sin nombre' : 'Persona Natural'),
             contactName || null,
+            formatPhoneEcuador(contactPhone), // FIX formatting before saving
+            contactEmail || null,
+            contactCedula || null,
             category,
             result,
             objection || null,
@@ -89,7 +102,8 @@ export async function POST(req: NextRequest) {
             sector || null,
             lat || null,
             lng || null,
-            fotoUrl || null
+            fotoUrl || null,
+            entityType || 'persona'
         ]);
 
         const visitId = visitResult.insertId;

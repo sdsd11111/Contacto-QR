@@ -106,6 +106,10 @@ export default function RegisterWizard() {
     const [sellerName, setSellerName] = useState<string | null>(null);
     const [isValidatingCode, setIsValidatingCode] = useState(false);
 
+    // Lead Footprint (Huella) States
+    const [footprintSeller, setFootprintSeller] = useState<string | null>(null);
+    const [isCheckingFootprint, setIsCheckingFootprint] = useState(false);
+
     const [emailError, setEmailError] = useState('');
     const [hasManualTags, setHasManualTags] = useState(false);
     const [isListening, setIsListening] = useState<string | null>(null);
@@ -580,6 +584,42 @@ export default function RegisterWizard() {
             // No resetear seller_id si vino por URL (atribución automática)
         }
     }, [formData.sellerCode]);
+
+    // REAL-TIME FOOTPRINT (HUELLA) CHECK
+    useEffect(() => {
+        const checkFootprint = async () => {
+            if (!formData.whatsapp && (!formData.email || formData.email.length < 5)) {
+                setFootprintSeller(null);
+                return;
+            }
+
+            setIsCheckingFootprint(true);
+            try {
+                const params = new URLSearchParams();
+                if (formData.whatsapp) params.append("whatsapp", formData.whatsapp);
+                if (formData.email) params.append("email", formData.email);
+
+                const res = await fetch(`/api/vcard/check-footprint?${params.toString()}`);
+                const data = await res.json();
+
+                if (data.found) {
+                    setFootprintSeller(data.sellerName);
+                    // Priority: If footprint is found, we use that seller's ID
+                    // (The server does this anyway, but we update UI)
+                    setSellerName(data.sellerName);
+                } else {
+                    setFootprintSeller(null);
+                }
+            } catch (err) {
+                console.error("Error checking footprint:", err);
+            } finally {
+                setIsCheckingFootprint(false);
+            }
+        };
+
+        const timer = setTimeout(checkFootprint, 800);
+        return () => clearTimeout(timer);
+    }, [formData.whatsapp, formData.email]);
 
     const validateEmail = (email: string) => {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1242,42 +1282,72 @@ export default function RegisterWizard() {
                                     {emailError && <p className="mt-2 text-[10px] font-black text-red-500 uppercase italic tracking-widest ml-1">{emailError}</p>}
                                 </div>
 
-                                {/* Seller Code Field */}
-                                <div className="group pt-4 border-t border-navy/5">
-                                    <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1 flex justify-between items-center">
-                                        <span>Código de Vendedor / Promocional</span>
-                                        {sellerName && <span className="text-primary animate-pulse">Vendedor: {sellerName}</span>}
-                                    </label>
-                                    <div className="relative">
-                                        <Tag className={cn(
-                                            "absolute left-6 top-1/2 -translate-y-1/2 transition-colors",
-                                            sellerName ? "text-primary" : "text-navy/20 group-focus-within:text-primary"
-                                        )} size={20} />
-                                        <input
-                                            type="text"
-                                            value={formData.sellerCode}
-                                            onChange={(e) => updateForm('sellerCode', e.target.value)}
-                                            placeholder="Ej. 001"
-                                            className={cn(
-                                                "w-full bg-white/50 border-2 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm uppercase",
-                                                sellerName ? "border-primary/20 bg-primary/5" : "border-transparent focus:border-primary/20"
+                                {/* FOOTPRINT BANNER (ATENCION PERSONALIZADA) */}
+                                <AnimatePresence>
+                                    {footprintSeller && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="bg-[#25D366]/10 border-2 border-[#25D366]/30 rounded-3xl p-6 relative overflow-hidden"
+                                        >
+                                            <div className="absolute top-0 right-0 p-2 opacity-10">
+                                                <ShieldCheck size={40} className="text-[#25D366]" />
+                                            </div>
+                                            <div className="flex gap-4 items-center">
+                                                <div className="w-12 h-12 rounded-2xl bg-[#25D366]/20 flex items-center justify-center shrink-0">
+                                                    <Star className="text-[#25D366]" size={24} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#25D366] mb-1 italic">✨ Cliente ya captado</p>
+                                                    <h4 className="text-sm font-black text-navy uppercase leading-none mb-1">Atención Personalizada Activa</h4>
+                                                    <p className="text-[11px] font-bold text-navy/60 leading-tight uppercase italic">
+                                                        Tu registro está siendo gestionado por <span className="text-[#25D366] font-black">{footprintSeller}</span>.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* Seller Code Field - Hidden or Disabled if footprint exists */}
+                                {!footprintSeller && (
+                                    <div className="group pt-4 border-t border-navy/5">
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3 ml-1 flex justify-between items-center">
+                                            <span>Código de Vendedor / Promocional</span>
+                                            {sellerName && <span className="text-primary animate-pulse">Vendedor: {sellerName}</span>}
+                                        </label>
+                                        <div className="relative">
+                                            <Tag className={cn(
+                                                "absolute left-6 top-1/2 -translate-y-1/2 transition-colors",
+                                                sellerName ? "text-primary" : "text-navy/20 group-focus-within:text-primary"
+                                            )} size={20} />
+                                            <input
+                                                type="text"
+                                                value={formData.sellerCode}
+                                                onChange={(e) => updateForm('sellerCode', e.target.value)}
+                                                placeholder="Ej. 001"
+                                                className={cn(
+                                                    "w-full bg-white/50 border-2 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm uppercase",
+                                                    sellerName ? "border-primary/20 bg-primary/5" : "border-transparent focus:border-primary/20"
+                                                )}
+                                            />
+                                            {isValidatingCode && (
+                                                <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                                                    <Loader2 className="animate-spin text-primary" size={20} />
+                                                </div>
                                             )}
-                                        />
-                                        {isValidatingCode && (
-                                            <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                                                <Loader2 className="animate-spin text-primary" size={20} />
-                                            </div>
-                                        )}
-                                        {sellerName && (
-                                            <div className="absolute right-6 top-1/2 -translate-y-1/2">
-                                                <CheckCircle className="text-primary" size={20} />
-                                            </div>
-                                        )}
+                                            {sellerName && (
+                                                <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                                                    <CheckCircle className="text-primary" size={20} />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="mt-2 text-[9px] font-bold text-navy/30 uppercase tracking-widest ml-1">
+                                            Si un asesor te ayudó, ingresa su código aquí.
+                                        </p>
                                     </div>
-                                    <p className="mt-2 text-[9px] font-bold text-navy/30 uppercase tracking-widest ml-1">
-                                        Si un asesor te ayudó, ingresa su código aquí.
-                                    </p>
-                                </div>
+                                )}
                             </div>
                         </div>
                     )}
