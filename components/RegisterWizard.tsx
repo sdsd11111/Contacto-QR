@@ -197,6 +197,8 @@ export default function RegisterWizard() {
                         const d = json.data;
                         setFormData(prev => ({
                             ...prev,
+                            // WhatsApp from JID
+                            whatsapp: json.whatsapp || prev.whatsapp,
                             // Tipo de perfil (persona o negocio)
                             tipo_perfil: (d.tipo_perfil === 'negocio' ? 'negocio' : 'persona') as 'persona' | 'negocio',
                             // Identidad - Persona

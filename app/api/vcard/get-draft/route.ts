@@ -22,10 +22,13 @@ export async function GET(request: NextRequest) {
 
         const results = rows as any[];
         if (results.length > 0 && results[0].registration_json) {
+            // Extract phone number from JID (format: 593967491847@s.whatsapp.net)
+            const phoneFromJid = jid.split('@')[0];
             return NextResponse.json({
                 success: true,
                 data: JSON.parse(results[0].registration_json),
-                step: results[0].registration_step
+                step: results[0].registration_step,
+                whatsapp: phoneFromJid
             });
         } else {
             return NextResponse.json({ success: false, error: 'Draft not found' }, { status: 404 });
