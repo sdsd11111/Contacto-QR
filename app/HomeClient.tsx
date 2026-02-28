@@ -18,6 +18,7 @@ import {
 import VideoModal from "@/components/VideoModal";
 import PopupManager from "@/components/PopupManager";
 import EditPortalModal from "@/components/EditPortalModal";
+import FloatingSalesHeader from "@/components/FloatingSalesHeader";
 
 export default function HomeClient() {
     useEffect(() => {
@@ -876,6 +877,8 @@ export default function HomeClient() {
                     </div>
                 </div>
             </section>
+
+            <FloatingSalesHeader />
 
             <VideoModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} videoId="Iy69aXd7MFI" />
             <PopupManager />

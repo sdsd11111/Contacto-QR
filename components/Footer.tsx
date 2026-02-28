@@ -16,6 +16,7 @@ export default function Footer() {
                 <Link href="/blog" className="hover:text-primary transition-colors italic">Ver Blog</Link>
                 <Link href="/registro" className="hover:text-primary transition-colors">Registro</Link>
                 <Link href="/diagnostico" className="hover:text-primary transition-colors">Diagnóstico</Link>
+                <Link href="/ventas" className="hover:text-primary transition-colors font-black text-primary">Ventas</Link>
             </div>
             <p className="text-[10px] opacity-50 hover:opacity-100 transition-opacity">
                 Diseñado por <a href="https://www.cesarreyesjaramillo.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">César Reyes Jaramillo</a>
