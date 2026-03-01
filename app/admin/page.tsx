@@ -813,7 +813,26 @@ export default function AdminDashboard() {
                                                             sellerIdFilter === s.id ? "bg-white/10" : ""
                                                         )}
                                                     >
-                                                        <span className="font-black text-xs uppercase tracking-tighter truncate pr-16">{s.nombre}</span>
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex flex-col truncate pr-4">
+                                                                <span className="font-black text-xs uppercase tracking-tighter truncate">{s.nombre}</span>
+                                                                <span className={cn(
+                                                                    "text-[7px] font-black uppercase tracking-widest mt-0.5",
+                                                                    s.parent_id ? "text-white/40" : "text-primary"
+                                                                )}>
+                                                                    {s.parent_id ? "— Asesor (Sub)" : "• Líder (Socio)"}
+                                                                </span>
+                                                            </div>
+                                                            {s.terminos_aceptados_en ? (
+                                                                <span className="text-[7px] bg-green-500/20 text-green-500 px-2 py-0.5 rounded font-black uppercase whitespace-nowrap" title={`Firmado el ${new Date(s.terminos_aceptados_en).toLocaleString()}`}>
+                                                                    Firmado
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[7px] bg-red-500/20 text-red-500 px-2 py-0.5 rounded font-black uppercase whitespace-nowrap">
+                                                                    Pendiente
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="flex justify-between items-center mt-1">
                                                             <span className="text-[9px] font-black text-primary uppercase font-mono">#{s.codigo}</span>
                                                             <span className="text-[9px] font-bold text-white/40">{s.total_ventas} Ventas</span>

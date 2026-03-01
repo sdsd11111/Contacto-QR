@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         // Fetch sellers with their sales count
         const query = `
             SELECT 
-                s.id, s.nombre, s.code as codigo, s.email, s.comision_porcentaje, s.activo, s.created_at,
+                s.id, s.nombre, s.code as codigo, s.email, s.comision_porcentaje, s.activo, s.created_at, s.terminos_aceptados_en,
                 (
                     SELECT COUNT(*) 
                     FROM registraya_vcard_registros r 
@@ -44,7 +44,6 @@ export async function GET(req: NextRequest) {
                     WHERE parent_id = s.id
                 ) as team_count
             FROM registraya_vcard_sellers s
-            WHERE s.parent_id IS NULL
             ORDER BY s.nombre ASC
         `;
         const [rows] = await pool.execute(query);

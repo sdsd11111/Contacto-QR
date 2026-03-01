@@ -136,7 +136,8 @@ export default function ContractModal({ seller, onAccept }: ContractModalProps) 
                         )}
                     </button>
                     <p className="text-[10px] text-white/30 uppercase tracking-widest mt-4 text-center max-w-md">
-                        Al hacer clic, se registrará tu IP ({new Date().toISOString()}) como prueba de aceptación legal de estas cuotas de rendimiento.
+                        Al hacer clic, se registrará tu IP ({new Date().toISOString()}) como prueba de aceptación legal.
+                        <span className="block mt-1 text-primary/60 font-bold">Te enviaremos una copia de este acuerdo a tu correo electrónico.</span>
                     </p>
                 </div>
             </motion.div>
