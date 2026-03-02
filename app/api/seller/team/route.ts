@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
                         <p style="margin: 5px 0;"><strong>Tu Código de Vendedor:</strong> <span style="background: #001549; color: white; padding: 3px 8px; border-radius: 4px;">${code}</span></p>
                     </div>
                     
-                    <p>Ya puedes ingresar a tu panel de control, firmar tu Acuerdo de Rendimiento y empezar a generar vCards para tus clientes.</p>
+                    <p>Ya puedes ingresar a tu panel de control, firmar tu Acuerdo de Rendimiento y empezar a generar perfiles digitales para tus clientes.</p>
                     
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
                     <p style="font-size: 12px; color: #999; text-align: center;">Generador de Tarjetas Digitales - ActivaQR</p>

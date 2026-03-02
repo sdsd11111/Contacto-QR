@@ -556,7 +556,7 @@ export default function SellerDashboard() {
                             : "text-white/40 hover:text-white/70"
                             }`}
                     >
-                        <span className="sm:inline">⚡</span> <span className="whitespace-nowrap">Generar vCard</span>
+                        <span className="sm:inline">⚡</span> <span className="whitespace-nowrap">Contacto Digital</span>
                     </button>
                 </div>
 
