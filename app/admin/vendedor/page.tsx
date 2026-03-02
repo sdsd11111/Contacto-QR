@@ -27,7 +27,8 @@ import {
     ChevronRight,
     X,
     Settings,
-    HelpCircle
+    HelpCircle,
+    ExternalLink
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -707,9 +708,10 @@ export default function SellerDashboard() {
                                         <tr className="text-[10px] font-black uppercase tracking-widest text-white/30 bg-white/[0.01]">
                                             <th className="px-8 py-6">Fecha</th>
                                             <th className="px-8 py-6">Cliente / Plan</th>
+                                            <th className="px-8 py-6">Menú Digital</th>
                                             <th className="px-8 py-6">Contacto</th>
                                             <th className="px-8 py-6">Vendedor</th>
-                                            <th className="px-8 py-6 px-8 py-6">Estado / Venta</th>
+                                            <th className="px-8 py-6">Estado / Venta</th>
                                             <th className="px-8 py-6 text-right">Pago / Comisión</th>
                                         </tr>
                                     </thead>
@@ -741,6 +743,20 @@ export default function SellerDashboard() {
                                                                 Plan {r.plan || 'basic'}
                                                             </span>
                                                         </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        {r.menu_digital ? (
+                                                            <a
+                                                                href={r.menu_digital}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1.5 text-[10px] font-black uppercase text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 w-fit"
+                                                            >
+                                                                <ExternalLink size={10} /> Ver Menú
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-[10px] text-white/20 uppercase font-black">No asignado</span>
+                                                        )}
                                                     </td>
                                                     <td className="px-8 py-6">
                                                         <p className="text-xs font-medium text-white/60">{r.email}</p>

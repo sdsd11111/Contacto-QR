@@ -243,6 +243,59 @@ export default function RegisterWizard() {
     }, []);
 
     useEffect(() => {
+        const handleHydrateFromSeller = async () => {
+            if (typeof window === 'undefined') return;
+            const transferData = localStorage.getItem('vcard_transfer_data');
+            if (transferData) {
+                try {
+                    const parsed = JSON.parse(transferData);
+                    if (parsed.redirectedFromSeller) {
+                        console.log("Hydrating VCard from Seller Panel:", parsed.email);
+
+                        // Reconstruct photo File if base64 exists
+                        let photoFile: File | null = null;
+                        if (parsed.photoBase64 && parsed.photoName && parsed.photoType) {
+                            try {
+                                const base64Data = parsed.photoBase64.split(',')[1];
+                                const byteString = atob(base64Data);
+                                const ab = new ArrayBuffer(byteString.length);
+                                const ia = new Uint8Array(ab);
+                                for (let i = 0; i < byteString.length; i++) {
+                                    ia[i] = byteString.charCodeAt(i);
+                                }
+                                const blob = new Blob([ab], { type: parsed.photoType });
+                                photoFile = new File([blob], parsed.photoName, { type: parsed.photoType });
+                            } catch (err) {
+                                console.error("Error reconstructing photo file:", err);
+                            }
+                        }
+
+                        setFormData(prev => ({
+                            ...prev,
+                            ...parsed,
+                            photo: photoFile || prev.photo,
+                            paymentMethod: parsed.paymentMethod || prev.paymentMethod,
+                            seller_id: parsed.seller_id || prev.seller_id
+                        }));
+
+                        setStep(4); // Jump to payment
+                        setShowVideoGuide(false);
+
+                        // Clean up
+                        localStorage.removeItem('vcard_transfer_data');
+
+                        // Show a small toast or alert
+                        alert("Datos de registro cargados correctamente desde tu panel de vendedor.");
+                    }
+                } catch (e) {
+                    console.error("Error parsing seller transfer data:", e);
+                }
+            }
+        };
+        handleHydrateFromSeller();
+    }, []);
+
+    useEffect(() => {
         // Guardar estado cuando cambie formData o step
         if (typeof window !== 'undefined') {
             if (step === 5) {
@@ -262,7 +315,6 @@ export default function RegisterWizard() {
             }
         }
     }, [formData, step]);
-    // --------------------------------
 
     // --- PAYPHONE REDIRECT HANDLING ---
     useEffect(() => {
@@ -929,7 +981,9 @@ export default function RegisterWizard() {
                 comprobante_url: receiptUrl,
                 slug: slug,
                 etiquetas: finalCategories,
-                seller_id: dataToSubmit.seller_id
+                seller_id: dataToSubmit.seller_id,
+                status: forcedStatus || 'pendiente',
+                payment_method: dataToSubmit.paymentMethod || 'transfer'
             };
 
             console.log("3. UPSERT: Enviando a Supabase...");

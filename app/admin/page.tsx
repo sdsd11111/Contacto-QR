@@ -1077,7 +1077,7 @@ export default function AdminDashboard() {
                             <thead>
                                 <tr className="text-[10px] font-black uppercase tracking-widest text-white/40 bg-white/[0.02]">
                                     <th className="px-8 py-6">Usuario</th>
-                                    <th className="px-8 py-6">Plan</th>
+                                    <th className="px-8 py-6">Plan / Menú</th>
                                     <th className="px-8 py-6">Comprobante</th>
                                     <th className="px-8 py-6">Vendedor</th>
                                     <th className="px-8 py-6">Estado</th>
@@ -1110,12 +1110,24 @@ export default function AdminDashboard() {
                                             </div>
                                         </td>
                                         <td className="px-8 py-6">
-                                            <span className={cn(
-                                                "px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
-                                                r.plan === 'pro' ? "bg-primary/20 text-primary" : "bg-white/10 text-white/40"
-                                            )}>
-                                                {r.plan || 'basic'}
-                                            </span>
+                                            <div className="flex flex-col gap-2">
+                                                <span className={cn(
+                                                    "px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit",
+                                                    r.plan === 'pro' ? "bg-primary/20 text-primary" : "bg-white/10 text-white/40"
+                                                )}>
+                                                    {r.plan || 'basic'}
+                                                </span>
+                                                {r.menu_digital && (
+                                                    <a
+                                                        href={r.menu_digital}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[8px] font-black uppercase text-primary hover:underline flex items-center gap-1"
+                                                    >
+                                                        <ExternalLink size={10} /> Ver Menú
+                                                    </a>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-8 py-6">
                                             {r.comprobante_url ? (
