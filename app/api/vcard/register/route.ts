@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
 
         const {
             nombre, email, profesion, empresa, bio, direccion,
-            web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
+            web, google_business, instagram, linkedin, facebook, tiktok, youtube, x, productos_servicios,
             plan, foto_url, comprobante_url, galeria_urls,
             slug, etiquetas, seller_id, edit_code, // Added edit_code for verification
             tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
                 const updateQuery = `
                     UPDATE registraya_vcard_registros SET
                         nombre=?, whatsapp=?, profesion=?, empresa=?, bio=?, direccion=?,
-                        web=?, google_business=?, instagram=?, linkedin=?, facebook=?, tiktok=?,
+                        web=?, google_business=?, instagram=?, linkedin=?, facebook=?, tiktok=?, youtube=?, x=?,
                         productos_servicios=?, plan=?, foto_url=?, comprobante_url=?, galeria_urls=?,
                         status=?, paid_at = CASE WHEN ? = 'pagado' AND (paid_at IS NULL) THEN NOW() ELSE paid_at END,
                         slug=?, etiquetas=?, seller_id=?,
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
                 await pool.execute(updateQuery, [
                     finalNombre, whatsapp, profesion || null, empresa || null, bio || null, direccion || null,
-                    web || null, google_business || null, instagram || null, linkedin || null, facebook || null, tiktok || null,
+                    web || null, google_business || null, instagram || null, linkedin || null, facebook || null, tiktok || null, youtube || null, x || null,
                     productos_servicios || null, plan || null, foto_url || null, comprobante_url || null, galeriaUrlsJson,
                     finalStatus || 'pendiente', finalStatus, slug || existingUser.slug, etiquetas || null, seller_id || null,
                     tipo_perfil || 'persona', nombres || null, apellidos || null, nombre_negocio || null, contacto_nombre || null, contacto_apellido || null,
@@ -126,14 +126,14 @@ export async function POST(req: NextRequest) {
                 const insertQuery = `
                     INSERT INTO registraya_vcard_registros (
                         id, created_at, nombre, email, whatsapp, profesion, empresa, bio, direccion,
-                        web, google_business, instagram, linkedin, facebook, tiktok, productos_servicios,
+                        web, google_business, instagram, linkedin, facebook, tiktok, youtube, x, productos_servicios,
                         plan, foto_url, comprobante_url, galeria_urls, status, paid_at, slug, etiquetas,
                         commission_status, seller_id, attributed_by_footprint, edit_code, edit_uses_remaining,
                         tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
                         menu_digital
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                        ?, ?, ?, ?, ?, ?, ?, 
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
 
                 const values = [
                     newId, now, finalNombre, email, whatsapp, profesion || null, empresa || null, bio || null, direccion || null,
-                    web || null, google_business || null, instagram || null, linkedin || null, facebook || null, tiktok || null, productos_servicios || null,
+                    web || null, google_business || null, instagram || null, linkedin || null, facebook || null, tiktok || null, youtube || null, x || null, productos_servicios || null,
                     plan || null, foto_url || null, comprobante_url || null, galeriaUrlsJson, finalStatus || 'pendiente', null, finalSlug, etiquetas || null,
                     'pending', // commission_status
                     finalSellerId,
