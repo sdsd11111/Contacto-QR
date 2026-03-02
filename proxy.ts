@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * Middleware de seguridad: protege rutas admin y API sensibles
  * Valida el header x-admin-key contra ADMIN_API_KEY
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const adminKey = request.headers.get('x-admin-key');
     const expectedKey = process.env.ADMIN_API_KEY;
 
