@@ -68,10 +68,32 @@ export default function SellerDashboard() {
         const savedSeller = localStorage.getItem("vcard_seller_data");
         if (savedSeller) {
             const data = JSON.parse(savedSeller);
-            setSeller(data);
-            setIsAuthorized(true);
-            fetchSellerSales(data.id);
-            fetchTeam(data.id);
+            // Verificar sesión en servidor y obtener datos frescos de la DB
+            fetch(`/api/seller/me?id=${data.id}`)
+                .then(res => res.json())
+                .then(serverData => {
+                    if (serverData.success && serverData.seller) {
+                        // Actualizar localStorage con datos frescos (incluye terminos_aceptados_en actualizado)
+                        const freshSeller = serverData.seller;
+                        localStorage.setItem("vcard_seller_data", JSON.stringify(freshSeller));
+                        setSeller(freshSeller);
+                        setIsAuthorized(true);
+                        fetchSellerSales(freshSeller.id);
+                        fetchTeam(freshSeller.id);
+                    } else {
+                        // Sesión inválida: limpiar localStorage y mostrar login
+                        localStorage.removeItem("vcard_seller_data");
+                        setIsAuthorized(false);
+                        setSeller(null);
+                    }
+                })
+                .catch(() => {
+                    // Si hay error de red, usar datos locales temporalmente
+                    setSeller(data);
+                    setIsAuthorized(true);
+                    fetchSellerSales(data.id);
+                    fetchTeam(data.id);
+                });
         }
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

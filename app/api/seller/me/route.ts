@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-export async function POST(request: NextRequest) {
+// GET /api/seller/me?id=X
+// Verifica que el ID del vendedor sea válido y devuelve sus datos frescos desde la DB
+export async function GET(request: NextRequest) {
     try {
-        const { email, password } = await request.json();
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
 
-        if (!email || !password) {
-            return NextResponse.json({ error: 'Email y contraseña requeridos' }, { status: 400 });
+        if (!id) {
+            return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
         }
 
         const connection = await pool.getConnection();
         try {
             const [rows]: any = await connection.execute(
-                'SELECT id, nombre, email, role, comision_porcentaje, parent_id, codigo, terminos_aceptados_en FROM registraya_vcard_sellers WHERE email = ? AND password = ? AND activo = 1',
-                [email, password]
+                'SELECT id, nombre, email, role, comision_porcentaje, parent_id, codigo, terminos_aceptados_en FROM registraya_vcard_sellers WHERE id = ? AND activo = 1',
+                [id]
             );
 
             if (rows.length === 0) {
-                return NextResponse.json({ error: 'Credenciales inválidas o cuenta desactivada' }, { status: 401 });
+                return NextResponse.json({ error: 'Sesión inválida o cuenta desactivada' }, { status: 401 });
             }
 
             const seller = rows[0];
@@ -41,7 +44,7 @@ export async function POST(request: NextRequest) {
         }
 
     } catch (error: any) {
-        console.error('Seller Login Error:', error);
+        console.error('Seller /me Error:', error);
         return NextResponse.json({ error: 'Error del servidor' }, { status: 500 });
     }
 }
