@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import DirectVCardRegistration from "@/components/vendedor/DirectVCardRegistration";
 import SupportModal from "@/components/vendedor/SupportModal";
 import ContractModal from "@/components/vendedor/ContractModal";
+import BankDetailsModal from "@/components/vendedor/BankDetailsModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     LayoutDashboard,
@@ -376,6 +377,19 @@ export default function SellerDashboard() {
                 seller={seller}
                 onAccept={() => {
                     const updatedSeller = { ...seller, terminos_aceptados_en: new Date().toISOString() };
+                    setSeller(updatedSeller);
+                    localStorage.setItem('vcard_seller_data', JSON.stringify(updatedSeller));
+                }}
+            />
+        );
+    }
+
+    if (seller && seller.terminos_aceptados_en && !seller.datos_bancarios_completados) {
+        return (
+            <BankDetailsModal
+                sellerId={seller.id}
+                onSuccess={() => {
+                    const updatedSeller = { ...seller, datos_bancarios_completados: 1 };
                     setSeller(updatedSeller);
                     localStorage.setItem('vcard_seller_data', JSON.stringify(updatedSeller));
                 }}

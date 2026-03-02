@@ -32,7 +32,9 @@ import {
     Users,
     ChevronDown,
     Info,
-    Settings
+    Settings,
+    Landmark,
+    CreditCard
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -863,6 +865,70 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* Datos Bancarios del Vendedor Seleccionado */}
+                <AnimatePresence>
+                    {sellerIdFilter && sellers.find(s => s.id === sellerIdFilter) && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="mb-12"
+                        >
+                            <div className="bg-[#0A1229] border border-primary/20 rounded-[40px] p-8 sm:p-10 shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                                    <Landmark size={80} className="text-primary" />
+                                </div>
+
+                                {(() => {
+                                    const s = sellers.find(sel => sel.id === sellerIdFilter);
+                                    if (!s) return null;
+
+                                    return (
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-3 mb-6">
+                                                <CreditCard className="text-primary" size={24} />
+                                                <h3 className="text-xl font-black uppercase italic tracking-tighter">Datos Bancarios: {s.nombre}</h3>
+                                            </div>
+
+                                            {s.datos_bancarios_completados ? (
+                                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-1">Banco</p>
+                                                        <p className="text-sm font-bold text-white uppercase">{s.banco_nombre}</p>
+                                                    </div>
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-1">Beneficiario</p>
+                                                        <p className="text-sm font-bold text-white uppercase italic">{s.banco_beneficiario}</p>
+                                                    </div>
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-1">Cédula</p>
+                                                        <p className="text-sm font-bold text-white font-mono">{s.banco_cedula}</p>
+                                                    </div>
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-1">N° Cuenta</p>
+                                                        <p className="text-sm font-bold text-primary font-mono">{s.banco_numero_cuenta}</p>
+                                                    </div>
+                                                    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+                                                        <p className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-1">Email</p>
+                                                        <p className="text-sm font-bold text-white lowercase truncate">{s.banco_correo}</p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-4 p-6 bg-red-500/10 border border-red-500/20 rounded-3xl">
+                                                    <ShieldAlert className="text-red-500 flex-shrink-0" />
+                                                    <p className="text-sm font-bold text-red-500/80 uppercase tracking-tight">
+                                                        Este vendedor aún no ha completado sus datos bancarios.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12">
                     <div

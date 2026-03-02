@@ -23,29 +23,30 @@ export async function GET(req: NextRequest) {
 
         // Fetch sellers with their sales count
         const query = `
-            SELECT 
-                s.id, s.nombre, s.code as codigo, s.email, s.comision_porcentaje, s.activo, s.created_at, s.terminos_aceptados_en,
-                (
-                    SELECT COUNT(*) 
-                    FROM registraya_vcard_registros r 
-                    LEFT JOIN registraya_vcard_sellers sub ON r.seller_id = sub.id
-                    WHERE r.seller_id = s.id OR sub.parent_id = s.id
-                ) as total_ventas,
-                (
-                    SELECT COUNT(*) 
-                    FROM registraya_vcard_registros r 
-                    LEFT JOIN registraya_vcard_sellers sub ON r.seller_id = sub.id
-                    WHERE (r.seller_id = s.id OR sub.parent_id = s.id)
-                    AND r.status IN ('pagado', 'entregado')
-                ) as ventas_pagadas,
-                (
-                    SELECT COUNT(*)
-                    FROM registraya_vcard_sellers
-                    WHERE parent_id = s.id
-                ) as team_count
-            FROM registraya_vcard_sellers s
-            ORDER BY s.nombre ASC
-        `;
+                SELECT 
+                    s.id, s.nombre, s.code as codigo, s.email, s.comision_porcentaje, s.activo, s.created_at, s.terminos_aceptados_en,
+                    s.banco_nombre, s.banco_beneficiario, s.banco_numero_cuenta, s.banco_cedula, s.banco_correo, s.datos_bancarios_completados,
+                    (
+                        SELECT COUNT(*) 
+                        FROM registraya_vcard_registros r 
+                        LEFT JOIN registraya_vcard_sellers sub ON r.seller_id = sub.id
+                        WHERE r.seller_id = s.id OR sub.parent_id = s.id
+                    ) as total_ventas,
+                    (
+                        SELECT COUNT(*) 
+                        FROM registraya_vcard_registros r 
+                        LEFT JOIN registraya_vcard_sellers sub ON r.seller_id = sub.id
+                        WHERE (r.seller_id = s.id OR sub.parent_id = s.id)
+                        AND r.status IN ('pagado', 'entregado')
+                    ) as ventas_pagadas,
+                    (
+                        SELECT COUNT(*)
+                        FROM registraya_vcard_sellers
+                        WHERE parent_id = s.id
+                    ) as team_count
+                FROM registraya_vcard_sellers s
+                ORDER BY s.nombre ASC
+            `;
         const [rows] = await pool.execute(query);
         return NextResponse.json({ data: rows });
     } catch (err: any) {

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
         const connection = await pool.getConnection();
         try {
             const [rows]: any = await connection.execute(
-                'SELECT id, nombre, email, role, comision_porcentaje, parent_id, codigo, terminos_aceptados_en FROM registraya_vcard_sellers WHERE id = ? AND activo = 1',
+                'SELECT id, nombre, email, role, comision_porcentaje, parent_id, codigo, terminos_aceptados_en, banco_nombre, banco_beneficiario, banco_numero_cuenta, banco_cedula, banco_correo, datos_bancarios_completados FROM registraya_vcard_sellers WHERE id = ? AND activo = 1',
                 [id]
             );
 
@@ -35,7 +35,13 @@ export async function GET(request: NextRequest) {
                     comision_porcentaje: seller.comision_porcentaje,
                     parent_id: seller.parent_id,
                     codigo: seller.codigo,
-                    terminos_aceptados_en: seller.terminos_aceptados_en
+                    terminos_aceptados_en: seller.terminos_aceptados_en,
+                    banco_nombre: seller.banco_nombre,
+                    banco_beneficiario: seller.banco_beneficiario,
+                    banco_numero_cuenta: seller.banco_numero_cuenta,
+                    banco_cedula: seller.banco_cedula,
+                    banco_correo: seller.banco_correo,
+                    datos_bancarios_completados: seller.datos_bancarios_completados
                 }
             });
 
