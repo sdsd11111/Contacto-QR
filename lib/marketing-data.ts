@@ -132,7 +132,7 @@ export const marketingDetails: Record<string, string> = {
         </div>
         <div class="mb-6 text-left">
             <h3 class="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Simplicidad Radical (Hick's Law)</h3>
-            <p class="text-sm text-white/60">Cero fricción. Sin Apps, sin bajar PDFs, sin Links inútiles. La tecnología es invisible. Se escanea con la cámara y se despliega el contacto vCard nativo para "Guardar".</p>
+            <p class="text-sm text-white/60">Cero fricción. Sin Apps, sin bajar PDFs, sin Links inútiles. La tecnología es invisible. Se escanea con la cámara y se despliega el contacto digital nativo para "Guardar".</p>
         </div>
     `,
     'competitors': `
@@ -140,7 +140,7 @@ export const marketingDetails: Record<string, string> = {
         <div class="mb-6 text-left">
             <h3 class="text-[10px] font-black uppercase tracking-widest text-primary mb-4">¿Por qué ganamos?</h3>
             <ul class="space-y-3 text-sm">
-                <li class="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col"><span class="font-bold text-white mb-1">Frente a la Tarjeta Física</span> <span class="text-white/60 text-xs">Ganamos por persistencia. El papel se pierde, el vCard se queda en la nube (Google/Apple) de tu prospecto para siempre.</span></li>
+                <li class="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col"><span class="font-bold text-white mb-1">Frente a la Tarjeta Física</span> <span class="text-white/60 text-xs">Ganamos por persistencia. El papel se pierde, tu contacto se queda en la nube (Google/Apple) de tu prospecto para siempre.</span></li>
                 <li class="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col"><span class="font-bold text-white mb-1">Frente a Linktree / Insta Bio</span> <span class="text-white/60 text-xs">Ganamos por enfoque. Las bios diluyen la atención con 5 botones. Nosotros tenemos 1 objetivo: Que guarden tu número.</span></li>
                 <li class="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col"><span class="font-bold text-white mb-1">Frente a Popl / NFC</span> <span class="text-white/60 text-xs">Ganamos por fricción cero y costo. Funciona con el 100% de los celulares sin hardware caro extra.</span></li>
             </ul>
@@ -187,7 +187,7 @@ export const marketingDetails: Record<string, string> = {
         <div class="text-left mb-6">
             <h3 class="text-[10px] font-black uppercase tracking-widest text-primary mb-4">Keyword Clusters Primarios</h3>
             <div class="space-y-3">
-                <div class="bg-white/5 p-3 rounded-lg"><span class="text-xs font-bold text-white block mb-1">Intención Comercial Fuerte (Home):</span> <p class="text-xs text-white/60">"código qr contacto", "generar codigo qr vcard", "qr con mis datos"</p></div>
+                <div class="bg-white/5 p-3 rounded-lg"><span class="text-xs font-bold text-white block mb-1">Intención Comercial Fuerte (Home):</span> <p class="text-xs text-white/60">"código qr contacto", "generar codigo qr de contacto", "qr con mis datos"</p></div>
                 <div class="bg-white/5 p-3 rounded-lg"><span class="text-xs font-bold text-white block mb-1">Nichos Programáticos (Landing Pages):</span> <p class="text-xs text-white/60">"tarjeta de presentacion medico", "qr de contacto para plomeros", "tarjetas digitales para abogados"</p></div>
             </div>
         </div>

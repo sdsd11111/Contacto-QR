@@ -14,14 +14,14 @@ export const BLOG_CATEGORIES = ['Todos', 'Educación', 'Negocios', 'Industrias']
 export const BLOG_POSTS: BlogPost[] = [
     {
         slug: 'vcard-vs-linktree-vs-tarjeta-digital',
-        title: 'vCard vs Linktree vs Tarjeta Digital: No son lo mismo y te explico por qué',
+        title: 'Contacto Digital vs Linktree vs Tarjeta Digital: No son lo mismo y te explico por qué',
         excerpt: '¿Crees que un Linktree es una tarjeta digital? Estás perdiendo clientes. Descubre por qué un archivo de contacto QR es la verdadera llave del networking.',
         date: '2026-02-19',
         image: '/images/blog/vcard-vs-linktree.jpg',
         category: 'Educación',
         keywords: 'tarjeta digital vs linktree',
         content: `
-# vCard vs Linktree vs Tarjeta Digital: No son lo mismo
+# Contacto Digital vs Linktree vs Tarjeta Digital: No son lo mismo
 
 Si eres un profesional que vende diariamente sus servicios, seguramente te han dicho: "Ya tengo tarjeta digital" o "Tengo mi Linktree en Instagram". 
 
@@ -35,7 +35,7 @@ Cuando alguien te da su Linktree, te está dando una tarea: entrar a su perfil, 
 
 ### Diferencias Clave
 
-| Característica | Linktree / Página Web | ActivaQR (vCard) |
+| Característica | Linktree / Página Web | ActivaQR (Contacto) |
 |---|---|---|
 | **Uso** | Entretenimiento / Redes | Networking / Ventas |
 | **Ubicación** | En la nube (se olvida) | **En la agenda del cliente** |
@@ -98,7 +98,7 @@ Un **QR de Contacto** genera una relación de largo plazo. Permite que el client
 
 ## ¿Y si ya tienes un Linktree o una tarjeta digital?
 
-No es lo mismo. Muchos confunden una página web con un contacto real guardado en la agenda. Aprende las diferencias clave en [vCard vs Linktree vs Tarjeta Digital: No son lo mismo](/blog/vcard-vs-linktree-vs-tarjeta-digital).
+No es lo mismo. Muchos confunden una página web con un contacto real guardado en la agenda. Aprende las diferencias clave en [Contacto Digital vs Linktree vs Tarjeta Digital: No son lo mismo](/blog/vcard-vs-linktree-vs-tarjeta-digital).
 
 ---
 
@@ -212,7 +212,7 @@ No sacrifiques alcance por parecer "tecnológico". Elige la herramienta que cier
 
 ## Entonces, ¿qué es exactamente una vCard?
 
-Si quieres entender a fondo cómo funciona el archivo que se descarga al escanear un QR de ActivaQR (y por qué no tiene nada que ver con un Linktree), lee: [vCard vs Linktree vs Tarjeta Digital: No son lo mismo](/blog/vcard-vs-linktree-vs-tarjeta-digital).
+Si quieres entender a fondo cómo funciona el archivo que se descarga al escanear un QR de ActivaQR (y por qué no tiene nada que ver con un Linktree), lee: [Contacto Digital vs Linktree vs Tarjeta Digital: No son lo mismo](/blog/vcard-vs-linktree-vs-tarjeta-digital).
 
 ---
 
@@ -221,20 +221,20 @@ Si quieres entender a fondo cómo funciona el archivo que se descarga al escanea
     },
     {
         slug: 'que-es-una-vcard',
-        title: 'Qué es una vCard y por qué NO es una página web',
+        title: 'Qué es un Contacto Digital y por qué NO es una página web',
         excerpt: 'Descubre el secreto técnico detrás de ActivaQR. Aprende qué es un archivo vCard y por qué es la forma más rápida de entrar en la agenda de tus clientes.',
         date: '2026-02-24',
         image: '/images/blog/vcard-tech.jpg',
         category: 'Educación',
         keywords: 'qué es una vCard',
         content: `
-# Qué es una vCard y por qué NO es una página web
+# Qué es un Contacto Digital y por qué NO es una página web
 
-Cuando escuchas "tarjeta digital", probablemente piensas en un link que abres en un navegador. Pero en ActivaQR usamos algo mucho más poderoso: la **vCard**.
+Cuando escuchas "tarjeta digital", probablemente piensas en un link que abres en un navegador. Pero en ActivaQR usamos algo mucho más poderoso: el **Contacto Digital**.
 
 ## La diferencia que lo cambia todo
 
-Una página web es un destino. Una vCard es un **archivo de datos**.
+Una página web es un destino. Un perfil de contacto es un **archivo de datos**.
 
 Cuando alguien escanea tu QR, su teléfono no solo "mira" una información; recibe una instrucción para descargar un archivo que contiene tu nombre, cargo, empresa, email y, lo más importante, tu **foto**.
 
@@ -246,9 +246,9 @@ Cuando alguien escanea tu QR, su teléfono no solo "mira" una información; reci
 
 ## El QR como puerta de entrada
 
-A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), el uso de una vCard a través de un QR elimina todos los pasos intermedios. Es "Escanear y Guardar". 
-
-Si quieres ver cómo se compara esto con otras herramientas populares, te invitamos a leer: [vCard vs Linktree vs Tarjeta Digital: No son lo mismo](/blog/vcard-vs-linktree-vs-tarjeta-digital).
+A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), el uso de un contacto digital a través de un QR elimina todos los pasos intermedios. Es "Escanear y Guardar". 
+ 
+ Si quieres ver cómo se compara esto con otras herramientas populares, te invitamos a leer: [Contacto Digital vs Linktree vs Tarjeta Digital: No son lo mismo](/blog/vcard-vs-linktree-vs-tarjeta-digital).
 
 ---
 
@@ -290,7 +290,7 @@ En 2026, los clientes valoran a los profesionales que cuidan el planeta. Present
 
 ### ¿Cómo dar el salto?
 
-Muchos profesionales dicen "ya tengo" una solución digital refiriéndose a un link, pero eso no basta. Descubre por qué un contacto real es superior en nuestra guía: [Qué es una vCard y por qué NO es una página web](/blog/que-es-una-vcard).
+Muchos profesionales dicen "ya tengo" una solución digital refiriéndose a un link, pero eso no basta. Descubre por qué un contacto real es superior en nuestra guía: [Qué es un Contacto Digital y por qué NO es una página web](/blog/que-es-una-vcard).
 
 ---
 
@@ -313,7 +313,7 @@ Muchos profesionales usan QRs, pero pocos entienden cómo este pequeño código 
 ## El viaje del cliente en 3 segundos
 
 1. **El Escaneo:** Tu cliente apunta con su cámara. No necesita descargar ninguna aplicación especial; hoy en día todos los teléfonos traen lector de QR nativo.
-2. **El Reconocimiento:** El sistema de ActivaQR reconoce el dispositivo del cliente y le entrega la vCard optimizada para su sistema (iOS o Android).
+2. **El Reconocimiento:** El sistema de ActivaQR reconoce el dispositivo del cliente y le entrega el perfil optimizado para su sistema (iOS o Android).
 3. **El Guardado:** Aparece un botón gigante que dice "Crear nuevo contacto" o "Añadir a contactos". Con un toque, tus datos (foto, nombre, empresa) quedan grabados para siempre.
 
 ### Por qué es tan efectivo
@@ -500,7 +500,7 @@ Si solo tienes QR de pago, eres un número de cuenta. Si tienes QR de contacto, 
 
 A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), tener un QR específicamente dedicado a que te guarden demuestra que valoras al cliente y quieres estar disponible para él.
 
-Si aún tienes dudas sobre cómo este formato se diferencia de otras soluciones digitales, lee: [Qué es una vCard y por qué NO es una página web](/blog/que-es-una-vcard).
+Si aún tienes dudas sobre cómo este formato se diferencia de otras soluciones digitales, lee: [Qué es un Contacto Digital y por qué NO es una página web](/blog/que-es-una-vcard).
 
 ---
 
@@ -533,7 +533,7 @@ Dar un Linktree o una página web es darle "tarea" a tu cliente: tiene que entra
 El mejor momento para "existir" en el teléfono de tu cliente es el momento en que lo conoces. Si te guarda en el instante mediante un QR, ya estás dentro de su agenda antes de que se despidan.
 
 ## 5. Olvidar el buscador de contactos
-La gente busca "Abogado" o "Diseño" en su agenda cuando tiene la necesidad. Si no estás guardado con esos metadatos (como permite una vCard detallada), simplemente no aparecerás.
+La gente busca "Abogado" o "Diseño" en su agenda cuando tiene la necesidad. Si no estás guardado con esos metadatos (como permite un contacto digital detallado), simplemente no aparecerás.
 
 ### La solución definitiva
 Aprende cómo aparecer siempre primero en nuestra guía: [Cómo aparecer primero cuando buscan tu servicio en el celular](/blog/aparecer-primero-contactos-celular).
@@ -564,7 +564,7 @@ Con ActivaQR, no solo guardamos "Juan Pérez". Guardamos "Juan Pérez - Marketin
 * **Resultado:** Cuando el cliente busque "Marketing", tu cara y tu empresa aparecerán antes que cualquier resultado de la web.
 
 ### Por qué la vCard es clave
-A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), una vCard le permite al sistema operativo del teléfono indexar tu información de forma nativa. Esto significa que eres parte del sistema, no una pestaña abierta en el navegador que se cerrará tarde o temprano.
+A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), un contacto digital le permite al sistema operativo del teléfono indexar tu información de forma nativa. Esto significa que eres parte del sistema, no una pestaña abierta en el navegador que se cerrará tarde o temprano.
 
 ### La confianza entra por los ojos
 Nada genera más confianza que ver tu **foto profesional** aparecer en la pantalla justo cuando el cliente tiene la necesidad. Descubre por qué este detalle es vital en: [Tu foto profesional en la agenda del cliente: por qué importa](/blog/foto-profesional-agenda-cliente).
@@ -749,7 +749,7 @@ Dictar el número o esperar a que te escriban un "hola" por WhatsApp es ineficie
 ### Ventajas de ActivaQR para Agentes:
 * **Ficha completa:** No solo tu número, también tu empresa y tu cargo.
 * **Foto de alto impacto:** Refuerza tu marca personal en cada interacción.
-* **Fácil de compartir:** Tu cliente puede compartir tu contacto con amigos simplemente pasándoles tu vCard.
+* **Fácil de compartir:** Tu cliente puede compartir tu contacto con amigos simplemente pasándoles tu perfil digital.
 
 ### No eres un link más
 A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora) porque solo son páginas de "curiosear", tú les das una herramienta de utilidad real que se integra en su agenda. 

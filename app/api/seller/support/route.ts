@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sendMail } from '@/lib/mailer';
 
-export const config = {
-    api: {
-        bodyParser: false, // Disabling bodyParser to handle FormData
-    },
-};
+
 
 export async function POST(req: Request) {
     try {

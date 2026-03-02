@@ -302,7 +302,7 @@ ADR;TYPE=WORK:;;${data.direccion};;;;`;
                         />
                     </div>
                     <p className="text-sm text-white/60 font-medium px-10 leading-relaxed mb-12">
-                        Escanea este código para compartir tu perfil al instante o vuelve a esta página para descargar tu vCard.
+                        Escanea este código para compartir tu perfil al instante o vuelve a esta página para descargar tu contacto.
                     </p>
 
                     <a href="https://www.activaqr.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-4 py-4 px-8 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors">

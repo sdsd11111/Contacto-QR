@@ -215,7 +215,7 @@ export default function QuizPage() {
                         </div>
 
                         <Link href="/registro" className="group flex items-center gap-3 bg-primary text-white px-8 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-orange w-full md:w-auto justify-center">
-                            <span>Solucionarlo Ahora con VCard</span>
+                            <span>Solucionarlo Ahora con ActivaQR</span>
                             <ArrowRight className="group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>

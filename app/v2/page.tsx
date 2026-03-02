@@ -117,7 +117,7 @@ export default function HomeV2() {
                         </div>
                         <div className="bg-white/80 backdrop-blur p-4 rounded-xl border border-navy/5 shadow-sm">
                             <div className="text-primary font-black text-3xl mb-1">+40%</div>
-                            <div className="text-xs font-bold text-navy/60 uppercase tracking-widest">Reservas con VCard</div>
+                            <div className="text-xs font-bold text-navy/60 uppercase tracking-widest">Reservas Digitales</div>
                         </div>
                     </div>
                 </div>

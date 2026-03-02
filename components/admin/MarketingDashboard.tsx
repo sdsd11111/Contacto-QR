@@ -91,7 +91,7 @@ export default function MarketingDashboard() {
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6"
                         >
-                            <MarketingCard onClick={() => setDetailKey('positioning')} className="bg-gradient-to-br from-navy to-[#1f2937]" title="POSICIONAMIENTO" mainText="Especialistas en Contactos" subText="Solo vCard para profesionales" />
+                            <MarketingCard onClick={() => setDetailKey('positioning')} className="bg-gradient-to-br from-navy to-[#1f2937]" title="POSICIONAMIENTO" mainText="Especialistas en Contactos" subText="Solo perfiles para profesionales" />
                             <MarketingCard onClick={() => setDetailKey('competitors')} title="COMPETIDORES" mainText="Diferenciador Fuerte" subText="No somos Linktree. No somos Canva. Somos tu Contacto." />
                             <MarketingCard onClick={() => setDetailKey('voice')} className="col-span-1 md:col-span-2" title="VOZ DE MARCA" mainText="Profesional Periférico" subText="Cercano / Directo / Emocional / Antitecnológico" />
                         </motion.div>
@@ -107,7 +107,7 @@ export default function MarketingDashboard() {
                             className="col-span-1 md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                         >
                             <MarketingCard onClick={() => setDetailKey('structure')} className="col-span-1 md:col-span-2" title="ESTRUCTURA DEL SITIO" mainText="Home > Demo > Checkout" subText="Embudo minimalista lineal" />
-                            <MarketingCard onClick={() => setDetailKey('seo')} title="TRÁFICO SEO" mainText="Keywords B2B" subText="Optimización semántica vCard" />
+                            <MarketingCard onClick={() => setDetailKey('seo')} title="TRÁFICO SEO" mainText="Keywords B2B" subText="Optimización semántica de perfiles" />
                             <MarketingCard onClick={() => setDetailKey('funnel')} className="col-span-1 md:col-span-3" title="FUNNEL DE CONVERSIÓN" mainText="TikTok → Web → WhatsApp → Venta" subText="Flujo de máxima conversión humana en WhatsApp" highlight />
                         </motion.div>
                     )}

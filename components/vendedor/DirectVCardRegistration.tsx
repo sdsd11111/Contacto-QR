@@ -374,10 +374,10 @@ export default function DirectVCardRegistration({
             const result = await response.json();
 
             if (response.ok && result.success) {
-                alert("¡vCard Generada Exitosamente!");
+                alert("¡Contacto Digital Generado Exitosamente!");
                 onSuccess(); // Close form and trigger refetch
             } else {
-                throw new Error(result.error || "Error al crear la vCard");
+                throw new Error(result.error || "Error al crear el contacto digital");
             }
 
         } catch (error: any) {
@@ -392,7 +392,7 @@ export default function DirectVCardRegistration({
         <div className="bg-[#0A1229] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl p-6 md:p-10 mb-10 w-full max-w-4xl mx-auto">
             <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
                 <div>
-                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Generar vCard para Cliente</h2>
+                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white">Generar Contacto Digital para Cliente</h2>
                     <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-1">Ingreso Rápido de Datos (Modo Vendedor)</p>
                 </div>
                 <button onClick={onCancel} className="text-white/40 hover:text-white text-xs uppercase font-bold tracking-widest px-4 py-2 border border-white/10 rounded-xl hover:bg-white/5 transition-all">
@@ -591,7 +591,7 @@ export default function DirectVCardRegistration({
                                 <input type="text" value={formData.tags} onChange={(e) => updateForm('tags', e.target.value)}
                                     className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-primary/50 text-white outline-none"
                                     placeholder="Ej: plomero, reparacion, mantenimiento (separadas por coma)" />
-                                <p className="text-[9px] text-white/30 italic">Ayuda a encontrar esta vCard en el directorio.</p>
+                                <p className="text-[9px] text-white/30 italic">Ayuda a encontrar este contacto en el directorio.</p>
                             </div>
 
                             <div className="space-y-2">

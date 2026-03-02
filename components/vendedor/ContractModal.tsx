@@ -78,7 +78,7 @@ export default function ContractModal({ seller, onAccept }: ContractModalProps) 
                             </h3>
                             <p className="mb-2">Para tener derecho a sumar las ventas generadas por tu equipo de Asesores y alcanzar las escalas de comisión premiadas (40% o 50%), debes cumplir una cuota de <strong>Ventas Personales Directas</strong>.</p>
                             <ul className="list-disc pl-5 space-y-2 text-white/70">
-                                <li><strong>Mínimo Requerido:</strong> 30 vCards vendidas directamente por ti al mes.</li>
+                                <li><strong>Mínimo Requerido:</strong> 30 contactos digitales vendidos directamente por ti al mes.</li>
                                 <li><strong>Beneficio si cumples (&gt;= 30):</strong> Se suman todas las ventas de tu red de Asesores para subir tu rango general al 40% o 50%, cobrando el diferencial de todo el equipo.</li>
                                 <li><strong>Penalidad si no cumples (&lt; 30):</strong> Tu rango se limitará estrictamente al 30% basado únicamente en tus propias ventas. Perderás el derecho a ganar comisiones sobre el volumen de tu equipo (dicho diferencial pasará íntegramente a ActivaQR Matrix).</li>
                             </ul>

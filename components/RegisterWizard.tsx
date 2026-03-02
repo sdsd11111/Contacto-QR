@@ -1962,7 +1962,7 @@ export default function RegisterWizard() {
                                             <p className="text-[10px] text-white/20 uppercase tracking-[0.3em] font-bold">Disponible en la versión 2.0</p>
 
                                             <a
-                                                href={`https://wa.me/593963410409?text=Hola,%20estoy%20en%20el%20paso%20de%20pago%20con%20Cripto%20y%20necesito%20ayuda%20para%20pagar%20mi%20vCard%20(Plan%20Pro%20$20).%20Mi%20correo:%20${formData.email}`}
+                                                href={`https://wa.me/593963410409?text=Hola,%20estoy%20en%20el%20paso%20de%20pago%20con%20Cripto%20y%20necesito%20ayuda%20para%20pagar%20mi%20Perfil%20(Plan%20Pro%20$20).%20Mi%20correo:%20${formData.email}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="w-full bg-green-500/10 text-green-400 font-bold text-[10px] py-4 rounded-xl flex items-center justify-center gap-2 border border-green-500/20 hover:bg-green-500/20 transition-all"

@@ -38,7 +38,7 @@ export default function manifest(): MetadataRoute.Manifest {
             {
                 name: 'Panel Administrador',
                 short_name: 'Admin',
-                description: 'Acceso directo al panel de gestión de vCards',
+                description: 'Acceso directo al panel de gestión de perfiles de contacto',
                 url: '/admin',
                 icons: [{ src: '/favicon.ico', sizes: '192x192' }]
             }
