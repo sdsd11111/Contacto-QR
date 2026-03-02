@@ -371,12 +371,14 @@ export default function SellerDashboard() {
         );
     }
 
+    // 1. First Priority: Legal Terms / Contract
     if (seller && !seller.terminos_aceptados_en) {
         return (
             <ContractModal
                 seller={seller}
                 onAccept={() => {
-                    const updatedSeller = { ...seller, terminos_aceptados_en: new Date().toISOString() };
+                    const now = new Date().toISOString();
+                    const updatedSeller = { ...seller, terminos_aceptados_en: now };
                     setSeller(updatedSeller);
                     localStorage.setItem('vcard_seller_data', JSON.stringify(updatedSeller));
                 }}
@@ -384,7 +386,10 @@ export default function SellerDashboard() {
         );
     }
 
-    if (seller && seller.terminos_aceptados_en && !seller.datos_bancarios_completados) {
+    // 2. Second Priority: Bank Details (Skip for 'Cesar Reyes')
+    const skipBankDetails = seller?.nombre?.toLowerCase().includes('cesar reyes');
+
+    if (seller && seller.terminos_aceptados_en && !seller.datos_bancarios_completados && !skipBankDetails) {
         return (
             <BankDetailsModal
                 sellerId={seller.id}
