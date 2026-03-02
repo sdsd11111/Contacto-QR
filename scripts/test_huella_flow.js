@@ -51,7 +51,7 @@ async function test() {
             FROM registraya_vcard_field_visits v
             JOIN registraya_vcard_sellers s ON v.seller_id = s.id
             WHERE (v.contact_phone = ? OR (v.contact_email IS NOT NULL AND v.contact_email = ?))
-              AND v.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+              AND v.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
             ORDER BY v.created_at DESC
             LIMIT 1
         `;

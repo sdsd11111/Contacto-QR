@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
                 OR v.contact_phone = ?
                 OR (v.contact_email IS NOT NULL AND v.contact_email = ?)
             )
-              AND v.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+              AND v.created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
             ORDER BY v.created_at DESC
             LIMIT 1
         `;

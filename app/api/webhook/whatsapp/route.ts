@@ -51,19 +51,20 @@ export async function POST(request: Request) {
         }
 
         // --- Extraer Mensaje Usuario ---
+        const pushName = data.pushName || "";
         let content = data.message.conversation || data.message.extendedTextMessage?.text || data.message.imageMessage?.caption || "";
         if (!content) return NextResponse.json({ message: "No text" });
 
-        console.log(`📥 Recibido de ${remoteJid}: ${content}`);
+        console.log(`📥 Recibido de ${remoteJid} (${pushName}): ${content}`);
 
         // --- ENCOLADO / DEBOUNCE (25 SEGUNDOS) ---
         // Guardamos en la cola para acumular mensajes fragmentados
         // Cada mensaje nuevo es una fila nueva, el Worker se encarga de unirlos y borrarlos atómicamente
 
         await pool.execute(
-            `INSERT INTO registraya_whatsapp_message_queue (jid, combined_content, processed)
-             VALUES (?, ?, 0)`,
-            [remoteJid, content.trim()]
+            `INSERT INTO registraya_whatsapp_message_queue (jid, push_name, combined_content, processed)
+             VALUES (?, ?, ?, 0)`,
+            [remoteJid, pushName, content.trim()]
         );
 
         return NextResponse.json({ success: true, message: "Message queued for accumulation" });

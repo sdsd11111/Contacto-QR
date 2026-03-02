@@ -57,7 +57,7 @@ async function verify() {
         const searchPhone = "+593 912345678"; // What the API sends
         const query = `
             SELECT id FROM registraya_vcard_field_visits 
-            WHERE contact_phone = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            WHERE contact_phone = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
         `;
         const [results] = await conn.execute(query, [searchPhone]);
         console.log("Match found with formatted search?", results.length > 0 ? "YES ✅" : "NO ❌");

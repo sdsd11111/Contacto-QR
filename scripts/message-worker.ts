@@ -3,6 +3,7 @@ import mysql from 'mysql2/promise';
 import * as dotenv from 'dotenv';
 import { resolve } from 'path';
 import { getBotResponse } from '../lib/openai-bot';
+import { saveToGoogleContacts } from '../lib/google-contacts';
 
 // Cargar variables de entorno desde .env.local
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
@@ -71,6 +72,26 @@ async function sendText(jid: string, text: string) {
 }
 
 // ======================================
+// ENVÍO DE TARJETA DE CONTACTO (VCard)
+// ======================================
+async function sendContact(jid: string, contactName: string, phoneNumber: string) {
+    try {
+        await fetch(`${apiUrl}/message/sendContact/${instance}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': apiKey },
+            body: JSON.stringify({
+                number: jid,
+                contact: [{
+                    fullName: contactName,
+                    phoneNumber: phoneNumber,
+                    organization: 'ActivaQR',
+                }]
+            }),
+        });
+    } catch (e) { console.error("Error sendContact:", e); }
+}
+
+// ======================================
 // NOTIFICACIÓN A ADMINISTRADORES (César / Soporte)
 // ======================================
 async function notifyAdmins(jid: string, summary: string, isSupport: boolean, isReseller: boolean) {
@@ -118,20 +139,20 @@ async function processQueue() {
         const now = new Date();
         // 1. Buscar mensajes NO procesados cuya ventana de 25s YA haya cerrado (calculado en DB para evitar bugs de Zona Horaria)
         const [rows] = await pool.execute(
-            `SELECT id, jid, combined_content 
+            `SELECT id, jid, push_name, combined_content 
              FROM registraya_whatsapp_message_queue 
              WHERE processed = 0 AND created_at <= DATE_SUB(NOW(), INTERVAL 25 SECOND)
              GROUP BY jid 
              ORDER BY MIN(created_at) ASC`
         );
-        const pending = rows as { id: number; jid: string; combined_content: string }[];
+        const pending = rows as { id: number; jid: string; push_name: string; combined_content: string }[];
 
         if (pending.length > 0) {
             console.log(`🤖 [${now.toISOString()}] Procesando ${pending.length} hilos acumulados...`);
         }
 
         for (const item of pending) {
-            const { jid, combined_content } = item;
+            const { jid, push_name, combined_content } = item;
 
             // 2. Obtener todos los IDs de mensajes de este jid para borrarlo atómicamente
             const [idsRows] = await pool.execute(
@@ -184,6 +205,22 @@ async function processQueue() {
                 if (summaryMatch) {
                     transferSummary = summaryMatch[1];
                     botReply = botReply.replace(/\[SUMMARY:.*?\]/g, '').trim();
+                }
+
+                // 8.5. Manejo de Guardado de Contacto (Disparado por Tags de la IA)
+                if (botReply.includes('[SAVE_CONTACT]')) {
+                    const cleanPhone = jid.replace('@s.whatsapp.net', '').replace(/\D/g, '');
+                    const nameToSave = push_name || 'Nuevo Cliente ActivaQR';
+
+                    // Guardar en Google Contacts (Silencioso en segundo plano)
+                    saveToGoogleContacts(nameToSave, cleanPhone).then(success => {
+                        if (success) console.log(`✨ Sincronizado Lead: ${nameToSave}`);
+                    });
+
+                    // Enviar tarjeta de ActivaQR al cliente
+                    await sendContact(jid, "ActivaQR - César", "593963410409");
+
+                    botReply = botReply.replace(/\[SAVE_CONTACT\]/g, '').trim();
                 }
 
                 // 9. Enviar respuesta (separada en múltiples globos de chat)

@@ -36,7 +36,7 @@ async function test() {
             SELECT seller_id 
             FROM registraya_vcard_field_visits 
             WHERE (contact_phone = ? OR (contact_email IS NOT NULL AND contact_email = ?))
-                AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                AND created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
             ORDER BY created_at DESC 
             LIMIT 1
         `, [testPhone, testEmail]);
