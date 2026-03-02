@@ -387,8 +387,8 @@ export default function SellerDashboard() {
         );
     }
 
-    // 2. Second Priority: Bank Details (Skip for 'Cesar Reyes')
-    const skipBankDetails = seller?.nombre?.toLowerCase().includes('cesar reyes');
+    const isSubSeller = !!(seller?.parent_id);
+    const skipBankDetails = isSubSeller || seller?.nombre?.toLowerCase().includes('cesar reyes');
 
     if (seller && seller.terminos_aceptados_en && !seller.datos_bancarios_completados && !skipBankDetails) {
         return (
@@ -402,8 +402,6 @@ export default function SellerDashboard() {
             />
         );
     }
-
-    const isSubSeller = !!(seller?.parent_id);
 
     // Filtro estricto por mes calendario actual para calcular Cuotas y Rangos
     const currentMonth = new Date().getMonth();
@@ -510,7 +508,7 @@ export default function SellerDashboard() {
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <span className="bg-primary/20 text-primary text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-primary/20">
-                                {isSubSeller ? "Asesor de Ventas" : "Vendedor Oficial"}
+                                {isSubSeller ? "Asesor de Ventas" : "Vendedor Oficial"} • {seller?.codigo || seller?.code}
                             </span>
                         </div>
                         <h1 className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-3">
