@@ -34,11 +34,13 @@ import {
     Info,
     Settings,
     Landmark,
-    CreditCard
+    CreditCard,
+    TrendingUp
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Link from "next/link";
+import StatsModal from "@/components/admin/StatsModal";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -85,6 +87,7 @@ export default function AdminDashboard() {
     const [migratingLeader, setMigratingLeader] = useState<any>(null);
     const [targetLeaderId, setTargetLeaderId] = useState<number>(0);
     const [isMigratingTeam, setIsMigratingTeam] = useState(false);
+    const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
 
     const fetchNextCode = async () => {
         const adminKey = localStorage.getItem('admin_access_key') || '';
@@ -714,6 +717,13 @@ export default function AdminDashboard() {
                         >
                             <div className={cn("w-2 h-2 rounded-full", isLive ? "bg-white" : "bg-white/20")} />
                             {isLive ? "LIVE MOD..." : "MODO LIVE OFF"}
+                        </button>
+                        <button
+                            onClick={() => setIsStatsModalOpen(true)}
+                            className="bg-navy border border-primary/30 text-primary px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-navy transition-all flex items-center gap-2 shadow-lg shadow-primary/10"
+                        >
+                            <TrendingUp size={16} />
+                            Estadísticas
                         </button>
                         <button
                             onClick={fetchRegistros}
@@ -2085,6 +2095,10 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </AnimatePresence>
+            <StatsModal
+                isOpen={isStatsModalOpen}
+                onClose={() => setIsStatsModalOpen(false)}
+            />
         </div>
     );
 }
