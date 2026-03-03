@@ -2,7 +2,8 @@ import OpenAI from 'openai';
 import pool from './db';
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: 'https://api.deepseek.com/v1',
+    apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
 });
 
 /**
@@ -310,7 +311,7 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
         }
 
         const aiResponse = await openai.chat.completions.create({
-            model: 'gpt-4o',
+            model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
             messages: [
                 { role: 'system', content: BOT_PERSONALITY.replace('{{METADATA}}', JSON.stringify(currentMetadata)).replace('{{VALIDATED_USER}}', validatedUserStr) },
                 ...chatHistory
