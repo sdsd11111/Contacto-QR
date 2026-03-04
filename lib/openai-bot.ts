@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import pool from './db';
 
 const openai = new OpenAI({
-    baseURL: 'https://api.deepseek.com/v1',
+    baseURL: 'https://api.deepseek.com',
     apiKey: process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY,
 });
 
@@ -279,6 +279,7 @@ export async function updateSessionMetadata(jid: string, state: string, metadata
 }
 
 export async function getBotResponse(userMessage: string, remoteJid?: string, history: any[] = []) {
+    console.log(`[BOT] getBotResponse started for JID: ${remoteJid}`);
     try {
         let validatedUserStr = "No validado.";
         let currentMetadata = {};
@@ -292,6 +293,7 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
                     registration_step: leads[0].registration_step,
                     registration_data: leads[0].registration_json ? JSON.parse(leads[0].registration_json) : {}
                 };
+                console.log("[BOT] Metadata loaded successfully");
             }
         }
 
@@ -311,6 +313,7 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
             if (validatedData) validatedUserStr = `✓ ${validatedData.nombre} (${validatedData.email})`;
         }
 
+        console.log("[BOT] Calling AI...");
         const aiResponse = await openai.chat.completions.create({
             model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
             messages: [
@@ -322,6 +325,7 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
         });
 
         let botReply = aiResponse.choices[0]?.message?.content || "";
+        console.log("[BOT] AI responded successfully");
         const dataMatch = botReply.match(/\[DATA\]([\s\S]*?)\[\/DATA\]/);
 
         if (dataMatch && remoteJid) {
@@ -359,5 +363,8 @@ export async function getBotResponse(userMessage: string, remoteJid?: string, hi
         }
 
         return botReply || "¡Hola! ¿Cómo puedo ayudarle hoy?";
-    } catch (e) { return "Un asesor le ayudará pronto."; }
+    } catch (e) {
+        console.error("[BOT ERROR]:", e);
+        return "Un asesor le ayudará pronto.";
+    }
 }
