@@ -72,23 +72,27 @@ async function sendText(jid: string, text: string) {
 }
 
 // ======================================
-// ENVÍO DE TARJETA DE CONTACTO (VCard)
+// ENVÍO DE MEDIOS (VCF y QR)
 // ======================================
-async function sendContact(jid: string, contactName: string, phoneNumber: string) {
+async function sendMedia(jid: string, type: 'document' | 'image', url: string, fileName: string, mimetype?: string, caption?: string) {
     try {
-        await fetch(`${apiUrl}/message/sendContact/${instance}`, {
+        const payload: any = {
+            number: jid,
+            mediatype: type,
+            media: url,
+            fileName: fileName,
+        };
+        if (mimetype) payload.mimetype = mimetype;
+        if (caption) payload.caption = caption;
+
+        await fetch(`${apiUrl}/message/sendMedia/${instance}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'apikey': apiKey },
-            body: JSON.stringify({
-                number: jid,
-                contact: [{
-                    fullName: contactName,
-                    phoneNumber: phoneNumber,
-                    organization: 'ActivaQR',
-                }]
-            }),
+            body: JSON.stringify(payload),
         });
-    } catch (e) { console.error("Error sendContact:", e); }
+    } catch (e) {
+        console.error(`Error sendMedia (${type}):`, e);
+    }
 }
 
 // ======================================
@@ -217,8 +221,12 @@ async function processQueue() {
                         if (success) console.log(`✨ Sincronizado Lead: ${nameToSave}`);
                     });
 
-                    // Enviar tarjeta de ActivaQR al cliente
-                    await sendContact(jid, "ActivaQR - César", "593963410409");
+                    // Enviar imagen del QR de Soporte
+                    await sendMedia(jid, 'image', 'https://www.activaqr.com/support_qr_v2.png', 'ActivaQR_Soporte.png', 'image/png');
+                    // Esperar un poco para que no lleguen desordenados
+                    await new Promise(r => setTimeout(r, 1000));
+                    // Enviar tarjeta VCF oficial de ActivaQR
+                    await sendMedia(jid, 'document', 'https://www.activaqr.com/api/vcard/activaqr-9ag4', 'Contacto_ActivaQR.vcf');
 
                     botReply = botReply.replace(/\[SAVE_CONTACT\]/g, '').trim();
                 }
