@@ -187,8 +187,8 @@ export default function RecorridoTab({ seller }: { seller: any }) {
     }, [seller?.id]);
 
     // Soporte Centralizado (Número del Admin)
-    const SUPPORT_NUMBER = "593962657270"; // César Reyes (Admin)
-    const SUPPORT_URL = `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent("Hola ActivaQR, necesito soporte técnico o tengo una sugerencia.")}`;
+    const SUPPORT_NUMBER = "593983237491"; // WhatsApp Soporte ActivaQR
+    const SUPPORT_URL = `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent("Hola ActivaQR necesito soporte 😊")}`;
 
     const todayStr = new Date().toLocaleDateString("es-EC", { weekday: "long", day: "numeric", month: "long" });
 
@@ -344,17 +344,17 @@ export default function RecorridoTab({ seller }: { seller: any }) {
             {/* ── QR SECTION ── */}
             <div className="flex justify-center">
                 <div className="bg-[#0A1229] border border-green-500/30 rounded-[24px] p-5 flex flex-col items-center gap-3 shadow-lg shadow-green-500/10 max-w-xs w-full">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-green-400">📲 Tarjeta ActivaQR</span>
-                    <div className="bg-white p-3 rounded-xl">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-green-400">📲 Guardar Contacto de Soporte</span>
+                    <div className="bg-white p-3 rounded-xl border-4 border-white">
                         <QRCodeCanvas
-                            value="https://activaqr.com/api/vcard/activaqr-9ag4"
+                            value={SUPPORT_URL}
                             size={180}
                             level="H"
                             includeMargin={false}
                         />
                     </div>
                     <p className="text-white/50 text-[10px] text-center leading-snug">
-                        Muéstrale al cliente esta tarjeta<br /><span className="text-green-400 font-bold">para que vea cómo funciona ActivaQR</span>
+                        Escanea para <span className="text-green-400 font-bold">agregarnos a tus contactos</span><br />y recibir nuestra tarjeta digital automáticamente.
                     </p>
                 </div>
             </div>

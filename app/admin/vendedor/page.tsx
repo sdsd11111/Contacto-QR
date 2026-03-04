@@ -498,8 +498,8 @@ export default function SellerDashboard() {
     const totalCommission = paidCommissions + pendingCommissions;
 
     // Soporte Centralizado (Número del Admin)
-    const SUPPORT_NUMBER = "593962657270"; // César Reyes (Admin)
-    const SUPPORT_URL = `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent("Hola ActivaQR, necesito soporte técnico o tengo una sugerencia.")}`;
+    const SUPPORT_NUMBER = "593983237491"; // WhatsApp Soporte ActivaQR
+    const SUPPORT_URL = `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent("Hola ActivaQR necesito soporte 😊")}`;
 
     return (
         <div className="min-h-screen bg-[#050B1C] text-white p-4 sm:p-8 font-sans">

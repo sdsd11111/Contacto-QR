@@ -280,16 +280,34 @@ export default function HomeClient() {
                             <div className="absolute top-4 right-6 text-4xl font-black text-white/20">03</div>
                         </motion.div>
                     </div>
+
+                    {/* Nota de Compatibilidad */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="mt-16 max-w-4xl mx-auto bg-white/5 border border-white/10 rounded-[2rem] p-6 md:p-8 flex flex-col md:flex-row items-center gap-6"
+                    >
+                        <div className="bg-primary/20 w-16 h-16 rounded-2xl flex items-center justify-center text-primary shrink-0">
+                            <Smartphone size={32} />
+                        </div>
+                        <div className="text-center md:text-left">
+                            <h4 className="text-lg font-black text-white uppercase tracking-tight mb-2">📱 Nota sobre compatibilidad</h4>
+                            <p className="text-white/60 text-sm font-medium leading-relaxed">
+                                La experiencia puede variar según tu dispositivo. Algunos celulares requieren una app de escaneo, otros muestran un enlace de descarga, y en iPhone la visualización mejora según la versión del sistema. Tu información principal siempre estará disponible para el cliente.
+                            </p>
+                        </div>
+                    </motion.div>
                 </div>
 
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
                     <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-navy/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
                 </div>
-            </section>
+            </section >
 
             {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            < section className="py-24 bg-cream relative overflow-hidden" >
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
                         <motion.div
@@ -469,10 +487,10 @@ export default function HomeClient() {
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px]"></div>
                     <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-navy/5 rounded-full blur-[150px]"></div>
                 </div>
-            </section>
+            </section >
 
             {/* Sección: Beneficios */}
-            <section className="py-24 bg-navy text-white relative overflow-hidden">
+            < section className="py-24 bg-navy text-white relative overflow-hidden" >
                 <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
                     <h2 className="text-3xl md:text-5xl font-black mb-16 tracking-tighter">No es una página web.<br /><span className="text-primary italic">Es tu contacto en su agenda.</span></h2>
 
@@ -494,10 +512,10 @@ export default function HomeClient() {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* Sección: Logos de Clientes (Confianza Institucional) */}
-            <section className="py-20 bg-white overflow-hidden border-y border-navy/5">
+            < section className="py-20 bg-white overflow-hidden border-y border-navy/5" >
                 <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
                     <h3 className="text-xl md:text-2xl font-black text-navy uppercase tracking-tighter italic">
                         <span className="text-primary italic">Decenas de negocios y profesionales</span> ya usan ActivaQR
@@ -588,10 +606,11 @@ export default function HomeClient() {
                     <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
                     <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
                 </div>
-            </section>
+            </section >
 
             {/* Pricing Section */}
-            <section className="py-24 bg-cream" id="precios" style={{ position: 'relative', zIndex: 10 }}>
+            < section className="py-24 bg-cream" id="precios" style={{ position: 'relative', zIndex: 10 }
+            }>
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase">Elige tu Plan</h2>
@@ -740,10 +759,10 @@ export default function HomeClient() {
                         *Todos los planes incluyen hosting, dominio, mantenimiento y actualizaciones por 1 año.
                     </p>
                 </div>
-            </section>
+            </section >
 
             {/* Before vs After Section */}
-            <section className="py-24 bg-navy relative overflow-hidden">
+            < section className="py-24 bg-navy relative overflow-hidden" >
                 <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
                     <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-primary rounded-full blur-[120px] -translate-y-1/2"></div>
                     <div className="absolute bottom-0 right-0 w-80 h-80 bg-royal rounded-full blur-[100px] translate-y-1/2"></div>
@@ -840,10 +859,10 @@ export default function HomeClient() {
                         </motion.div>
                     </div>
                 </div>
-            </section>
+            </section >
 
             {/* FAQ Section */}
-            <section className="py-24 bg-white">
+            < section className="py-24 bg-white" >
                 <div className="max-w-3xl mx-auto px-6">
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-black text-navy uppercase tracking-tighter">Preguntas Frecuentes</h2>
@@ -865,6 +884,10 @@ export default function HomeClient() {
                             {
                                 q: "¿Tengo que pagar mensualidades?",
                                 a: "No. Es un pago anual de $20 que incluye hosting, mantenimiento y actualizaciones. La renovación es del 100% al año."
+                            },
+                            {
+                                q: "¿Funciona en todos los celulares?",
+                                a: "Sí, aunque la forma en que se guarda el contacto puede cambiar. Los celulares modernos escanean el QR directamente con la cámara, mientras que modelos más antiguos pueden necesitar una app. En iPhone o Android, el sistema gestiona la importación de manera ligeramente distinta, siempre asegurando que tus datos lleguen al cliente."
                             }
                         ].map((item, i) => (
                             <details key={i} className="group bg-gray-50 rounded-2xl p-6 cursor-pointer border border-gray-100 hover:bg-gray-100 transition-colors">
@@ -876,7 +899,7 @@ export default function HomeClient() {
                         ))}
                     </div>
                 </div>
-            </section>
+            </section >
 
             <FloatingSalesHeader />
 
