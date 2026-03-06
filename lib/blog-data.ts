@@ -17,7 +17,7 @@ export const BLOG_POSTS: BlogPost[] = [
         title: 'Vivimos engañados: Por qué tu tarjeta de presentación digital y tus redes NO te están dando ventas',
         excerpt: 'Crees que por tener un Linktree o un perfil bonito ya eres digital. La realidad es que estás perdiendo el 90% de tus prospectos por un error básico de contacto.',
         date: '2026-03-05',
-        image: '/images/blog/enganados-digital.jpg',
+        image: '/images/blog/enganados-digital.png',
         category: 'Educación',
         keywords: 'tarjeta de presentación digital, ventas por whatsapp',
         content: `
@@ -67,7 +67,7 @@ De eso se trata la verdadera visibilidad. No de tener una página bonita, sino d
         title: 'El error de "escríbeme al WhatsApp" y el script prohibido para que SÍ te guarden',
         excerpt: 'Dejar que el cliente anote tu número es el primer paso para que te olvinden. Aprende el script exacto para entrar en su agenda para siempre.',
         date: '2026-03-05',
-        image: '/images/blog/whatsapp-script.jpg',
+        image: '/images/blog/whatsapp-script.png',
         category: 'Educación',
         keywords: 'vender por whatsapp, script ventas',
         content: `
@@ -113,7 +113,7 @@ No dejes tu futuro comercial en manos de la memoria de tu cliente. Toma el contr
         title: 'El buscador invisible: El truco para que tus clientes te encuentren primero en su celular',
         excerpt: '¿Sabías que la mayoría de la gente no busca por nombre, sino por servicio? Aprende cómo configurar tu identidad para ser el número 1 en su agenda.',
         date: '2026-03-05',
-        image: '/images/blog/buscador-invisible.jpg',
+        image: '/images/blog/rank-first.jpg',
         category: 'Educación',
         keywords: 'aparecer en contactos, seo local whatsapp',
         content: `
@@ -146,7 +146,7 @@ Porque una web vive en una pestaña del navegador que se cierra. Un **Contacto D
         title: 'Por qué tu Linktree es el cementerio de tus ventas (y la solución definitiva)',
         excerpt: 'Darle opciones infinitas a un cliente es la mejor forma de que no elija ninguna. Descubre por qué un contacto directo cierra más tratos que mil links.',
         date: '2026-03-05',
-        image: '/images/blog/cementerio-links.jpg',
+        image: '/images/blog/vcard-vs-linktree.jpg',
         category: 'Educación',
         keywords: 'linktree vs tarjeta digital, cerrar ventas',
         content: `
@@ -182,7 +182,7 @@ Si quieres que te llamen, dales el botón de llamar en su lista de contactos, no
         title: 'Inversión vs Gasto: Por qué $20 al año es el mejor regalo que le harás a tu negocio',
         excerpt: '¿Te parece caro pagar por un servicio de contacto? Compara ese precio con lo que pierdes cada vez que un cliente no te encuentra.',
         date: '2026-03-05',
-        image: '/images/blog/inversion-negocio.jpg',
+        image: '/images/blog/lost-clients.jpg',
         category: 'Negocios',
         keywords: 'precio activaqr, inversion marketing',
         content: `

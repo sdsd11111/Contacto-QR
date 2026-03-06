@@ -95,6 +95,23 @@ El bot (`lib/openai-bot.ts`) no es un simple informante, es una máquina estruct
 
 ---
 
+## 🚀 Estrategia de Conversión y UX (Home)
+
+El componente `HomeClient.tsx` actúa como el motor de persuasión principal, utilizando patrones de diseño de alta conversión.
+
+### 1. Carrusel de Conversión Estratégica (WhatsApp)
+- **Componentes**: 3 banners dinámicos (WhatsApp Pro-Tip, Estados de WhatsApp, Automatización).
+- **Auto-play**: Ciclo automático de 5 segundos para mantener el dinamismo visual.
+- **Responsividad**: Orquestación estricta de rejilla (`grid-cols-1` en mobile, `lg:grid-cols-2` en desktop) para evitar desbordes y asegurar legibilidad.
+- **UI Estética**: Uso de *glassmorphism* (backdrop-blur) en controles de navegación y sombras profundas para resaltar mockups.
+
+### 2. Funnel de FAQ con Interlinking
+- **Estructura**: Preguntas categorizadas (`tag`) que siguen un embudo lógico: Concepto -> Valor -> Diferencia -> Redes -> Estrategia -> Inversión.
+- **Interlinking**: Cada respuesta vincula a un artículo específico en `/blog/[slug]`. Esto reduce la tasa de rebote y educa al cliente en profundidad.
+- **Copywriting Veraz**: Eliminación de jerga técnica (.vcf, VCard) en favor de beneficios directos ("Contacto Digital"). Se prohíben términos engañosos como "hackeo".
+
+---
+
 ## 🔐 Seguridad y Autenticación
 
 - **Admin API Key**: Protege los endpoints sensibles (`/api/admin/*`) mediante el header `x-admin-key`.
