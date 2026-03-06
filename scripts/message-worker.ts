@@ -101,7 +101,7 @@ async function sendMedia(jid: string, type: 'document' | 'image', url: string, f
 async function notifyAdmins(jid: string, summary: string, isSupport: boolean, isReseller: boolean) {
     const cesarPhone = "593963410409";
     const supportPhone = "593967491847";
-    const isSameContact = cesarPhone === supportPhone;
+    const isSameContact = (cesarPhone as string) === (supportPhone as string);
     try {
         const [leadRows] = await pool.execute(
             'SELECT profesion, negocio, ciudad, puntuacion_calidad, notas FROM registraya_whatsapp_leads WHERE jid = ?',
