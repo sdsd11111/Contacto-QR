@@ -22,7 +22,7 @@ const pool = await mysql.createPool({
     connectTimeout: 30000,
 });
 
-const jid = '593967491847@s.whatsapp.net';
+const jid = '593963410409@s.whatsapp.net';
 console.log(`Clearing data for JID: ${jid}`);
 
 const [m] = await pool.execute('DELETE FROM registraya_whatsapp_messages WHERE jid = ?', [jid]);

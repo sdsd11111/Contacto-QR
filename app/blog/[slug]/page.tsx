@@ -145,23 +145,24 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
     return (
         <main className="min-h-screen bg-cream py-24 px-6 md:px-0">
             <article className="max-w-3xl mx-auto bg-white rounded-[3rem] shadow-2xl overflow-hidden border border-navy/5">
-                {/* Hero Header */}
-                <div className="relative aspect-[21/9] w-full overflow-hidden">
+                {/* Hero Header Refined */}
+                <div className="relative min-h-[400px] w-full overflow-hidden flex items-center justify-center bg-navy">
                     <img
                         src={post.image}
                         alt={post.title}
-                        className="w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover opacity-50"
                     />
-                    <div className="absolute inset-0 bg-navy/40 backdrop-blur-[2px]"></div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center">
-                        <span className="bg-primary text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/40 to-transparent"></div>
+                    <div className="relative z-10 flex flex-col items-center justify-center p-8 md:p-12 text-center max-w-4xl mx-auto">
+                        <span className="bg-primary text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6 shadow-lg">
                             {post.category}
                         </span>
-                        <h1 className="text-4xl md:text-6xl font-black text-white leading-tight tracking-tighter mb-8 drop-shadow-xl">
+                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tighter mb-4 drop-shadow-2xl">
                             {post.title.split(/(QR)/).map((part, i) => (
-                                part === 'QR' ? <span key={i} className="text-primary drop-shadow-none">QR</span> : part
+                                part === 'QR' ? <span key={i} className="text-primary">QR</span> : part
                             ))}
                         </h1>
+                        <div className="w-20 h-1.5 bg-primary rounded-full mt-4"></div>
                     </div>
                 </div>
 

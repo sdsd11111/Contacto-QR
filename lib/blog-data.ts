@@ -13,9 +13,211 @@ export const BLOG_CATEGORIES = ['Todos', 'Educación', 'Negocios', 'Industrias']
 
 export const BLOG_POSTS: BlogPost[] = [
     {
-        slug: 'vcard-vs-linktree-vs-tarjeta-digital',
+        slug: 'vivimos-enganados-tarjeta-presentacion-digital-no-vende',
+        title: 'Vivimos engañados: Por qué tu tarjeta de presentación digital y tus redes NO te están dando ventas',
+        excerpt: 'Crees que por tener un Linktree o un perfil bonito ya eres digital. La realidad es que estás perdiendo el 90% de tus prospectos por un error básico de contacto.',
+        date: '2026-03-05',
+        image: '/images/blog/enganados-digital.jpg',
+        category: 'Educación',
+        keywords: 'tarjeta de presentación digital, ventas por whatsapp',
+        content: `
+# Vivimos engañados: Por qué tu tarjeta de presentación digital y tus redes NO te están dando ventas
+
+Si eres un profesional que vende diariamente, seguramente piensas: "Ya tengo mi tarjeta digital" o "Tengo mi Linktree en mi bio". 
+
+Pero aquí está la cruda realidad: **Esas herramientas te están haciendo perder dinero.**
+
+## El Gran Engaño del "Estar en Internet"
+
+La mayoría de las "tarjetas digitales" hoy en día son solo páginas web glorificadas. Cuando le envías un link a un cliente, le estás dando una **tarea**:
+1. Entrar al link.
+2. Navegar entre botones.
+3. Buscar tu número.
+4. Anotarlo o intentar copiarlo.
+5. Crear un contacto nuevo manualmente.
+
+**¿Sabes cuánta gente hace eso? Casi nadie.**
+
+## El error fatal: El contacto manual por WhatsApp
+
+Muchos clientes nos dicen: *"Yo ya no uso tarjetas, solo pido que me escriban al WhatsApp"*. 
+
+**Aquí es donde el "Abogado del Diablo" tiene razón:**
+* **Te registran mal:** El cliente te guarda como "Tipo del Aire Acondicionado" o "Abogado 2". Tu marca personal muere ahí.
+* **Información Cero:** No tienen tus redes, ni tu catálogo, ni tu correo. Eres solo un número más en un mar de chats.
+* **El Retargeting Invisible:** Si el cliente no te guarda correctamente (con nombre y marca) y tú no los guardas a ellos, **nadie ve los estados de nadie**. Has matado tu publicidad gratuita de WhatsApp.
+
+## La Solución ActivaQR: Identidad Integrada
+
+Un verdadero **Contacto Digital** no es un destino para "curiosear". Es un archivo de identidad inteligente que se inyecta en la agenda de tu cliente.
+
+Al escanear tu QR o recibir tu archivo:
+* **Tú dictas cómo te ven:** Apareces con tu foto profesional, tu cargo y tu marca.
+* **Presencia en el Buscador:** Cuando busquen "Abogado" en su celular (no en Google, sino en sus contactos), **tú aparecerás primero**.
+
+De eso se trata la verdadera visibilidad. No de tener una página bonita, sino de estar donde el cliente decide a quién llamar: **Su agenda.**
+
+---
+
+**Deja de ser un link olvidado y conviértete en un contacto guardado.** [Empieza aquí](/registro)
+`
+    },
+    {
+        slug: 'error-escribeme-al-whatsapp-script-prohibido',
+        title: 'El error de "escríbeme al WhatsApp" y el script prohibido para que SÍ te guarden',
+        excerpt: 'Dejar que el cliente anote tu número es el primer paso para que te olvinden. Aprende el script exacto para entrar en su agenda para siempre.',
+        date: '2026-03-05',
+        image: '/images/blog/whatsapp-script.jpg',
+        category: 'Educación',
+        keywords: 'vender por whatsapp, script ventas',
+        content: `
+# El error de "escríbeme al WhatsApp" 
+
+"Pásame tu número", "Escríbeme y agendamos". Estas frases son las asesinas silenciosas de tu networking. 
+
+Cuando confías en que el usuario hará el trabajo manual de registrarte, estás apostando tu venta al azar.
+
+## Por qué te registran como "Señor del Local"
+
+Cuando un cliente te escribe sin tenerte guardado, no ve tu foto de perfil (según tu privacidad), no sabe tu nombre completo y, sobre todo, te guarda con el primer nombre que se le viene a la mente. 
+
+**¿El resultado?** Eres irreconocible tres meses después.
+
+## El Script Prohibido (Úsalo y nota la diferencia)
+
+Si quieres dejar de ser un número anónimo, debes enviar tu **Contacto Digital** acompañado de este mensaje preciso:
+
+> "✨ ¡Hola! Gracias por escribir a [Tu Marca] 🎀
+>
+> Antes de comenzar, para que puedas conocer mejor nuestro trabajo y mantenerte al día con nuestras novedades, te compartimos un pequeño archivo con nuestra información.
+>
+> 👉 Solo sigue estos pasos:
+> 📎 1. Haz clic en el archivo que te enviamos
+> 📲 2. Guárdalo o impórtalo en tu teléfono
+> 🌐 3. Así tendrás nuestro contacto completo y acceso a nuestras redes sociales"
+
+### Por qué esto funciona:
+* **Elimina la fricción:** Le das instrucciones claras (1, 2, 3).
+* **Profesionalismo:** No eres un informal pasando un número; eres un negocio entregando su identidad.
+* **Activa los Estados:** Al seguir estos pasos, aseguras que el cliente vea tus promociones diarias en WhatsApp.
+
+No dejes tu futuro comercial en manos de la memoria de tu cliente. Toma el control de cómo apareces en su teléfono.
+
+---
+
+**¿Aún no tienes tu archivo de contacto profesional?** [Consíguelo hoy por $20](/registro)
+`
+    },
+    {
+        slug: 'buscador-invisible-truco-encontrar-primero-celular',
+        title: 'El buscador invisible: El truco para que tus clientes te encuentren primero en su celular',
+        excerpt: '¿Sabías que la mayoría de la gente no busca por nombre, sino por servicio? Aprende cómo configurar tu identidad para ser el número 1 en su agenda.',
+        date: '2026-03-05',
+        image: '/images/blog/buscador-invisible.jpg',
+        category: 'Educación',
+        keywords: 'aparecer en contactos, seo local whatsapp',
+        content: `
+# El buscador invisible: El truco para que tus clientes te encuentren primero
+
+Cuando alguien necesita un servicio urgente (un cerrajero, un médico, un abogado), no se va a Google a ver anuncios. Abre su lista de contactos y escribe la palabra clave.
+
+## El problema de ser "Juan Pérez"
+
+Si te guardan solo como "Juan Pérez", has perdido. A menos que el cliente tenga una memoria prodigiosa, te olvidará. 
+
+**La verdadera visibilidad ocurre en el buscador nativo del celular.**
+
+## Cómo hackear la agenda de tu cliente
+
+Con ActivaQR, no solo enviamos un nombre. Enviamos metadatos inteligentes. 
+1. **Palabras Clave en el Nombre:** Te guardamos como "Juan Pérez - Marketing Digital". 
+2. **Foto de Perfil:** El reconocimiento visual hace que el cliente haga clic en tu nombre antes que en cualquier otro que sea solo texto plano.
+
+### ¿Por qué esto es mejor que una web?
+Porque una web vive en una pestaña del navegador que se cierra. Un **Contacto Digital** vive en el sistema operativo. Eres parte de su teléfono.
+
+---
+
+**¿Quieres dominar el buscador de tus clientes?** [Crea tu perfil optimizado aquí](/registro)
+`
+    },
+    {
+        slug: 'linktree-cementerio-ventas-solucion-definitiva',
+        title: 'Por qué tu Linktree es el cementerio de tus ventas (y la solución definitiva)',
+        excerpt: 'Darle opciones infinitas a un cliente es la mejor forma de que no elija ninguna. Descubre por qué un contacto directo cierra más tratos que mil links.',
+        date: '2026-03-05',
+        image: '/images/blog/cementerio-links.jpg',
+        category: 'Educación',
+        keywords: 'linktree vs tarjeta digital, cerrar ventas',
+        content: `
+# Por qué tu Linktree es el cementerio de tus ventas
+
+Muchos profesionales se sienten orgullosos de su Linktree. "Mira todos mis links", dicen. 
+
+**El problema:** Le estás dando al cliente una parálisis por análisis. 
+
+## El laberinto digital
+
+Cuando envías a alguien a una página de links, lo estás obligando a decidir. Y en ventas, **cada segundo de decisión es un segundo donde el cliente puede arrepentirse.**
+
+A diferencia de las tarjetas digitales que son solo catálogos de enlaces, un **Contacto Digital** es una acción directa. 
+
+### La Ley del Menor Esfuerzo
+*   **Linktree:** Escanear -> Abrir Web -> Buscar Botón -> Ver Número -> Intentar guardar (si se acuerdan).
+*   **ActivaQR:** Escanear -> **Guardar**.
+
+## Deja de ser una opción y conviértete en una solución
+
+En el artículo pillar ["Vivimos engañados: Por qué tus redes NO te dan ventas"](/blog/vivimos-enganados-tarjeta-presentacion-digital-no-vende) explicamos a fondo por qué la fricción es el enemigo #1 de tu negocio.
+
+Si quieres que te llamen, dales el botón de llamar en su lista de contactos, no un link en una bio.
+
+---
+
+**Simplifica tu éxito.** [Cambia de links a contactos aquí](/registro)
+`
+    },
+    {
+        slug: 'inversion-vs-gasto-20-dolares-regalo-negocio',
+        title: 'Inversión vs Gasto: Por qué $20 al año es el mejor regalo que le harás a tu negocio',
+        excerpt: '¿Te parece caro pagar por un servicio de contacto? Compara ese precio con lo que pierdes cada vez que un cliente no te encuentra.',
+        date: '2026-03-05',
+        image: '/images/blog/inversion-negocio.jpg',
+        category: 'Negocios',
+        keywords: 'precio activaqr, inversion marketing',
+        content: `
+# Inversión vs Gasto: Por qué $20 al año es un regalo
+
+A veces escuchamos: *"¿Tengo que pagar cada año?"*. La respuesta corta es: **Si valoras tu visibilidad, sí.**
+
+Pero vamos a analizarlo con cabeza fría. 
+
+## Menos que un café al mes
+
+$20 al año equivale a **$1.66 al mes**. Es decir, menos de lo que cuesta un café o una suscripción básica de cualquier app. 
+
+### ¿Qué estás comprando realmente?
+No estás comprando un "dibujito QR". Estás comprando:
+1.  **Hosting de Identidad:** Tu información disponible 24/7 sin errores.
+2.  **Actualizaciones Instantáneas:** Si cambias de número, no pierdes a tus clientes antigüos.
+3.  **Seguridad y Soporte:** Tu marca protegida en una infraestructura profesional.
+
+## El costo de ser invisible
+
+¿Cuánto vale para ti un cliente nuevo? ¿$50? ¿$100? ¿$500? 
+Si por no estar en la agenda de un cliente pierdes tan solo **UNA** venta al año, ya has perdido muchísimo más de lo que cuesta ActivaQR.
+
+En nuestro blog explicamos por qué ["Todos me conocen" es la trampa de los negocios exitosos](/blog/por-que-los-negocios-exitosos-pierden-clientes). No permitas que un ahorro de $1.66 al mes te haga invisible para tu mercado.
+
+---
+
+**Invierte en tu futuro.** [Renueva o crea tu contacto aquí](/registro)
+`
+    },
+    {
+        slug: 'contacto-digital-vs-linktree-vs-tarjeta-digital',
         title: 'Contacto Digital vs Linktree vs Tarjeta Digital: No son lo mismo y te explico por qué',
-        excerpt: '¿Crees que un Linktree es una tarjeta digital? Estás perdiendo clientes. Descubre por qué un archivo de contacto QR es la verdadera llave del networking.',
+        excerpt: '¿Crees que un Linktree es una tarjeta digital? Estás perdiendo clientes. Descubre por qué un archivo de contacto inteligente es la verdadera llave del networking.',
         date: '2026-02-19',
         image: '/images/blog/vcard-vs-linktree.jpg',
         category: 'Educación',
@@ -206,7 +408,7 @@ Aunque es genial para pagos, muchos teléfonos antiguos o gamas medias no tienen
 
 ### La solución ActivaQR
 
-En ActivaQR nos enfocamos en que **nadie se quede fuera**. Nuestro sistema de descarga de vCard por QR asegura que el 100% de tus clientes potenciales puedan guardarte sin errores técnicos.
+En ActivaQR nos enfocamos en que **nadie se quede fuera**. Nuestro sistema de descarga de contacto inteligente por QR asegura que el 100% de tus clientes potenciales puedan guardarte sin errores técnicos.
 
 No sacrifiques alcance por parecer "tecnológico". Elige la herramienta que cierra más ventas.
 
@@ -220,13 +422,13 @@ Si quieres entender a fondo cómo funciona el archivo que se descarga al escanea
     `
     },
     {
-        slug: 'que-es-una-vcard',
+        slug: 'que-es-un-contacto-digital',
         title: 'Qué es un Contacto Digital y por qué NO es una página web',
-        excerpt: 'Descubre el secreto técnico detrás de ActivaQR. Aprende qué es un archivo vCard y por qué es la forma más rápida de entrar en la agenda de tus clientes.',
+        excerpt: 'Descubre el secreto técnico detrás de ActivaQR. Aprende qué es un archivo de contacto inteligente y por qué es la forma más rápida de entrar en la agenda de tus clientes.',
         date: '2026-02-24',
-        image: '/images/blog/vcard-tech.jpg',
+        image: '/images/blog/contacto-digital-tech.jpg',
         category: 'Educación',
-        keywords: 'qué es una vCard',
+        keywords: 'qué es un contacto digital',
         content: `
 # Qué es un Contacto Digital y por qué NO es una página web
 
@@ -241,7 +443,7 @@ Cuando alguien escanea tu QR, su teléfono no solo "mira" una información; reci
 ### Por qué esto es mejor que una web
 
 * **Funciona sin internet una vez guardado:** Una vez que estás en su agenda, no necesitan datos para buscarte.
-* **Integración nativa:** Al ser un formato estándar (\`.vcf\`), todos los teléfonos del mundo (iPhone o Android) saben exactamente qué hacer con él.
+* **Integración nativa:** Al ser un formato estándar, todos los teléfonos del mundo (iPhone o Android) saben exactamente qué hacer con él.
 * **Apareces al buscar:** Si te guardan como "Juan - Abogado", cuando busquen "Abogado" en su lista de contactos, aparecerás tú. Una página web nunca aparecerá ahí.
 
 ## El QR como puerta de entrada
@@ -290,7 +492,7 @@ En 2026, los clientes valoran a los profesionales que cuidan el planeta. Present
 
 ### ¿Cómo dar el salto?
 
-Muchos profesionales dicen "ya tengo" una solución digital refiriéndose a un link, pero eso no basta. Descubre por qué un contacto real es superior en nuestra guía: [Qué es un Contacto Digital y por qué NO es una página web](/blog/que-es-una-vcard).
+Many professionals say "I already have" a digital solution referring to a link, but that's not enough. Discover why a real contact is superior in our guide: [What is a Digital Contact and why it is NOT a web page](/blog/que-es-un-contacto-digital).
 
 ---
 
@@ -500,7 +702,7 @@ Si solo tienes QR de pago, eres un número de cuenta. Si tienes QR de contacto, 
 
 A diferencia de las tarjetas digitales que la gente "ya tiene" (y ignora), tener un QR específicamente dedicado a que te guarden demuestra que valoras al cliente y quieres estar disponible para él.
 
-Si aún tienes dudas sobre cómo este formato se diferencia de otras soluciones digitales, lee: [Qué es un Contacto Digital y por qué NO es una página web](/blog/que-es-una-vcard).
+Si aún tienes dudas sobre cómo este formato se diferencia de otras soluciones digitales, lee: [Qué es un Contacto Digital y por qué NO es una página web](/blog/que-es-un-contacto-digital).
 
 ---
 
@@ -758,7 +960,7 @@ Aprende más sobre cómo destacar en networking moderno en: [5 errores de networ
 
 ---
 
-**Convierte cada saludo en una oportunidad de venta.** [Crea tu contacto vCard hoy](/registro)
+**Convierte cada saludo en una oportunidad de venta.** [Crea tu contacto digital hoy](/registro)
 `
     }
 ];

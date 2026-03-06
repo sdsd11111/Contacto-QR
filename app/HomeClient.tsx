@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import {
     CheckCircle2,
     Phone,
@@ -15,6 +14,8 @@ import {
     BarChart3,
     Edit
 } from "lucide-react";
+import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import VideoModal from "@/components/VideoModal";
 import PopupManager from "@/components/PopupManager";
 import EditPortalModal from "@/components/EditPortalModal";
@@ -33,6 +34,16 @@ export default function HomeClient() {
     }, []);
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+    const [currentSlide, setCurrentSlide] = useState(0);
+
+    useEffect(() => {
+        // Auto-play para el carrusel (5 segundos)
+        const timer = setInterval(() => {
+            setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1));
+        }, 5000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         // Check if URL has #editar and open modal
@@ -305,6 +316,214 @@ export default function HomeClient() {
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-navy/20 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2"></div>
                 </div>
             </section >
+
+            {/* Sección: Carrusel de Banners de Conversión Estratégica */}
+            <section className="py-24 bg-white relative overflow-hidden">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="relative">
+                        <AnimatePresence mode="wait">
+                            {currentSlide === 0 && (
+                                <motion.div
+                                    key="slide-whatsapp-pro"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left"
+                                >
+                                    {/* Slide 1: WhatsApp Pro-Tip */}
+                                    <div className="relative z-10">
+                                        <div className="inline-block bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
+                                            ✨ MÉTODO PRO
+                                        </div>
+                                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tighter leading-none mb-6">
+                                            COMPÁRTELO POR <span className="text-primary italic">WHATSAPP</span>
+                                        </h2>
+                                        <div className="relative mb-8 text-left">
+                                            <div className="absolute left-0 top-0 w-1.5 h-full bg-primary rounded-full hidden lg:block"></div>
+                                            <p className="text-xl text-navy/70 font-bold italic lg:pl-8">
+                                                "Cuando un cliente te escriba por WhatsApp, no solo le des tu número. Envíale este mensaje junto con tu contacto digital de ActivaQR:"
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+                                            <div className="flex items-center gap-2 text-navy/80 font-black uppercase text-[10px] tracking-widest bg-gray-50 px-3 py-2 rounded-xl border border-gray-100 italic">
+                                                <div className="w-5 h-5 bg-[#66bf19] text-white rounded-full flex items-center justify-center text-[10px] shadow-sm">✓</div>
+                                                Ideal para clientes de Instagram
+                                            </div>
+                                            <div className="flex items-center gap-2 text-navy/80 font-black uppercase text-[10px] tracking-widest bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
+                                                <div className="w-5 h-5 bg-[#66bf19] text-white rounded-full flex items-center justify-center text-[10px] shadow-sm">✓</div>
+                                                Profesionalismo
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="relative">
+                                        <div className="absolute -inset-10 bg-gradient-to-tr from-primary/20 to-green-500/10 blur-3xl opacity-30"></div>
+                                        <div className="relative bg-[#efeae2] rounded-[3rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] border-[10px] border-navy overflow-hidden aspect-[9/12] max-w-[380px] mx-auto group">
+                                            <div className="bg-[#075e54] p-5 flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white text-xl">👤</div>
+                                                <div className="text-left">
+                                                    <div className="text-white font-black text-sm uppercase tracking-tight">Interesado de IG</div>
+                                                    <div className="text-[#25d366] text-[10px] font-bold animate-pulse">en línea</div>
+                                                </div>
+                                            </div>
+                                            <div className="p-4 space-y-4 text-left">
+                                                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
+                                                    className="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[75%] text-xs font-bold text-navy/80"
+                                                >
+                                                    "Vi tus productos en Instagram, me puedes enviar tu catálogo?"
+                                                </motion.div>
+                                                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}
+                                                    className="bg-[#dcf8c6] p-4 rounded-2xl rounded-tr-none shadow-md border border-navy/5 ml-auto max-w-[90%] relative"
+                                                >
+                                                    <p className="text-[11px] leading-relaxed text-navy font-medium whitespace-pre-line">
+                                                        ✨ ¡Hola! Gracias por escribir a <span className="font-black">[Tu Negocio]</span> 🎀
+                                                        {"\n\n"}
+                                                        Antes de comenzar, para que puedas conocer mejor nuestro trabajo y mantenerte al día con nuestras novedades, te compartimos nuestra información de contacto.
+                                                        {"\n\n"}
+                                                        👉 <span className="font-black text-primary underline decoration-primary/30">Solo sigue estos pasos:</span>
+                                                        {"\n"}
+                                                        📎 1. Haz clic en el archivo que te enviamos
+                                                        {"\n"}
+                                                        📲 2. Guárdalo o impórtalo en tu teléfono
+                                                        {"\n"}
+                                                        🌐 3. Así tendrás nuestro contacto completo y acceso a nuestras redes.
+                                                    </p>
+                                                    <div className="text-[8px] text-navy/30 text-right mt-1 font-bold">11:15 p.m. ✓✓</div>
+                                                </motion.div>
+                                                <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 1.2 }}
+                                                    className="bg-[#dcf8c6] p-2 rounded-2xl rounded-tr-none shadow-lg ml-auto max-w-[85%] border-2 border-primary/20"
+                                                >
+                                                    <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 flex items-center gap-3">
+                                                        <div className="w-12 h-12 bg-navy rounded-xl flex items-center justify-center text-white shrink-0 shadow-inner">
+                                                            <div className="flex flex-col items-center"><span className="text-[8px] font-black opacity-50">FILE</span><span className="text-xs font-black text-primary">VCF</span></div>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-[11px] font-black text-navy truncate">tu-contacto.vcf</div>
+                                                            <div className="text-[9px] font-bold text-navy/40">VCF • 28 kB</div>
+                                                        </div>
+                                                        <div className="w-8 h-8 rounded-full bg-navy/5 flex items-center justify-center text-navy/60">↓</div>
+                                                    </div>
+                                                </motion.div>
+                                            </div>
+                                            <div className="absolute bottom-0 left-0 w-full bg-[#f0f2f5] p-3 flex items-center gap-3">
+                                                <div className="w-full bg-white rounded-full py-2.5 px-5 text-[11px] text-navy/20 font-bold border border-navy/5 shadow-inner">Escribe un mensaje...</div>
+                                                <div className="w-10 h-10 bg-[#075e54] rounded-full flex items-center justify-center text-white shadow-lg shrink-0">➤</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {currentSlide === 1 && (
+                                <motion.div
+                                    key="slide-estados"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left"
+                                >
+                                    {/* Slide 2: Vende por Estados */}
+                                    <div className="relative z-10">
+                                        <div className="inline-block bg-green-500/10 text-green-600 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
+                                            📈 ENGAGEMENT MÁXIMO
+                                        </div>
+                                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tighter leading-none mb-6">
+                                            VENDE POR <span className="text-primary italic">ESTADOS DE WHATSAPP</span>
+                                        </h2>
+                                        <ul className="space-y-4 mb-8 text-left">
+                                            <li className="flex items-start gap-4">
+                                                <div className="w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-1">1</div>
+                                                <p className="text-lg text-navy/70 font-bold">Si ellos te agregan y tu los agregas podrán ver tus estados. ¡Mayor engagement y ventas!</p>
+                                            </li>
+                                            <li className="flex items-start gap-4">
+                                                <div className="w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-1">2</div>
+                                                <p className="text-lg text-navy/70 font-bold">Si también los etiquetas, podrán crear difusiones y será más fácil enviar campañas o mensajes personalizados.</p>
+                                            </li>
+                                        </ul>
+                                        <div className="flex gap-4 justify-center lg:justify-start">
+                                            <Link href="/habitaciones" className="bg-navy text-white font-black px-8 py-4 rounded-2xl hover:bg-primary transition-all shadow-xl uppercase tracking-widest text-xs">
+                                                Probar ahora
+                                            </Link>
+                                        </div>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute -inset-10 bg-primary/10 blur-3xl rounded-full"></div>
+                                        <img
+                                            src="/images/estado de whatsapp.png"
+                                            alt="Estados de WhatsApp"
+                                            className="relative rounded-[2rem] shadow-2xl border-4 border-white transform rotate-2 max-w-md mx-auto"
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {currentSlide === 2 && (
+                                <motion.div
+                                    key="slide-automatizacion"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center text-center lg:text-left"
+                                >
+                                    {/* Slide 3: Automatización */}
+                                    <div className="relative z-10">
+                                        <div className="inline-block bg-navy/10 text-navy text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
+                                            🚀 PARA NEGOCIOS ESCALABLES
+                                        </div>
+                                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tighter leading-none mb-6">
+                                            LO HACEMOS <span className="text-primary italic">POR TI</span>
+                                        </h2>
+                                        <p className="text-xl text-navy/70 font-bold mb-8 italic leading-relaxed">
+                                            "Si quieres simplemente ver el resultado y no perder meses y mucho dinero intentándolo tú mismo, lo hacemos por ti."
+                                        </p>
+                                        <div className="flex gap-4 justify-center lg:justify-start">
+                                            <Link href="/contacto" className="bg-primary text-white font-black px-10 py-5 rounded-2xl hover:scale-105 transition-all shadow-2xl uppercase tracking-widest text-sm">
+                                                QUIERO AUTOMATIZAR
+                                            </Link>
+                                        </div>
+                                    </div>
+                                    <div className="relative">
+                                        <div className="absolute -inset-10 bg-navy/5 blur-3xl rounded-full"></div>
+                                        <img
+                                            src="/images/mockup_laptop_automatizacion_activaqr_1772769734997.png"
+                                            alt="Automatización ActivaQR"
+                                            className="relative rounded-[2rem] shadow-2xl border-4 border-navy/10 max-w-lg mx-auto"
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Controles del Carrusel */}
+                        <div className="flex justify-center lg:justify-start items-center gap-6 mt-16">
+                            {[0, 1, 2].map((idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentSlide(idx)}
+                                    className={`h-3 rounded-full transition-all duration-500 ${currentSlide === idx ? 'w-12 bg-primary' : 'w-3 bg-navy/10 hover:bg-navy/30'}`}
+                                    aria-label={`Go to slide ${idx + 1}`}
+                                />
+                            ))}
+                            <div className="ml-4 flex gap-3">
+                                <button
+                                    onClick={() => setCurrentSlide((prev) => (prev === 0 ? 2 : prev - 1))}
+                                    className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-navy/10 flex items-center justify-center text-navy shadow-lg hover:bg-navy hover:text-white transition-all group active:scale-95"
+                                    title="Anterior"
+                                >
+                                    <span className="group-hover:-translate-x-0.5 transition-transform font-bold">←</span>
+                                </button>
+                                <button
+                                    onClick={() => setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1))}
+                                    className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-md border border-navy/10 flex items-center justify-center text-navy shadow-lg hover:bg-navy hover:text-white transition-all group active:scale-95"
+                                    title="Siguiente"
+                                >
+                                    <span className="group-hover:translate-x-0.5 transition-transform font-bold">→</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
             < section className="py-24 bg-cream relative overflow-hidden" >
@@ -870,32 +1089,62 @@ export default function HomeClient() {
                     <div className="space-y-4">
                         {[
                             {
-                                q: "¿Por qué necesito esto si ya tengo redes sociales?",
-                                a: "Las redes son para entretenimiento. Cuando alguien necesita un servicio urgente, busca en su agenda o contactos. Con esto, te aseguras de estar ahí, guardado con foto y profesión, listo para que te llamen."
+                                tag: "CONCEPTO",
+                                q: "¿Qué es exactamente mi contacto digital?",
+                                a: "Es un **archivo con tu información organizada** que se integra directamente en la agenda de tu cliente. A diferencia de un link o papel, ActivaQR permite que tu negocio viva dentro del teléfono, con tu foto y servicios siempre a mano. Mira [qué es un contacto digital aquí](/blog/que-es-un-contacto-digital)."
                             },
                             {
+                                tag: "VALOR",
+                                q: "¿De qué me sirve estar en la agenda de mi cliente?",
+                                a: "Solo imagina estar en **1000 o 5000 celulares** al mismo tiempo y que cada uno de ellos busque en su TELÉFONO 'Tu servicio'. ¿Cuántas ventas podrían significar? Esto genera recordación constante y ventas recurrentes. Mira el [truco para que te encuentren primero aquí](/blog/aparecer-primero-contactos-celular)."
+                            },
+                            {
+                                tag: "DIFERENCIA",
+                                q: "¿Es como un Linktree o una página web?",
+                                a: "Definitivamente NO. Un Linktree es una página externa donde el cliente se pierde. ActivaQR es el paso siguiente: entra en su agenda para que te llamen directo. Lee más sobre el [cementerio de links aquí](/blog/linktree-cementerio-ventas-solucion-definitiva)."
+                            },
+                            {
+                                tag: "REDES",
+                                q: "¡Pero si ya me buscan por Instagram o Redes!",
+                                a: "El problema de las redes es que el cliente se distrae con la competencia. Al tenerte guardado en su agenda, tiene línea directa contigo sin distracciones. Mira por qué [Instagram no es suficiente aquí](/blog/vivimos-enganados-tarjeta-presentacion-digital-no-vende)."
+                            },
+                            {
+                                tag: "ESTRATEGIA",
+                                q: "¿Cómo me encuentran más fácil en su buscador?",
+                                a: "Optimizamos el guardado incluyendo tu profesión o nombre como palabra clave. Si buscan 'Abogado' o 'Tienda', tú aparecerás de forma inmediata. Descubre el [truco del buscador invisible aquí](/blog/buscador-invisible-truco-encontrar-primero-celular)."
+                            },
+                            {
+                                tag: "INVERSIÓN",
                                 q: "¿El Código QR funciona para siempre?",
-                                a: "Sí, el código QR es dinámico. Si cambias de número, actualizamos tu contacto y el mismo QR impreso sigue funcionando."
+                                a: "¡SÍ! El código es tuyo de por vida. Sin embargo, para mantener tu información 'viva' y siempre actualizada en la nube, debes **renovar tu hosting de identidad** por solo $20 al año. Mira por qué es la [mejor inversión para tu negocio aquí](/blog/inversion-vs-gasto-20-dolares-regalo-negocio)."
                             },
                             {
-                                q: "¿Cómo recibo mi contacto?",
-                                a: "Es automático. Llenas tus datos, realizas el pago y recibes en tu correo el enlace a tu contacto y tus archivos listos para usar."
-                            },
-                            {
-                                q: "¿Tengo que pagar mensualidades?",
-                                a: "No. Es un pago anual de $20 que incluye hosting, mantenimiento y actualizaciones. La renovación es del 100% al año."
-                            },
-                            {
-                                q: "¿Funciona en todos los celulares?",
-                                a: "Sí, aunque la forma en que se guarda el contacto puede cambiar. Los celulares modernos escanean el QR directamente con la cámara, mientras que modelos más antiguos pueden necesitar una app. En iPhone o Android, el sistema gestiona la importación de manera ligeramente distinta, siempre asegurando que tus datos lleguen al cliente."
+                                tag: "COMPATIBILIDAD",
+                                q: "¿Funciona en todos los modelos de celulares?",
+                                a: "Absolutamente. iPhone o Android, todos reconocen este estándar universal. Es tan simple como 'Escanear y Guardar', sin apps raras. Mira la [comparativa de compatibilidad aquí](/blog/tarjeta-digital-vs-nfc)."
                             }
                         ].map((item, i) => (
-                            <details key={i} className="group bg-gray-50 rounded-2xl p-6 cursor-pointer border border-gray-100 hover:bg-gray-100 transition-colors">
-                                <summary className="flex items-center justify-between font-bold text-navy list-none text-base md:text-lg">
-                                    {item.q}<ChevronRight size={20} className="group-open:rotate-90 transition-transform text-primary" />
-                                </summary>
-                                <p className="mt-4 text-navy/70 leading-relaxed text-sm">{item.a}</p>
-                            </details>
+                            <div key={i} className="group overflow-hidden">
+                                <button
+                                    onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
+                                    className="w-full text-left bg-gray-50 rounded-2xl p-6 border border-gray-100 hover:bg-gray-100 transition-all flex items-center justify-between group"
+                                >
+                                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 flex-1">
+                                        <span className="inline-block bg-primary/10 text-primary text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md w-fit">
+                                            {item.tag}
+                                        </span>
+                                        <span className={`font-black uppercase tracking-tight text-sm md:text-base transition-colors ${openFaqIndex === i ? 'text-primary' : 'text-navy'}`}>
+                                            {item.q}
+                                        </span>
+                                    </div>
+                                    <ChevronRight size={18} className={`transform transition-transform duration-300 ml-4 shrink-0 ${openFaqIndex === i ? 'rotate-90 text-primary' : 'text-primary/40'}`} />
+                                </button>
+                                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaqIndex === i ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                                    <div className="p-6 pt-0 text-navy/70 leading-relaxed text-sm bg-gray-50 rounded-b-2xl border-x border-b border-gray-100">
+                                        <p dangerouslySetInnerHTML={{ __html: item.a.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-primary font-bold underline">$1</a>') }} />
+                                    </div>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>
