@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     CheckCircle2,
@@ -302,33 +303,231 @@ export default function VentasClient() {
                 </div>
             </section>
 
-            {/* CTA Final */}
-            <section className="py-24 bg-cream text-center px-6">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    className="max-w-3xl mx-auto bg-navy p-12 rounded-[3rem] shadow-2xl relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+            {/* CTA Final + Formulario */}
+            <section id="empezar" className="py-24 bg-cream px-6">
+                <div className="max-w-6xl mx-auto">
+                    <div className="grid lg:grid-cols-2 gap-12 items-center bg-navy p-8 md:p-12 rounded-[3rem] shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
 
-                    <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-6 relative z-10">
-                        ¿Listo para empezar?
-                    </h2>
-                    <p className="text-white/70 text-lg mb-10 max-w-xl mx-auto relative z-10">
-                        Escríbenos por WhatsApp. César, nuestro encargado, te orientará sobre los siguientes pasos para activar tu cuenta de vendedor.
-                    </p>
+                        {/* Columna Izquierda: Texto */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -30 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            className="relative z-10"
+                        >
+                            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-6 leading-tight">
+                                ¿Listo para <br />
+                                <span className="text-primary italic">empezar?</span>
+                            </h2>
+                            <p className="text-white/70 text-lg mb-8 max-w-xl font-medium">
+                                Completa tus datos y un asesor se contactará contigo para activar tu cuenta de vendedor y darte acceso a tu panel.
+                            </p>
 
-                    <a
-                        href="https://wa.me/593983237491?text=Hola%20C%C3%A9sar,%20quiero%20unirme%20al%20equipo%20de%20ventas%20de%20ActivaQR"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-3 bg-[#25D366] text-white py-4 px-10 rounded-full font-black text-lg uppercase tracking-widest shadow-lg hover:scale-105 transition-transform relative z-10"
-                    >
-                        <MessageCircle size={24} /> Contactar a César
-                    </a>
-                </motion.div>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-4 text-white/80">
+                                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-primary">
+                                        <CheckCircle2 size={20} />
+                                    </div>
+                                    <span className="font-bold">Capacitación gratuita incluida</span>
+                                </div>
+                                <div className="flex items-center gap-4 text-white/80">
+                                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-primary">
+                                        <CheckCircle2 size={20} />
+                                    </div>
+                                    <span className="font-bold">Acceso a panel de gestión</span>
+                                </div>
+                                <div className="flex items-center gap-4 text-white/80">
+                                    <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center text-primary">
+                                        <CheckCircle2 size={20} />
+                                    </div>
+                                    <span className="font-bold">Soporte prioritario</span>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Columna Derecha: Formulario */}
+                        <motion.div
+                            initial={{ opacity: 0, x: 30 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            className="relative z-20"
+                        >
+                            <SalesLeadForm />
+                        </motion.div>
+                    </div>
+                </div>
             </section>
         </main>
     );
+}
+
+function SalesLeadForm() {
+    const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+    const [formData, setFormData] = useState({
+        nombre: '',
+        celular: '',
+        ciudad: '',
+        experiencia: '',
+        aceptaTerminos: false
+    });
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!formData.aceptaTerminos) {
+            alert("Debes aceptar los términos y condiciones para continuar.");
+            return;
+        }
+
+        setStatus('loading');
+        try {
+            const res = await fetch('/api/ventas/vendedor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: formData.nombre,
+                    celular: formData.celular,
+                    ciudad: formData.ciudad,
+                    experiencia: formData.experiencia
+                })
+            });
+
+            if (res.ok) {
+                setStatus('success');
+                // Redirigir a WhatsApp después de 1.5 segundos
+                setTimeout(() => {
+                    const message = encodeURIComponent("Hola ActivaQR quiero informacion sobre los vendedores :)");
+                    window.open(`https://wa.me/593983237491?text=${message}`, '_blank');
+                }, 1500);
+            } else {
+                setStatus('error');
+            }
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            setStatus('error');
+        }
+    };
+
+    if (status === 'success') {
+        return (
+            <div className="bg-white p-8 rounded-[2rem] text-center">
+                <div className="w-16 h-16 bg-[#66bf19]/20 text-[#66bf19] rounded-full flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle2 size={32} />
+                </div>
+                <h3 className="text-2xl font-black text-navy uppercase mb-2">¡Registro Exitoso!</h3>
+                <p className="text-navy/60 font-medium mb-6">Redirigiéndote a WhatsApp para finalizar tu activación...</p>
+                <div className="animate-pulse text-xs font-black text-primary uppercase tracking-widest">
+                    Cargando WhatsApp...
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="bg-white p-8 rounded-[2rem] shadow-xl space-y-4">
+            <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-navy/40 ml-4 mb-2 block">Nombre completo</label>
+                <input
+                    required
+                    type="text"
+                    value={formData.nombre}
+                    onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                    placeholder="Ej. Juan Pérez"
+                    className="w-full px-6 py-3 rounded-full bg-cream border border-navy/5 focus:outline-none focus:border-primary font-bold text-navy text-sm"
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-navy/40 ml-4 mb-2 block">Celular</label>
+                    <input
+                        required
+                        type="tel"
+                        value={formData.celular}
+                        onChange={e => setFormData({ ...formData, celular: e.target.value })}
+                        placeholder="099..."
+                        className="w-full px-6 py-3 rounded-full bg-cream border border-navy/5 focus:outline-none focus:border-primary font-bold text-navy text-sm"
+                    />
+                </div>
+                <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-navy/40 ml-4 mb-2 block">Ciudad</label>
+                    <input
+                        required
+                        type="text"
+                        value={formData.ciudad}
+                        onChange={e => setFormData({ ...formData, ciudad: e.target.value })}
+                        placeholder="Ej. Quito"
+                        className="w-full px-6 py-3 rounded-full bg-cream border border-navy/5 focus:outline-none focus:border-primary font-bold text-navy text-sm"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-navy/40 ml-4 mb-2 block">¿Tienes experiencia vendiendo?</label>
+                <div className="flex gap-4 px-2">
+                    {['Sí', 'No'].map(opt => (
+                        <label key={opt} className="flex items-center gap-2 cursor-pointer group">
+                            <input
+                                required
+                                type="radio"
+                                name="experiencia"
+                                value={opt}
+                                onChange={e => setFormData({ ...formData, experiencia: e.target.value })}
+                                className="hidden"
+                            />
+                            <div className={`w-5 h-5 rounded-full border-2 border-navy/10 flex items-center justify-center transition-all ${formData.experiencia === opt ? 'bg-primary border-primary' : 'bg-transparent group-hover:border-primary/50'}`}>
+                                {formData.experiencia === opt && <div className="w-1.5 h-1.5 bg-white rounded-full"></div>}
+                            </div>
+                            <span className={`text-sm font-bold uppercase ${formData.experiencia === opt ? 'text-navy' : 'text-navy/40'}`}>{opt}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            <div className="pt-2">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                    <input
+                        required
+                        type="checkbox"
+                        checked={formData.aceptaTerminos}
+                        onChange={e => setFormData({ ...formData, aceptaTerminos: e.target.checked })}
+                        className="hidden"
+                    />
+                    <div className={`w-5 h-5 mt-0.5 rounded border-2 border-navy/10 flex items-center justify-center shrink-0 transition-all ${formData.aceptaTerminos ? 'bg-primary border-primary' : 'bg-transparent group-hover:border-primary/50'}`}>
+                        {formData.aceptaTerminos && <Check size={14} className="text-white" />}
+                    </div>
+                    <span className="text-[10px] font-bold text-navy/50 leading-tight">
+                        Acepto los <a href="/terminos" target="_blank" className="text-primary hover:underline">términos y condiciones</a> y la <a href="/privacidad" target="_blank" className="text-primary hover:underline">política de privacidad</a>.
+                    </span>
+                </label>
+            </div>
+
+            <button
+                disabled={status === 'loading'}
+                type="submit"
+                className="w-full py-4 rounded-full bg-navy text-white font-black uppercase tracking-widest text-sm shadow-lg hover:bg-primary transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-3 mt-4"
+            >
+                {status === 'loading' ? (
+                    <> <Loader2 size={20} className="animate-spin" /> Procesando... </>
+                ) : (
+                    <> Enviar Solicitud <ArrowRight size={20} /> </>
+                )}
+            </button>
+
+            {status === 'error' && (
+                <p className="text-red-500 text-[10px] font-black uppercase tracking-widest text-center mt-2">
+                    Ocurrió un error. Inténtalo de nuevo.
+                </p>
+            )}
+        </form>
+    );
+}
+
+function Loader2({ size, className }: { size: number, className: string }) {
+    return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>;
+}
+
+function Check({ size, className }: { size: number, className: string }) {
+    return <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12" /></svg>;
 }

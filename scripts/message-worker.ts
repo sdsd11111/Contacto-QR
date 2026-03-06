@@ -231,6 +231,34 @@ async function processQueue() {
                     botReply = botReply.replace(/\[SAVE_CONTACT\]/g, '').trim();
                 }
 
+                // 8.6. Manejo de Guardado de VCF Solo (Sin QR)
+                if (botReply.includes('[SAVE_VCF_ONLY]')) {
+                    const cleanPhone = jid.replace('@s.whatsapp.net', '').replace(/\D/g, '');
+                    const nameToSave = push_name || 'Nuevo Vendedor ActivaQR';
+
+                    // Guardar en Google Contacts
+                    saveToGoogleContacts(nameToSave, cleanPhone).then(success => {
+                        if (success) console.log(`✨ Sincronizado Vendedor: ${nameToSave}`);
+                    });
+
+                    // Enviar tarjeta VCF oficial de ActivaQR
+                    await sendMedia(jid, 'document', 'https://www.activaqr.com/api/vcard/activaqr-9ag4', 'Contacto_ActivaQR.vcf');
+                    botReply = botReply.replace(/\[SAVE_VCF_ONLY\]/g, '').trim();
+                }
+
+                // 8.7. Silenciar Bot (Handoff)
+                if (botReply.includes('[MUTE_24H]')) {
+                    const mutedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                    await pool.execute(
+                        `INSERT INTO registraya_whatsapp_sessions (jid, last_human_interaction, bot_muted_until) 
+                         VALUES (?, NOW(), ?) 
+                         ON DUPLICATE KEY UPDATE bot_muted_until = ?`,
+                        [jid, mutedUntil, mutedUntil]
+                    );
+                    console.log(`🔇 Bot silenciado por 24h para ${jid}`);
+                    botReply = botReply.replace(/\[MUTE_24H\]/g, '').trim();
+                }
+
                 // 9. Enviar respuesta (separada en múltiples globos de chat)
                 let messagesToSend: string[] = [];
                 if (botReply.includes('[SPLIT]')) {
