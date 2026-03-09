@@ -7,18 +7,18 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { nombre, celular, ciudad, experiencia } = body;
+        const { nombre, celular, provincia, canton, experiencia } = body;
 
-        if (!nombre || !celular || !ciudad || !experiencia) {
+        if (!nombre || !celular || !provincia || !canton || !experiencia) {
             return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400 });
         }
 
         // 1. Guardar en la base de datos
         const query = `
-            INSERT INTO ventas_leads (nombre, celular, ciudad, experiencia)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO ventas_leads (nombre, celular, provincia, canton, experiencia)
+            VALUES (?, ?, ?, ?, ?)
         `;
-        const [result]: any = await pool.execute(query, [nombre, celular, ciudad, experiencia]);
+        const [result]: any = await pool.execute(query, [nombre, celular, provincia, canton, experiencia]);
 
         // 2. Enviar correo a registro@activaqr.com con todos los datos (CC a cristhopheryeah113@gmail.com)
         const leadHtml = `
@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
                 <h2 style="color: #66bf19; border-bottom: 2px solid #66bf19; padding-bottom: 10px;">Nuevo Lead de Vendedor</h2>
                 <p><strong>Nombre:</strong> ${nombre}</p>
                 <p><strong>Celular:</strong> ${celular}</p>
-                <p><strong>Ciudad:</strong> ${ciudad}</p>
+                <p><strong>Provincia:</strong> ${provincia}</p>
+                <p><strong>Cantón:</strong> ${canton}</p>
                 <p><strong>¿Tiene experiencia vendiendo?:</strong> ${experiencia}</p>
                 <p style="font-size: 12px; color: #777; margin-top: 20px;">Este lead ha sido registrado automáticamente desde la página de Ventas.</p>
             </div>
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
             // Correo principal
             await sendMail({
                 to: 'registro@activaqr.com, cristhopheryeah113@gmail.com',
-                subject: `Nuevo Vendedor: ${nombre} - ${ciudad}`,
+                subject: `Nuevo Vendedor: ${nombre} - ${canton}, ${provincia}`,
                 html: leadHtml
             });
         } catch (mailErr) {
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
             await sendMail({
                 to: 'cristhopheryeah113@gmail.com',
                 subject: 'Tienes un nuevo vendedor',
-                html: `<p>Hola, tienes un nuevo lead de vendedor interesado: <strong>${nombre}</strong> de <strong>${ciudad}</strong>.</p><p>Revisa el correo de registro@activaqr.com para ver todos los detalles.</p>`
+                html: `<p>Hola, tienes un nuevo lead de vendedor interesado: <strong>${nombre}</strong> de <strong>${canton}, ${provincia}</strong>.</p><p>Revisa el correo de registro@activaqr.com para ver todos los detalles.</p>`
             });
         } catch (mailErr) {
             console.error('Error enviando email de notificación:', mailErr);
