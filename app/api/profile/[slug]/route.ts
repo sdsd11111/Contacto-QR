@@ -15,10 +15,10 @@ export async function GET(
             const [rows] = await pool.execute(
                 `SELECT 
                     id, slug, nombre, profesion, empresa, bio, direccion, web, whatsapp, email, 
-                    google_business, instagram, linkedin, facebook, tiktok, productos_servicios, 
+                    google_business, instagram, linkedin, facebook, tiktok, youtube, x, productos_servicios, 
                     plan, foto_url, galeria_urls, status, tipo_perfil, nombres, apellidos, 
                     nombre_negocio, contacto_nombre, contacto_apellido, etiquetas, created_at,
-                    menu_digital
+                    menu_digital, wifi_ssid, wifi_password
                  FROM registraya_vcard_registros 
                  WHERE slug = ? OR id = ?`,
                 [slug, slug]

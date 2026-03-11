@@ -87,8 +87,9 @@ export async function GET(
 
         noteContent += "\n\n- Realizado por www.activaqr.com";
 
-        // Limpiar WhatsApp para el campo TEL
-        const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números
+        // Limpiar WhatsApp para el campo TEL (Preservar el + si existe para mejor compatibilidad internacional)
+        const cleanWhatsApp = whatsapp.replace(/\D/g, ''); // Solo números para links
+        const whatsappWithPlus = whatsapp.trim().startsWith('+') ? `+${cleanWhatsApp}` : cleanWhatsApp;
 
         // Función para line folding (removida para campos de texto por problemas en Android)
 
@@ -124,8 +125,8 @@ export async function GET(
             `FN:${escapeVCardValue(fullName)}`,
             `N:${structuredName}`, // Ya escapado individualmente
             user.profesion ? `TITLE:${escapeVCardValue(user.profesion)}` : '',
-            `ORG:${escapeVCardValue(organization)}`,
-            `TEL;TYPE=CELL,VOICE:${cleanWhatsApp}`,
+            `TEL;TYPE=CELL,VOICE:${whatsappWithPlus}`,
+            `X-ABLabel:Móvil`,
             `EMAIL;TYPE=WORK,INTERNET:${escapeVCardValue(user.email)}`,
             user.direccion ? `ADR;TYPE=WORK:;;${escapeVCardValue(user.direccion)};;;;` : '',
             user.web ? `URL:${escapeVCardValue(user.web)}` : '',
@@ -143,6 +144,22 @@ export async function GET(
             user.linkedin ? `URL;type=LINKEDIN:${escapeVCardValue(user.linkedin)}` : '',
             user.linkedin ? `X-SOCIALPROFILE;type=linkedin:${escapeVCardValue(user.linkedin)}` : '',
             user.tiktok ? `URL;type=TIKTOK:${escapeVCardValue(user.tiktok)}` : '',
+            user.tiktok ? `X-SOCIALPROFILE;type=tiktok:${escapeVCardValue(user.tiktok)}` : '',
+            user.youtube ? `URL;type=YOUTUBE:${escapeVCardValue(user.youtube)}` : '',
+            user.x ? `URL;type=X:${escapeVCardValue(user.x)}` : '',
+            // Strong WhatsApp discovery tags (using whatsappWithPlus to preserve the crucial '+' prefix for international numbers)
+            whatsappWithPlus ? `X-SOCIALPROFILE;TYPE=whatsapp:whatsapp:${whatsappWithPlus}` : '',
+            whatsappWithPlus ? `IMPP;X-SERVICE-TYPE=WhatsApp:whatsapp:${whatsappWithPlus}` : '',
+            whatsappWithPlus ? `IMPP;SERVICE-TYPE=WhatsApp:whatsapp:${whatsappWithPlus}` : '',
+            
+            // Native Android Connected Apps tags
+            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.profile;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
+            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.voip;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
+            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.w4b.profile;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
+            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.w4b.voip;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
+            
+            user.nombre_negocio ? `X-WA-BIZ-NAME:${escapeVCardValue(user.nombre_negocio)}` : '',
+            `X-CUSTOM(WTSAPP);TYPE=pref:whatsapp:${whatsappWithPlus}`,
         ];
 
         // Procesar foto

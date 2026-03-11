@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
             plan, foto_url, comprobante_url, galeria_urls,
             slug, etiquetas, seller_id, edit_code, // Added edit_code for verification
             tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
-            menu_digital
+            menu_digital, wifi_ssid, wifi_password
         } = body;
 
         // SECURITY: Never accept 'pagado' status from client. 
@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
                         status=?, paid_at = CASE WHEN ? = 'pagado' AND (paid_at IS NULL) THEN NOW() ELSE paid_at END,
                         slug=?, etiquetas=?, seller_id=?,
                         tipo_perfil=?, nombres=?, apellidos=?, nombre_negocio=?, contacto_nombre=?, contacto_apellido=?,
-                        menu_digital=?
+                        menu_digital=?, wifi_ssid=?, wifi_password=?
                     WHERE email=?
                 `;
 
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
                     productos_servicios || null, plan || null, foto_url || null, comprobante_url || null, galeriaUrlsJson,
                     finalStatus || 'pendiente', finalStatus, slug || existingUser.slug, etiquetas || null, seller_id || null,
                     tipo_perfil || 'persona', nombres || null, apellidos || null, nombre_negocio || null, contacto_nombre || null, contacto_apellido || null,
-                    menu_digital || null,
+                    menu_digital || null, wifi_ssid || null, wifi_password || null,
                     email
                 ]);
 
@@ -130,14 +130,14 @@ export async function POST(req: NextRequest) {
                         plan, foto_url, comprobante_url, galeria_urls, status, paid_at, slug, etiquetas,
                         commission_status, seller_id, attributed_by_footprint, edit_code, edit_uses_remaining,
                         tipo_perfil, nombres, apellidos, nombre_negocio, contacto_nombre, contacto_apellido,
-                        menu_digital
+                        menu_digital, wifi_ssid, wifi_password
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?,
                         ?, ?, ?, ?, ?, ?,
-                        ?
+                        ?, ?, ?
                     )
                 `;
 
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
                     isFootprintAttributed,
                     serverGeneratedEditCode, 2, // edit_code and uses
                     tipo_perfil || 'persona', nombres || null, apellidos || null, nombre_negocio || null, contacto_nombre || null, contacto_apellido || null,
-                    menu_digital || null
+                    menu_digital || null, wifi_ssid || null, wifi_password || null
                 ];
 
                 await pool.execute(insertQuery, values);

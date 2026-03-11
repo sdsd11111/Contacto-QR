@@ -48,6 +48,8 @@ export async function POST(req: NextRequest) {
                     linkedin = ?,
                     facebook = ?,
                     tiktok = ?,
+                    youtube = ?,
+                    x = ?,
                     productos_servicios = ?,
                     etiquetas = ?,
                     email = ?,
@@ -59,6 +61,8 @@ export async function POST(req: NextRequest) {
                     contacto_apellido = ?,
                     nombre = ?,
                     menu_digital = ?,
+                    wifi_ssid = ?,
+                    wifi_password = ?,
                     edit_uses_remaining = edit_uses_remaining - 1,
                     last_edited_at = NOW()
             `;
@@ -75,6 +79,8 @@ export async function POST(req: NextRequest) {
                 data.linkedin,
                 data.facebook,
                 data.tiktok,
+                data.youtube,
+                data.x,
                 data.products,
                 data.categories,
                 data.email,
@@ -85,7 +91,9 @@ export async function POST(req: NextRequest) {
                 data.contacto_nombre || '',
                 data.contacto_apellido || '',
                 nombreLegacy,
-                data.menu_digital || null
+                data.menu_digital || null,
+                data.wifi_ssid || null,
+                data.wifi_password || null
             ];
 
             // If foto_url is provided (base64 from frontend), update it

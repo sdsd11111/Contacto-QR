@@ -97,6 +97,8 @@ export default function DirectVCardRegistration({
         linkedin: '',
         facebook: '',
         tiktok: '',
+        youtube: '',
+        x: '',
         menu_digital: '',
         products: '',
         tags: '',
@@ -109,6 +111,8 @@ export default function DirectVCardRegistration({
         pago_directo: true,
         status: 'pagado' as 'pagado' | 'pendiente' | 'cancelado',
         paymentMethod: 'transfer' as 'transfer' | 'payphone' | 'paypal',
+        wifi_ssid: '',
+        wifi_password: '',
     });
     const [isRecording, setIsRecording] = useState(false);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -507,9 +511,13 @@ export default function DirectVCardRegistration({
                 linkedin: formData.linkedin || null,
                 facebook: formData.facebook || null,
                 tiktok: formData.tiktok || null,
+                youtube: formData.youtube || null,
+                x: formData.x || null,
                 menu_digital: formData.menu_digital || null,
                 payment_method: formData.paymentMethod || 'seller_direct',
                 comprobante_url: receiptUrl,
+                wifi_ssid: formData.wifi_ssid || null,
+                wifi_password: formData.wifi_password || null,
                 galeria_urls: null
             };
 
@@ -795,6 +803,66 @@ export default function DirectVCardRegistration({
                                         onBlur={() => setFocusedField(null)}
                                         className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-primary/50 text-white outline-none"
                                         placeholder="Ej: Loja, Av. Cuxibamba 12-34" />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#68d3fe]">LinkedIn (Link Completo)</label>
+                                        <input type="url" value={formData.linkedin}
+                                            onChange={(e) => updateForm('linkedin', e.target.value)}
+                                            onFocus={() => setFocusedField('linkedin')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-[#68d3fe]/50 text-white outline-none"
+                                            placeholder="https://linkedin.com/..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#68d3fe]">TikTok (Link Completo)</label>
+                                        <input type="url" value={formData.tiktok}
+                                            onChange={(e) => updateForm('tiktok', e.target.value)}
+                                            onFocus={() => setFocusedField('tiktok')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-[#68d3fe]/50 text-white outline-none"
+                                            placeholder="https://tiktok.com/..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#68d3fe]">YouTube (Canal)</label>
+                                        <input type="url" value={formData.youtube}
+                                            onChange={(e) => updateForm('youtube', e.target.value)}
+                                            onFocus={() => setFocusedField('youtube')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-[#68d3fe]/50 text-white outline-none"
+                                            placeholder="https://youtube.com/..." />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#68d3fe]">X / Twitter (Link Completo)</label>
+                                        <input type="url" value={formData.x}
+                                            onChange={(e) => updateForm('x', e.target.value)}
+                                            onFocus={() => setFocusedField('x')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-[#68d3fe]/50 text-white outline-none"
+                                            placeholder="https://x.com/..." />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#FF8A33]">Nombre Red WiFi (Opcional)</label>
+                                        <input type="text" value={formData.wifi_ssid}
+                                            onChange={(e) => updateForm('wifi_ssid', e.target.value)}
+                                            onFocus={() => setFocusedField('wifi_ssid')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-[#FF8A33]/30 text-white outline-none"
+                                            placeholder="MiLocal_Guest" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-[#FF8A33]">Contraseña WiFi (Opcional)</label>
+                                        <input type="text" value={formData.wifi_password}
+                                            onChange={(e) => updateForm('wifi_password', e.target.value)}
+                                            onFocus={() => setFocusedField('wifi_password')}
+                                            onBlur={() => setFocusedField(null)}
+                                            className="w-full bg-[#050B1C] border border-white/10 rounded-xl px-5 py-4 focus:border-[#FF8A33]/30 text-white outline-none"
+                                            placeholder="Opcional" />
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

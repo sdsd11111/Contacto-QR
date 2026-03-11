@@ -420,6 +420,15 @@ export default function AdminDashboard() {
         if (!editingRegistro) return;
         setIsSaving(true);
         const adminKey = localStorage.getItem('admin_access_key') || '';
+
+        let recalculatedNombre = editingRegistro.nombre;
+        if (editingRegistro.tipo_perfil === 'negocio') {
+            recalculatedNombre = editingRegistro.nombre_negocio || editingRegistro.nombre;
+        } else if (editingRegistro.tipo_perfil === 'persona') {
+            const combined = `${editingRegistro.nombres || ''} ${editingRegistro.apellidos || ''}`.trim();
+            if (combined) recalculatedNombre = combined;
+        }
+
         try {
             const res = await fetch('/api/admin/registros', {
                 method: 'PATCH',
@@ -429,7 +438,7 @@ export default function AdminDashboard() {
                 },
                 body: JSON.stringify({
                     id: editingRegistro.id,
-                    nombre: editingRegistro.nombre,
+                    nombre: recalculatedNombre,
                     profesion: editingRegistro.profesion,
                     empresa: editingRegistro.empresa,
                     whatsapp: editingRegistro.whatsapp,
@@ -462,7 +471,7 @@ export default function AdminDashboard() {
             });
             const result = await res.json();
             if (res.ok) {
-                setRegistros(prev => prev.map(r => r.id === editingRegistro.id ? editingRegistro : r));
+                setRegistros(prev => prev.map(r => r.id === editingRegistro.id ? { ...editingRegistro, nombre: recalculatedNombre } : r));
                 setIsEditModalOpen(false);
                 setEditingRegistro(null);
             } else {
@@ -1666,6 +1675,27 @@ export default function AdminDashboard() {
                                                     value={editingRegistro.google_business || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, google_business: e.target.value })}
                                                     placeholder="https://maps.app.goo.gl/..."
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre de Red WiFi (SSID)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.wifi_ssid || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, wifi_ssid: e.target.value })}
+                                                    placeholder="Ej. MiLocal_Guest"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Contraseña del WiFi</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.wifi_password || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, wifi_password: e.target.value })}
+                                                    placeholder="Opcional"
                                                 />
                                             </div>
                                         </div>

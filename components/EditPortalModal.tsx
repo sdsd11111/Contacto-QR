@@ -41,6 +41,10 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
         products: '',
         categories: '',
         menu_digital: '',
+        youtube: '',
+        x: '',
+        wifi_ssid: '',
+        wifi_password: '',
         foto_url: '' // For profile image update (base64)
     });
 
@@ -83,6 +87,10 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
                     products: data.data.products || '',
                     categories: data.data.categories || '',
                     menu_digital: data.data.menu_digital || '',
+                    youtube: data.data.youtube || '',
+                    x: data.data.x || '',
+                    wifi_ssid: data.data.wifi_ssid || '',
+                    wifi_password: data.data.wifi_password || '',
                     foto_url: '' // Keep empty on load, only set if changed. Use userData.foto_url for display.
                 });
                 setStep('edit');
@@ -505,6 +513,24 @@ ADR;TYPE=WORK:;;${formData.address};;;;`;
                                             placeholder="https://maps.app.goo.gl/..."
                                         />
                                     </div>
+                                    <div className="form-group mb-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Nombre de Red WiFi (SSID)</label>
+                                        <input
+                                            className="w-full border rounded-lg p-2 font-medium"
+                                            value={formData.wifi_ssid}
+                                            onChange={(e) => setFormData({ ...formData, wifi_ssid: e.target.value })}
+                                            placeholder="Ej. MiLocal_Guest"
+                                        />
+                                    </div>
+                                    <div className="form-group mb-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Contraseña del WiFi</label>
+                                        <input
+                                            className="w-full border rounded-lg p-2 font-medium"
+                                            value={formData.wifi_password}
+                                            onChange={(e) => setFormData({ ...formData, wifi_password: e.target.value })}
+                                            placeholder="Opcional"
+                                        />
+                                    </div>
 
                                     {/* Redes Sociales - SECCIÓN NUEVA */}
                                     <div className="col-span-full border-t pt-4 mt-2 mb-2">
@@ -554,6 +580,24 @@ ADR;TYPE=WORK:;;${formData.address};;;;`;
                                             value={formData.linkedin}
                                             onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
                                             placeholder="https://linkedin.com/in/..."
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">YouTube (Canal)</label>
+                                        <input
+                                            className="w-full border rounded-lg p-2 font-medium"
+                                            value={formData.youtube}
+                                            onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
+                                            placeholder="https://youtube.com/..."
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">X / Twitter (Link)</label>
+                                        <input
+                                            className="w-full border rounded-lg p-2 font-medium"
+                                            value={formData.x}
+                                            onChange={(e) => setFormData({ ...formData, x: e.target.value })}
+                                            placeholder="https://x.com/..."
                                         />
                                     </div>
                                     <div className="col-span-full form-group">

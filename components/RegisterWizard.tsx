@@ -101,6 +101,8 @@ export default function RegisterWizard() {
         paymentMethod: 'transfer' as 'transfer' | 'payphone' | 'paypal' | 'crypto',
         seller_id: null as string | null,
         sellerCode: '',
+        wifi_ssid: '',
+        wifi_password: '',
     });
 
     const [sellerName, setSellerName] = useState<string | null>(null);
@@ -975,6 +977,8 @@ export default function RegisterWizard() {
                 facebook: dataToSubmit.facebook,
                 tiktok: dataToSubmit.tiktok,
                 menu_digital: dataToSubmit.menu_digital,
+                youtube: dataToSubmit.youtube,
+                x: dataToSubmit.x,
                 productos_servicios: dataToSubmit.products,
                 plan: dataToSubmit.plan,
                 foto_url: photoUrl,
@@ -983,7 +987,9 @@ export default function RegisterWizard() {
                 etiquetas: finalCategories,
                 seller_id: dataToSubmit.seller_id,
                 status: forcedStatus || 'pendiente',
-                payment_method: dataToSubmit.paymentMethod || 'transfer'
+                payment_method: dataToSubmit.paymentMethod || 'transfer',
+                wifi_ssid: dataToSubmit.wifi_ssid,
+                wifi_password: dataToSubmit.wifi_password
             };
 
             console.log("3. UPSERT: Enviando a Supabase...");
@@ -1601,6 +1607,26 @@ export default function RegisterWizard() {
                                             value={formData.address}
                                             onChange={(e) => updateForm('address', e.target.value)}
                                             placeholder="Ej. Oficina 203, Edificio X"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Nombre Red WiFi (Opcional)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.wifi_ssid}
+                                            onChange={(e) => updateForm('wifi_ssid', e.target.value)}
+                                            placeholder="MiLocal_Guest"
+                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Contraseña WiFi (Opcional)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.wifi_password}
+                                            onChange={(e) => updateForm('wifi_password', e.target.value)}
+                                            placeholder="Opcional"
                                             className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
                                         />
                                     </div>
