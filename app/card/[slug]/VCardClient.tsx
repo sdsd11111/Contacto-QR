@@ -15,7 +15,8 @@ import {
     Mail,
     Briefcase,
     Clock,
-    ShieldAlert
+    ShieldAlert,
+    ChevronDown
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -28,7 +29,7 @@ export default function VCardClient() {
     const { slug } = useParams();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [showWifiModal, setShowWifiModal] = useState<'none' | 'presave' | 'postsave'>('none');
+    const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -134,13 +135,13 @@ export default function VCardClient() {
         {
             id: 'whatsapp',
             icon: (
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-4.821 7.354h-.01c-1.282 0-2.54-.345-3.641-1.002l-.261-.155-2.704.711.724-2.636-.17-.271c-.724-1.15-1.104-2.483-1.104-3.852 0-3.992 3.244-7.241 7.243-7.241 1.935 0 3.754.755 5.122 2.124 1.368 1.367 2.122 3.187 2.122 5.12 0 4.001-3.247 7.248-7.248 7.248M19.79 4.204C17.903 2.314 15.389 1.272 12.726 1.272 7.373 1.272 3.007 5.637 3.007 11.002c0 1.714.445 3.388 1.29 4.876L1.87 22.25l6.434-1.688c1.439.785 3.064 1.198 4.717 1.199H13c5.352 0 9.718-4.364 9.718-9.728 0-2.598-1.012-5.042-2.928-6.829z" />
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                    <path d="M19.057 4.298c-1.883-1.884-4.386-2.922-7.05-2.922-5.495 0-9.968 4.471-9.968 9.966 0 1.756.459 3.468 1.328 4.975l-1.41 5.148 5.266-1.381c1.455.794 3.09 1.211 4.78 1.212h.004c5.493 0 9.964-4.471 9.964-9.966 0-2.662-1.036-5.166-2.921-7.052zm-7.05 15.393h-.003c-1.488 0-2.946-.4-4.23-1.155l-.304-.18-3.146.825.839-3.067-.197-.314c-.829-1.321-1.267-2.854-1.267-4.43 0-4.43 3.605-8.036 8.04-8.036 2.148 0 4.167.837 5.684 2.355 1.517 1.518 2.352 3.538 2.352 5.686-.002 4.434-3.609 8.041-8.043 8.041zm4.412-6.03c-.242-.121-1.431-.707-1.652-.788-.221-.081-.383-.121-.544.121-.161.242-.625.787-.766.949-.141.161-.282.181-.524.061-.242-.121-1.02-.376-1.943-1.199-.718-.641-1.203-1.433-1.344-1.675-.141-.242-.015-.373.106-.493.109-.108.242-.282.363-.423.121-.141.161-.242.242-.403.081-.161.04-.303-.02-.424-.061-.121-.544-1.312-.746-1.796-.196-.472-.397-.407-.544-.415-.141-.007-.302-.008-.463-.008-.161 0-.423.061-.644.303-.221.242-.846.827-.846 2.018 0 1.191.866 2.336.987 2.5.121.164 1.706 2.605 4.133 3.651.577.249 1.027.397 1.378.508.579.185 1.107.158 1.523.096.465-.069 1.431-.585 1.632-1.15.201-.564.201-1.049.141-1.15-.06-.101-.221-.161-.463-.282z"/>
                 </svg>
             ),
             label: 'WhatsApp',
             value: data.whatsapp,
-            color: 'bg-[#25D366]',
+            color: 'bg-[#25D366] text-white shadow-[#25D366]/30',
             url: `https://wa.me/${data.whatsapp?.replace(/\D/g, '')}`
         },
         {
@@ -182,13 +183,13 @@ export default function VCardClient() {
         {
             id: 'tiktok',
             icon: (
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                    <path d="M12.525.02c1.31 0 2.59.34 3.71 1 .28-.21.57-.42.87-.62a9.66 9.66 0 0 0-4.58-1c-5.26 0-9.52 4.25-9.52 9.5 0 5.25 4.26 9.5 9.52 9.5a9.54 9.54 0 0 0 8.07-4.48c.19-.29.35-.59.5-.9-.12.01-.24.01-.36.01-5.12 0-9.28-4.15-9.28-9.26a9.21 9.21 0 0 1 1-4.22c.11-.23.25-.45.39-.67-.11-.06-.23-.11-.35-.16a9.85 9.85 0 0 0-1.42-.42c-.01-.01-.01-.01-.02-.01l.01-.21h.01c-.13-.01-.26-.01-.39-.01zM24 4.81a6.83 6.83 0 0 1-4.27-1.49V17c0 3.86-3.13 7-7 7s-7-3.14-7-7 3.13-7 7-7c.7 0 1.36.1 1.98.3V1.27C17.47 1.27 18.06.01 24 0v4.81z" />
+                <svg viewBox="0 0 448 512" fill="currentColor" className="w-5 h-5">
+                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
                 </svg>
             ),
             label: 'TikTok',
             value: data.tiktok,
-            color: 'bg-[#000000]',
+            color: 'bg-black text-white shadow-black/30',
             url: data.tiktok
         },
         {
@@ -271,19 +272,93 @@ export default function VCardClient() {
 
                                     {/* Action Button Container */}
                                     <div className="w-full flex justify-center md:justify-start">
-                                        <button
-                                            onClick={() => {
-                                                if (data.wifi_ssid) {
-                                                    setShowWifiModal('presave');
-                                                } else {
-                                                    downloadVCF();
-                                                }
-                                            }}
-                                            className="w-full md:w-auto min-w-[220px] bg-[#f66739] text-white px-10 md:px-12 py-4 md:py-6 rounded-2xl font-black text-base md:text-xl shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-5 hover:scale-105 transition-all active:scale-95 group relative z-20"
-                                        >
-                                            <Download size={24} className="group-hover:animate-bounce shrink-0" />
-                                            <span id="btn-download-text">GUARDAR CONTACTO</span>
-                                        </button>
+                                        {data.wifi_ssid ? (
+                                            <div className="w-full md:w-auto w-full max-w-sm relative z-20">
+                                                <button
+                                                    onClick={() => setIsAccordionOpen(!isAccordionOpen)}
+                                                    className="w-full bg-[#f66739] text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl font-black text-base md:text-lg shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 group"
+                                                >
+                                                    <Zap size={24} className="group-hover:animate-pulse shrink-0" />
+                                                    <span>ACCEDE A NUESTRO INTERNET</span>
+                                                    <motion.div
+                                                        animate={{ rotate: isAccordionOpen ? 180 : 0 }}
+                                                        transition={{ duration: 0.3 }}
+                                                    >
+                                                        <ChevronDown size={20} />
+                                                    </motion.div>
+                                                </button>
+
+                                                <AnimatePresence>
+                                                    {isAccordionOpen && (
+                                                        <motion.div
+                                                            initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                                                            animate={{ height: "auto", opacity: 1, marginTop: 16 }}
+                                                            exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                                                            className="overflow-hidden bg-[#05509c] text-white rounded-3xl border border-white/10 shadow-2xl relative"
+                                                        >
+                                                            <div className="p-5 md:p-6 flex flex-col gap-5 text-left bg-gradient-to-b from-transparent to-[#001549]/30">
+                                                                {/* Step 1 */}
+                                                                <div className="flex flex-col gap-2">
+                                                                    <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
+                                                                        <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span> 
+                                                                        Descarga Nuestro Contacto (el vcf)
+                                                                    </h3>
+                                                                    <button 
+                                                                        onClick={downloadVCF}
+                                                                        className="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-1"
+                                                                    >
+                                                                        <Download size={18} />
+                                                                        <span id="btn-download-text">Descargar .vcf</span>
+                                                                    </button>
+                                                                </div>
+                                                                
+                                                                {/* Step 2 */}
+                                                                <div className="flex flex-col gap-2">
+                                                                    <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
+                                                                        <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">2</span> 
+                                                                        Asegurate de importar el contacto
+                                                                    </h3>
+                                                                    <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
+                                                                        Abre el archivo descargado y guárdanos en tu agenda para activar la conexión.
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Step 3 */}
+                                                                <div className="flex flex-col gap-2">
+                                                                    <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
+                                                                        <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">3</span> 
+                                                                        Conéctate a la Red
+                                                                    </h3>
+                                                                    <div className="bg-[#001549]/50 p-4 rounded-xl border border-white/5 space-y-3 mt-1 relative overflow-hidden">
+                                                                        <div className="absolute top-0 right-0 text-[#f66739]/10 -mt-2 -mr-2">
+                                                                            <Zap size={60} />
+                                                                        </div>
+                                                                        <div className="relative z-10">
+                                                                            <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Nombre del WiFi</p>
+                                                                            <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block">{data.wifi_ssid}</p>
+                                                                        </div>
+                                                                        {data.wifi_password && (
+                                                                            <div className="relative z-10">
+                                                                                <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Contraseña</p>
+                                                                                <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block">{data.wifi_password}</p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={downloadVCF}
+                                                className="w-full md:w-auto min-w-[220px] bg-[#f66739] text-white px-10 md:px-12 py-4 md:py-6 rounded-2xl font-black text-base md:text-xl shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-5 hover:scale-105 transition-all active:scale-95 group relative z-20"
+                                            >
+                                                <Download size={24} className="group-hover:animate-bounce shrink-0" />
+                                                <span id="btn-download-text">GUARDAR CONTACTO</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -386,70 +461,6 @@ export default function VCardClient() {
                     </div>
                 </footer>
             </div>
-
-            {/* WiFi Flow Modals */}
-            <AnimatePresence>
-                {showWifiModal === 'presave' && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#001549]/80 backdrop-blur-sm">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="bg-[#05509c] text-white p-8 md:p-10 rounded-[40px] shadow-2xl max-w-sm w-full relative border border-white/10 text-center"
-                        >
-                            <button onClick={() => setShowWifiModal('none')} className="absolute top-4 right-4 text-white/50 hover:text-white">✕</button>
-                            <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <Zap size={40} className="text-[#f66739]" />
-                            </div>
-                            <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-2">Guárdanos</h2>
-                            <p className="text-sm font-medium text-white/80 mb-8">Para tener acceso a Internet VIP local.</p>
-                            <button
-                                onClick={() => {
-                                    downloadVCF();
-                                    setShowWifiModal('postsave');
-                                }}
-                                className="w-full bg-[#f66739] text-white py-4 px-6 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-transform flex items-center justify-center gap-3 relative"
-                            >
-                                <Download size={20} /> Guardar Contacto
-                            </button>
-                        </motion.div>
-                    </div>
-                )}
-
-                {showWifiModal === 'postsave' && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#001549]/80 backdrop-blur-sm">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="bg-[#05509c] text-white p-8 md:p-10 rounded-[40px] shadow-2xl max-w-sm w-full relative border border-white/10 text-center"
-                        >
-                            <button onClick={() => setShowWifiModal('none')} className="absolute top-4 right-4 text-white/50 hover:text-white">✕</button>
-                            <div className="w-20 h-20 bg-[#66bf19]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <CheckCircle size={40} className="text-[#66bf19]" />
-                            </div>
-                            <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-2">¡Contacto Guardado!</h2>
-                            <p className="text-sm font-medium text-white/80 mb-6">Conéctate a nuestra red WiFi gratis.</p>
-                            <div className="bg-[#001549]/50 rounded-2xl p-4 mb-8 text-left border border-white/5 relative">
-                                <p className="text-[10px] font-black tracking-widest text-[#f66739] uppercase mb-1">Red WiFi</p>
-                                <p className="font-bold text-lg mb-3 break-all">{data.wifi_ssid}</p>
-                                {data.wifi_password && (
-                                    <>
-                                        <p className="text-[10px] font-black tracking-widest text-[#f66739] uppercase mb-1">Contraseña</p>
-                                        <p className="font-bold text-lg break-all">{data.wifi_password}</p>
-                                    </>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => setShowWifiModal('none')}
-                                className="w-full bg-white/10 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-white/20 transition-colors flex flex-col items-center justify-center relative overflow-hidden group"
-                            >
-                                <span>🎉 ¡Obtén Internet Aquí!</span>
-                            </button>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
         </main>
     );
 }
