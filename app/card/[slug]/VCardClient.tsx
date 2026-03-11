@@ -30,6 +30,7 @@ export default function VCardClient() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+    const [wifiStep, setWifiStep] = useState(1);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -74,6 +75,7 @@ export default function VCardClient() {
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+            setWifiStep(2);
         } catch (error) {
             console.error("Error descargando VCF:", error);
         }
@@ -275,7 +277,11 @@ export default function VCardClient() {
                                         {data.wifi_ssid ? (
                                             <div className="w-full md:w-auto w-full max-w-sm relative z-20">
                                                 <button
-                                                    onClick={() => setIsAccordionOpen(!isAccordionOpen)}
+                                                    onClick={() => {
+                                                        const newState = !isAccordionOpen;
+                                                        setIsAccordionOpen(newState);
+                                                        if (!newState) setWifiStep(1); // Reset when closing
+                                                    }}
                                                     className="w-full bg-[#f66739] text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl font-black text-base md:text-lg shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 group"
                                                 >
                                                     <Zap size={24} className="group-hover:animate-pulse shrink-0" />
@@ -296,55 +302,95 @@ export default function VCardClient() {
                                                             exit={{ height: 0, opacity: 0, marginTop: 0 }}
                                                             className="overflow-hidden bg-[#05509c] text-white rounded-3xl border border-white/10 shadow-2xl relative"
                                                         >
-                                                            <div className="p-5 md:p-6 flex flex-col gap-5 text-left bg-gradient-to-b from-transparent to-[#001549]/30">
+                                                            <div className="p-5 md:p-6 flex flex-col gap-6 text-left bg-gradient-to-b from-transparent to-[#001549]/30">
                                                                 {/* Step 1 */}
-                                                                <div className="flex flex-col gap-2">
-                                                                    <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                        <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span> 
-                                                                        Descarga Nuestro Contacto (el vcf)
-                                                                    </h3>
+                                                                <motion.div 
+                                                                    initial={false}
+                                                                    animate={{ opacity: 1, scale: 1 }}
+                                                                    className={cn("flex flex-col gap-2 transition-all duration-500", wifiStep > 1 && "opacity-50 grayscale-[0.5]")}
+                                                                >
+                                                                    <div className="flex items-center justify-between">
+                                                                        <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
+                                                                            <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span> 
+                                                                            Descarga Nuestro Contacto
+                                                                        </h3>
+                                                                        {wifiStep > 1 && <CheckCircle size={16} className="text-[#25D366]" />}
+                                                                    </div>
                                                                     <button 
                                                                         onClick={downloadVCF}
-                                                                        className="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-1"
+                                                                        className={cn(
+                                                                            "w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-1",
+                                                                            wifiStep === 1 ? "bg-white text-[#05509c] shadow-lg scale-[1.02]" : "bg-white/5 text-white/40 border border-white/10"
+                                                                        )}
+                                                                        disabled={wifiStep > 1}
                                                                     >
                                                                         <Download size={18} />
                                                                         <span id="btn-download-text">Descargar .vcf</span>
                                                                     </button>
-                                                                </div>
+                                                                </motion.div>
                                                                 
                                                                 {/* Step 2 */}
-                                                                <div className="flex flex-col gap-2">
-                                                                    <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                        <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">2</span> 
-                                                                        Asegurate de importar el contacto
-                                                                    </h3>
-                                                                    <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
-                                                                        Abre el archivo descargado y guárdanos en tu agenda para activar la conexión.
-                                                                    </p>
-                                                                </div>
+                                                                <AnimatePresence>
+                                                                    {wifiStep >= 2 && (
+                                                                        <motion.div 
+                                                                            initial={{ height: 0, opacity: 0 }}
+                                                                            animate={{ height: "auto", opacity: 1 }}
+                                                                            className={cn("flex flex-col gap-2 transition-all duration-500", wifiStep > 2 && "opacity-50 grayscale-[0.5]")}
+                                                                        >
+                                                                            <div className="flex items-center justify-between">
+                                                                                <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
+                                                                                    <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">2</span> 
+                                                                                    Asegurate de importar el contacto
+                                                                                </h3>
+                                                                                {wifiStep > 2 && <CheckCircle size={16} className="text-[#25D366]" />}
+                                                                            </div>
+                                                                            <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
+                                                                                Abre el archivo descargado y guárdanos en tu agenda para activar la conexión.
+                                                                            </p>
+                                                                            {wifiStep === 2 && (
+                                                                                <button 
+                                                                                    onClick={() => setWifiStep(3)}
+                                                                                    className="w-full bg-[#f66739] text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-2 animate-bounce-subtle"
+                                                                                >
+                                                                                    Ya guardé el contacto
+                                                                                </button>
+                                                                            )}
+                                                                        </motion.div>
+                                                                    )}
+                                                                </AnimatePresence>
 
                                                                 {/* Step 3 */}
-                                                                <div className="flex flex-col gap-2">
-                                                                    <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                        <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">3</span> 
-                                                                        Conéctate a la Red
-                                                                    </h3>
-                                                                    <div className="bg-[#001549]/50 p-4 rounded-xl border border-white/5 space-y-3 mt-1 relative overflow-hidden">
-                                                                        <div className="absolute top-0 right-0 text-[#f66739]/10 -mt-2 -mr-2">
-                                                                            <Zap size={60} />
-                                                                        </div>
-                                                                        <div className="relative z-10">
-                                                                            <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Nombre del WiFi</p>
-                                                                            <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block">{data.wifi_ssid}</p>
-                                                                        </div>
-                                                                        {data.wifi_password && (
-                                                                            <div className="relative z-10">
-                                                                                <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Contraseña</p>
-                                                                                <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block">{data.wifi_password}</p>
+                                                                <AnimatePresence>
+                                                                    {wifiStep >= 3 && (
+                                                                        <motion.div 
+                                                                            initial={{ height: 0, opacity: 0 }}
+                                                                            animate={{ height: "auto", opacity: 1 }}
+                                                                            className="flex flex-col gap-2"
+                                                                        >
+                                                                            <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
+                                                                                <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">3</span> 
+                                                                                Conéctate a la Red
+                                                                            </h3>
+                                                                            <div className="bg-[#001549]/50 p-4 rounded-xl border border-[#f66739]/30 space-y-3 mt-1 relative overflow-hidden shadow-[0_0_20px_rgba(246,103,57,0.1)]">
+                                                                                <div className="absolute top-0 right-0 text-[#f66739]/10 -mt-2 -mr-2">
+                                                                                    <Zap size={60} />
+                                                                                </div>
+                                                                                <div className="relative z-10">
+                                                                                    <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Nombre del WiFi</p>
+                                                                                    <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-white selection:bg-[#f66739]">{data.wifi_ssid}</p>
+                                                                                </div>
+                                                                                {data.wifi_password && (
+                                                                                    <div className="relative z-10">
+                                                                                        <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Contraseña</p>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-[#f66739] selection:bg-white">{data.wifi_password}</p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
                                                                             </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
+                                                                        </motion.div>
+                                                                    )}
+                                                                </AnimatePresence>
                                                             </div>
                                                         </motion.div>
                                                     )}
