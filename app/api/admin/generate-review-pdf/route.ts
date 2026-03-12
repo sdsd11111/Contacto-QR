@@ -34,6 +34,24 @@ function getImageFormat(dataUrl: string): string {
     return 'JPEG';
 }
 
+// Sanitize text for jsPDF (helvetica font only supports basic Latin)
+function sanitizeText(text: string): string {
+    if (!text) return '';
+    return text
+        // Replace common special bullets/symbols with ASCII equivalents
+        .replace(/[\u2022\u2023\u25E6\u2043\u2219]/g, '-')  // bullets → dash
+        .replace(/[\u2013\u2014]/g, '-')  // en/em dash
+        .replace(/[\u2018\u2019]/g, "'")  // smart quotes
+        .replace(/[\u201C\u201D]/g, '"')  // smart double quotes
+        .replace(/[\u2026]/g, '...')  // ellipsis
+        .replace(/[\u00D8]/g, 'O')  // Ø → O
+        .replace(/[\u0178\u00DD\u00FD]/g, 'Y')  // Ÿ/Ý/ý → Y
+        .replace(/[\u00D0]/g, 'D')  // Ð → D
+        .replace(/[^\x20-\x7E\xA0-\xFF\n]/g, ' ')  // strip remaining non-Latin1
+        .replace(/  +/g, ' ')  // collapse multiple spaces
+        .trim();
+}
+
 // Colors — matching the ActivaQR navy theme
 const COLORS = {
     navy: [5, 11, 28] as [number, number, number],
@@ -79,11 +97,26 @@ export async function POST(req: NextRequest) {
         } catch { galeriaUrls = []; }
 
         let etiquetas: string[] = [];
-        try {
-            if (r.etiquetas) {
-                etiquetas = typeof r.etiquetas === 'string' ? JSON.parse(r.etiquetas) : r.etiquetas;
+        if (r.etiquetas) {
+            try {
+                const raw = typeof r.etiquetas === 'string' ? JSON.parse(r.etiquetas) : r.etiquetas;
+                if (Array.isArray(raw)) {
+                    etiquetas = raw.map((t: any) => {
+                        if (typeof t === 'string') return t;
+                        if (t && typeof t === 'object') return t.label || t.nombre || t.name || String(t);
+                        return String(t);
+                    }).filter(Boolean);
+                }
+            } catch {
+                // Si no es JSON, asumir que es una lista separada por comas
+                etiquetas = typeof r.etiquetas === 'string' 
+                    ? r.etiquetas.split(',').map((t: string) => t.trim()).filter(Boolean)
+                    : [];
             }
-        } catch { etiquetas = []; }
+        }
+
+        console.log('[PDF] Etiquetas parsed:', JSON.stringify(etiquetas));
+        console.log('[PDF] Raw etiquetas:', r.etiquetas);
 
         // ===== PDF GENERATION =====
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -359,23 +392,26 @@ export async function POST(req: NextRequest) {
 
         // ===== BIO =====
         if (r.bio) {
+            const cleanBio = sanitizeText(r.bio);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9.5);
+            const bioLines = doc.splitTextToSize(cleanBio, contentW - 20);
+            const bioHeight = bioLines.length * 4.5 + 10;
+            
+            checkNewPage(18 + bioHeight);
+            
             drawSectionTitle('Biografia / Descripcion');
             setFillColor(COLORS.navyCard);
             setDrawColor([30, 40, 70]);
-            const bioLines = doc.splitTextToSize(r.bio, contentW - 20);
-            const bioHeight = bioLines.length * 4.5 + 10;
-            checkNewPage(bioHeight + 4);
             doc.roundedRect(margin, y, contentW, bioHeight, 3, 3, 'FD');
+            setColor(COLORS.whiteSubtle);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9.5);
-            setColor(COLORS.whiteSubtle);
             doc.text(bioLines, margin + 8, y + 7);
             y += bioHeight + 6;
         }
 
         // ===== DATOS PERSONALES =====
-        drawSectionTitle('Datos de Contacto');
-        
         const contactFields = [
             ['Email', r.email],
             ['WhatsApp', r.whatsapp],
@@ -395,7 +431,10 @@ export async function POST(req: NextRequest) {
 
         const allPersonalFields = [...(r.tipo_perfil === 'negocio' ? negocioFields : personaFields), ...contactFields];
         const personalBlockH = allPersonalFields.length * 10 + 8;
-        checkNewPage(personalBlockH + 4);
+        
+        checkNewPage(18 + personalBlockH);
+        drawSectionTitle('Datos de Contacto');
+        
         setFillColor(COLORS.navyCard);
         setDrawColor([30, 40, 70]);
         doc.roundedRect(margin, y, contentW, personalBlockH, 3, 3, 'FD');
@@ -420,9 +459,10 @@ export async function POST(req: NextRequest) {
         ].filter(([_, v]) => v);
 
         if (socialLinks.length > 0) {
-            drawSectionTitle('Redes Sociales y Enlaces');
             const socialBlockH = socialLinks.length * 9 + 8;
-            checkNewPage(socialBlockH + 4);
+            checkNewPage(18 + socialBlockH);
+            
+            drawSectionTitle('Redes Sociales y Enlaces');
             setFillColor(COLORS.navyCard);
             setDrawColor([30, 40, 70]);
             doc.roundedRect(margin, y, contentW, socialBlockH, 3, 3, 'FD');
@@ -436,11 +476,12 @@ export async function POST(req: NextRequest) {
 
         // ===== WIFI =====
         if (r.wifi_ssid || r.wifi_password) {
+            const wifiH = 26;
+            checkNewPage(18 + wifiH);
+            
             drawSectionTitle('Configuracion WiFi');
             setFillColor(COLORS.navyCard);
             setDrawColor([30, 40, 70]);
-            const wifiH = 26;
-            checkNewPage(wifiH + 4);
             doc.roundedRect(margin, y, contentW, wifiH, 3, 3, 'FD');
             y += 3;
             drawField('Red (SSID)', r.wifi_ssid);
@@ -450,8 +491,8 @@ export async function POST(req: NextRequest) {
 
         // ===== ETIQUETAS =====
         if (etiquetas && etiquetas.length > 0) {
+            checkNewPage(18 + 20); // title + est 20mm tags height
             drawSectionTitle('Etiquetas / Categorias');
-            checkNewPage(16);
             
             let tagX = margin + 4;
             doc.setFont('helvetica', 'bold');
@@ -478,25 +519,29 @@ export async function POST(req: NextRequest) {
 
         // ===== PRODUCTOS / SERVICIOS =====
         if (r.productos_servicios) {
+            const cleanProds = sanitizeText(r.productos_servicios);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9.5);
+            const prodLines = doc.splitTextToSize(cleanProds, contentW - 20);
+            const prodH = prodLines.length * 4.5 + 12;
+            
+            checkNewPage(18 + prodH);
+            
             drawSectionTitle('Productos y Servicios');
             setFillColor(COLORS.navyCard);
             setDrawColor([30, 40, 70]);
-            const prodLines = doc.splitTextToSize(r.productos_servicios, contentW - 20);
-            const prodH = prodLines.length * 4.5 + 12;
-            checkNewPage(prodH + 4);
             doc.roundedRect(margin, y, contentW, prodH, 3, 3, 'FD');
+            setColor(COLORS.whiteSubtle);
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9.5);
-            setColor(COLORS.whiteSubtle);
             doc.text(prodLines, margin + 8, y + 8);
             y += prodH + 6;
         }
 
         // ===== GALERIA =====
         if (galeriaUrls.length > 0) {
-            doc.addPage();
-            paintBackground();
-            y = 20;
+            // Don't force new page — flow naturally to maximize space
+            checkNewPage(70);
             
             drawSectionTitle(`Galeria de Imagenes (${galeriaUrls.length})`);
             
@@ -573,6 +618,49 @@ export async function POST(req: NextRequest) {
             }
         }
 
+        // ===== APROBACIÓN =====
+        checkNewPage(50);
+        y += 5;
+        
+        // Warning Container
+        setFillColor(COLORS.navyCard);
+        setDrawColor(COLORS.primary);
+        doc.setLineWidth(0.5);
+        doc.roundedRect(margin, y, contentW, 35, 3, 3, 'FD');
+        
+        // Warning Text
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        setColor(COLORS.primary);
+        doc.text('¿TODO CORRECTO? APRUEBE SU DISENO', margin + 6, y + 8);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        setColor(COLORS.lightGray);
+        const warnText = 'Al confirmar, usted aprueba este diseno final. Si desea realizar modificaciones posteriores, debera hacerlas usted mismo utilizando las 2 ediciones gratuitas desde activaqr.com (las instrucciones llegaran a su correo).';
+        const warnLines = doc.splitTextToSize(warnText, contentW - 55); // Leave space for button
+        doc.text(warnLines, margin + 6, y + 14);
+        
+        // WhatsApp Button
+        const btnW = 42;
+        const btnH = 12;
+        const btnX = margin + contentW - btnW - 6;
+        const btnY = y + 11.5;
+        
+        setFillColor(COLORS.accent); // Green button for WhatsApp
+        doc.roundedRect(btnX, btnY, btnW, btnH, 2, 2, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        setColor(COLORS.white);
+        doc.text('APROBAR DISENO', btnX + btnW/2, btnY + 7.5, { align: 'center' });
+        
+        // Clickable link on button
+        const waLink = 'https://wa.me/593963410409?text=' + encodeURIComponent(`Hola, apruebo el documento de revision de mi tarjeta digital (${sanitizeText(r.nombre)}). Todo esta correcto.`);
+        doc.link(btnX, btnY, btnW, btnH, { url: waLink });
+
+        y += 45;
+
         // ===== FOOTER (on every page — apply to last page) =====
         const totalPages = doc.getNumberOfPages();
         for (let p = 1; p <= totalPages; p++) {
@@ -627,9 +715,10 @@ export async function POST(req: NextRequest) {
                 const docPayload = {
                     number: targetNumber,
                     mediatype: 'document',
-                    media: `data:application/pdf;base64,${pdfBase64}`,
+                    mimetype: 'application/pdf',
+                    media: pdfBase64,
                     fileName: fileName,
-                    caption: `*REVISION DE CONTACTO DIGITAL*\n\n*${r.nombre}*\nEmail: ${r.email}\nWhatsApp: ${r.whatsapp || 'N/A'}\nPlan: ${(r.plan || 'basic').toUpperCase()}\n\n_Revise el PDF adjunto con todos los datos del cliente._`
+                    caption: `*REVISION DE CONTACTO DIGITAL*\n\n*${sanitizeText(r.nombre)}*\nEmail: ${r.email}\nWhatsApp: ${r.whatsapp || 'N/A'}\nPlan: ${(r.plan || 'basic').toUpperCase()}\n\n_Revise el PDF adjunto con todos los datos del cliente._`
                 };
 
                 const waResponse = await fetch(`${apiUrl}/message/sendMedia/${instance}`, {

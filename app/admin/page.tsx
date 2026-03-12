@@ -782,25 +782,13 @@ export default function AdminDashboard() {
                 throw new Error(errData.error || 'Error generando PDF');
             }
 
-            // Download the PDF
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const clientName = (registro.nombre || 'contacto').replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, '').replace(/\s+/g, '_');
-            a.download = `Revision_${clientName}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            // Check WhatsApp status
+            // Check WhatsApp status instead of downloading
             const waSent = res.headers.get('X-WhatsApp-Sent');
             if (waSent === 'true') {
-                alert('✅ PDF generado y enviado por WhatsApp correctamente');
+                alert('✅ PDF generado y enviado por WhatsApp correctamente al cliente.');
             } else {
                 const waError = res.headers.get('X-WhatsApp-Error') || '';
-                alert(`📄 PDF descargado correctamente\n⚠️ WhatsApp: ${waError || 'No se pudo enviar (revise las variables de Evolution API)'}`);
+                alert(`⚠️ Error enviando WhatsApp: ${waError || 'Revise las variables de Evolution API'}`);
             }
 
         } catch (error: any) {
