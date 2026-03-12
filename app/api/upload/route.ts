@@ -23,19 +23,26 @@ export async function POST(request: NextRequest) {
 
         const buffer = Buffer.from(await file.arrayBuffer());
         
-        // Compress and convert to WebP
-        const processedBuffer = await sharp(buffer)
-            .webp({ quality: 80 })
-            .toBuffer();
+        let finalBuffer = buffer;
+        let mimeType = file.type;
 
-        // Save to filesystem with unique name
-        const filename = `${uuidv4()}.webp`;
-        const filepath = path.join(UPLOAD_DIR, filename);
-        fs.writeFileSync(filepath, processedBuffer);
+        // Compress, resize and convert to WebP only if it's an image
+        if (file.type.startsWith('image/')) {
+            try {
+                const processed = await sharp(buffer)
+                    .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+                    .webp({ quality: 75 }) // Slightly lower quality for better size/persistence balance
+                    .toBuffer();
+                finalBuffer = Buffer.from(processed);
+                mimeType = 'image/webp';
+            } catch (e) {
+                console.error('Sharp processing failed, using original buffer', e);
+            }
+        }
 
-        // Return the public URL path (not base64!)
-        const url = `/uploads/${filename}`;
-        return NextResponse.json({ url });
+        // Return the Base64 string instead of a filename
+        const base64 = `data:${mimeType};base64,${finalBuffer.toString('base64')}`;
+        return NextResponse.json({ url: base64 });
 
     } catch (error: any) {
         console.error('Upload error:', error);

@@ -604,12 +604,15 @@ export default function VCardEditModal({ isOpen, onClose, initialSlug }: VCardEd
                                                                             <input type="file" accept=".pdf,.vcf,.jpg,.png" className="hidden" onChange={async (e) => {
                                                                                 const file = e.target.files?.[0];
                                                                                 if (file) {
-                                                                                    // Subir archivo (podemos reusar la lógica de handleImageChange pero adaptada o usar base64 para prototipo)
-                                                                                    const reader = new FileReader();
-                                                                                    reader.onloadend = () => {
-                                                                                        setFormData({ ...formData, hero_file_url: reader.result as string });
-                                                                                    };
-                                                                                    reader.readAsDataURL(file);
+                                                                                    setLoading(true);
+                                                                                    const fd = new FormData();
+                                                                                    fd.append('file', file);
+                                                                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                                                    if (res.ok) {
+                                                                                        const { url } = await res.json();
+                                                                                        setFormData({ ...formData, hero_file_url: url });
+                                                                                    }
+                                                                                    setLoading(false);
                                                                                 }
                                                                             }} />
                                                                         </label>
