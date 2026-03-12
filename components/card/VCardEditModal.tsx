@@ -9,9 +9,10 @@ interface VCardEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialSlug: string;
+    allowCatalog?: boolean;
 }
 
-export default function VCardEditModal({ isOpen, onClose, initialSlug }: VCardEditModalProps) {
+export default function VCardEditModal({ isOpen, onClose, initialSlug, allowCatalog = false }: VCardEditModalProps) {
     const [step, setStep] = useState<'code' | 'edit' | 'success'>('code');
     const [editCode, setEditCode] = useState('');
     const [loading, setLoading] = useState(false);
@@ -127,7 +128,18 @@ export default function VCardEditModal({ isOpen, onClose, initialSlug }: VCardEd
                     catalogo_json: (() => {
                         const raw = data.data.catalogo_json ? (typeof data.data.catalogo_json === 'string' ? JSON.parse(data.data.catalogo_json) : data.data.catalogo_json) : null;
                         if (!raw) return { categories: [], products: [] };
-                        if (Array.isArray(raw)) return { categories: Array.from(new Set(raw.map((p:any) => p.categoria))).filter(Boolean), products: raw };
+                        if (Array.isArray(raw)) {
+                            return { 
+                                categories: Array.from(new Set(raw.map((p:any) => p.categoria))).filter(Boolean), 
+                                products: raw.map((p: any) => ({ ...p, id: p.id || Math.random().toString(36).substr(2, 9) })) 
+                            };
+                        }
+                        if (raw.products) {
+                            return {
+                                ...raw,
+                                products: raw.products.map((p: any) => ({ ...p, id: p.id || Math.random().toString(36).substr(2, 9) }))
+                            };
+                        }
                         return raw;
                     })()
                 });
@@ -706,285 +718,291 @@ export default function VCardEditModal({ isOpen, onClose, initialSlug }: VCardEd
                                     </div>
 
                                     {/* SECCIÓN 5: GESTIÓN DE CATÁLOGO */}
-                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                        <button 
-                                            onClick={() => setActiveSection(activeSection === 'catalogo' ? null : 'catalogo')}
-                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                                    <Store size={18} />
+                                    {allowCatalog && (
+                                        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                            <button 
+                                                onClick={() => setActiveSection(activeSection === 'catalogo' ? null : 'catalogo')}
+                                                className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                                        <Store size={18} />
+                                                    </div>
+                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter">Catálogo de Productos</span>
                                                 </div>
-                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Catálogo de Productos</span>
-                                            </div>
-                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'catalogo' && "rotate-180")} />
-                                        </button>
-                                        <AnimatePresence>
-                                            {activeSection === 'catalogo' && (
-                                                <motion.div 
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: "auto", opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden bg-white border-t border-gray-100"
-                                                >
-                                                    <div className="p-6 space-y-6">
-                                                        <div className="flex gap-2 p-1 bg-gray-100 rounded-xl mb-4">
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => setCatalogTab('config')}
-                                                                className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all", catalogTab === 'config' ? "bg-white text-orange-500 shadow-sm" : "text-gray-500")}
-                                                            >
-                                                                <Library size={14} className="inline mr-1" /> Categorías
-                                                            </button>
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => setCatalogTab('products')}
-                                                                className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all", catalogTab === 'products' ? "bg-white text-orange-500 shadow-sm" : "text-gray-500")}
-                                                            >
-                                                                <Store size={14} className="inline mr-1" /> Productos
-                                                            </button>
-                                                        </div>
-
-                                                        {/* CATEGORIES CONFIG */}
-                                                        {catalogTab === 'config' && (
-                                                            <div className="space-y-4">
-                                                                <div className="flex items-center justify-between">
-                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Títulos de Categorías</label>
-                                                                    <button 
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            const cat = prompt('Nombre de la nueva categoría:');
-                                                                            if (cat) {
-                                                                                const newCats = [...formData.catalogo_json.categories, cat];
-                                                                                setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, categories: newCats } });
-                                                                            }
-                                                                        }}
-                                                                        className="text-[10px] font-black text-orange-500 uppercase flex items-center gap-1 hover:underline"
-                                                                    >
-                                                                        <Plus size={12} /> Nueva Categoría
-                                                                    </button>
-                                                                </div>
-                                                                
-                                                                <div className="flex flex-wrap gap-2">
-                                                                    {formData.catalogo_json.categories.map((cat: string, idx: number) => (
-                                                                        <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full group">
-                                                                            <span className="text-[10px] font-bold text-navy uppercase">{cat}</span>
-                                                                            <button 
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    const newCats = formData.catalogo_json.categories.filter((_:any, i:number) => i !== idx);
-                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, categories: newCats } });
-                                                                                }}
-                                                                                className="text-red-400 hover:text-red-600 transition-colors"
-                                                                            >
-                                                                                <X size={10} />
-                                                                            </button>
-                                                                        </div>
-                                                                    ))}
-                                                                    {formData.catalogo_json.categories.length === 0 && (
-                                                                        <p className="text-[10px] text-gray-400 italic">No has definido categorías para tu catálogo aún.</p>
-                                                                    )}
-                                                                </div>
-                                                                <p className="text-[9px] text-gray-400">Estas categorías servirán para filtrar tus productos en la vista pública.</p>
+                                                <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'catalogo' && "rotate-180")} />
+                                            </button>
+                                            <AnimatePresence>
+                                                {activeSection === 'catalogo' && (
+                                                    <motion.div 
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: "auto", opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        className="overflow-hidden bg-white border-t border-gray-100"
+                                                    >
+                                                        <div className="p-6 space-y-6">
+                                                            <div className="flex gap-2 p-1 bg-gray-100 rounded-xl mb-4">
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={() => setCatalogTab('config')}
+                                                                    className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all", catalogTab === 'config' ? "bg-white text-orange-500 shadow-sm" : "text-gray-500")}
+                                                                >
+                                                                    <Library size={14} className="inline mr-1" /> Categorías
+                                                                </button>
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={() => setCatalogTab('products')}
+                                                                    className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all", catalogTab === 'products' ? "bg-white text-orange-500 shadow-sm" : "text-gray-500")}
+                                                                >
+                                                                    <Store size={14} className="inline mr-1" /> Productos
+                                                                </button>
                                                             </div>
-                                                        )}
 
-                                                        {/* PRODUCTS MANAGEMENT */}
-                                                        {catalogTab === 'products' && (
-                                                            <div className="space-y-6">
-                                                                <div className="flex flex-col gap-4">
+                                                            {/* CATEGORIES CONFIG */}
+                                                            {catalogTab === 'config' && (
+                                                                <div className="space-y-4">
                                                                     <div className="flex items-center justify-between">
-                                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gestión de Productos</label>
+                                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Títulos de Categorías</label>
                                                                         <button 
                                                                             type="button"
                                                                             onClick={() => {
-                                                                                const firstCat = productCategoryFilter !== 'Todas' ? productCategoryFilter : (formData.catalogo_json.categories[0] || 'General');
-                                                                                const newProduct = { 
-                                                                                    id: Math.random().toString(36).substr(2, 9),
-                                                                                    categoria: firstCat, 
-                                                                                    titulo: 'Nuevo Producto', 
-                                                                                    descripcion: '', 
-                                                                                    precio: '', 
-                                                                                    url: '' 
-                                                                                };
-                                                                                setFormData({ 
-                                                                                    ...formData, 
-                                                                                    catalogo_json: { 
-                                                                                        ...formData.catalogo_json, 
-                                                                                        products: [...formData.catalogo_json.products, newProduct] 
-                                                                                    } 
-                                                                                });
+                                                                                const cat = prompt('Nombre de la nueva categoría:');
+                                                                                if (cat) {
+                                                                                    const newCats = [...formData.catalogo_json.categories, cat];
+                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, categories: newCats } });
+                                                                                }
                                                                             }}
-                                                                            className="bg-orange-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all hover:-translate-y-0.5"
+                                                                            className="text-[10px] font-black text-orange-500 uppercase flex items-center gap-1 hover:underline"
                                                                         >
-                                                                            <Plus size={14} /> Agregar Producto
+                                                                            <Plus size={12} /> Nueva Categoría
                                                                         </button>
                                                                     </div>
                                                                     
-                                                                    {/* Category Filter for Admin */}
-                                                                    <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setProductCategoryFilter('Todas')}
-                                                                            className={cn("shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", productCategoryFilter === 'Todas' ? "bg-navy text-white" : "bg-gray-100 text-gray-500")}
-                                                                        >
-                                                                            Todas
-                                                                        </button>
-                                                                        {formData.catalogo_json.categories.map((cat: string) => (
-                                                                            <button
-                                                                                key={cat}
-                                                                                type="button"
-                                                                                onClick={() => setProductCategoryFilter(cat)}
-                                                                                className={cn("shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", productCategoryFilter === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-500")}
-                                                                            >
-                                                                                {cat}
-                                                                            </button>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {formData.catalogo_json.categories.map((cat: string, idx: number) => (
+                                                                            <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full group">
+                                                                                <span className="text-[10px] font-bold text-navy uppercase">{cat}</span>
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        const newCats = formData.catalogo_json.categories.filter((_:any, i:number) => i !== idx);
+                                                                                        setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, categories: newCats } });
+                                                                                    }}
+                                                                                    className="text-red-400 hover:text-red-600 transition-colors"
+                                                                                >
+                                                                                    <X size={10} />
+                                                                                </button>
+                                                                            </div>
                                                                         ))}
+                                                                        {formData.catalogo_json.categories.length === 0 && (
+                                                                            <p className="text-[10px] text-gray-400 italic">No has definido categorías para tu catálogo aún.</p>
+                                                                        )}
                                                                     </div>
+                                                                    <p className="text-[9px] text-gray-400">Estas categorías servirán para filtrar tus productos en la vista pública.</p>
                                                                 </div>
+                                                            )}
 
-                                                                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                                                                    {formData.catalogo_json.products
-                                                                        .filter((p: any) => productCategoryFilter === 'Todas' || p.categoria === productCategoryFilter)
-                                                                        .map((item: any, idx: number) => (
-                                                                        <div key={item.id || idx} className="p-5 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
+                                                            {/* PRODUCTS MANAGEMENT */}
+                                                            {catalogTab === 'products' && (
+                                                                <div className="space-y-6">
+                                                                    <div className="flex flex-col gap-4">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gestión de Productos</label>
                                                                             <button 
                                                                                 type="button"
                                                                                 onClick={() => {
-                                                                                    const newList = formData.catalogo_json.products.filter((_:any, i:number) => i !== idx);
+                                                                                    const firstCat = productCategoryFilter !== 'Todas' ? productCategoryFilter : (formData.catalogo_json.categories[0] || 'General');
+                                                                                    const newProduct = { 
+                                                                                        id: Math.random().toString(36).substr(2, 9),
+                                                                                        categoria: firstCat, 
+                                                                                        titulo: 'Nuevo Producto', 
+                                                                                        descripcion: '', 
+                                                                                        precio: '', 
+                                                                                        url: '' 
+                                                                                    };
                                                                                     setFormData({ 
                                                                                         ...formData, 
                                                                                         catalogo_json: { 
                                                                                             ...formData.catalogo_json, 
-                                                                                            products: formData.catalogo_json.products.filter((p: any) => p.id !== item.id) 
+                                                                                            products: [...formData.catalogo_json.products, newProduct] 
                                                                                         } 
                                                                                     });
                                                                                 }}
-                                                                                className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+                                                                                className="bg-orange-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all hover:-translate-y-0.5"
                                                                             >
-                                                                                <Trash2 size={12} />
+                                                                                <Plus size={14} /> Agregar Producto
                                                                             </button>
-                                                                            
-                                                                            <div className="flex flex-col sm:flex-row gap-6">
-                                                                                <div className="w-full sm:w-1/3">
-                                                                                    <div className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 group/img">
-                                                                                        {item.url ? (
-                                                                                            <img src={item.url} className="w-full h-full object-cover" />
-                                                                                        ) : (
-                                                                                            <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-4 text-center">
-                                                                                                <ImageIcon size={24} className="mb-2" />
-                                                                                                <span className="text-[10px] font-bold">Imagen</span>
-                                                                                            </div>
-                                                                                        )}
-                                                                                        <label className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white">
-                                                                                            <Edit size={20} className="mb-1" />
-                                                                                            <span className="text-[10px] font-black uppercase">Subir</span>
-                                                                                            <input 
-                                                                                                type="file" 
-                                                                                                accept="image/*" 
-                                                                                                className="hidden" 
-                                                                                                onChange={async (e) => {
-                                                                                                    const file = e.target.files?.[0];
-                                                                                                    if (file) {
-                                                                                                        setLoading(true);
-                                                                                                        const fd = new FormData();
-                                                                                                        fd.append('file', file);
-                                                                                                        const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                                                                        if (res.ok) {
-                                                                                                            const { url } = await res.json();
-                                                                                                            const newList = [...formData.catalogo_json.products];
-                                                                                                            newList[idx].url = url;
-                                                                                                            setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
+                                                                        </div>
+                                                                        
+                                                                        {/* Category Filter for Admin */}
+                                                                        <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => setProductCategoryFilter('Todas')}
+                                                                                className={cn("shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", productCategoryFilter === 'Todas' ? "bg-navy text-white" : "bg-gray-100 text-gray-500")}
+                                                                            >
+                                                                                Todas
+                                                                            </button>
+                                                                            {formData.catalogo_json.categories.map((cat: string) => (
+                                                                                <button
+                                                                                    key={cat}
+                                                                                    type="button"
+                                                                                    onClick={() => setProductCategoryFilter(cat)}
+                                                                                    className={cn("shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", productCategoryFilter === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-500")}
+                                                                                >
+                                                                                    {cat}
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                                                        {formData.catalogo_json.products
+                                                                            .filter((p: any) => productCategoryFilter === 'Todas' || p.categoria === productCategoryFilter)
+                                                                            .map((item: any) => (
+                                                                            <div key={item.id} className="p-5 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        setFormData({ 
+                                                                                            ...formData, 
+                                                                                            catalogo_json: { 
+                                                                                                ...formData.catalogo_json, 
+                                                                                                products: formData.catalogo_json.products.filter((p: any) => p.id !== item.id) 
+                                                                                            } 
+                                                                                        });
+                                                                                    }}
+                                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
+                                                                                >
+                                                                                    <Trash2 size={12} />
+                                                                                </button>
+                                                                                
+                                                                                <div className="flex flex-col sm:flex-row gap-6">
+                                                                                    <div className="w-full sm:w-1/3">
+                                                                                        <div className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 group/img">
+                                                                                            {item.url ? (
+                                                                                                <img src={item.url} className="w-full h-full object-cover" />
+                                                                                            ) : (
+                                                                                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-4 text-center">
+                                                                                                    <ImageIcon size={24} className="mb-2" />
+                                                                                                    <span className="text-[10px] font-bold">Imagen</span>
+                                                                                                </div>
+                                                                                            )}
+                                                                                            <label className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white">
+                                                                                                <Edit size={20} className="mb-1" />
+                                                                                                <span className="text-[10px] font-black uppercase">Subir</span>
+                                                                                                <input 
+                                                                                                    type="file" 
+                                                                                                    accept="image/*" 
+                                                                                                    className="hidden" 
+                                                                                                    onChange={async (e) => {
+                                                                                                        const file = e.target.files?.[0];
+                                                                                                        if (file) {
+                                                                                                            setLoading(true);
+                                                                                                            const fd = new FormData();
+                                                                                                            fd.append('file', file);
+                                                                                                            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                                                                            if (res.ok) {
+                                                                                                                const { url } = await res.json();
+                                                                                                                const newList = formData.catalogo_json.products.map((p: any) => 
+                                                                                                                    p.id === item.id ? { ...p, url } : p
+                                                                                                                );
+                                                                                                                setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
+                                                                                                            }
+                                                                                                            setLoading(false);
                                                                                                         }
-                                                                                                        setLoading(false);
-                                                                                                    }
-                                                                                                }} 
-                                                                                            />
-                                                                                        </label>
+                                                                                                    }} 
+                                                                                                />
+                                                                                            </label>
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
-                                                                                <div className="flex-1 space-y-3">
-                                                                                    <div className="grid grid-cols-2 gap-3">
-                                                                                        <div className="space-y-1">
-                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Categoría</label>
-                                                                                            <select 
-                                                                                                className="w-full text-[11px] font-bold border-none bg-gray-50 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500/20"
-                                                                                                value={item.categoria}
-                                                                                                onChange={(e) => {
-                                                                                                    const newList = [...formData.catalogo_json.products];
-                                                                                                    newList[idx].categoria = e.target.value;
-                                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
-                                                                                                }}
-                                                                                            >
-                                                                                                {formData.catalogo_json.categories.length > 0 ? (
-                                                                                                    formData.catalogo_json.categories.map((cat:string) => (
-                                                                                                        <option key={cat} value={cat}>{cat}</option>
-                                                                                                    ))
-                                                                                                ) : (
-                                                                                                    <option value="General">General</option>
-                                                                                                )}
-                                                                                            </select>
+                                                                                    <div className="flex-1 space-y-3">
+                                                                                        <div className="grid grid-cols-2 gap-3">
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Categoría</label>
+                                                                                                <select 
+                                                                                                    className="w-full text-[11px] font-bold border-none bg-gray-50 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500/20"
+                                                                                                    value={item.categoria}
+                                                                                                    onChange={(e) => {
+                                                                                                        const newList = formData.catalogo_json.products.map((p: any) => 
+                                                                                                            p.id === item.id ? { ...p, categoria: e.target.value } : p
+                                                                                                        );
+                                                                                                        setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
+                                                                                                    }}
+                                                                                                >
+                                                                                                    {formData.catalogo_json.categories.length > 0 ? (
+                                                                                                        formData.catalogo_json.categories.map((cat:string) => (
+                                                                                                            <option key={cat} value={cat}>{cat}</option>
+                                                                                                        ))
+                                                                                                    ) : (
+                                                                                                        <option value="General">General</option>
+                                                                                                    )}
+                                                                                                </select>
+                                                                                            </div>
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Precio</label>
+                                                                                                <input 
+                                                                                                    className="w-full text-[11px] font-bold border-none bg-gray-50 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500/20"
+                                                                                                    placeholder="Ej: $10.00"
+                                                                                                    value={item.precio}
+                                                                                                    onChange={(e) => {
+                                                                                                        const newList = formData.catalogo_json.products.map((p: any) => 
+                                                                                                            p.id === item.id ? { ...p, precio: e.target.value } : p
+                                                                                                        );
+                                                                                                        setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
+                                                                                                    }}
+                                                                                                />
+                                                                                            </div>
                                                                                         </div>
                                                                                         <div className="space-y-1">
-                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Precio</label>
+                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Título del Producto</label>
                                                                                             <input 
-                                                                                                className="w-full text-[11px] font-bold border-none bg-gray-50 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500/20"
-                                                                                                placeholder="Ej: $10.00"
-                                                                                                value={item.precio}
+                                                                                                className="w-full text-xs font-black border-none bg-gray-50 rounded-xl p-3 focus:ring-2 focus:ring-orange-500/20 uppercase"
+                                                                                                placeholder="Ej: Hamburguesa de la Casa"
+                                                                                                value={item.titulo}
                                                                                                 onChange={(e) => {
-                                                                                                    const newList = [...formData.catalogo_json.products];
-                                                                                                    newList[idx].precio = e.target.value;
+                                                                                                    const newList = formData.catalogo_json.products.map((p: any) => 
+                                                                                                        p.id === item.id ? { ...p, titulo: e.target.value } : p
+                                                                                                    );
                                                                                                     setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
                                                                                                 }}
                                                                                             />
                                                                                         </div>
-                                                                                    </div>
-                                                                                    <div className="space-y-1">
-                                                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Título del Producto</label>
-                                                                                        <input 
-                                                                                            className="w-full text-xs font-black border-none bg-gray-50 rounded-xl p-3 focus:ring-2 focus:ring-orange-500/20 uppercase"
-                                                                                            placeholder="Ej: Hamburguesa de la Casa"
-                                                                                            value={item.titulo}
-                                                                                            onChange={(e) => {
-                                                                                                const newList = [...formData.catalogo_json.products];
-                                                                                                newList[idx].titulo = e.target.value;
-                                                                                                setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
-                                                                                            }}
-                                                                                        />
-                                                                                    </div>
-                                                                                    <div className="space-y-1">
-                                                                                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Descripción</label>
-                                                                                        <textarea 
-                                                                                            className="w-full text-[11px] font-medium border-none bg-gray-50 rounded-xl p-3 focus:ring-2 focus:ring-orange-500/20"
-                                                                                            placeholder="Escribe los ingredientes o detalles aquí..."
-                                                                                            rows={2}
-                                                                                            value={item.descripcion}
-                                                                                            onChange={(e) => {
-                                                                                                const newList = [...formData.catalogo_json.products];
-                                                                                                newList[idx].descripcion = e.target.value;
-                                                                                                setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
-                                                                                            }}
-                                                                                        />
+                                                                                        <div className="space-y-1">
+                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Descripción</label>
+                                                                                            <textarea 
+                                                                                                className="w-full text-[11px] font-medium border-none bg-gray-50 rounded-xl p-3 focus:ring-2 focus:ring-orange-500/20"
+                                                                                                placeholder="Escribe los ingredientes o detalles aquí..."
+                                                                                                rows={2}
+                                                                                                value={item.descripcion}
+                                                                                                onChange={(e) => {
+                                                                                                    const newList = formData.catalogo_json.products.map((p: any) => 
+                                                                                                        p.id === item.id ? { ...p, descripcion: e.target.value } : p
+                                                                                                    );
+                                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
+                                                                                                }}
+                                                                                            />
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
-                                                                        </div>
-                                                                    ))}
-                                                                    {formData.catalogo_json.products.length === 0 && (
-                                                                        <div className="py-20 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100">
-                                                                            <Store className="mx-auto mb-4 text-gray-300" size={48} />
-                                                                            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Aún no has agregado productos</p>
-                                                                            <p className="text-[10px] text-gray-300 mt-2">Haz clic en "Agregar Producto" para comenzar</p>
-                                                                        </div>
-                                                                    )}
+                                                                        ))}
+                                                                        {formData.catalogo_json.products.length === 0 && (
+                                                                            <div className="py-20 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100">
+                                                                                <Store className="mx-auto mb-4 text-gray-300" size={48} />
+                                                                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Aún no has agregado productos</p>
+                                                                                <p className="text-[10px] text-gray-300 mt-2">Haz clic en "Agregar Producto" para comenzar</p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
+                                                            )}
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

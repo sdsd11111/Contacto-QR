@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
             try {
                 const processed = await sharp(buffer)
                     .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-                    .webp({ quality: 75 }) // Slightly lower quality for better size/persistence balance
+                    .webp({ quality: 80 }) // Calidad al 80% como solicitó el usuario
                     .toBuffer();
                 finalBuffer = Buffer.from(processed);
                 mimeType = 'image/webp';

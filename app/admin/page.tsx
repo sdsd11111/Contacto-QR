@@ -76,6 +76,7 @@ export default function AdminDashboard() {
     const [editingRegistro, setEditingRegistro] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+    const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
 
     // Estados para creación de vendedor
     const [isCreateSellerModalOpen, setIsCreateSellerModalOpen] = useState(false);
@@ -762,6 +763,54 @@ export default function AdminDashboard() {
     // Helper: obtener admin key del localStorage
     const getAdminKey = () => localStorage.getItem('admin_access_key') || '';
 
+    const handleGenerateReviewPDF = async (registro: any) => {
+        if (generatingPdfId) return;
+        setGeneratingPdfId(registro.id);
+
+        try {
+            const res = await fetch('/api/admin/generate-review-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': getAdminKey()
+                },
+                body: JSON.stringify({ id: registro.id })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Error generando PDF');
+            }
+
+            // Download the PDF
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const clientName = (registro.nombre || 'contacto').replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, '').replace(/\s+/g, '_');
+            a.download = `Revision_${clientName}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Check WhatsApp status
+            const waSent = res.headers.get('X-WhatsApp-Sent');
+            if (waSent === 'true') {
+                alert('✅ PDF generado y enviado por WhatsApp correctamente');
+            } else {
+                const waError = res.headers.get('X-WhatsApp-Error') || '';
+                alert(`📄 PDF descargado correctamente\n⚠️ WhatsApp: ${waError || 'No se pudo enviar (revise las variables de Evolution API)'}`);
+            }
+
+        } catch (error: any) {
+            console.error('Error generating PDF:', error);
+            alert('❌ Error: ' + error.message);
+        } finally {
+            setGeneratingPdfId(null);
+        }
+    };
+
     const sendVCardEmail = async (registro: any) => {
         if (!confirm(`¿Estás seguro de aprobar y enviar el correo a ${registro.email}?`)) return;
 
@@ -1427,6 +1476,16 @@ export default function AdminDashboard() {
                                                         <ShieldCheck size={18} />
                                                     </button>
                                                 )}
+
+                                                {/* Botón PDF Revisión */}
+                                                <button
+                                                    onClick={() => handleGenerateReviewPDF(r)}
+                                                    disabled={generatingPdfId === r.id}
+                                                    className="p-2 bg-indigo-500/20 text-indigo-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-lg shadow-indigo-500/10"
+                                                    title="Generar PDF de Revisión y enviar por WhatsApp"
+                                                >
+                                                    {generatingPdfId === r.id ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
+                                                </button>
 
                                                 <button
                                                     onClick={() => handleEdit(r)}

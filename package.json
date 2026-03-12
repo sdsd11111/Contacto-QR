@@ -21,6 +21,7 @@
     "dotenv": "^17.3.1",
     "framer-motion": "^12.31.0",
     "googleapis": "^171.4.0",
+    "jspdf": "^4.2.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
     "mysql2": "^3.17.1",

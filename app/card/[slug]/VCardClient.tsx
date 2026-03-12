@@ -378,7 +378,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             )}
 
             {/* =================== PROFILE DETAILS =================== */}
-            <main id="profile-details" className="min-h-screen bg-[#001549] text-white selection:bg-[#f66739]/30 py-8 px-4 md:py-12 md:px-6 relative overflow-hidden font-sans">
+            <main id="profile-details" className="min-h-screen bg-[#001549] text-white selection:bg-[#f66739]/30 py-8 md:py-12 relative overflow-hidden font-sans">
             {/* Premium Background Effects */}
             <div className="absolute top-[-10%] right-[-10%] w-[70%] h-[50%] bg-[#f66739]/20 blur-[120px] rounded-full pointer-events-none animate-pulse" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#05509c]/20 blur-[100px] rounded-full pointer-events-none" />
@@ -758,17 +758,75 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                 </div>
 
                     {/* Catalog Section (Now integrated in main flow) */}
-                    {(showCatalog || data.catalogo_json) && (
+                    {showCatalog && data.catalogo_json && (
                         <div className="mt-16 md:mt-24">
                             <CatalogGallery 
                                 data={typeof data.catalogo_json === 'string' ? JSON.parse(data.catalogo_json) : data.catalogo_json} 
+                                whatsapp={data.whatsapp}
                             />
                         </div>
                     )}
+                </div>
 
-                    {/* Footer Branding */}
-                    <footer className="mt-16 md:mt-24 text-center pb-20 md:pb-12 px-2">
-                    <div className="inline-flex flex-col md:flex-row items-center gap-4 md:gap-10 py-6 px-10 bg-white/5 backdrop-blur-md rounded-3xl md:rounded-full border border-white/10 shadow-xl">
+                {/* Map Section (Full Width) */}
+                {(data.google_business || data.address || data.direccion) && (() => {
+                    const isGoogleLink = data.google_business?.startsWith('http');
+                    const businessName = data.nombre_negocio || data.nombre || '';
+                    const addressText = data.direccion || data.address || '';
+                    
+                    // Smart extraction of coordinates from long Google Maps links
+                    const coordMatch = data.google_business?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                    const hasCoords = coordMatch && coordMatch.length >= 3;
+                    
+                    const mapQuery = hasCoords 
+                        ? `${coordMatch[1]},${coordMatch[2]}` 
+                        : isGoogleLink 
+                            ? `${businessName} ${addressText}`.trim() 
+                            : (data.google_business || addressText || businessName);
+                    
+                    return (
+                        <div className="mt-16 md:mt-32 w-full">
+                            <div className="max-w-6xl mx-auto px-4 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                <div>
+                                    <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#f66739] flex items-center gap-2 mb-2">
+                                        <Zap size={14} /> UBICACIÓN ESTRATÉGICA
+                                    </h4>
+                                    <p className="text-white/50 text-[10px] md:text-sm font-bold uppercase tracking-wider max-w-xl">
+                                        {data.direccion || data.address || "Visítanos en nuestra ubicación oficial"}
+                                    </p>
+                                </div>
+                                {isGoogleLink && (
+                                    <a 
+                                        href={data.google_business} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-3 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center gap-3 transition-all hover:scale-105 group whitespace-nowrap self-start md:self-center"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-[#f66739]/20 flex items-center justify-center text-[#f66739] group-hover:bg-[#f66739] group-hover:text-white transition-colors">
+                                            <Zap size={14} />
+                                        </div>
+                                        CÓMO LLEGAR (Google Maps)
+                                    </a>
+                                )}
+                            </div>
+                            <div className="w-full h-[350px] md:h-[500px] relative overflow-hidden shadow-2xl bg-white/5">
+                                <iframe 
+                                    width="100%" 
+                                    height="100%" 
+                                    style={{ border: 0 }} 
+                                    className="w-full h-full"
+                                    loading="lazy" 
+                                    allowFullScreen 
+                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=17&ie=UTF8&iwloc=A&output=embed`}
+                                />
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* Footer Branding */}
+                <footer className="mt-24 md:mt-32 text-center pb-24 md:pb-16 px-4">
+                    <div className="inline-flex flex-col md:flex-row items-center gap-4 md:gap-10 py-6 px-10 bg-white/5 backdrop-blur-md rounded-3xl md:rounded-full border border-white/10 shadow-xl mx-auto">
                         <div className="flex items-center gap-4 opacity-100">
                             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Impulsado por</span>
                             <img src="/images/logo_header.png" alt="ActivaQR" className="h-6 md:h-8 w-auto object-contain drop-shadow" />
@@ -779,13 +837,13 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                         </a>
                     </div>
                 </footer>
-            </div>
-        </main>
+            </main>
 
         <VCardEditModal 
             isOpen={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}
             initialSlug={slug as string}
+            allowCatalog={showCatalog}
         />
         </div>
     );

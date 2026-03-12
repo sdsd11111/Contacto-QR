@@ -16,9 +16,10 @@ export interface CatalogItem {
 
 interface CatalogGalleryProps {
     data: CatalogItem[] | { categories: string[], products: CatalogItem[] };
+    whatsapp?: string;
 }
 
-export default function CatalogGallery({ data }: CatalogGalleryProps) {
+export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) {
     const [activeCategory, setActiveCategory] = useState<string>('Todas');
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
 
@@ -174,11 +175,27 @@ export default function CatalogGallery({ data }: CatalogGalleryProps) {
                                 {selectedItem.descripcion && (
                                     <div>
                                         <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3 flex items-center gap-2">
-                                            <Info size={12} /> DESCRIPCIÓN
+                                            <Info size={12} /> DETALLES DEL PRODUCTO
                                         </h4>
-                                        <p className="text-white/70 text-sm md:text-base leading-relaxed font-medium">
+                                        <div className="text-white/80 text-sm md:text-base leading-relaxed font-medium space-y-2 whitespace-pre-line">
                                             {selectedItem.descripcion}
-                                        </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {whatsapp && (
+                                    <div className="mt-10">
+                                        <a
+                                            href={`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola, me interesa el producto: ${selectedItem.titulo}. Precio: ${selectedItem.precio || 'Consultar'}`)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-sm md:text-base uppercase tracking-widest flex items-center justify-center gap-3 shadow-[0_10px_30px_-5px_rgba(37,211,102,0.4)] hover:scale-[1.02] active:scale-95 transition-all"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                                                <path d="M19.057 4.298c-1.883-1.884-4.386-2.922-7.05-2.922-5.495 0-9.968 4.471-9.968 9.966 0 1.756.459 3.468 1.328 4.975l-1.41 5.148 5.266-1.381c1.455.794 3.09 1.211 4.78 1.212h.004c5.493 0 9.964-4.471 9.964-9.966 0-2.662-1.036-5.166-2.921-7.052zm-7.05 15.393h-.003c-1.488 0-2.946-.4-4.23-1.155l-.304-.18-3.146.825.839-3.067-.197-.314c-.829-1.321-1.267-2.854-1.267-4.43 0-4.43 3.605-8.036 8.04-8.036 2.148 0 4.167.837 5.684 2.355 1.517 1.518 2.352 3.538 2.352 5.686-.002 4.434-3.609 8.041-8.043 8.041zm4.412-6.03c-.242-.121-1.431-.707-1.652-.788-.221-.081-.383-.121-.544.121-.161.242-.625.787-.766.949-.141.161-.282.181-.524.061-.242-.121-1.02-.376-1.943-1.199-.718-.641-1.203-1.433-1.344-1.675-.141-.242-.015-.373.106-.493.109-.108.242-.282.363-.423.121-.141.161-.242.242-.403.081-.161.04-.303-.02-.424-.061-.121-.544-1.312-.746-1.796-.196-.472-.397-.407-.544-.415-.141-.007-.302-.008-.463-.008-.161 0-.423.061-.644.303-.221.242-.846.827-.846 2.018 0 1.191.866 2.336.987 2.5.121.164 1.706 2.605 4.133 3.651.577.249 1.027.397 1.378.508.579.185 1.107.158 1.523.096.465-.069 1.431-.585 1.632-1.15.201-.564.201-1.049.141-1.15-.06-.101-.221-.161-.463-.282z"/>
+                                            </svg>
+                                            Consultar por WhatsApp
+                                        </a>
                                     </div>
                                 )}
                             </div>
