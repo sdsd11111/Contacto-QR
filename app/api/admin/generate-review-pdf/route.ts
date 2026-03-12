@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     try {
         // Auth check
         const adminKey = req.headers.get('x-admin-key') || '';
-        if (adminKey !== process.env.ADMIN_ACCESS_KEY) {
+        if (adminKey !== process.env.ADMIN_API_KEY) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
