@@ -103,6 +103,7 @@ export default function RegisterWizard() {
         sellerCode: '',
         wifi_ssid: '',
         wifi_password: '',
+        hero_button_text: '',
     });
 
     const [sellerName, setSellerName] = useState<string | null>(null);
@@ -989,7 +990,8 @@ export default function RegisterWizard() {
                 status: forcedStatus || 'pendiente',
                 payment_method: dataToSubmit.paymentMethod || 'transfer',
                 wifi_ssid: dataToSubmit.wifi_ssid,
-                wifi_password: dataToSubmit.wifi_password
+                wifi_password: dataToSubmit.wifi_password,
+                hero_button_text: dataToSubmit.hero_button_text
             };
 
             console.log("3. UPSERT: Enviando a Supabase...");
@@ -1629,6 +1631,19 @@ export default function RegisterWizard() {
                                             placeholder="Opcional"
                                             className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
                                         />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-[10px] font-black text-primary uppercase tracking-widest mb-3 italic">Texto Personalizado para el Botón de la Oferta (Hero)</label>
+                                        <input
+                                            type="text"
+                                            value={formData.hero_button_text}
+                                            onChange={(e) => updateForm('hero_button_text', e.target.value)}
+                                            placeholder="Ej. ACCEDE A NUESTRO INTERNET o DIA DE LA MUJER"
+                                            className="w-full bg-primary/5 border-2 border-primary/20 focus:border-primary rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
+                                        />
+                                        <p className="mt-2 text-[9px] font-bold text-navy/30 uppercase tracking-widest ml-1">
+                                            Si se deja vacío, se usará "ACCEDE A NUESTRO INTERNET" (si hay WiFi) o "VER PERFIL".
+                                        </p>
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Sitio Web (Opcional)</label>

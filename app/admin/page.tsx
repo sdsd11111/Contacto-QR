@@ -35,7 +35,8 @@ import {
     Settings,
     Landmark,
     CreditCard,
-    TrendingUp
+    TrendingUp,
+    Smartphone
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -50,7 +51,11 @@ function cn(...inputs: ClassValue[]) {
 const isPlaceholderUrl = (url: string | null | undefined) => {
     if (!url) return true;
     if (url.startsWith('data:image')) return false; // Base64 is not a placeholder
-    const placeholders = ['photo.com', 'example.com', 'placeholder.com', 'placehold.co', 'placeholder.supabase.co', 'supabase.co/storage'];
+    const placeholders = [
+        'photo.com', 'example.com', 'placeholder.com', 'placehold.co', 
+        'placeholder.supabase.co', 'supabase.co/storage',
+        '_default.png', 'hero_desktop_default', 'hero_mobile_default'
+    ];
     return placeholders.some(p => url.toLowerCase().includes(p));
 };
 
@@ -88,6 +93,8 @@ export default function AdminDashboard() {
     const [targetLeaderId, setTargetLeaderId] = useState<number>(0);
     const [isMigratingTeam, setIsMigratingTeam] = useState(false);
     const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
+    const [isHeroPromptOpen, setIsHeroPromptOpen] = useState(false);
+    const [promptRegistro, setPromptRegistro] = useState<any>(null);
 
     const fetchNextCode = async () => {
         const adminKey = localStorage.getItem('admin_access_key') || '';
@@ -467,6 +474,11 @@ export default function AdminDashboard() {
                     nombre_negocio: editingRegistro.nombre_negocio,
                     contacto_nombre: editingRegistro.contacto_nombre,
                     contacto_apellido: editingRegistro.contacto_apellido,
+                    portada_desktop: editingRegistro.portada_desktop,
+                    portada_movil: editingRegistro.portada_movil,
+                    wifi_ssid: editingRegistro.wifi_ssid,
+                    wifi_password: editingRegistro.wifi_password,
+                    hero_button_text: editingRegistro.hero_button_text,
                 })
             });
             const result = await res.json();
@@ -540,6 +552,36 @@ export default function AdminDashboard() {
             setIsSaving(false);
         }
     };
+
+    const handlePortadaUpload = async (e: React.ChangeEvent<HTMLInputElement>, tipo: 'portada_desktop' | 'portada_movil') => {
+        const file = e.target.files?.[0];
+        if (!file || !editingRegistro) return;
+
+        setIsSaving(true);
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+            if (!uploadRes.ok) throw new Error(`Error subiendo ${tipo} al servidor`);
+            const { url: publicUrl } = await uploadRes.json();
+
+            setEditingRegistro({ ...editingRegistro, [tipo]: publicUrl });
+
+            await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': localStorage.getItem('admin_access_key') || ''
+                },
+                body: JSON.stringify({ id: editingRegistro.id, [tipo]: publicUrl })
+            });
+
+        } catch (err: any) {
+            alert(`Error subiendo ${tipo}: ` + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
     const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || !editingRegistro || files.length === 0) return;
@@ -589,6 +631,29 @@ export default function AdminDashboard() {
             },
             body: JSON.stringify({ id: editingRegistro.id, galeria_urls: newUrls })
         });
+    };
+
+    const handleViewProfile = (registro: any) => {
+        // Si no tiene imágenes o son placeholders, abrir el modal de diseño
+        if (isPlaceholderUrl(registro.portada_desktop) || isPlaceholderUrl(registro.portada_movil)) {
+            setPromptRegistro(registro);
+            setIsHeroPromptOpen(true);
+        } else {
+            window.open(`/card/${registro.slug || registro.id}`, '_blank');
+        }
+    };
+
+    const handleHeroUploadConfirm = async () => {
+        if (!promptRegistro) return;
+        
+        // Refresh registries to reflect new images
+        fetchRegistros();
+        setIsHeroPromptOpen(false);
+        
+        // Open the profile after a short delay to ensure DB update is perceived
+        setTimeout(() => {
+            window.open(`/card/${promptRegistro.slug || promptRegistro.id}`, '_blank');
+        }, 500);
     };
 
     const filtered = registros.filter(r => {
@@ -1319,14 +1384,13 @@ export default function AdminDashboard() {
                                                     <Download size={18} />
                                                 </a>
 
-                                                <a
-                                                    href={`/card/${r.slug || r.id}`}
-                                                    target="_blank"
+                                                <button
+                                                    onClick={() => handleViewProfile(r)}
                                                     className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
                                                     title="Ver Perfil"
                                                 >
                                                     <Eye size={18} />
-                                                </a>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -1418,6 +1482,43 @@ export default function AdminDashboard() {
                                                 </label>
                                             </div>
                                             <p className="text-[10px] font-bold text-white/40 text-center uppercase">Formatos: JPG, PNG. Máx 5MB.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-6">
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">PORTADA DESKTOP (PC)</h4>
+                                            <div className="flex flex-col items-center gap-4">
+                                                <div className="w-full aspect-video rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
+                                                    {editingRegistro.portada_desktop ? (
+                                                        <img src={editingRegistro.portada_desktop} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <ImageIcon size={40} className="text-white/10" />
+                                                    )}
+                                                    <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                        <Upload size={20} className="text-white" />
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handlePortadaUpload(e, 'portada_desktop')} />
+                                                    </label>
+                                                </div>
+                                                <p className="text-[10px] font-bold text-white/40 text-center uppercase">Horizontal (1920x1080px)</p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-6">
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">PORTADA MÓVIL</h4>
+                                            <div className="flex flex-col items-center gap-4">
+                                                <div className="w-[180px] aspect-[9/16] rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
+                                                    {editingRegistro.portada_movil ? (
+                                                        <img src={editingRegistro.portada_movil} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <Smartphone size={40} className="text-white/10" />
+                                                    )}
+                                                    <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
+                                                        <Upload size={20} className="text-white" />
+                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handlePortadaUpload(e, 'portada_movil')} />
+                                                    </label>
+                                                </div>
+                                                <p className="text-[10px] font-bold text-white/40 text-center uppercase">Vertical (1080x1920px)</p>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1698,6 +1799,15 @@ export default function AdminDashboard() {
                                                     placeholder="Opcional"
                                                 />
                                             </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block ml-1 italic">Texto Botón Hero (Oferta)</label>
+                                                <input
+                                                    className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary transition-all"
+                                                    value={editingRegistro.hero_button_text || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, hero_button_text: e.target.value })}
+                                                    placeholder="Ej. ACCEDE A NUESTRO INTERNET"
+                                                />
+                                            </div>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1707,6 +1817,62 @@ export default function AdminDashboard() {
                                                     className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
                                                     value={editingRegistro.web || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, web: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Instagram (Link)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.instagram || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, instagram: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">TikTok (Link)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.tiktok || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, tiktok: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Facebook (Link)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.facebook || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, facebook: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">LinkedIn (Link)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.linkedin || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, linkedin: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">YouTube (Link)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.youtube || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, youtube: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">X (Twitter) (Link)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.x || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, x: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Menú Digital (Link)</label>
+                                                <input
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
+                                                    value={editingRegistro.menu_digital || ''}
+                                                    onChange={e => setEditingRegistro({ ...editingRegistro, menu_digital: e.target.value })}
                                                 />
                                             </div>
                                         </div>
@@ -2125,6 +2291,118 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </AnimatePresence>
+            <AnimatePresence>
+                {isHeroPromptOpen && promptRegistro && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="w-full max-w-2xl bg-[#0A0B1E] border border-white/10 rounded-[48px] overflow-hidden shadow-3xl"
+                        >
+                            <div className="p-10 text-center">
+                                <div className="w-20 h-20 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                                    <ImageIcon size={40} />
+                                </div>
+                                <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-4">¡Diseño Premium Pendiente!</h3>
+                                <p className="text-white/60 text-sm mb-12 max-w-sm mx-auto leading-relaxed">
+                                    Para que la VCard de <span className="text-white font-bold">{promptRegistro.nombre}</span> se vea profesional, necesitamos configurar las imágenes del Hero primero.
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Fondo Escritorio</p>
+                                        <div className="aspect-video bg-white/5 rounded-[32px] border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
+                                            {promptRegistro.portada_desktop && !isPlaceholderUrl(promptRegistro.portada_desktop) ? (
+                                                <img src={promptRegistro.portada_desktop} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <ImageIcon size={32} className="text-white/10" />
+                                            )}
+                                            <label htmlFor="hero-desktop-upload" className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
+                                                <Upload size={20} className="text-white" />
+                                            </label>
+                                            <input 
+                                                id="hero-desktop-upload"
+                                                type="file" 
+                                                className="hidden" 
+                                                accept="image/*" 
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const formData = new FormData();
+                                                    formData.append('file', file);
+                                                    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                                    if (res.ok) {
+                                                        const { url } = await res.json();
+                                                        await fetch('/api/admin/registros', {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_access_key') || '' },
+                                                            body: JSON.stringify({ id: promptRegistro.id, portada_desktop: url })
+                                                        });
+                                                        setPromptRegistro({...promptRegistro, portada_desktop: url});
+                                                    }
+                                                }} 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">Fondo Móvil</p>
+                                        <div className="aspect-[9/16] h-32 mx-auto bg-white/5 rounded-3xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
+                                            {promptRegistro.portada_movil && !isPlaceholderUrl(promptRegistro.portada_movil) ? (
+                                                <img src={promptRegistro.portada_movil} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <Smartphone size={32} className="text-white/10" />
+                                            )}
+                                            <label htmlFor="hero-mobile-upload" className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
+                                                <Upload size={20} className="text-white" />
+                                            </label>
+                                            <input 
+                                                id="hero-mobile-upload"
+                                                type="file" 
+                                                className="hidden" 
+                                                accept="image/*" 
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const formData = new FormData();
+                                                    formData.append('file', file);
+                                                    const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                                    if (res.ok) {
+                                                        const { url } = await res.json();
+                                                        await fetch('/api/admin/registros', {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_access_key') || '' },
+                                                            body: JSON.stringify({ id: promptRegistro.id, portada_movil: url })
+                                                        });
+                                                        setPromptRegistro({...promptRegistro, portada_movil: url});
+                                                    }
+                                                }} 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-4">
+                                    <button
+                                        onClick={handleHeroUploadConfirm}
+                                        disabled={!promptRegistro.portada_desktop || !promptRegistro.portada_movil}
+                                        className="w-full bg-primary text-navy py-5 rounded-[24px] font-black uppercase tracking-widest shadow-orange hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                                    >
+                                        Guardar y Ver Perfil
+                                    </button>
+                                    <button
+                                        onClick={() => setIsHeroPromptOpen(false)}
+                                        className="w-full py-5 rounded-[24px] border border-white/10 text-white/40 font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                                    >
+                                        Ahora No
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <StatsModal
                 isOpen={isStatsModalOpen}
                 onClose={() => setIsStatsModalOpen(false)}

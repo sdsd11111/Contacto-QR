@@ -18,7 +18,7 @@ export async function GET(
                     google_business, instagram, linkedin, facebook, tiktok, youtube, x, productos_servicios, 
                     plan, foto_url, galeria_urls, status, tipo_perfil, nombres, apellidos, 
                     nombre_negocio, contacto_nombre, contacto_apellido, etiquetas, created_at,
-                    menu_digital, wifi_ssid, wifi_password
+                    menu_digital, wifi_ssid, wifi_password, portada_desktop, portada_movil
                  FROM registraya_vcard_registros 
                  WHERE slug = ? OR id = ?`,
                 [slug, slug]

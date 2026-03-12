@@ -22,17 +22,20 @@ export async function POST(request: NextRequest) {
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        // Compress and convert to WebP Buffer
+        
+        // Compress and convert to WebP
         const processedBuffer = await sharp(buffer)
             .webp({ quality: 80 })
             .toBuffer();
 
-        // Convert to Base64 string
-        const base64String = `data:image/webp;base64,${processedBuffer.toString('base64')}`;
+        // Save to filesystem with unique name
+        const filename = `${uuidv4()}.webp`;
+        const filepath = path.join(UPLOAD_DIR, filename);
+        fs.writeFileSync(filepath, processedBuffer);
 
-        // Return the Base64 string directly (to be saved in DB by the client)
-        // We don't save to file system anymore.
-        return NextResponse.json({ url: base64String });
+        // Return the public URL path (not base64!)
+        const url = `/uploads/${filename}`;
+        return NextResponse.json({ url });
 
     } catch (error: any) {
         console.error('Upload error:', error);

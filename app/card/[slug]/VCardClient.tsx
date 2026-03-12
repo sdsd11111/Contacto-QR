@@ -16,8 +16,10 @@ import {
     Briefcase,
     Clock,
     ShieldAlert,
+    Settings,
     ChevronDown
 } from "lucide-react";
+import VCardEditModal from '@/components/card/VCardEditModal';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -31,6 +33,8 @@ export default function VCardClient() {
     const [loading, setLoading] = useState(true);
     const [isAccordionOpen, setIsAccordionOpen] = useState(false);
     const [wifiStep, setWifiStep] = useState(1);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isProductsExpanded, setIsProductsExpanded] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -218,10 +222,158 @@ export default function VCardClient() {
             color: 'bg-[#000000]',
             url: data.x
         },
+        {
+            id: 'menu_digital',
+            icon: <span className="text-xl">🍽️</span>,
+            label: 'Menú Digital',
+            value: data.menu_digital,
+            color: 'bg-[#f66739] text-white shadow-[#f66739]/30',
+            url: data.menu_digital
+        },
     ].filter(s => s.value);
 
+    const heroDesktop = data.portada_desktop || '/images/hero_desktop_default.png';
+    const heroMobile = data.portada_movil || '/images/hero_mobile_default.png';
+    const showHero = data.portada_desktop || data.portada_movil;
+
+    const scrollToProfile = () => {
+        document.getElementById('profile-details')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleHeroClick = () => {
+        const action = data.hero_action || 'wifi'; // default to wifi if not set
+
+        if (action === 'wifi') {
+            scrollToProfile();
+            setIsAccordionOpen(true);
+            setWifiStep(1);
+        } else if (action === 'file') {
+            if (data.hero_file_url) {
+                const a = document.createElement('a');
+                a.href = data.hero_file_url;
+                a.download = ''; // Let the browser determine filename from URL
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            } else {
+                // If no specific file URL, fallback to VCF
+                downloadVCF();
+            }
+        } else if (action === 'link') {
+            if (data.hero_external_link) {
+                window.open(data.hero_external_link, '_blank', 'noopener,noreferrer');
+            }
+        }
+    };
+
+    const getHeroButtonIcon = () => {
+        const action = data.hero_action || 'wifi';
+        if (action === 'wifi') return <Zap size={16} className="md:w-6 md:h-6 shrink-0" />;
+        if (action === 'file') return <Download size={16} className="md:w-6 md:h-6 shrink-0" />;
+        return <Smartphone size={16} className="md:w-6 md:h-6 shrink-0" />; // Default link icon
+    };
+
+    const getHeroButtonText = () => {
+        if (data.hero_button_text) return data.hero_button_text;
+        const action = data.hero_action || 'wifi';
+        if (action === 'wifi') return "ACCEDE A NUESTRO INTERNET";
+        if (action === 'file') return "DESCARGAR ARCHIVO";
+        return "VER MÁS INFORMACIÓN";
+    };
+
+    // Parse WiFi steps from data
+    const wifiStepsConfig = data.hero_wifi_steps ? (typeof data.hero_wifi_steps === 'string' ? JSON.parse(data.hero_wifi_steps) : data.hero_wifi_steps) : ['step1', 'step2', 'step3'];
+
+    const showStep1 = wifiStepsConfig.includes('step1');
+    const showStep2 = wifiStepsConfig.includes('step2');
+    const showStep3 = wifiStepsConfig.includes('step3');
+
+    // Logic to determine what the 'next' step should be if a step is skipped
+    const nextAfterStep1 = showStep2 ? 2 : (showStep3 ? 3 : 1);
+    const nextAfterStep2 = showStep3 ? 3 : 2;
+
+    const mainActionButtonText = getHeroButtonText();
+    const mainActionButtonIcon = getHeroButtonIcon();
+
     return (
-        <main className="min-h-screen bg-[#001549] text-white selection:bg-[#f66739]/30 py-8 px-4 md:py-12 md:px-6 relative overflow-hidden font-sans">
+        <div className="relative">
+            {/* Floating Edit Button */}
+            <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="fixed top-6 right-6 z-[60] bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 shadow-lg group"
+                title="Configurar Perfil"
+            >
+                <Settings size={20} className="group-hover:rotate-90 transition-transform duration-500" />
+            </button>
+
+            {/* =================== FULLSCREEN HERO =================== */}
+            {showHero && (
+                <section className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+                    {/* Background Image - Mobile */}
+                    <div
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden"
+                        style={{ backgroundImage: `url('${heroMobile}')` }}
+                    />
+                    {/* Background Image - Desktop */}
+                    <div
+                        className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block"
+                        style={{ backgroundImage: `url('${heroDesktop}')` }}
+                    />
+
+                    {/* Dark overlay for better text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
+
+                    {/* Hero Content */}
+                    <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 text-center w-full max-w-5xl pt-20">
+                        <motion.h1
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8, ease: 'easeOut' }}
+                            className="text-5xl sm:text-7xl md:text-8xl lg:text-[100px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words"
+                        >
+                            {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
+                        </motion.h1>
+
+                        {data.profesion && (
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8, delay: 0.2 }}
+                                className="mt-4 md:mt-6 text-lg sm:text-xl md:text-3xl font-bold uppercase tracking-[0.2em] text-white/90 drop-shadow-lg"
+                            >
+                                {data.profesion}
+                            </motion.p>
+                        )}
+                    </div>
+
+                    {/* Scroll-down CTA at the bottom */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.5 }}
+                        className="relative z-10 pb-8 md:pb-24 flex flex-col items-center gap-3 md:gap-6"
+                    >
+                        <button
+                            onClick={handleHeroClick}
+                            className="group flex flex-col items-center gap-2 md:gap-4 focus:outline-none w-[75vw] max-w-xs md:w-auto md:max-w-none"
+                        >
+                            <span className="w-full justify-center text-[10px] sm:text-xs md:text-lg font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.3em] text-white/90 bg-[#f66739] px-4 py-4 md:px-12 md:py-6 rounded-3xl md:rounded-full shadow-[0_10px_40px_-8px_rgba(246,103,57,0.6)] md:border-2 md:border-white/20 group-hover:scale-105 transition-all flex items-center gap-2 md:gap-4 text-center leading-snug">
+                                {getHeroButtonIcon()}
+                                {getHeroButtonText()}
+                            </span>
+                            <motion.div
+                                animate={{ y: [0, 12, 0] }}
+                                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+                            >
+                                <ChevronDown size={28} className="text-white/70 md:w-12 md:h-12" />
+                            </motion.div>
+                        </button>
+                    </motion.div>
+                </section>
+            )}
+
+            {/* =================== PROFILE DETAILS =================== */}
+            <main id="profile-details" className="min-h-screen bg-[#001549] text-white selection:bg-[#f66739]/30 py-8 px-4 md:py-12 md:px-6 relative overflow-hidden font-sans">
             {/* Premium Background Effects */}
             <div className="absolute top-[-10%] right-[-10%] w-[70%] h-[50%] bg-[#f66739]/20 blur-[120px] rounded-full pointer-events-none animate-pulse" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#05509c]/20 blur-[100px] rounded-full pointer-events-none" />
@@ -258,12 +410,16 @@ export default function VCardClient() {
 
                                 {/* Name & Profession */}
                                 <div className="text-center md:text-left flex-1 min-w-0 w-full">
-                                    <h1 className="text-2xl md:text-3xl lg:text-5xl xl:text-5xl font-black tracking-tighter leading-[1.05] mb-4 uppercase italic text-white break-words drop-shadow-md">
-                                        {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
-                                    </h1>
-                                    <p className="text-sm md:text-lg lg:text-xl font-black text-[#f66739] uppercase tracking-[0.2em] mb-8 drop-shadow-sm break-words opacity-90">
-                                        {data.profesion || "Profesional Estratégico"}
-                                    </p>
+                                    {!showHero && (
+                                        <>
+                                            <h1 className="text-2xl md:text-3xl lg:text-5xl xl:text-5xl font-black tracking-tighter leading-[1.05] mb-4 uppercase italic text-white break-words drop-shadow-md">
+                                                {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
+                                            </h1>
+                                            <p className="text-sm md:text-lg lg:text-xl font-black text-[#f66739] uppercase tracking-[0.2em] mb-8 drop-shadow-sm break-words opacity-90">
+                                                {data.profesion || "Profesional Estratégico"}
+                                            </p>
+                                        </>
+                                    )}
 
                                     {data.empresa && (
                                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-8 max-w-full">
@@ -272,38 +428,45 @@ export default function VCardClient() {
                                         </div>
                                     )}
 
+
                                     {/* Action Button Container */}
                                     <div className="w-full flex justify-center md:justify-start">
-                                        {data.wifi_ssid ? (
-                                            <div className="w-full md:w-auto w-full max-w-sm relative z-20">
-                                                <button
-                                                    onClick={() => {
+                                        <div className="w-full md:w-auto max-w-sm relative z-20">
+                                            <button
+                                                onClick={() => {
+                                                    if (data.hero_action === 'wifi' || (!data.hero_action && data.wifi_ssid)) {
                                                         const newState = !isAccordionOpen;
                                                         setIsAccordionOpen(newState);
-                                                        if (!newState) setWifiStep(1); // Reset when closing
-                                                    }}
-                                                    className="w-full bg-[#f66739] text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl font-black text-base md:text-lg shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 group"
-                                                >
-                                                    <Zap size={24} className="group-hover:animate-pulse shrink-0" />
-                                                    <span>ACCEDE A NUESTRO INTERNET</span>
+                                                        if (!newState) setWifiStep(1);
+                                                    } else {
+                                                        handleHeroClick();
+                                                    }
+                                                }}
+                                                className="w-full bg-[#f66739] text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl font-black text-base md:text-lg shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 group"
+                                            >
+                                                {mainActionButtonIcon}
+                                                <span>{mainActionButtonText}</span>
+                                                {(data.hero_action === 'wifi' || (!data.hero_action && data.wifi_ssid)) && (
                                                     <motion.div
                                                         animate={{ rotate: isAccordionOpen ? 180 : 0 }}
                                                         transition={{ duration: 0.3 }}
                                                     >
                                                         <ChevronDown size={20} />
                                                     </motion.div>
-                                                </button>
+                                                )}
+                                            </button>
 
-                                                <AnimatePresence>
-                                                    {isAccordionOpen && (
-                                                        <motion.div
-                                                            initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                                            animate={{ height: "auto", opacity: 1, marginTop: 16 }}
-                                                            exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                                                            className="overflow-hidden bg-[#05509c] text-white rounded-3xl border border-white/10 shadow-2xl relative"
-                                                        >
-                                                            <div className="p-5 md:p-6 flex flex-col gap-6 text-left bg-gradient-to-b from-transparent to-[#001549]/30">
-                                                                {/* Step 1 */}
+                                            <AnimatePresence>
+                                                {isAccordionOpen && (data.hero_action === 'wifi' || (!data.hero_action && data.wifi_ssid)) && (
+                                                    <motion.div
+                                                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
+                                                        animate={{ height: "auto", opacity: 1, marginTop: 16 }}
+                                                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
+                                                        className="overflow-hidden bg-[#05509c] text-white rounded-3xl border border-white/10 shadow-2xl relative"
+                                                    >
+                                                        <div className="p-5 md:p-6 flex flex-col gap-6 text-left bg-gradient-to-b from-transparent to-[#001549]/30">
+                                                            {/* Step 1 */}
+                                                            {showStep1 && (
                                                                 <motion.div 
                                                                     initial={false}
                                                                     animate={{ opacity: 1, scale: 1 }}
@@ -312,12 +475,15 @@ export default function VCardClient() {
                                                                     <div className="flex items-center justify-between">
                                                                         <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
                                                                             <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span> 
-                                                                            Descarga Nuestro Contacto
+                                                                            {data.hero_step1_title || "Descarga Nuestro Contacto"}
                                                                         </h3>
                                                                         {wifiStep > 1 && <CheckCircle size={16} className="text-[#25D366]" />}
                                                                     </div>
                                                                     <button 
-                                                                        onClick={downloadVCF}
+                                                                        onClick={async () => {
+                                                                            await downloadVCF();
+                                                                            setWifiStep(nextAfterStep1);
+                                                                        }}
                                                                         className={cn(
                                                                             "w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-1",
                                                                             wifiStep === 1 ? "bg-white text-[#05509c] shadow-lg scale-[1.02]" : "bg-white/5 text-white/40 border border-white/10"
@@ -328,10 +494,12 @@ export default function VCardClient() {
                                                                         <span id="btn-download-text">Descargar .vcf</span>
                                                                     </button>
                                                                 </motion.div>
-                                                                
-                                                                {/* Step 2 */}
+                                                            )}
+                                                            
+                                                            {/* Step 2 */}
+                                                            {showStep2 && (
                                                                 <AnimatePresence>
-                                                                    {wifiStep >= 2 && (
+                                                                    {(wifiStep >= 2 || !showStep1) && (
                                                                         <motion.div 
                                                                             initial={{ height: 0, opacity: 0 }}
                                                                             animate={{ height: "auto", opacity: 1 }}
@@ -339,17 +507,17 @@ export default function VCardClient() {
                                                                         >
                                                                             <div className="flex items-center justify-between">
                                                                                 <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                                    <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">2</span> 
-                                                                                    Asegurate de importar el contacto
+                                                                                    <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{showStep1 ? 2 : 1}</span> 
+                                                                                    {data.hero_step2_title || "Asegurate de importar el contacto"}
                                                                                 </h3>
                                                                                 {wifiStep > 2 && <CheckCircle size={16} className="text-[#25D366]" />}
                                                                             </div>
                                                                             <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
-                                                                                Abre el archivo descargado y guárdanos en tu agenda para activar la conexión.
+                                                                                {data.hero_step2_text || "Abre el archivo descargado y guárdanos en tu agenda para activar la conexión."}
                                                                             </p>
                                                                             {wifiStep === 2 && (
                                                                                 <button 
-                                                                                    onClick={() => setWifiStep(3)}
+                                                                                    onClick={() => setWifiStep(nextAfterStep2)}
                                                                                     className="w-full bg-[#f66739] text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-2 animate-bounce-subtle"
                                                                                 >
                                                                                     Ya guardé el contacto
@@ -358,19 +526,26 @@ export default function VCardClient() {
                                                                         </motion.div>
                                                                     )}
                                                                 </AnimatePresence>
+                                                            )}
 
-                                                                {/* Step 3 */}
+                                                            {/* Step 3 */}
+                                                            {showStep3 && (
                                                                 <AnimatePresence>
-                                                                    {wifiStep >= 3 && (
+                                                                    {(wifiStep >= 3 || (!showStep1 && !showStep2)) && (
                                                                         <motion.div 
                                                                             initial={{ height: 0, opacity: 0 }}
                                                                             animate={{ height: "auto", opacity: 1 }}
                                                                             className="flex flex-col gap-2"
                                                                         >
                                                                             <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                                <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">3</span> 
-                                                                                Conéctate a la Red
+                                                                                <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{ (showStep1 && showStep2) ? 3 : ((showStep1 || showStep2) ? 2 : 1) }</span> 
+                                                                                {data.hero_step3_title || "Conéctate a la Red"}
                                                                             </h3>
+                                                                            {data.hero_step3_text && (
+                                                                                <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
+                                                                                    {data.hero_step3_text}
+                                                                                </p>
+                                                                            )}
                                                                             <div className="bg-[#001549]/50 p-4 rounded-xl border border-[#f66739]/30 space-y-3 mt-1 relative overflow-hidden shadow-[0_0_20px_rgba(246,103,57,0.1)]">
                                                                                 <div className="absolute top-0 right-0 text-[#f66739]/10 -mt-2 -mr-2">
                                                                                     <Zap size={60} />
@@ -391,38 +566,110 @@ export default function VCardClient() {
                                                                         </motion.div>
                                                                     )}
                                                                 </AnimatePresence>
-                                                            </div>
-                                                        </motion.div>
-                                                    )}
-                                                </AnimatePresence>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={downloadVCF}
-                                                className="w-full md:w-auto min-w-[220px] bg-[#f66739] text-white px-10 md:px-12 py-4 md:py-6 rounded-2xl font-black text-base md:text-xl shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-5 hover:scale-105 transition-all active:scale-95 group relative z-20"
-                                            >
-                                                <Download size={24} className="group-hover:animate-bounce shrink-0" />
-                                                <span id="btn-download-text">GUARDAR CONTACTO</span>
-                                            </button>
-                                        )}
+                                                            )}
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Bio / Description */}
-                            {data.bio && (
+                            {/* Bio / Description and Products */}
+                            {(data.bio || data.productos_servicios) && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.4 }}
-                                    className="mt-12 md:mt-16 pt-10 border-t border-white/10"
+                                    className="mt-12 md:mt-16 pt-10 border-t border-white/10 flex flex-col gap-10"
                                 >
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#f66739] mb-4 flex items-center gap-2">
-                                        <Zap size={12} /> SOBRE MÍ
-                                    </h4>
-                                    <p className="text-sm md:text-lg font-medium leading-relaxed text-white/70 italic break-words max-w-4xl">
-                                        "{data.bio}"
-                                    </p>
+                                    {data.bio && (
+                                        <div>
+                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#f66739] mb-4 flex items-center gap-2">
+                                                <Zap size={14} /> SOBRE MÍ
+                                            </h4>
+                                            <p className="text-sm md:text-lg font-medium leading-relaxed text-white/80 italic break-words max-w-4xl whitespace-pre-wrap">
+                                                "{data.bio}"
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {data.productos_servicios && (
+                                        <div>
+                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#f66739] mb-4 flex items-center gap-2">
+                                                <Briefcase size={14} /> PRODUCTOS Y SERVICIOS
+                                            </h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm md:text-base font-medium leading-relaxed text-white/80 max-w-4xl">
+                                                {(() => {
+                                                    const allProducts = data.productos_servicios
+                                                        .split(/[,\n]/)
+                                                        .map((item: string) => item.trim())
+                                                        .filter((item: string) => item !== '');
+                                                    
+                                                    const visibleProducts = isProductsExpanded ? allProducts : allProducts.slice(0, 8);
+                                                    
+                                                    return (
+                                                        <>
+                                                            {visibleProducts.map((line: string, index: number) => {
+                                                                const lowerLine = line.toLowerCase();
+                                                                let emoji = '🔹';
+                                                                
+                                                                const keywordEmojis: Record<string, string> = {
+                                                                    'costilla': '🍖', 'costillas': '🍖', 'parrilla': '🔥', 'parrillada': '🔥', 'asado': '🥩', 'asados': '🥩', 'cerdo': '🐖', 'res': '🥩',
+                                                                    'chuleta': '🥩', 'chuletón': '🥩', 'lomo': '🥩', 'pechuga': '🍗', 'pollo': '🍗',
+                                                                    'chorizo': '🌭', 'ternera': '🥩', 'alita': '🍗', 'alitas': '🍗', 'ubre': '🐄', 'carne': '🥩', 'carnes': '🥩',
+                                                                    'comida': '🍔', 'bebida': '🍹', 'bebidas': '🍹', 'cerveza': '🍺', 'cervezas': '🍺', 'vino': '🍷', 'postre': '🍰', 
+                                                                    'helado': '🍦', 'cafe': '☕', 'café': '☕', 'desayuno': '🍳', 'almuerzo': '🍲',
+                                                                    'tecnologia': '💻', 'software': '💻', 'app': '📱', 'web': '🌐', 'marketing': '📈',
+                                                                    'venta': '💰', 'ventas': '💰', 'asesoria': '🤝', 'consultoria': '🤝', 'diseño': '🎨', 'foto': '📸',
+                                                                    'video': '🎥', 'musica': '🎵', 'evento': '🎉', 'eventos': '🎉', 'salud': '⚕️', 'medico': '🩺',
+                                                                    'dental': '🦷', 'spa': '💆‍♀️', 'belleza': '💅', 'cabello': '💇‍♀️', 'ropa': '👗',
+                                                                    'zapato': '👞', 'zapatos': '👞', 'deporte': '⚽', 'gym': '🏋️‍♂️', 'fitness': '💪', 'curso': '📚', 'cursos': '📚',
+                                                                    'abogado': '⚖️', 'auto': '🚗', 'autos': '🚗', 'mecanica': '🔧', 'limpieza': '🧹', 'piscina': '🏊‍♂️',
+                                                                    'casa': '🏠', 'inmueble': '🏢', 'viaje': '✈️', 'viajes': '✈️', 'hotel': '🏨', 'mascota': '🐾', 'mascotas': '🐾',
+                                                                    'perro': '🐕', 'gato': '🐈', 'veterinaria': '🏥', 'delivery': '🛵', 'envio': '📦', 'tarjeta': '🪪', 'digital': '📱', 'qr': '🔳'
+                                                                };
+
+                                                                // Extract individual words for exact matching to avoid substring issues (like 'res' in 'revendedores')
+                                                                const words = lowerLine.split(/[\s\W]+/);
+                                                                
+                                                                for (const [key, emj] of Object.entries(keywordEmojis)) {
+                                                                    if (words.includes(key)) {
+                                                                        emoji = emj;
+                                                                        break;
+                                                                    }
+                                                                }
+
+                                                                const hasExistingEmoji = /^(\p{Emoji}|\u200d)+/u.test(line);
+                                                                
+                                                                return (
+                                                                    <div key={index} className="flex gap-3 items-center bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/20 transition-colors">
+                                                                        <span className="shrink-0 text-xl w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
+                                                                            {hasExistingEmoji ? '' : emoji}
+                                                                        </span>
+                                                                        <span className="capitalize">{hasExistingEmoji ? line : line.replace(/^[-•*]\s*/, '')}</span>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                            
+                                                            {allProducts.length > 8 && (
+                                                                <div className="col-span-full mt-2 flex justify-center">
+                                                                    <button 
+                                                                        onClick={() => setIsProductsExpanded(!isProductsExpanded)}
+                                                                        className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-bold tracking-widest uppercase transition-all"
+                                                                    >
+                                                                        {isProductsExpanded ? 'Mostrar menos' : `Ver más (${allProducts.length - 8})`}
+                                                                        <ChevronDown size={16} className={cn("transition-transform duration-300", isProductsExpanded && "rotate-180")} />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
+                                        </div>
+                                    )}
                                 </motion.div>
                             )}
                         </div>
@@ -497,8 +744,8 @@ export default function VCardClient() {
                 <footer className="mt-16 md:mt-24 text-center pb-20 md:pb-12 px-2">
                     <div className="inline-flex flex-col md:flex-row items-center gap-4 md:gap-10 py-6 px-10 bg-white/5 backdrop-blur-md rounded-3xl md:rounded-full border border-white/10 shadow-xl">
                         <div className="flex items-center gap-4 opacity-100">
-                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Impulsado por</span>
-                            <img src="/images/logo_header.png" alt="ActivaQR" className="h-4 brightness-0 invert opacity-40" />
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Impulsado por</span>
+                            <img src="/images/logo_header.png" alt="ActivaQR" className="h-6 md:h-8 w-auto object-contain drop-shadow" />
                         </div>
                         <div className="hidden md:block w-px h-6 bg-white/10" />
                         <a href="https://www.activaqr.com" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-widest text-[#f66739] hover:text-white transition-all hover:scale-105">
@@ -508,5 +755,12 @@ export default function VCardClient() {
                 </footer>
             </div>
         </main>
+
+        <VCardEditModal 
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            initialSlug={slug as string}
+        />
+        </div>
     );
 }

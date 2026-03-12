@@ -45,7 +45,10 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
         x: '',
         wifi_ssid: '',
         wifi_password: '',
-        foto_url: '' // For profile image update (base64)
+        foto_url: '', // For profile image update (base64)
+        portada_desktop: '', // New hero desktop
+        portada_movil: '',   // New hero mobile
+        hero_button_text: '' // Custom hero button text
     });
 
     const validateCode = async () => {
@@ -91,7 +94,10 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
                     x: data.data.x || '',
                     wifi_ssid: data.data.wifi_ssid || '',
                     wifi_password: data.data.wifi_password || '',
-                    foto_url: '' // Keep empty on load, only set if changed. Use userData.foto_url for display.
+                    foto_url: '', // Keep empty on load, only set if changed. Use userData.foto_url for display.
+                    portada_desktop: data.data.portada_desktop || '',
+                    portada_movil: data.data.portada_movil || '',
+                    hero_button_text: data.data.hero_button_text || ''
                 });
                 setStep('edit');
             } else {
@@ -626,6 +632,102 @@ ADR;TYPE=WORK:;;${formData.address};;;;`;
                                         />
                                     </div>
 
+                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
+                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
+                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
+                                            Oferta (Hero)
+                                        </h4>
+                                    </div>
+                                    <div className="col-span-full form-group">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Texto del Botón Hero (Oferta)</label>
+                                        <input
+                                            className="w-full border rounded-lg p-2 font-medium"
+                                            value={formData.hero_button_text}
+                                            onChange={(e) => setFormData({ ...formData, hero_button_text: e.target.value })}
+                                            placeholder="Ej. ACCEDE A NUESTRO INTERNET o DIA DE LA MUJER"
+                                        />
+                                        <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold text-center">Si se deja vacío, mostrará "ACCEDE A NUESTRO INTERNET" (si hay WiFi) o "VER PERFIL".</p>
+                                    </div>
+
+                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
+                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
+                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
+                                            Diseño Premium (Imágenes)
+                                        </h4>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="text-[10px] font-black text-primary uppercase mb-2 block">Imagen de Portada (PC)</label>
+                                        <div className="aspect-video bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group relative">
+                                            {formData.portada_desktop ? (
+                                                <img src={formData.portada_desktop} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="flex flex-col items-center text-gray-400 gap-1">
+                                                    <Loader2 size={24} className="opacity-20" />
+                                                    <span className="text-[9px] font-black uppercase tracking-widest">Sin imagen</span>
+                                                </div>
+                                            )}
+                                            <label htmlFor="edit-portada-desktop" className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10">
+                                                <Edit size={20} className="text-white" />
+                                            </label>
+                                            <input 
+                                                id="edit-portada-desktop"
+                                                type="file" 
+                                                className="hidden" 
+                                                accept="image/*" 
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const fd = new FormData();
+                                                    fd.append('file', file);
+                                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                    if (res.ok) {
+                                                        const { url } = await res.json();
+                                                        setFormData({ ...formData, portada_desktop: url });
+                                                    }
+                                                }} 
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="text-[10px] font-black text-primary uppercase mb-2 block">Imagen de Portada (Móvil)</label>
+                                        <div className="aspect-[9/16] h-32 mx-auto bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group relative">
+                                            {formData.portada_movil ? (
+                                                <img src={formData.portada_movil} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="flex flex-col items-center text-gray-400 gap-1">
+                                                    <Loader2 size={24} className="opacity-20" />
+                                                    <span className="text-[9px] font-black uppercase tracking-widest">Sin imagen</span>
+                                                </div>
+                                            )}
+                                            <label htmlFor="edit-portada-movil" className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10">
+                                                <Edit size={20} className="text-white" />
+                                            </label>
+                                            <input 
+                                                id="edit-portada-movil"
+                                                type="file" 
+                                                className="hidden" 
+                                                accept="image/*" 
+                                                onChange={async (e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    const fd = new FormData();
+                                                    fd.append('file', file);
+                                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                    if (res.ok) {
+                                                        const { url } = await res.json();
+                                                        setFormData({ ...formData, portada_movil: url });
+                                                    }
+                                                }} 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
+                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
+                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
+                                            Categorías y Etiquetas
+                                        </h4>
+                                    </div>
                                     <div className="col-span-full form-group">
                                         <label className="text-xs font-bold text-gray-500 uppercase">Categorías / Etiquetas</label>
                                         <input
