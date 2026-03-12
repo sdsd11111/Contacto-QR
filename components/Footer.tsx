@@ -6,8 +6,9 @@ import { usePathname } from 'next/navigation';
 export default function Footer() {
     const pathname = usePathname();
     const isAdmin = pathname?.startsWith('/admin');
+    const isCatalog = pathname?.startsWith('/catalog/');
 
-    if (isAdmin) return null;
+    if (isAdmin || isCatalog) return null;
 
     return (
         <footer className="py-12 text-center text-white/60 text-xs font-bold uppercase tracking-widest bg-navy border-t border-white/10">

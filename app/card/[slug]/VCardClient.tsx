@@ -20,6 +20,7 @@ import {
     ChevronDown
 } from "lucide-react";
 import VCardEditModal from '@/components/card/VCardEditModal';
+import CatalogGallery from '@/components/card/CatalogGallery';
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -27,7 +28,11 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
-export default function VCardClient() {
+interface VCardClientProps {
+    showCatalog?: boolean;
+}
+
+export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const { slug } = useParams();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -672,6 +677,18 @@ export default function VCardClient() {
                                     )}
                                 </motion.div>
                             )}
+
+                            {/* Bio / Description and Products */}
+                            {(data.bio || data.productos_servicios) && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.4 }}
+                                    className="mt-12 md:mt-16 pt-10 border-t border-white/10 flex flex-col gap-10"
+                                >
+                                    {/* ... existing bio and products code ... */}
+                                </motion.div>
+                            )}
                         </div>
                     </motion.div>
 
@@ -740,8 +757,17 @@ export default function VCardClient() {
                     </motion.div>
                 </div>
 
-                {/* Footer Branding */}
-                <footer className="mt-16 md:mt-24 text-center pb-20 md:pb-12 px-2">
+                    {/* Catalog Section (Now integrated in main flow) */}
+                    {(showCatalog || data.catalogo_json) && (
+                        <div className="mt-16 md:mt-24">
+                            <CatalogGallery 
+                                data={typeof data.catalogo_json === 'string' ? JSON.parse(data.catalogo_json) : data.catalogo_json} 
+                            />
+                        </div>
+                    )}
+
+                    {/* Footer Branding */}
+                    <footer className="mt-16 md:mt-24 text-center pb-20 md:pb-12 px-2">
                     <div className="inline-flex flex-col md:flex-row items-center gap-4 md:gap-10 py-6 px-10 bg-white/5 backdrop-blur-md rounded-3xl md:rounded-full border border-white/10 shadow-xl">
                         <div className="flex items-center gap-4 opacity-100">
                             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Impulsado por</span>

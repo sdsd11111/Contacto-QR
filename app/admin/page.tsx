@@ -36,7 +36,9 @@ import {
     Landmark,
     CreditCard,
     TrendingUp,
-    Smartphone
+    Smartphone,
+    Store,
+    Library
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -95,6 +97,14 @@ export default function AdminDashboard() {
     const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
     const [isHeroPromptOpen, setIsHeroPromptOpen] = useState(false);
     const [promptRegistro, setPromptRegistro] = useState<any>(null);
+
+    // Estados para Catálogo
+    const [isCatalogManagerOpen, setIsCatalogManagerOpen] = useState(false);
+    const [catalogRegistro, setCatalogRegistro] = useState<any>(null);
+    const [catalogItems, setCatalogItems] = useState<any[]>([]);
+    const [newCatalogItem, setNewCatalogItem] = useState({ categoria: 'General', titulo: '', descripcion: '', precio: '' });
+    const [catalogImageFile, setCatalogImageFile] = useState<File | null>(null);
+    const [isSavingCatalog, setIsSavingCatalog] = useState(false);
 
     const fetchNextCode = async () => {
         const adminKey = localStorage.getItem('admin_access_key') || '';
@@ -643,6 +653,76 @@ export default function AdminDashboard() {
         }
     };
 
+    const openCatalogManager = (registro: any) => {
+        setCatalogRegistro(registro);
+        setCatalogItems(typeof registro.catalogo_json === 'string' ? JSON.parse(registro.catalogo_json || '[]') : (registro.catalogo_json || []));
+        setIsCatalogManagerOpen(true);
+    };
+
+    const handleAddCatalogItem = async () => {
+        if (!catalogRegistro || !catalogImageFile || !newCatalogItem.titulo) return;
+        setIsSavingCatalog(true);
+
+        try {
+            // Subir imagen
+            const fd = new FormData();
+            fd.append('file', catalogImageFile);
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (!uploadRes.ok) throw new Error('Error subiendo imagen del catálogo');
+            const { url } = await uploadRes.json();
+
+            const newItem = {
+                id: Date.now().toString(),
+                categoria: newCatalogItem.categoria || 'General',
+                titulo: newCatalogItem.titulo,
+                descripcion: newCatalogItem.descripcion,
+                precio: newCatalogItem.precio,
+                url
+            };
+
+            const updatedItems = [...catalogItems, newItem];
+            setCatalogItems(updatedItems);
+
+            // Guardar en JSON de Registro
+            await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': localStorage.getItem('admin_access_key') || ''
+                },
+                body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(updatedItems) })
+            });
+
+            // Limpiar formulario
+            setNewCatalogItem({ categoria: 'General', titulo: '', descripcion: '', precio: '' });
+            setCatalogImageFile(null);
+            fetchRegistros(); // Refrescar
+
+        } catch (error: any) {
+            alert(error.message);
+        } finally {
+            setIsSavingCatalog(false);
+        }
+    };
+
+    const handleDeleteCatalogItem = async (index: number) => {
+        if (!catalogRegistro) return;
+        const updatedItems = [...catalogItems];
+        updatedItems.splice(index, 1);
+        setCatalogItems(updatedItems);
+
+        await fetch('/api/admin/registros', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-admin-key': localStorage.getItem('admin_access_key') || ''
+            },
+            body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(updatedItems) })
+        });
+        fetchRegistros();
+    };
+
+
     const handleHeroUploadConfirm = async () => {
         if (!promptRegistro) return;
         
@@ -1171,18 +1251,18 @@ export default function AdminDashboard() {
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="text-[10px] font-black uppercase tracking-widest text-white/40 bg-white/[0.02]">
-                                    <th className="px-8 py-6">Usuario</th>
-                                    <th className="px-8 py-6">Plan / Menú</th>
-                                    <th className="px-8 py-6">Comprobante</th>
-                                    <th className="px-8 py-6">Vendedor</th>
-                                    <th className="px-8 py-6">Estado</th>
-                                    <th className="px-8 py-6">Acciones</th>
+                                    <th className="px-4 py-6">Usuario</th>
+                                    <th className="px-4 py-6 uppercase">Plan</th>
+                                    <th className="px-4 py-6">Comprobante</th>
+                                    <th className="px-4 py-6">Vendedor</th>
+                                    <th className="px-4 py-6 font-bold">Estado</th>
+                                    <th className="px-4 py-6">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/10">
                                 {filtered.map((r) => (
                                     <tr key={r.id} className="hover:bg-white/[0.02] transition-all group">
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 py-6">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden flex items-center justify-center">
                                                     {r.foto_url && !isPlaceholderUrl(r.foto_url) ? (
@@ -1204,7 +1284,7 @@ export default function AdminDashboard() {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 py-6">
                                             <div className="flex flex-col gap-2">
                                                 <span className={cn(
                                                     "px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit",
@@ -1219,75 +1299,73 @@ export default function AdminDashboard() {
                                                         rel="noopener noreferrer"
                                                         className="text-[8px] font-black uppercase text-primary hover:underline flex items-center gap-1"
                                                     >
-                                                        <ExternalLink size={10} /> Ver Menú
+                                                        <FileText size={10} /> Ver Menú
                                                     </a>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 py-6">
                                             {r.comprobante_url ? (
                                                 <button
                                                     onClick={() => setSelectedReceipt(r.comprobante_url)}
-                                                    className="flex items-center gap-2 text-xs font-bold text-primary hover:underline"
+                                                    className="group relative flex items-center justify-center p-1 bg-white/5 border border-white/10 rounded-xl hover:border-accent transition-all overflow-hidden"
                                                 >
-                                                    <ImageIcon size={16} /> Ver Recibo
+                                                    <div className="absolute inset-0 bg-accent/20 opacity-0 group-hover:opacity-100 flex items-center justify-center z-10 transition-all">
+                                                        <Eye size={14} className="text-white" />
+                                                    </div>
+                                                    <img
+                                                        src={r.comprobante_url}
+                                                        alt="Comprobante"
+                                                        className="h-10 w-10 object-cover rounded-lg group-hover:scale-110 transition-transform"
+                                                    />
                                                 </button>
                                             ) : (
-                                                <span className="text-[10px] text-white/20 uppercase font-black">Sin Archivo</span>
+                                                <span className="text-[8px] text-white/20 uppercase font-black italic tracking-widest">Sin archivo</span>
                                             )}
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 py-6">
                                             {r.seller_id ? (
                                                 <button
-                                                    onClick={() => setSellerIdFilter(r.seller_id)}
-                                                    className="flex flex-col gap-1 items-start group/seller hover:bg-primary/5 p-2 -m-2 rounded-lg transition-all"
-                                                    title={`Filtrar ventas de Socio #${r.seller_id}`}
+                                                    onClick={() => handleEditSeller(sellers.find(s => s.id === r.seller_id))}
+                                                    className="flex flex-col items-start gap-1 p-2 rounded-xl border border-white/5 hover:bg-white/5 transition-all group/seller"
                                                 >
-                                                    <span className="text-[10px] font-black uppercase text-primary group-hover/seller:underline flex items-center gap-1">
-                                                        {r.parent_name ? (
+                                                    <span className="text-[10px] font-black text-accent uppercase leading-tight tracking-widest flex items-center gap-2">
+                                                        {r.sold_by_name?.includes(' ') ? (
                                                             <>
-                                                                <span className="text-white/40">{r.parent_name}</span>
                                                                 <ChevronRight size={10} className="text-white/20" />
                                                                 <span>{r.sold_by_name?.split(' ')[0]}</span>
                                                             </>
                                                         ) : (
                                                             r.sold_by_name || `Socio #${r.seller_id}`
                                                         )}
-                                                        <Users size={10} className="opacity-0 group-hover/seller:opacity-100 transition-opacity" />
-                                                    </span>
-                                                    <span className={cn(
-                                                        "text-[8px] font-black uppercase tracking-tighter text-left",
-                                                        (r.commission_status === 'completed' || r.commission_status === 'paid_to_leader') ? "text-green-500" : "text-white/20"
-                                                    )}>
-                                                        {(r.commission_status === 'completed' || r.commission_status === 'paid_to_leader') ? 'Comisión Pagada' : 'Pago Pendiente'}
                                                     </span>
                                                 </button>
                                             ) : (
                                                 <span className="text-[10px] text-white/20 uppercase font-black">Directo</span>
                                             )}
                                         </td>
-                                        <td className="px-8 py-6">
+                                        <td className="px-4 py-6">
                                             <div className="flex flex-col gap-2">
                                                 <div className="flex items-center gap-2">
                                                     <div className={cn(
                                                         "w-2 h-2 rounded-full",
                                                         r.status === 'pagado' ? "bg-accent" : r.status === 'entregado' ? "bg-green-500" : r.status === 'cancelado' ? "bg-red-500" : "bg-yellow-500"
                                                     )} />
-                                                    <span className="text-[10px] font-black uppercase tracking-widest">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">
                                                         {r.status}
                                                     </span>
                                                 </div>
                                                 {r.status === 'pendiente' && (
-                                                    <span className="text-[8px] font-bold text-white/30 uppercase tracking-tighter italic">Esperando Pago</span>
+                                                    <span className="text-[8px] font-bold text-white/30 uppercase tracking-tighter italic whitespace-nowrap">Esperando Pago</span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-8 py-6">
-                                            <div className="flex items-center gap-3">
+                                        <td className="px-4 py-6">
+                                            <div className="flex items-center gap-1.5">
                                                 {/* Botón Enviar Email */}
                                                 <button
                                                     onClick={() => sendVCardEmail(r)}
-                                                    className="p-3 bg-green-500/20 text-green-500 rounded-xl hover:bg-green-500 hover:text-white transition-all"
+                                                    className="p-2 bg-green-500/20 text-green-500 rounded-xl hover:bg-green-500 hover:text-white transition-all shadow-lg shadow-green-500/10"
                                                     title="Aprobar y Enviar Email"
                                                     disabled={r.isSending}
                                                 >
@@ -1299,7 +1377,7 @@ export default function AdminDashboard() {
                                                     <button
                                                         onClick={() => updateStatus(r.id, 'pagado')}
                                                         disabled={pendingIds.has(r.id)}
-                                                        className="p-3 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
+                                                        className="p-2 bg-blue-500/20 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all shadow-lg shadow-blue-500/10"
                                                         title="Marcar como Pagado"
                                                     >
                                                         <CheckCircle size={18} />
@@ -1311,7 +1389,7 @@ export default function AdminDashboard() {
                                                     <button
                                                         onClick={() => updateStatus(r.id, 'cancelado')}
                                                         disabled={pendingIds.has(r.id)}
-                                                        className="p-3 bg-red-500/10 text-red-500/40 rounded-xl hover:bg-red-500 hover:text-white transition-all"
+                                                        className="p-2 bg-red-500/10 text-red-500/40 rounded-xl hover:bg-red-500 hover:text-white transition-all"
                                                         title="Cancelar Registro"
                                                     >
                                                         <XCircle size={18} />
@@ -1321,7 +1399,7 @@ export default function AdminDashboard() {
                                                 {/* Botón Eliminar Físico */}
                                                 <button
                                                     onClick={() => handleDeleteRegistro(r.id, r.nombre)}
-                                                    className="p-3 bg-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/30"
+                                                    className="p-2 bg-red-500/20 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all border border-red-500/30 shadow-lg shadow-red-500/10"
                                                     title="Eliminar Registro (Permanente)"
                                                 >
                                                     <Trash2 size={18} />
@@ -1329,47 +1407,30 @@ export default function AdminDashboard() {
 
                                                 {/* Botón Comisión (Socio) */}
                                                 {r.seller_id && (
-                                                    <div className="relative group/comm">
-                                                        <button
-                                                            onClick={() => updateCommissionStatus(r.id, r.commission_status)}
-                                                            disabled={pendingIds.has(r.id)}
-                                                            className={cn(
-                                                                "p-3 rounded-xl transition-all shadow-lg",
-                                                                r.commission_status === 'completed'
-                                                                    ? "bg-green-500 text-white shadow-green-500/20"
-                                                                    : r.commission_status === 'paid_to_leader'
-                                                                        ? "bg-brand text-white shadow-brand/20"
-                                                                        : "bg-white/5 text-white/20 border border-white/10 hover:bg-white/10"
-                                                            )}
-                                                            title={
-                                                                r.commission_status === 'completed' ? "Pago Confirmado por Vendedor ✅" :
-                                                                    r.commission_status === 'paid_to_leader' ? "Enviado al Líder (Esperando Confirmación) 🚚" :
-                                                                        "Marcar como PAGADO AL LÍDER"
-                                                            }
-                                                        >
-                                                            <ShieldCheck size={18} />
-                                                        </button>
-
-                                                        {/* Alerta de retraso > 48h */}
-                                                        {r.commission_status === 'paid_to_leader' && r.leader_paid_at && (
-                                                            (() => {
-                                                                const paidDate = new Date(r.leader_paid_at).getTime();
-                                                                const now = new Date().getTime();
-                                                                const hoursPassed = (now - paidDate) / (1000 * 60 * 60);
-                                                                if (hoursPassed > 48) {
-                                                                    return (
-                                                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-navy rounded-full animate-pulse shadow-lg shadow-red-500/50" />
-                                                                    );
-                                                                }
-                                                                return null;
-                                                            })()
+                                                    <button
+                                                        onClick={() => updateCommissionStatus(r.id, r.commission_status)}
+                                                        disabled={pendingIds.has(r.id)}
+                                                        className={cn(
+                                                            "p-2 rounded-xl transition-all shadow-lg",
+                                                            r.commission_status === 'completed'
+                                                                ? "bg-green-500 text-white shadow-green-500/20"
+                                                                : r.commission_status === 'paid_to_leader'
+                                                                    ? "bg-brand text-white shadow-brand/20"
+                                                                    : "bg-white/5 text-white/20 border border-white/10 hover:bg-white/10"
                                                         )}
-                                                    </div>
+                                                        title={
+                                                            r.commission_status === 'completed' ? "Pago Confirmado por Vendedor ✅" :
+                                                                r.commission_status === 'paid_to_leader' ? "Enviado al Líder (Esperando Confirmación) 🚚" :
+                                                                    "Marcar como PAGADO AL LÍDER"
+                                                        }
+                                                    >
+                                                        <ShieldCheck size={18} />
+                                                    </button>
                                                 )}
 
                                                 <button
                                                     onClick={() => handleEdit(r)}
-                                                    className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
+                                                    className="p-2 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
                                                     title="Editar vCard"
                                                 >
                                                     <Edit size={18} />
@@ -1378,7 +1439,7 @@ export default function AdminDashboard() {
                                                 <a
                                                     href={`/api/vcard/${r.slug || r.id}`}
                                                     download={`${r.slug || r.id}.vcf`}
-                                                    className="p-3 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-navy transition-all"
+                                                    className="p-2 bg-primary/10 text-primary rounded-xl hover:bg-primary hover:text-navy transition-all shadow-lg shadow-primary/10"
                                                     title="Descargar vCard"
                                                 >
                                                     <Download size={18} />
@@ -1386,11 +1447,22 @@ export default function AdminDashboard() {
 
                                                 <button
                                                     onClick={() => handleViewProfile(r)}
-                                                    className="p-3 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
+                                                    className="p-2 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
                                                     title="Ver Perfil"
                                                 >
                                                     <Eye size={18} />
                                                 </button>
+
+                                                <a
+                                                    href={`/catalog/${r.slug || r.id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 bg-[#f66739]/10 text-[#f66739] rounded-xl hover:bg-[#f66739] hover:text-white transition-all shadow-lg shadow-[#f66739]/10"
+                                                    title="Ver Catálogo"
+                                                >
+                                                    <Store size={18} />
+                                                </a>
+
                                             </div>
                                         </td>
                                     </tr>
