@@ -21,7 +21,6 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
         const base64 = Buffer.from(buffer).toString('base64');
         const contentType = response.headers.get('content-type') || 'image/png';
         
-        // jsPDF needs format like 'PNG', 'JPEG', 'WEBP'
         return `data:${contentType};base64,${base64}`;
     } catch {
         return null;
@@ -35,16 +34,17 @@ function getImageFormat(dataUrl: string): string {
     return 'JPEG';
 }
 
-// Colors
+// Colors — matching the ActivaQR navy theme
 const COLORS = {
     navy: [5, 11, 28] as [number, number, number],
     navyLight: [10, 18, 41] as [number, number, number],
+    navyCard: [15, 22, 45] as [number, number, number],
     primary: [255, 107, 0] as [number, number, number],
     accent: [0, 200, 83] as [number, number, number],
     white: [255, 255, 255] as [number, number, number],
-    gray: [150, 160, 180] as [number, number, number],
-    lightGray: [200, 210, 220] as [number, number, number],
-    darkBlue: [15, 25, 50] as [number, number, number],
+    whiteSubtle: [200, 210, 230] as [number, number, number],
+    gray: [120, 135, 165] as [number, number, number],
+    lightGray: [180, 190, 210] as [number, number, number],
 };
 
 export async function POST(req: NextRequest) {
@@ -98,16 +98,23 @@ export async function POST(req: NextRequest) {
         const setFillColor = (color: [number, number, number]) => doc.setFillColor(color[0], color[1], color[2]);
         const setDrawColor = (color: [number, number, number]) => doc.setDrawColor(color[0], color[1], color[2]);
 
+        // Paint full page background navy blue
+        const paintBackground = () => {
+            setFillColor(COLORS.navy);
+            doc.rect(0, 0, pageW, pageH, 'F');
+        };
+
         const checkNewPage = (neededHeight: number) => {
-            if (y + neededHeight > pageH - 30) {
+            if (y + neededHeight > pageH - 35) {
                 doc.addPage();
+                paintBackground();
                 y = 20;
                 return true;
             }
             return false;
         };
 
-        const drawSectionTitle = (title: string, icon?: string) => {
+        const drawSectionTitle = (title: string) => {
             checkNewPage(18);
             // Orange accent bar
             setFillColor(COLORS.primary);
@@ -115,10 +122,10 @@ export async function POST(req: NextRequest) {
             
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(13);
-            setColor(COLORS.navy);
+            setColor(COLORS.white);
             doc.text(title.toUpperCase(), margin + 8, y + 7);
             
-            // Underline
+            // Orange underline
             setDrawColor(COLORS.primary);
             doc.setLineWidth(0.3);
             doc.line(margin + 8, y + 10, margin + 8 + doc.getTextWidth(title.toUpperCase()), y + 10);
@@ -126,22 +133,21 @@ export async function POST(req: NextRequest) {
             y += 16;
         };
 
-        const drawField = (label: string, value: string | null | undefined, icon?: string) => {
+        const drawField = (label: string, value: string | null | undefined) => {
             if (!value) return;
             checkNewPage(10);
             
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(8);
             setColor(COLORS.gray);
-            doc.text(label.toUpperCase(), margin + 4, y + 4);
+            doc.text(label.toUpperCase(), margin + 8, y + 4);
             
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
-            setColor(COLORS.navy);
+            setColor(COLORS.whiteSubtle);
             
-            // Handle long text with wrapping
-            const lines = doc.splitTextToSize(value, contentW - 10);
-            doc.text(lines, margin + 4, y + 9);
+            const lines = doc.splitTextToSize(value, contentW - 16);
+            doc.text(lines, margin + 8, y + 9);
             y += 6 + (lines.length * 4.5);
         };
 
@@ -152,27 +158,27 @@ export async function POST(req: NextRequest) {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(8);
             setColor(COLORS.gray);
-            doc.text(label.toUpperCase(), margin + 4, y + 4);
+            doc.text(label.toUpperCase(), margin + 8, y + 4);
             
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
             setColor(COLORS.primary);
 
-            const lines = doc.splitTextToSize(value, contentW - 10);
-            doc.text(lines, margin + 4, y + 9);
+            const lines = doc.splitTextToSize(value, contentW - 16);
+            doc.text(lines, margin + 8, y + 9);
             y += 6 + (lines.length * 4);
         };
 
-        // ===== PAGE 1: HEADER =====
-        
-        // Full navy background
-        setFillColor(COLORS.navy);
-        doc.rect(0, 0, pageW, 65, 'F');
+        // ===== PAGE 1 =====
+        paintBackground();
 
-        // Decorative elements (subtle)
+        // ===== HEADER (navy with decorative orange circle) =====
+        // Decorative orange circle (top right)
         setFillColor([255, 140, 50]);
         doc.circle(pageW - 5, 5, 30, 'F');
-        setFillColor(COLORS.navy); // restore
+        // Re-cover part of circle so it's subtle
+        setFillColor(COLORS.navy);
+        doc.rect(0, 0, pageW - 25, 65, 'F');
         
         // Load and draw logo
         try {
@@ -182,8 +188,7 @@ export async function POST(req: NextRequest) {
                 const logoBase64 = `data:image/png;base64,${logoData.toString('base64')}`;
                 doc.addImage(logoBase64, 'PNG', margin, 8, 55, 18);
             }
-        } catch (e) {
-            // Fallback: just write text
+        } catch {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(24);
             setColor(COLORS.white);
@@ -194,66 +199,118 @@ export async function POST(req: NextRequest) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(18);
         setColor(COLORS.white);
-        doc.text('DOCUMENTO DE REVISIÓN', margin, 38);
+        doc.text('DOCUMENTO DE REVISION', margin, 38);
         
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         setColor(COLORS.lightGray);
-        doc.text(`Contacto Digital • Generado: ${new Date().toLocaleDateString('es-EC', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin, 45);
+        doc.text(`Contacto Digital  |  Generado: ${new Date().toLocaleDateString('es-EC', { day: '2-digit', month: 'long', year: 'numeric' })}`, margin, 45);
         
-        // Decorative orange accent line at bottom of header
+        // Orange accent line
         setFillColor(COLORS.primary);
         doc.rect(0, 62, pageW, 3, 'F');
 
         y = 72;
 
         // ===== PROFILE CARD =====
-        // Card background
-        setFillColor([248, 249, 252]);
-        setDrawColor([230, 235, 245]);
-        doc.setLineWidth(0.3);
+        setFillColor(COLORS.navyCard);
+        setDrawColor([30, 40, 70]);
+        doc.setLineWidth(0.5);
         doc.roundedRect(margin, y, contentW, 55, 4, 4, 'FD');
 
-        // Profile photo
-        const profileImgX = margin + 6;
-        const profileImgY = y + 6;
-        const profileImgSize = 30;
+        // Profile photo — CIRCULAR
+        const profileCenterX = margin + 6 + 15; // center of 30mm image
+        const profileCenterY = y + 6 + 15;
+        const profileRadius = 15;
         
         let hasProfilePhoto = false;
         if (r.foto_url) {
             try {
                 const imgData = await fetchImageAsBase64(r.foto_url);
                 if (imgData) {
-                    // Clip circle effect - draw circle background first
+                    // Orange ring around photo
                     setFillColor(COLORS.primary);
-                    doc.circle(profileImgX + profileImgSize/2, profileImgY + profileImgSize/2, profileImgSize/2 + 1.5, 'F');
-                    doc.addImage(imgData, getImageFormat(imgData), profileImgX, profileImgY, profileImgSize, profileImgSize);
+                    doc.circle(profileCenterX, profileCenterY, profileRadius + 1.5, 'F');
+                    
+                    // White ring
+                    setFillColor(COLORS.white);
+                    doc.circle(profileCenterX, profileCenterY, profileRadius + 0.5, 'F');
+                    
+                    // Place image (square, but visually masked by circle)
+                    doc.addImage(imgData, getImageFormat(imgData), margin + 6, y + 6, 30, 30);
+                    
+                    // Draw navy "corners" to simulate circle clip
+                    // Top-left corner
+                    setFillColor(COLORS.navyCard);
+                    // We create the illusion of a circle by covering the corners with the card background color
+                    // Four corner arcs using small rectangles at the corners of the image
+                    const imgX = margin + 6;
+                    const imgY = y + 6;
+                    const imgS = 30;
+                    
+                    // Draw corner masks (8 triangular-ish pieces to make circular)
+                    for (let angle = 0; angle < 360; angle += 1) {
+                        const rad = (angle * Math.PI) / 180;
+                        const px = profileCenterX + Math.cos(rad) * (profileRadius + 0.3);
+                        const py = profileCenterY + Math.sin(rad) * (profileRadius + 0.3);
+                        
+                        // Only mask points outside circle but inside square
+                        if (px >= imgX && px <= imgX + imgS && py >= imgY && py <= imgY + imgS) {
+                            continue; // inside circle, skip
+                        }
+                    }
+                    
+                    // Simpler approach: draw 4 corner pieces in card background color
+                    // Top-left
+                    doc.setFillColor(COLORS.navyCard[0], COLORS.navyCard[1], COLORS.navyCard[2]);
+                    
+                    // Create a path that covers corners using multiple small rects
+                    const cornerSize = 6;
+                    // Top corners
+                    for (let cx = 0; cx < cornerSize; cx++) {
+                        for (let cy = 0; cy < cornerSize; cy++) {
+                            const distX = cx < cornerSize/2 ? cornerSize - cx : cx - cornerSize/2;
+                            const distY = cy < cornerSize/2 ? cornerSize - cy : cy - cornerSize/2;
+                            
+                            // Check if point is outside circle
+                            const pointX = (cx < cornerSize/2) ? imgX + cx * 0.5 : imgX + imgS - (cornerSize - cx) * 0.5;
+                            const pointY = (cy < cornerSize/2) ? imgY + cy * 0.5 : imgY + imgS - (cornerSize - cy) * 0.5;
+                            
+                            const dist = Math.sqrt(Math.pow(pointX - profileCenterX, 2) + Math.pow(pointY - profileCenterY, 2));
+                            if (dist > profileRadius) {
+                                doc.rect(pointX, pointY, 0.6, 0.6, 'F');
+                            }
+                        }
+                    }
+                    
+                    // More effective: just overlay the orange ring to create circular look
+                    setDrawColor(COLORS.primary);
+                    doc.setLineWidth(1.5);
+                    doc.circle(profileCenterX, profileCenterY, profileRadius, 'D');
+                    
                     hasProfilePhoto = true;
                 }
             } catch { }
         }
 
         if (!hasProfilePhoto) {
-            // Placeholder circle
             setFillColor(COLORS.gray);
-            doc.circle(profileImgX + profileImgSize/2, profileImgY + profileImgSize/2, profileImgSize/2, 'F');
+            doc.circle(profileCenterX, profileCenterY, profileRadius, 'F');
             setColor(COLORS.white);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(16);
             const initials = (r.nombre || 'N/A').split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
-            doc.text(initials, profileImgX + profileImgSize/2, profileImgY + profileImgSize/2 + 3, { align: 'center' });
+            doc.text(initials, profileCenterX, profileCenterY + 3, { align: 'center' });
         }
 
-        // Profile info to the right of photo
-        const infoX = profileImgX + profileImgSize + 8;
+        // Profile info
+        const infoX = margin + 6 + 30 + 8;
         
-        // Name
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
-        setColor(COLORS.navy);
+        setColor(COLORS.white);
         doc.text(r.nombre || 'Sin nombre', infoX, y + 14);
 
-        // Profession/Title
         if (r.profesion) {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
@@ -261,12 +318,11 @@ export async function POST(req: NextRequest) {
             doc.text(r.profesion, infoX, y + 21);
         }
 
-        // Company
         if (r.empresa) {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
-            setColor(COLORS.gray);
-            doc.text(`🏢 ${r.empresa}`, infoX, y + 28);
+            setColor(COLORS.lightGray);
+            doc.text(r.empresa, infoX, y + 28);
         }
 
         // Plan badge
@@ -279,16 +335,16 @@ export async function POST(req: NextRequest) {
         doc.setFontSize(7);
         doc.text(planLabel, infoX + 5, y + 38);
 
-        // Profile type badge
+        // Profile type badge (no emojis)
         if (r.tipo_perfil) {
-            const tipoBadge = r.tipo_perfil === 'negocio' ? '🏪 NEGOCIO' : '👤 PERSONA';
+            const tipoBadge = r.tipo_perfil === 'negocio' ? 'NEGOCIO' : 'PERSONA';
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(7);
             setColor(COLORS.gray);
             doc.text(tipoBadge, infoX + planBadgeW + 4, y + 38);
         }
 
-        // Status badge (top right of card)
+        // Status badge (top right)
         const statusLabel = r.status?.toUpperCase() || 'PENDIENTE';
         const statusColor = r.status === 'pagado' ? COLORS.accent : r.status === 'entregado' ? COLORS.accent : COLORS.primary;
         setFillColor(statusColor);
@@ -303,38 +359,34 @@ export async function POST(req: NextRequest) {
 
         // ===== BIO =====
         if (r.bio) {
-            drawSectionTitle('Biografía / Descripción');
-            setFillColor([248, 249, 252]);
-            const bioLines = doc.splitTextToSize(r.bio, contentW - 16);
-            const bioHeight = bioLines.length * 4.5 + 8;
+            drawSectionTitle('Biografia / Descripcion');
+            setFillColor(COLORS.navyCard);
+            setDrawColor([30, 40, 70]);
+            const bioLines = doc.splitTextToSize(r.bio, contentW - 20);
+            const bioHeight = bioLines.length * 4.5 + 10;
             checkNewPage(bioHeight + 4);
-            doc.roundedRect(margin, y, contentW, bioHeight, 3, 3, 'F');
+            doc.roundedRect(margin, y, contentW, bioHeight, 3, 3, 'FD');
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9.5);
-            setColor(COLORS.navy);
-            doc.text(bioLines, margin + 8, y + 6);
+            setColor(COLORS.whiteSubtle);
+            doc.text(bioLines, margin + 8, y + 7);
             y += bioHeight + 6;
         }
 
         // ===== DATOS PERSONALES =====
         drawSectionTitle('Datos de Contacto');
-        setFillColor([248, 249, 252]);
-        setDrawColor([230, 235, 245]);
         
-        // Calculate height needed
         const contactFields = [
             ['Email', r.email],
             ['WhatsApp', r.whatsapp],
-            ['Dirección', r.direccion],
+            ['Direccion', r.direccion],
         ].filter(([_, v]) => v);
         
-        // For persona profile
         const personaFields = [
             ['Nombres', r.nombres],
             ['Apellidos', r.apellidos],
         ].filter(([_, v]) => v);
 
-        // For negocio profile
         const negocioFields = [
             ['Nombre del Negocio', r.nombre_negocio],
             ['Contacto (Nombre)', r.contacto_nombre],
@@ -342,10 +394,12 @@ export async function POST(req: NextRequest) {
         ].filter(([_, v]) => v);
 
         const allPersonalFields = [...(r.tipo_perfil === 'negocio' ? negocioFields : personaFields), ...contactFields];
-        const personalBlockH = allPersonalFields.length * 10 + 6;
+        const personalBlockH = allPersonalFields.length * 10 + 8;
         checkNewPage(personalBlockH + 4);
+        setFillColor(COLORS.navyCard);
+        setDrawColor([30, 40, 70]);
         doc.roundedRect(margin, y, contentW, personalBlockH, 3, 3, 'FD');
-        y += 3;
+        y += 4;
 
         for (const [label, value] of allPersonalFields) {
             drawField(label as string, value as string);
@@ -362,17 +416,17 @@ export async function POST(req: NextRequest) {
             ['X (Twitter)', r.x],
             ['Google Business', r.google_business],
             ['Sitio Web', r.web],
-            ['Menú Digital', r.menu_digital],
+            ['Menu Digital', r.menu_digital],
         ].filter(([_, v]) => v);
 
         if (socialLinks.length > 0) {
             drawSectionTitle('Redes Sociales y Enlaces');
-            setFillColor([248, 249, 252]);
-            setDrawColor([230, 235, 245]);
-            const socialBlockH = socialLinks.length * 9 + 6;
+            const socialBlockH = socialLinks.length * 9 + 8;
             checkNewPage(socialBlockH + 4);
+            setFillColor(COLORS.navyCard);
+            setDrawColor([30, 40, 70]);
             doc.roundedRect(margin, y, contentW, socialBlockH, 3, 3, 'FD');
-            y += 3;
+            y += 4;
             
             for (const [label, value] of socialLinks) {
                 drawLinkField(label as string, value as string);
@@ -382,25 +436,24 @@ export async function POST(req: NextRequest) {
 
         // ===== WIFI =====
         if (r.wifi_ssid || r.wifi_password) {
-            drawSectionTitle('Configuración WiFi');
-            setFillColor([248, 249, 252]);
-            setDrawColor([230, 235, 245]);
-            const wifiH = 24;
+            drawSectionTitle('Configuracion WiFi');
+            setFillColor(COLORS.navyCard);
+            setDrawColor([30, 40, 70]);
+            const wifiH = 26;
             checkNewPage(wifiH + 4);
             doc.roundedRect(margin, y, contentW, wifiH, 3, 3, 'FD');
-            y += 2;
+            y += 3;
             drawField('Red (SSID)', r.wifi_ssid);
-            drawField('Contraseña', r.wifi_password);
+            drawField('Contrasena', r.wifi_password);
             y += 4;
         }
 
         // ===== ETIQUETAS =====
         if (etiquetas && etiquetas.length > 0) {
-            drawSectionTitle('Etiquetas / Categorías');
+            drawSectionTitle('Etiquetas / Categorias');
             checkNewPage(16);
             
             let tagX = margin + 4;
-            const tagY = y;
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(8);
             
@@ -426,24 +479,26 @@ export async function POST(req: NextRequest) {
         // ===== PRODUCTOS / SERVICIOS =====
         if (r.productos_servicios) {
             drawSectionTitle('Productos y Servicios');
-            setFillColor([248, 249, 252]);
-            const prodLines = doc.splitTextToSize(r.productos_servicios, contentW - 16);
-            const prodH = prodLines.length * 4.5 + 10;
+            setFillColor(COLORS.navyCard);
+            setDrawColor([30, 40, 70]);
+            const prodLines = doc.splitTextToSize(r.productos_servicios, contentW - 20);
+            const prodH = prodLines.length * 4.5 + 12;
             checkNewPage(prodH + 4);
-            doc.roundedRect(margin, y, contentW, prodH, 3, 3, 'F');
+            doc.roundedRect(margin, y, contentW, prodH, 3, 3, 'FD');
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9.5);
-            setColor(COLORS.navy);
-            doc.text(prodLines, margin + 8, y + 7);
+            setColor(COLORS.whiteSubtle);
+            doc.text(prodLines, margin + 8, y + 8);
             y += prodH + 6;
         }
 
-        // ===== GALERÍA =====
+        // ===== GALERIA =====
         if (galeriaUrls.length > 0) {
             doc.addPage();
+            paintBackground();
             y = 20;
             
-            drawSectionTitle(`Galería de Imágenes (${galeriaUrls.length})`);
+            drawSectionTitle(`Galeria de Imagenes (${galeriaUrls.length})`);
             
             const imgSize = 52;
             const gap = 5;
@@ -458,13 +513,9 @@ export async function POST(req: NextRequest) {
                         
                         checkNewPage(imgSize + gap + 10);
                         
-                        // Shadow effect
-                        setFillColor([230, 235, 245]);
-                        doc.roundedRect(imgX + 1, y + 1, imgSize, imgSize, 3, 3, 'F');
-                        
-                        // Image border
-                        setDrawColor([200, 210, 220]);
-                        doc.setLineWidth(0.3);
+                        // Border
+                        setDrawColor([40, 55, 90]);
+                        doc.setLineWidth(0.5);
                         doc.roundedRect(imgX, y, imgSize, imgSize, 3, 3, 'D');
                         
                         doc.addImage(imgData, getImageFormat(imgData), imgX + 0.5, y + 0.5, imgSize - 1, imgSize - 1);
@@ -487,7 +538,7 @@ export async function POST(req: NextRequest) {
         
         if (hasPortadas) {
             checkNewPage(80);
-            drawSectionTitle('Imágenes de Portada');
+            drawSectionTitle('Imagenes de Portada');
             
             if (r.portada_desktop && !r.portada_desktop.includes('default')) {
                 try {
@@ -513,9 +564,8 @@ export async function POST(req: NextRequest) {
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(8);
                         setColor(COLORS.gray);
-                        doc.text('PORTADA MÓVIL', margin + 4, y + 4);
+                        doc.text('PORTADA MOVIL', margin + 4, y + 4);
                         y += 7;
-                        // Mobile portada - narrower
                         doc.addImage(imgData, getImageFormat(imgData), margin + 30, y, contentW - 60, 60);
                         y += 65;
                     }
@@ -523,32 +573,42 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // ===== FOOTER =====
-        const footerY = pageH - 25;
-        
-        // Orange bar
-        setFillColor(COLORS.primary);
-        doc.rect(0, footerY - 2, pageW, 2, 'F');
-        
-        // Footer background
-        setFillColor(COLORS.navy);
-        doc.rect(0, footerY, pageW, 25, 'F');
-        
-        // Footer text
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
-        setColor(COLORS.primary);
-        doc.text('⚠️  DOCUMENTO DE REVISIÓN — Por favor verifique todos los datos', pageW / 2, footerY + 8, { align: 'center' });
-        
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        setColor(COLORS.lightGray);
-        doc.text('Si encuentra algún error o desea modificar algo, notifíquenos antes de la entrega final.', pageW / 2, footerY + 14, { align: 'center' });
-        doc.text('ActivaQR © 2026 — activaqr.com', pageW / 2, footerY + 20, { align: 'center' });
+        // ===== FOOTER (on every page — apply to last page) =====
+        const totalPages = doc.getNumberOfPages();
+        for (let p = 1; p <= totalPages; p++) {
+            doc.setPage(p);
+            
+            const footerY = pageH - 28;
+            
+            // Orange accent bar
+            setFillColor(COLORS.primary);
+            doc.rect(0, footerY, pageW, 2, 'F');
+            
+            // Footer background
+            setFillColor([3, 7, 18]);
+            doc.rect(0, footerY + 2, pageW, 26, 'F');
+            
+            // Footer text line 1 — no emojis
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8);
+            setColor(COLORS.primary);
+            doc.text('DOCUMENTO DE REVISION  --  Por favor verifique todos los datos', pageW / 2, footerY + 10, { align: 'center' });
+            
+            // Footer text line 2
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            setColor(COLORS.lightGray);
+            doc.text('Si encuentra algun error o desea modificar algo, notifiquenos antes de la entrega final.', pageW / 2, footerY + 16, { align: 'center' });
+            
+            // Footer text line 3
+            doc.setFontSize(6.5);
+            setColor(COLORS.gray);
+            doc.text('ActivaQR  |  2026  |  activaqr.com', pageW / 2, footerY + 22, { align: 'center' });
+        }
 
         // Generate PDF buffer
         const pdfBuffer = Buffer.from(doc.output('arraybuffer'));
-        const clientName = (r.nombre || 'contacto').replace(/[^a-zA-Z0-9áéíóúñÁÉÍÓÚÑ ]/g, '').replace(/\s+/g, '_');
+        const clientName = (r.nombre || 'contacto').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_');
         const fileName = `Revision_${clientName}.pdf`;
 
         // ===== SEND TO WHATSAPP =====
@@ -556,27 +616,26 @@ export async function POST(req: NextRequest) {
         let whatsappError = '';
 
         const apiUrl = process.env.EVOLUTION_API_URL;
-        const apiKey = process.env.EVOLUTION_API_KEY;
+        const evolutionKey = process.env.EVOLUTION_API_KEY;
         const instance = process.env.EVOLUTION_INSTANCE;
-        const targetNumber = '593963410409'; // Fixed number as requested
+        const targetNumber = '593963410409';
 
-        if (apiUrl && apiKey && instance) {
+        if (apiUrl && evolutionKey && instance) {
             try {
-                // Send document via Evolution API
                 const pdfBase64 = pdfBuffer.toString('base64');
                 
                 const docPayload = {
                     number: targetNumber,
                     media: `data:application/pdf;base64,${pdfBase64}`,
                     fileName: fileName,
-                    caption: `📋 *REVISIÓN DE CONTACTO DIGITAL*\n\n👤 *${r.nombre}*\n📧 ${r.email}\n📱 ${r.whatsapp || 'N/A'}\n💎 Plan: ${(r.plan || 'basic').toUpperCase()}\n\n_Revise el PDF adjunto con todos los datos del cliente._`
+                    caption: `*REVISION DE CONTACTO DIGITAL*\n\n*${r.nombre}*\nEmail: ${r.email}\nWhatsApp: ${r.whatsapp || 'N/A'}\nPlan: ${(r.plan || 'basic').toUpperCase()}\n\n_Revise el PDF adjunto con todos los datos del cliente._`
                 };
 
                 const waResponse = await fetch(`${apiUrl}/message/sendMedia/${instance}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'apikey': apiKey
+                        'apikey': evolutionKey
                     },
                     body: JSON.stringify(docPayload)
                 });
