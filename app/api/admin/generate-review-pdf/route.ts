@@ -626,6 +626,7 @@ export async function POST(req: NextRequest) {
                 
                 const docPayload = {
                     number: targetNumber,
+                    mediatype: 'document',
                     media: `data:application/pdf;base64,${pdfBase64}`,
                     fileName: fileName,
                     caption: `*REVISION DE CONTACTO DIGITAL*\n\n*${r.nombre}*\nEmail: ${r.email}\nWhatsApp: ${r.whatsapp || 'N/A'}\nPlan: ${(r.plan || 'basic').toUpperCase()}\n\n_Revise el PDF adjunto con todos los datos del cliente._`
