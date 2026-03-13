@@ -41,6 +41,51 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isProductsExpanded, setIsProductsExpanded] = useState(false);
 
+    const [extractedBg, setExtractedBg] = useState<string>('#001549');
+    const [themePrimary, setThemePrimary] = useState<string>('#f66739');
+    const [themeTextOnPrimary, setThemeTextOnPrimary] = useState<string>('#ffffff');
+
+    useEffect(() => {
+        if (data?.foto_url) {
+            import('node-vibrant/browser').then((module) => {
+                const Vibrant = module.Vibrant || module.default || module;
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.src = data.foto_url;
+                img.onload = () => {
+                    try {
+                        const v = new Vibrant(img, { colorCount: 64, quality: 3 });
+                        v.getPalette().then((palette: any) => {
+                            // ActivaQR Override
+                            const isActivaQR = typeof slug === 'string' && slug.includes('activaqr') || data?.nombre_negocio?.toLowerCase().includes('activaqr');
+                            if (isActivaQR) {
+                                setExtractedBg('#001549');
+                                setThemePrimary('#f66739');
+                                setThemeTextOnPrimary('#ffffff');
+                                return;
+                            }
+
+                            if (palette.DarkVibrant) {
+                                setExtractedBg(palette.DarkVibrant.hex);
+                            } else if (palette.DarkMuted) {
+                                setExtractedBg(palette.DarkMuted.hex);
+                            }
+                            if (palette.Vibrant) {
+                                setThemePrimary(palette.Vibrant.hex);
+                                setThemeTextOnPrimary(palette.Vibrant.titleTextColor || '#ffffff');
+                            } else if (palette.LightVibrant) {
+                                setThemePrimary(palette.LightVibrant.hex);
+                                setThemeTextOnPrimary(palette.LightVibrant.titleTextColor || '#000000');
+                            }
+                        }).catch((err: any) => console.error("Palette extraction failed", err));
+                    } catch (err) {
+                        console.error("Vibrant instantiation failed", err);
+                    }
+                };
+            }).catch(err => console.error("Could not load node-vibrant", err));
+        }
+    }, [data?.foto_url]);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -232,7 +277,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             icon: <span className="text-xl">🍽️</span>,
             label: 'Menú Digital',
             value: data.menu_digital,
-            color: 'bg-[#f66739] text-white shadow-[#f66739]/30',
+            color: 'bg-[var(--theme-primary)] text-white shadow-[var(--theme-primary)]/30',
             url: data.menu_digital
         },
     ].filter(s => s.value);
@@ -301,7 +346,12 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const mainActionButtonIcon = getHeroButtonIcon();
 
     return (
-        <div className="relative">
+        <div className="relative" style={{ 
+            '--theme-bg': `color-mix(in srgb, ${extractedBg} 20%, #050510)`, 
+            '--theme-bg-raw': extractedBg,
+            '--theme-primary': themePrimary,
+            '--theme-text-on-primary': themeTextOnPrimary
+        } as React.CSSProperties}>
             {/* Floating Edit Button */}
             <button
                 onClick={() => setIsEditModalOpen(true)}
@@ -362,7 +412,14 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                             onClick={handleHeroClick}
                             className="group flex flex-col items-center gap-2 md:gap-4 focus:outline-none w-[75vw] max-w-xs md:w-auto md:max-w-none"
                         >
-                            <span className="w-full justify-center text-[10px] sm:text-xs md:text-lg font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.3em] text-white/90 bg-[#f66739] px-4 py-4 md:px-12 md:py-6 rounded-3xl md:rounded-full shadow-[0_10px_40px_-8px_rgba(246,103,57,0.6)] md:border-2 md:border-white/20 group-hover:scale-105 transition-all flex items-center gap-2 md:gap-4 text-center leading-snug">
+                            <span 
+                                className="w-full justify-center text-[10px] sm:text-xs md:text-lg font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.3em] px-4 py-4 md:px-12 md:py-6 rounded-3xl md:rounded-full md:border-2 md:border-white/20 group-hover:scale-105 transition-all flex items-center gap-2 md:gap-4 text-center leading-snug"
+                                style={{
+                                    background: 'linear-gradient(135deg, var(--theme-primary), color-mix(in srgb, var(--theme-primary) 70%, black))',
+                                    boxShadow: '0 10px 40px -8px color-mix(in srgb, var(--theme-primary) 60%, transparent)',
+                                    color: 'var(--theme-text-on-primary)'
+                                }}
+                            >
                                 {getHeroButtonIcon()}
                                 {getHeroButtonText()}
                             </span>
@@ -378,9 +435,9 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             )}
 
             {/* =================== PROFILE DETAILS =================== */}
-            <main id="profile-details" className="min-h-screen bg-[#001549] text-white selection:bg-[#f66739]/30 py-8 md:py-12 relative overflow-hidden font-sans">
+            <main id="profile-details" className="min-h-screen bg-[var(--theme-bg)] text-white selection:bg-[var(--theme-primary)]/30 py-8 md:py-12 relative overflow-hidden font-sans">
             {/* Premium Background Effects */}
-            <div className="absolute top-[-10%] right-[-10%] w-[70%] h-[50%] bg-[#f66739]/20 blur-[120px] rounded-full pointer-events-none animate-pulse" />
+            <div className="absolute top-[-10%] right-[-10%] w-[70%] h-[50%] bg-[var(--theme-primary)]/20 blur-[120px] rounded-full pointer-events-none animate-pulse" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#05509c]/20 blur-[100px] rounded-full pointer-events-none" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none" />
 
@@ -394,13 +451,13 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                     >
                         <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-10 lg:p-14 shadow-2xl relative overflow-hidden group min-w-0 w-full">
                             {/* Decorative accent */}
-                            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[#f66739] to-transparent opacity-10 rounded-bl-full shrink-0" />
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[var(--theme-primary)] to-transparent opacity-10 rounded-bl-full shrink-0" />
 
                             <div className="flex flex-col md:flex-row gap-8 md:gap-14 items-center md:items-start relative z-10 w-full">
                                 {/* Profile Image */}
                                 <div className="relative shrink-0">
-                                    <div className="w-32 h-32 md:w-36 lg:w-48 rounded-3xl bg-gradient-to-br from-[#f66739] to-[#05509c] p-1 shadow-2xl">
-                                        <div className="w-full h-full aspect-square rounded-[20px] bg-[#001549] overflow-hidden flex items-center justify-center">
+                                    <div className="w-32 h-32 md:w-36 lg:w-48 rounded-3xl bg-gradient-to-br from-[var(--theme-primary)] to-[#05509c] p-1 shadow-2xl">
+                                        <div className="w-full h-full aspect-square rounded-[20px] bg-[var(--theme-bg)] overflow-hidden flex items-center justify-center">
                                             {data.foto_url ? (
                                                 <img src={data.foto_url} className="w-full h-full object-cover" alt={data.nombre} />
                                             ) : (
@@ -408,7 +465,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="absolute -bottom-2 -right-2 bg-[#66bf19] p-2 rounded-full shadow-lg border-2 border-[#001549]">
+                                    <div className="absolute -bottom-2 -right-2 bg-[#66bf19] p-2 rounded-full shadow-lg border-2 border-[var(--theme-bg)]">
                                         <CheckCircle size={20} className="text-white" />
                                     </div>
                                 </div>
@@ -420,7 +477,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                             <h1 className="text-2xl md:text-3xl lg:text-5xl xl:text-5xl font-black tracking-tighter leading-[1.05] mb-4 uppercase italic text-white break-words drop-shadow-md">
                                                 {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
                                             </h1>
-                                            <p className="text-sm md:text-lg lg:text-xl font-black text-[#f66739] uppercase tracking-[0.2em] mb-8 drop-shadow-sm break-words opacity-90">
+                                            <p className="text-sm md:text-lg lg:text-xl font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] mb-8 drop-shadow-sm break-words opacity-90">
                                                 {data.profesion || "Profesional Estratégico"}
                                             </p>
                                         </>
@@ -428,7 +485,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
 
                                     {data.empresa && (
                                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-8 max-w-full">
-                                            <Briefcase size={14} className="text-[#f66739] shrink-0" />
+                                            <Briefcase size={14} className="text-[var(--theme-primary)] shrink-0" />
                                             <span className="text-[10px] md:text-xs lg:text-sm font-bold uppercase tracking-wider text-white/50 truncate text-ellipsis">{data.empresa}</span>
                                         </div>
                                     )}
@@ -447,7 +504,12 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                         handleHeroClick();
                                                     }
                                                 }}
-                                                className="w-full bg-[#f66739] text-white px-8 md:px-10 py-4 md:py-5 rounded-2xl font-black text-base md:text-lg shadow-[0_15px_50px_-10px_rgba(246,103,57,0.5)] flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 group"
+                                                className="w-full px-8 md:px-10 py-4 md:py-5 rounded-2xl font-black text-base md:text-lg flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 group"
+                                                style={{
+                                                    background: 'linear-gradient(135deg, var(--theme-primary), color-mix(in srgb, var(--theme-primary) 70%, black))',
+                                                    boxShadow: '0 15px 50px -10px color-mix(in srgb, var(--theme-primary) 50%, transparent)',
+                                                    color: 'var(--theme-text-on-primary)'
+                                                }}
                                             >
                                                 {mainActionButtonIcon}
                                                 <span>{mainActionButtonText}</span>
@@ -469,7 +531,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                         exit={{ height: 0, opacity: 0, marginTop: 0 }}
                                                         className="overflow-hidden bg-[#05509c] text-white rounded-3xl border border-white/10 shadow-2xl relative"
                                                     >
-                                                        <div className="p-5 md:p-6 flex flex-col gap-6 text-left bg-gradient-to-b from-transparent to-[#001549]/30">
+                                                        <div className="p-5 md:p-6 flex flex-col gap-6 text-left bg-gradient-to-b from-transparent to-[var(--theme-bg)]/30">
                                                             {/* Step 1 */}
                                                             {showStep1 && (
                                                                 <motion.div 
@@ -478,8 +540,8 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                                     className={cn("flex flex-col gap-2 transition-all duration-500", wifiStep > 1 && "opacity-50 grayscale-[0.5]")}
                                                                 >
                                                                     <div className="flex items-center justify-between">
-                                                                        <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                            <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span> 
+                                                                        <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[var(--theme-primary)] flex items-center gap-2">
+                                                                            <span className="bg-[var(--theme-primary)] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span> 
                                                                             {data.hero_step1_title || "Descarga Nuestro Contacto"}
                                                                         </h3>
                                                                         {wifiStep > 1 && <CheckCircle size={16} className="text-[#25D366]" />}
@@ -511,8 +573,8 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                                             className={cn("flex flex-col gap-2 transition-all duration-500", wifiStep > 2 && "opacity-50 grayscale-[0.5]")}
                                                                         >
                                                                             <div className="flex items-center justify-between">
-                                                                                <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                                    <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{showStep1 ? 2 : 1}</span> 
+                                                                                <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[var(--theme-primary)] flex items-center gap-2">
+                                                                                    <span className="bg-[var(--theme-primary)] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{showStep1 ? 2 : 1}</span> 
                                                                                     {data.hero_step2_title || "Asegurate de importar el contacto"}
                                                                                 </h3>
                                                                                 {wifiStep > 2 && <CheckCircle size={16} className="text-[#25D366]" />}
@@ -523,7 +585,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                                             {wifiStep === 2 && (
                                                                                 <button 
                                                                                     onClick={() => setWifiStep(nextAfterStep2)}
-                                                                                    className="w-full bg-[#f66739] text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-2 animate-bounce-subtle"
+                                                                                    className="w-full bg-[var(--theme-primary)] text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-2 animate-bounce-subtle"
                                                                                 >
                                                                                     Ya guardé el contacto
                                                                                 </button>
@@ -542,8 +604,8 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                                             animate={{ height: "auto", opacity: 1 }}
                                                                             className="flex flex-col gap-2"
                                                                         >
-                                                                            <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[#f66739] flex items-center gap-2">
-                                                                                <span className="bg-[#f66739] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{ (showStep1 && showStep2) ? 3 : ((showStep1 || showStep2) ? 2 : 1) }</span> 
+                                                                            <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[var(--theme-primary)] flex items-center gap-2">
+                                                                                <span className="bg-[var(--theme-primary)] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{ (showStep1 && showStep2) ? 3 : ((showStep1 || showStep2) ? 2 : 1) }</span> 
                                                                                 {data.hero_step3_title || "Conéctate a la Red"}
                                                                             </h3>
                                                                             {data.hero_step3_text && (
@@ -551,19 +613,19 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                                                     {data.hero_step3_text}
                                                                                 </p>
                                                                             )}
-                                                                            <div className="bg-[#001549]/50 p-4 rounded-xl border border-[#f66739]/30 space-y-3 mt-1 relative overflow-hidden shadow-[0_0_20px_rgba(246,103,57,0.1)]">
-                                                                                <div className="absolute top-0 right-0 text-[#f66739]/10 -mt-2 -mr-2">
+                                                                            <div className="bg-[var(--theme-bg)]/50 p-4 rounded-xl border border-[var(--theme-primary)]/30 space-y-3 mt-1 relative overflow-hidden shadow-[0_0_20px_rgba(246,103,57,0.1)]">
+                                                                                <div className="absolute top-0 right-0 text-[var(--theme-primary)]/10 -mt-2 -mr-2">
                                                                                     <Zap size={60} />
                                                                                 </div>
                                                                                 <div className="relative z-10">
                                                                                     <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Nombre del WiFi</p>
-                                                                                    <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-white selection:bg-[#f66739]">{data.wifi_ssid}</p>
+                                                                                    <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-white selection:bg-[var(--theme-primary)]">{data.wifi_ssid}</p>
                                                                                 </div>
                                                                                 {data.wifi_password && (
                                                                                     <div className="relative z-10">
                                                                                         <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Contraseña</p>
                                                                                         <div className="flex items-center gap-2">
-                                                                                            <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-[#f66739] selection:bg-white">{data.wifi_password}</p>
+                                                                                            <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-[var(--theme-primary)] selection:bg-white">{data.wifi_password}</p>
                                                                                         </div>
                                                                                     </div>
                                                                                 )}
@@ -591,7 +653,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                 >
                                     {data.bio && (
                                         <div>
-                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#f66739] mb-4 flex items-center gap-2">
+                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-4 flex items-center gap-2">
                                                 <Zap size={14} /> SOBRE MÍ
                                             </h4>
                                             <p className="text-sm md:text-lg font-medium leading-relaxed text-white/80 italic break-words max-w-4xl whitespace-pre-wrap">
@@ -602,7 +664,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
 
                                     {data.productos_servicios && (
                                         <div>
-                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#f66739] mb-4 flex items-center gap-2">
+                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-4 flex items-center gap-2">
                                                 <Briefcase size={14} /> PRODUCTOS Y SERVICIOS
                                             </h4>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm md:text-base font-medium leading-relaxed text-white/80 max-w-4xl">
@@ -701,7 +763,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                     >
                         {/* Social & Contact Grid */}
                         <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-10 shadow-2xl w-full">
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#f66739] mb-8">CANALES</h4>
+                            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--theme-primary)] mb-8">CANALES</h4>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-1 gap-4">
                                 {socialLinks.map((social) => (
@@ -710,7 +772,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                         href={social.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="group flex flex-col xl:flex-row items-center xl:gap-4 p-4 md:p-6 bg-white/10 rounded-[28px] md:rounded-[32px] border border-white/5 hover:border-[#f66739]/50 transition-all hover:bg-white/20"
+                                        className="group flex flex-col xl:flex-row items-center xl:gap-4 p-4 md:p-6 bg-white/10 rounded-[28px] md:rounded-[32px] border border-white/5 hover:border-[var(--theme-primary)]/50 transition-all hover:bg-white/20"
                                     >
                                         <div className={cn("w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center mb-3 xl:mb-0 shadow-lg group-hover:scale-110 transition-transform shrink-0", social.color)}>
                                             {social.icon}
@@ -720,8 +782,8 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                 ))}
 
                                 {data.email && (
-                                    <a href={`mailto:${data.email}`} className="col-span-2 md:col-span-4 xl:col-span-1 flex items-center gap-4 p-4 md:p-5 bg-white/10 rounded-[24px] border border-white/5 hover:border-[#f66739]/50 transition-all group overflow-hidden">
-                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 text-[#f66739] group-hover:scale-110 transition-transform shrink-0">
+                                    <a href={`mailto:${data.email}`} className="col-span-2 md:col-span-4 xl:col-span-1 flex items-center gap-4 p-4 md:p-5 bg-white/10 rounded-[24px] border border-white/5 hover:border-[var(--theme-primary)]/50 transition-all group overflow-hidden">
+                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 text-[var(--theme-primary)] group-hover:scale-110 transition-transform shrink-0">
                                             <Mail size={18} />
                                         </div>
                                         <div className="text-left min-w-0">
@@ -745,12 +807,12 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                             </div>
 
                             {data.web && (
-                                <a href={data.web} target="_blank" rel="noopener noreferrer" className="mt-6 flex items-center justify-between p-5 md:p-6 bg-gradient-to-r from-[#05509c] to-[#001549] rounded-[24px] border border-white/10 group">
+                                <a href={data.web} target="_blank" rel="noopener noreferrer" className="mt-6 flex items-center justify-between p-5 md:p-6 bg-gradient-to-r from-[#05509c] to-[var(--theme-bg)] rounded-[24px] border border-white/10 group">
                                     <div className="flex items-center gap-4">
                                         <div className="text-xl">🌐</div>
                                         <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Web Oficial</span>
                                     </div>
-                                    <Zap size={16} className="text-[#f66739] group-hover:scale-125 transition-transform" />
+                                    <Zap size={16} className="text-[var(--theme-primary)] group-hover:scale-125 transition-transform" />
                                 </a>
                             )}
                         </div>
@@ -788,7 +850,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                         <div className="mt-16 md:mt-32 w-full">
                             <div className="max-w-6xl mx-auto px-4 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div>
-                                    <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#f66739] flex items-center gap-2 mb-2">
+                                    <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] flex items-center gap-2 mb-2">
                                         <Zap size={14} /> UBICACIÓN ESTRATÉGICA
                                     </h4>
                                     <p className="text-white/50 text-[10px] md:text-sm font-bold uppercase tracking-wider max-w-xl">
@@ -802,7 +864,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                         rel="noopener noreferrer"
                                         className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-3 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center gap-3 transition-all hover:scale-105 group whitespace-nowrap self-start md:self-center"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-[#f66739]/20 flex items-center justify-center text-[#f66739] group-hover:bg-[#f66739] group-hover:text-white transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)] group-hover:bg-[var(--theme-primary)] group-hover:text-white transition-colors">
                                             <Zap size={14} />
                                         </div>
                                         CÓMO LLEGAR (Google Maps)
@@ -832,7 +894,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                             <img src="/images/logo_header.png" alt="ActivaQR" className="h-6 md:h-8 w-auto object-contain drop-shadow" />
                         </div>
                         <div className="hidden md:block w-px h-6 bg-white/10" />
-                        <a href="https://www.activaqr.com" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-widest text-[#f66739] hover:text-white transition-all hover:scale-105">
+                        <a href="https://www.activaqr.com" target="_blank" rel="noopener noreferrer" className="text-[10px] font-black uppercase tracking-widest text-[var(--theme-primary)] hover:text-white transition-all hover:scale-105">
                             Crea tu Red de Contactos Ahora →
                         </a>
                     </div>

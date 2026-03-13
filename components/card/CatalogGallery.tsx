@@ -55,7 +55,7 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
 
     return (
         <div className="w-full mt-16 pt-10 border-t border-white/10 flex flex-col gap-8">
-            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[#f66739] mb-2 flex items-center gap-2">
+            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-2 flex items-center gap-2">
                 <ZoomIn size={14} /> CATÁLOGO INTERACTIVO
             </h4>
 
@@ -69,7 +69,7 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                             className={cn(
                                 "px-5 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all duration-300",
                                 activeCategory === cat
-                                    ? "bg-[#f66739] text-white shadow-lg shadow-[#f66739]/30"
+                                    ? "bg-[var(--theme-primary)] text-white shadow-lg shadow-[var(--theme-primary)]/30"
                                     : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
                             )}
                         >
@@ -93,7 +93,7 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
                             transition={{ duration: 0.3 }}
-                            className="group relative aspect-square rounded-2xl md:rounded-[32px] overflow-hidden cursor-pointer border border-white/5 hover:border-[#f66739]/50 shadow-lg hover:shadow-[#f66739]/20"
+                            className="group relative aspect-square rounded-2xl md:rounded-[32px] overflow-hidden cursor-pointer border border-white/5 hover:border-[var(--theme-primary)]/50 shadow-lg hover:shadow-[var(--theme-primary)]/20"
                             onClick={() => setSelectedItem(item)}
                         >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -108,7 +108,7 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                                     {item.titulo}
                                 </h3>
                                 {item.precio && (
-                                    <p className="text-[#f66739] font-black text-xs md:text-sm mt-1">
+                                    <p className="text-[var(--theme-primary)] font-black text-xs md:text-sm mt-1">
                                         {item.precio}
                                     </p>
                                 )}
@@ -130,7 +130,7 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                     >
                         {/* Close Button */}
                         <button 
-                            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-[#f66739] text-white rounded-full transition-colors z-[101]"
+                            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-[var(--theme-primary)] text-white rounded-full transition-colors z-[101]"
                             onClick={(e) => { e.stopPropagation(); setSelectedItem(null); }}
                         >
                             <X size={24} />
@@ -165,10 +165,10 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                                 
                                 {selectedItem.precio && (
                                     <div className="flex items-center gap-2 mb-8">
-                                        <div className="w-10 h-10 rounded-full bg-[#f66739]/20 flex items-center justify-center text-[#f66739]">
+                                        <div className="w-10 h-10 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)]">
                                             <DollarSign size={20} />
                                         </div>
-                                        <span className="text-xl md:text-2xl font-black text-[#f66739]">{selectedItem.precio}</span>
+                                        <span className="text-xl md:text-2xl font-black text-[var(--theme-primary)]">{selectedItem.precio}</span>
                                     </div>
                                 )}
 
