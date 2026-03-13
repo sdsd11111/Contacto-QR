@@ -1500,15 +1500,26 @@ export default function AdminDashboard() {
                                                     <Eye size={18} />
                                                 </button>
 
-                                                <a
-                                                    href={`/catalog/${r.slug || r.id}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        let catItems: any[] = [];
+                                                        try {
+                                                            catItems = typeof r.catalogo_json === 'string' ? JSON.parse(r.catalogo_json || '[]') : (r.catalogo_json || []);
+                                                        } catch (err) {}
+                                                        
+                                                        if (catItems.length > 0) {
+                                                            window.open(`/catalog/${r.slug || r.id}`, '_blank');
+                                                        } else {
+                                                            alert('El catálogo está vacío. Por favor, agrega mínimo 1 categoría y 1 producto antes de visualizarlo.');
+                                                            openCatalogManager(r);
+                                                        }
+                                                    }}
                                                     className="p-2 bg-[#f66739]/10 text-[#f66739] rounded-xl hover:bg-[#f66739] hover:text-white transition-all shadow-lg shadow-[#f66739]/10"
                                                     title="Ver Catálogo"
                                                 >
                                                     <Store size={18} />
-                                                </a>
+                                                </button>
 
                                             </div>
                                         </td>

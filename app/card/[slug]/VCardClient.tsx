@@ -47,7 +47,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
 
     useEffect(() => {
         if (data?.foto_url) {
-            import('node-vibrant/browser').then((module) => {
+            import('node-vibrant/browser').then((module: any) => {
                 const Vibrant = module.Vibrant || module.default || module;
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
