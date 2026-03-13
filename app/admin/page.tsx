@@ -1907,9 +1907,15 @@ export default function AdminDashboard() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="w-full max-w-2xl bg-[#0A0B1E] border border-white/10 rounded-[48px] overflow-hidden shadow-3xl"
+                            exit={{ opacity : 0, scale: 0.9 }}
+                            className="w-full max-w-2xl bg-[#0A0B1E] border border-white/10 rounded-[48px] overflow-hidden shadow-3xl relative"
                         >
+                            <button 
+                                onClick={() => setIsHeroPromptOpen(false)}
+                                className="absolute top-8 right-8 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/40 hover:text-white z-50"
+                            >
+                                <X size={24} />
+                            </button>
                             <div className="p-10 text-center">
                                 <div className="w-20 h-20 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
                                     {setupTarget === 'catalog' ? <Store size={40} /> : <ImageIcon size={40} />}
