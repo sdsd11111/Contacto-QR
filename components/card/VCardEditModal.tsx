@@ -55,6 +55,7 @@ export default function VCardEditModal({
         categories: '',
         menu_digital: '',
         youtube: '',
+        youtube_video_url: '',
         x: '',
         wifi_ssid: '',
         wifi_password: '',
@@ -90,8 +91,6 @@ export default function VCardEditModal({
             const data = await res.json();
 
             if (res.ok) {
-                // If the code is for a different slug, we should ideally check it
-                // but for now we follow the same logic as the home portal
                 setUserData(data.data);
                 setUsesRemaining(data.usesRemaining);
                 setFormData({
@@ -117,6 +116,7 @@ export default function VCardEditModal({
                     categories: data.data.categories || '',
                     menu_digital: data.data.menu_digital || '',
                     youtube: data.data.youtube || '',
+                    youtube_video_url: data.data.youtube_video_url || '',
                     x: data.data.x || '',
                     wifi_ssid: data.data.wifi_ssid || '',
                     wifi_password: data.data.wifi_password || '',
@@ -138,15 +138,9 @@ export default function VCardEditModal({
                         const raw = data.data.catalogo_json ? (typeof data.data.catalogo_json === 'string' ? JSON.parse(data.data.catalogo_json) : data.data.catalogo_json) : null;
                         if (!raw) return { categories: [], products: [] };
                         if (Array.isArray(raw)) {
-                            return { 
-                                categories: Array.from(new Set(raw.map((p:any) => p.categoria))).filter(Boolean), 
-                                products: raw.map((p: any) => ({ ...p, id: p.id || Math.random().toString(36).substr(2, 9) })) 
-                            };
-                        }
-                        if (raw.products) {
                             return {
-                                ...raw,
-                                products: raw.products.map((p: any) => ({ ...p, id: p.id || Math.random().toString(36).substr(2, 9) }))
+                                categories: Array.from(new Set(raw.map((p: any) => p.category || 'Sin Categoría'))),
+                                products: raw
                             };
                         }
                         return raw;
@@ -198,12 +192,44 @@ export default function VCardEditModal({
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, field: 'foto_url' | 'portada_desktop' | 'portada_movil') => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setLoading(true);
         const fd = new FormData();
         fd.append('file', file);
-        const res = await fetch('/api/upload', { method: 'POST', body: fd });
-        if (res.ok) {
-            const { url } = await res.json();
-            setFormData({ ...formData, [field]: url });
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (res.ok) {
+                const { url } = await res.json();
+                setFormData({ ...formData, [field]: url });
+            }
+        } catch (err) {
+            console.error('Error uploading image:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        
+        // Allow VCF, PDF, DOCX, etc.
+        setLoading(true);
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (res.ok) {
+                const { url } = await res.json();
+                setFormData({ ...formData, hero_file_url: url });
+                alert('Archivo subido correctamente');
+            } else {
+                alert('Error al subir el archivo');
+            }
+        } catch (err) {
+            console.error('Error uploading file:', err);
+            alert('Error al subir el archivo');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -248,55 +274,57 @@ export default function VCardEditModal({
                                 </p>
 
                                 <div className="w-full max-w-sm mb-4">
-                                    <input
-                                        type="text"
+                                    <input 
+                                        type="text" 
                                         value={editCode}
                                         onChange={(e) => setEditCode(e.target.value.toUpperCase())}
-                                        placeholder="RYA-XXXX"
-                                        className="w-full text-center text-2xl font-black text-navy border-2 border-gray-200 rounded-xl p-4 uppercase focus:border-primary outline-none tracking-widest"
+                                        placeholder="Ingresa tu código"
+                                        className="w-full border-2 border-gray-100 rounded-2xl p-4 text-center text-xl font-black tracking-[0.2em] focus:border-primary outline-none transition-all uppercase"
                                     />
-                                    {error && (
-                                        <p className="text-red-500 text-sm font-bold mt-2 flex items-center justify-center gap-1">
-                                            <AlertCircle size={14} /> {error}
-                                        </p>
-                                    )}
+                                    {error && <p className="text-red-500 text-xs font-bold mt-2 flex items-center justify-center gap-1 uppercase tracking-tighter italic"> <AlertCircle size={14}/> {error}</p>}
                                 </div>
 
-                                <button
+                                <button 
                                     onClick={validateCode}
-                                    disabled={loading || editCode.length < 4}
-                                    className="bg-navy text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest hover:bg-navy/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                    disabled={loading || !editCode}
+                                    className="bg-primary text-white font-black py-4 px-10 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 uppercase tracking-widest text-sm flex items-center gap-2"
                                 >
-                                    {loading ? <Loader2 className="animate-spin" /> : 'Verificar y Entrar'}
+                                    {loading ? <Loader2 className="animate-spin" /> : <CheckCircle size={20} />}
+                                    Validar Acceso
                                 </button>
                             </div>
                         )}
 
-                        {step === 'edit' && userData && (
-                            <div className="space-y-4">
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-start gap-3 mb-6">
-                                    <AlertCircle className="text-yellow-600 shrink-0 mt-0.5" size={20} />
-                                    <div>
-                                        <p className="text-sm text-yellow-800 font-bold">Modo Edición Activo</p>
-                                        <p className="text-xs text-yellow-700 mt-1">
-                                            Tienes <strong>{usesRemaining} ediciones restantes</strong>.
-                                        </p>
+                        {step === 'edit' && (
+                            <div className="space-y-6">
+                                <div className="bg-navy/5 p-4 rounded-2xl border border-navy/10 flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3 text-navy">
+                                        <div className="w-10 h-10 rounded-full bg-navy/10 flex items-center justify-center">
+                                            <Edit size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Editando Perfil</p>
+                                            <p className="text-sm font-black uppercase tracking-tight italic">/{initialSlug}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Usos Disponibles</p>
+                                        <p className="text-lg font-black text-blue-600 tracking-tighter leading-none mt-1">{usesRemaining}</p>
                                     </div>
                                 </div>
 
-                                {/* ACORDEÓN DE SECCIONES */}
-                                <div className="space-y-3">
-                                    {/* SECCIÓN 1: DATOS DEL PERFIL */}
+                                <div className="space-y-4 pb-20">
+                                    {/* SECCIÓN 1: PERFIL */}
                                     <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                         <button 
                                             onClick={() => setActiveSection(activeSection === 'perfil' ? null : 'perfil')}
                                             className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                                    <User size={18} />
+                                                <div className="w-8 h-8 rounded-lg bg-navy/10 flex items-center justify-center text-navy font-black italic uppercase text-xs">
+                                                    ID
                                                 </div>
-                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Datos del Perfil</span>
+                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Identidad y Perfil</span>
                                             </div>
                                             <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'perfil' && "rotate-180")} />
                                         </button>
@@ -412,6 +440,10 @@ export default function VCardEditModal({
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-[#FF0000] uppercase tracking-widest">YouTube (Canal)</label>
                                                             <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.youtube} onChange={(e) => setFormData({ ...formData, youtube: e.target.value })} placeholder="https://..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-[#FF0000] uppercase tracking-widest">Video de YouTube (Embed)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="https://www.youtube.com/watch?v=..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Menú Digital (Link)</label>
@@ -600,7 +632,7 @@ export default function VCardEditModal({
                                                                             rows={2}
                                                                             value={formData.hero_step3_text} 
                                                                             onChange={(e) => setFormData({ ...formData, hero_step3_text: e.target.value })} 
-                                                                            placeholder="Texto descriptivo para el paso 3..." 
+                                                                            placeholder="Instrucciones para paso 3..." 
                                                                         />
                                                                     </div>
                                                                 </div>
@@ -608,51 +640,45 @@ export default function VCardEditModal({
                                                         )}
 
                                                         {formData.hero_action === 'file' && (
-                                                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-4">
-                                                                <h5 className="text-[10px] font-black text-navy uppercase tracking-widest mb-2">Archivo para Descargar (PDF, VCF, etc.)</h5>
-                                                                <div className="flex items-center gap-4">
-                                                                    {formData.hero_file_url ? (
-                                                                        <div className="flex-1 p-3 bg-white border rounded-xl flex items-center justify-between">
-                                                                            <span className="text-xs font-bold text-navy truncate max-w-[200px]">{formData.hero_file_url.split('/').pop()}</span>
-                                                                            <button onClick={() => setFormData({ ...formData, hero_file_url: '' })} className="text-red-500 hover:text-red-700">
-                                                                                <X size={16} />
-                                                                            </button>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <label className="flex-1 p-4 border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                                                                            <Download className="text-gray-300 group-hover:text-primary mb-2" size={24} />
-                                                                            <span className="text-[10px] font-bold text-gray-400">Clic para subir archivo</span>
-                                                                            <input type="file" accept=".pdf,.vcf,.jpg,.png" className="hidden" onChange={async (e) => {
-                                                                                const file = e.target.files?.[0];
-                                                                                if (file) {
-                                                                                    setLoading(true);
-                                                                                    const fd = new FormData();
-                                                                                    fd.append('file', file);
-                                                                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                                                    if (res.ok) {
-                                                                                        const { url } = await res.json();
-                                                                                        setFormData({ ...formData, hero_file_url: url });
-                                                                                    }
-                                                                                    setLoading(false);
-                                                                                }
-                                                                            }} />
+                                                            <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                                                                <label className="text-[10px] font-black text-navy uppercase tracking-widest flex items-center gap-2">
+                                                                    <Download size={14} /> Archivo a Descargar (VCF, PDF, etc.)
+                                                                </label>
+                                                                <div className="flex flex-col gap-3">
+                                                                    <div className="flex gap-2">
+                                                                        <input 
+                                                                            className="flex-1 border rounded-lg p-3 text-sm font-bold bg-white" 
+                                                                            value={formData.hero_file_url} 
+                                                                            onChange={(e) => setFormData({ ...formData, hero_file_url: e.target.value })} 
+                                                                            placeholder="URL o sube un archivo" 
+                                                                        />
+                                                                        <label className="cursor-pointer bg-primary text-white px-4 py-3 rounded-lg text-xs font-black uppercase flex items-center gap-2 hover:bg-primary/90 transition-all shrink-0">
+                                                                            {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                                                                            Subir
+                                                                            <input type="file" className="hidden" onChange={handleFileChange} />
                                                                         </label>
+                                                                    </div>
+                                                                    {formData.hero_file_url && formData.hero_file_url.startsWith('data:') && (
+                                                                        <p className="text-[10px] text-green-600 font-bold flex items-center gap-1">
+                                                                            <CheckCircle size={12} /> Archivo cargado correctamente (Base64)
+                                                                        </p>
                                                                     )}
+                                                                    <p className="text-[10px] text-gray-400 font-medium italic">Puedes subir tu archivo directamente aquí o pegar un link de Drive/Dropbox.</p>
                                                                 </div>
-                                                                <p className="text-[9px] text-gray-400">Este archivo se descargará automáticamente cuando el usuario pulse el botón principal.</p>
                                                             </div>
                                                         )}
 
                                                         {formData.hero_action === 'link' && (
-                                                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-4">
-                                                                <h5 className="text-[10px] font-black text-navy uppercase tracking-widest mb-2">Enlace Externo</h5>
+                                                            <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                                                                <label className="text-[10px] font-black text-navy uppercase tracking-widest flex items-center gap-2">
+                                                                    <Zap size={14} /> Enlace Externo
+                                                                </label>
                                                                 <input 
                                                                     className="w-full border rounded-lg p-3 text-sm font-bold bg-white" 
                                                                     value={formData.hero_external_link} 
                                                                     onChange={(e) => setFormData({ ...formData, hero_external_link: e.target.value })} 
-                                                                    placeholder="https://drive.google.com/..." 
+                                                                    placeholder="https://tupagina.com/oferta" 
                                                                 />
-                                                                <p className="text-[9px] text-gray-400">Se abrirá este enlace en una nueva pestaña (útil para menús en Drive, catálogos externos, etc.).</p>
                                                             </div>
                                                         )}
                                                     </div>
@@ -662,30 +688,16 @@ export default function VCardEditModal({
                                     </div>
 
                                     {/* SECCIÓN 4: IMÁGENES DE PORTADA */}
-                                    <div className={cn(
-                                        "border rounded-2xl overflow-hidden shadow-sm transition-all",
-                                        isSetup && (!formData.portada_desktop || !formData.portada_movil) ? "border-primary ring-2 ring-primary/20" : "border-gray-100"
-                                    )}>
+                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                         <button 
                                             onClick={() => setActiveSection(activeSection === 'portada' ? null : 'portada')}
-                                            className={cn(
-                                                "w-full flex items-center justify-between p-4 transition-colors",
-                                                isSetup && (!formData.portada_desktop || !formData.portada_movil) ? "bg-primary/5 hover:bg-primary/10" : "bg-gray-50/50 hover:bg-gray-100"
-                                            )}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={cn(
-                                                    "w-8 h-8 rounded-lg flex items-center justify-center",
-                                                    isSetup && (!formData.portada_desktop || !formData.portada_movil) ? "bg-primary text-white" : "bg-blue-500/10 text-blue-500"
-                                                )}>
+                                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
                                                     <ImageIcon size={18} />
                                                 </div>
-                                                <div className="text-left">
-                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter block">Imágenes de Portada</span>
-                                                    {isSetup && (!formData.portada_desktop || !formData.portada_movil) && (
-                                                        <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">¡Faltan imágenes!</span>
-                                                    )}
-                                                </div>
+                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Imágenes de Portada</span>
                                             </div>
                                             <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'portada' && "rotate-180")} />
                                         </button>
@@ -697,41 +709,38 @@ export default function VCardEditModal({
                                                     exit={{ height: 0, opacity: 0 }}
                                                     className="overflow-hidden bg-white border-t border-gray-100"
                                                 >
-                                                    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Escritorio (1920x1080)</label>
-                                                            <div className="relative aspect-video bg-gray-50 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 group">
-                                                                {formData.portada_desktop || userData.portada_desktop ? (
-                                                                    <img src={formData.portada_desktop || userData.portada_desktop} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-4 text-center">
-                                                                        <ImageIcon size={32} className="mb-2" />
-                                                                        <span className="text-[10px] font-bold">Sin Imagen</span>
-                                                                    </div>
-                                                                )}
-                                                                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer text-white">
-                                                                    <Edit size={24} className="mb-1" />
-                                                                    <span className="text-[10px] font-black uppercase">Cambiar</span>
+                                                    <div className="p-6 space-y-6">
+                                                        <div className="space-y-3">
+                                                            <div className="flex justify-between items-center">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Portada Desktop (PC)</label>
+                                                                <label className="cursor-pointer bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase hover:bg-primary/20 transition-colors">
+                                                                    Cambiar Imagen
                                                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'portada_desktop')} />
                                                                 </label>
                                                             </div>
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Móvil (Vertical)</label>
-                                                            <div className="relative aspect-[9/16] h-48 mx-auto bg-gray-50 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 group">
-                                                                {formData.portada_movil || userData.portada_movil ? (
-                                                                    <img src={formData.portada_movil || userData.portada_movil} className="w-full h-full object-cover" />
+                                                            <div className="aspect-[21/9] w-full bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200">
+                                                                {formData.portada_desktop ? (
+                                                                    <img src={formData.portada_desktop} className="w-full h-full object-cover" />
                                                                 ) : (
-                                                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-4 text-center">
-                                                                        <ImageIcon size={32} className="mb-2" />
-                                                                        <span className="text-[10px] font-bold">Sin Imagen</span>
-                                                                    </div>
+                                                                    <div className="w-full h-full flex items-center justify-center text-gray-300 italic font-medium">Sin imagen de escritorio</div>
                                                                 )}
-                                                                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity cursor-pointer text-white text-center p-4">
-                                                                    <Edit size={24} className="mb-1" />
-                                                                    <span className="text-[10px] font-black uppercase">Cambiar</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-3">
+                                                            <div className="flex justify-between items-center">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Portada Móvil (Celular)</label>
+                                                                <label className="cursor-pointer bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase hover:bg-primary/20 transition-colors">
+                                                                    Cambiar Imagen
                                                                     <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'portada_movil')} />
                                                                 </label>
+                                                            </div>
+                                                            <div className="aspect-[4/5] w-32 bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200">
+                                                                {formData.portada_movil ? (
+                                                                    <img src={formData.portada_movil} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center text-gray-300 italic font-medium text-center p-2">Sin imagen móvil</div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -740,324 +749,283 @@ export default function VCardEditModal({
                                         </AnimatePresence>
                                     </div>
 
-                                    {/* SECCIÓN 5: CATÁLOGO DIGITAL */}
-                                    {allowCatalog && (
-                                        <div className={cn(
-                                            "border rounded-2xl overflow-hidden shadow-sm transition-all",
-                                            isSetup && formData.catalogo_json.products.length === 0 ? "border-primary ring-2 ring-primary/20" : "border-gray-100"
-                                        )}>
-                                            <button 
-                                                onClick={() => setActiveSection(activeSection === 'catalogo' ? null : 'catalogo')}
-                                                className={cn(
-                                                    "w-full flex items-center justify-between p-4 transition-colors",
-                                                    isSetup && formData.catalogo_json.products.length === 0 ? "bg-primary/5 hover:bg-primary/10" : "bg-gray-50/50 hover:bg-gray-100"
-                                                )}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={cn(
-                                                        "w-8 h-8 rounded-lg flex items-center justify-center",
-                                                        isSetup && formData.catalogo_json.products.length === 0 ? "bg-primary text-white" : "bg-orange-500/10 text-orange-500"
-                                                    )}>
-                                                        <Store size={18} />
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <span className="font-black text-navy uppercase text-sm tracking-tighter block">Catálogo de Productos</span>
-                                                        {isSetup && formData.catalogo_json.products.length === 0 && (
-                                                            <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">¡Sin productos!</span>
-                                                        )}
-                                                    </div>
+                                    {/* SECCIÓN 5: CATÁLOGO DE PRODUCTOS (SOLO PRO) */}
+                                    <div className={cn("border border-gray-100 rounded-2xl overflow-hidden shadow-sm", !allowCatalog && "opacity-50 grayscale pointer-events-none")}>
+                                        <button 
+                                            onClick={() => setActiveSection(activeSection === 'catalogo' ? null : 'catalogo')}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-navy/10 flex items-center justify-center text-navy">
+                                                    <Store size={18} />
                                                 </div>
-                                                <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'catalogo' && "rotate-180")} />
-                                            </button>
-                                            <AnimatePresence>
-                                                {activeSection === 'catalogo' && (
-                                                    <motion.div 
-                                                        initial={{ height: 0, opacity: 0 }}
-                                                        animate={{ height: "auto", opacity: 1 }}
-                                                        exit={{ height: 0, opacity: 0 }}
-                                                        className="overflow-hidden bg-white border-t border-gray-100"
-                                                    >
-                                                        <div className="p-6 space-y-6">
-                                                            <div className="flex gap-2 p-1 bg-gray-100 rounded-xl mb-4">
-                                                                <button 
-                                                                    type="button"
-                                                                    onClick={() => setCatalogTab('config')}
-                                                                    className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all", catalogTab === 'config' ? "bg-white text-orange-500 shadow-sm" : "text-gray-500")}
-                                                                >
-                                                                    <Library size={14} className="inline mr-1" /> Categorías
-                                                                </button>
-                                                                <button 
-                                                                    type="button"
-                                                                    onClick={() => setCatalogTab('products')}
-                                                                    className={cn("flex-1 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest transition-all", catalogTab === 'products' ? "bg-white text-orange-500 shadow-sm" : "text-gray-500")}
-                                                                >
-                                                                    <Store size={14} className="inline mr-1" /> Productos
-                                                                </button>
-                                                            </div>
+                                                <div className="text-left leading-none">
+                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter">Catálogo de Productos</span>
+                                                    {!allowCatalog && <p className="text-[9px] font-black text-navy/40 uppercase tracking-widest">Exclusivo Plan PRO/BIZ</p>}
+                                                </div>
+                                            </div>
+                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'catalogo' && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeSection === 'catalogo' && allowCatalog && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-visible bg-white border-t border-gray-100"
+                                                >
+                                                    <div className="p-0 flex flex-col max-h-[600px]">
+                                                        {/* Sub-TABS del Catálogo */}
+                                                        <div className="flex bg-gray-100 p-1 border-b border-gray-200">
+                                                            <button onClick={() => setCatalogTab('config')} className={cn("flex-1 py-3 px-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 transition-all", catalogTab === 'config' ? "bg-white text-navy shadow-md" : "text-gray-500 hover:bg-gray-200")}>
+                                                                <Library size={14} /> Configuración
+                                                            </button>
+                                                            <button onClick={() => setCatalogTab('products')} className={cn("flex-1 py-3 px-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 transition-all", catalogTab === 'products' ? "bg-white text-navy shadow-md" : "text-gray-500 hover:bg-gray-200")}>
+                                                                <Store size={14} /> Gestionar Productos ({formData.catalogo_json.products.length})
+                                                            </button>
+                                                        </div>
 
-                                                            {/* CATEGORIES CONFIG */}
-                                                            {catalogTab === 'config' && (
-                                                                <div className="space-y-4">
-                                                                    <div className="flex items-center justify-between">
-                                                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Títulos de Categorías</label>
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                const cat = prompt('Nombre de la nueva categoría:');
-                                                                                if (cat) {
-                                                                                    const newCats = [...formData.catalogo_json.categories, cat];
-                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, categories: newCats } });
-                                                                                }
-                                                                            }}
-                                                                            className="text-[10px] font-black text-orange-500 uppercase flex items-center gap-1 hover:underline"
+                                                        {/* Contenido TABS */}
+                                                        <div className="p-6 overflow-y-auto grow">
+                                                            {catalogTab === 'config' ? (
+                                                                <div className="space-y-6">
+                                                                    <div className="space-y-3">
+                                                                        <div className="flex justify-between items-center">
+                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Categorías del Catálogo</label>
+                                                                            <button 
+                                                                                onClick={() => {
+                                                                                    const cat = prompt('Nombre de la nueva categoría:');
+                                                                                    if (cat && !formData.catalogo_json.categories.includes(cat)) {
+                                                                                        setFormData({
+                                                                                            ...formData,
+                                                                                            catalogo_json: {
+                                                                                                ...formData.catalogo_json,
+                                                                                                categories: [...formData.catalogo_json.categories, cat]
+                                                                                            }
+                                                                                        });
+                                                                                    }
+                                                                                }}
+                                                                                className="text-primary font-black uppercase text-[10px] flex items-center gap-1 hover:underline"
+                                                                            >
+                                                                                <Plus size={12} /> Nueva Categoría
+                                                                            </button>
+                                                                        </div>
+                                                                        <div className="flex flex-wrap gap-2">
+                                                                            {formData.catalogo_json.categories.map((cat, idx) => (
+                                                                                <div key={idx} className="bg-navy/5 border border-navy/10 px-3 py-1.5 rounded-xl flex items-center gap-2">
+                                                                                    <span className="text-[10px] font-black text-navy uppercase">{cat}</span>
+                                                                                    <button 
+                                                                                        onClick={() => {
+                                                                                            if (confirm(`¿Eliminar categoría "${cat}"?`)) {
+                                                                                                setFormData({
+                                                                                                    ...formData,
+                                                                                                    catalogo_json: {
+                                                                                                        ...formData.catalogo_json,
+                                                                                                        categories: formData.catalogo_json.categories.filter(c => c !== cat)
+                                                                                                    }
+                                                                                                });
+                                                                                            }
+                                                                                        }}
+                                                                                        className="text-navy/40 hover:text-red-500 transition-colors"
+                                                                                    >
+                                                                                        <X size={14} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            ))}
+                                                                            {formData.catalogo_json.categories.length === 0 && (
+                                                                                <p className="text-[10px] italic text-gray-300 p-4 w-full text-center border-2 border-dashed border-gray-100 rounded-2xl">Agrega categorías para organizar tus productos</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="space-y-6 pb-20">
+                                                                    {/* Filtro y Acción */}
+                                                                    <div className="flex justify-between items-center sticky top-0 bg-white py-2 z-10 border-b mb-4">
+                                                                        <select 
+                                                                            value={productCategoryFilter}
+                                                                            onChange={(e) => setProductCategoryFilter(e.target.value)}
+                                                                            className="bg-gray-100 border-0 rounded-lg text-[10px] font-black uppercase py-2 px-3 outline-none"
                                                                         >
-                                                                            <Plus size={12} /> Nueva Categoría
+                                                                            <option value="Todas">Todas las Categorías</option>
+                                                                            {formData.catalogo_json.categories.map(c => (
+                                                                                <option key={c} value={c}>{c}</option>
+                                                                            ))}
+                                                                        </select>
+                                                                        <button 
+                                                                            onClick={() => {
+                                                                                const newProduct = {
+                                                                                    id: `prod_${Date.now()}`,
+                                                                                    name: 'Nuevo Producto',
+                                                                                    description: 'Descripción aquí',
+                                                                                    price: '0.00',
+                                                                                    category: formData.catalogo_json.categories[0] || 'Sin Categoría',
+                                                                                    image: ''
+                                                                                };
+                                                                                setFormData({
+                                                                                    ...formData,
+                                                                                    catalogo_json: {
+                                                                                        ...formData.catalogo_json,
+                                                                                        products: [newProduct, ...formData.catalogo_json.products]
+                                                                                    }
+                                                                                });
+                                                                            }}
+                                                                            className="bg-primary text-white p-2 rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all"
+                                                                            title="Agregar Producto"
+                                                                        >
+                                                                            <Plus size={20} />
                                                                         </button>
                                                                     </div>
-                                                                    
-                                                                    <div className="flex flex-wrap gap-2">
-                                                                        {formData.catalogo_json.categories.map((cat: string, idx: number) => (
-                                                                            <div key={idx} className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full group">
-                                                                                <span className="text-[10px] font-bold text-navy uppercase">{cat}</span>
-                                                                                <button 
-                                                                                    type="button"
-                                                                                    onClick={() => {
-                                                                                        const newCats = formData.catalogo_json.categories.filter((_:any, i:number) => i !== idx);
-                                                                                        setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, categories: newCats } });
-                                                                                    }}
-                                                                                    className="text-red-400 hover:text-red-600 transition-colors"
-                                                                                >
-                                                                                    <X size={10} />
-                                                                                </button>
-                                                                            </div>
-                                                                        ))}
-                                                                        {formData.catalogo_json.categories.length === 0 && (
-                                                                            <p className="text-[10px] text-gray-400 italic">No has definido categorías para tu catálogo aún.</p>
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-[9px] text-gray-400">Estas categorías servirán para filtrar tus productos en la vista pública.</p>
-                                                                </div>
-                                                            )}
 
-                                                            {/* PRODUCTS MANAGEMENT */}
-                                                            {catalogTab === 'products' && (
-                                                                <div className="space-y-6">
-                                                                    <div className="flex flex-col gap-4">
-                                                                        <div className="flex items-center justify-between">
-                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Gestión de Productos</label>
-                                                                            <button 
-                                                                                type="button"
-                                                                                onClick={() => {
-                                                                                    const firstCat = productCategoryFilter !== 'Todas' ? productCategoryFilter : (formData.catalogo_json.categories[0] || 'General');
-                                                                                    const newProduct = { 
-                                                                                        id: Math.random().toString(36).substr(2, 9),
-                                                                                        categoria: firstCat, 
-                                                                                        titulo: 'Nuevo Producto', 
-                                                                                        descripcion: '', 
-                                                                                        precio: '', 
-                                                                                        url: '' 
-                                                                                    };
-                                                                                    setFormData({ 
-                                                                                        ...formData, 
-                                                                                        catalogo_json: { 
-                                                                                            ...formData.catalogo_json, 
-                                                                                            products: [...formData.catalogo_json.products, newProduct] 
-                                                                                        } 
-                                                                                    });
-                                                                                }}
-                                                                                className="bg-orange-500 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all hover:-translate-y-0.5"
-                                                                            >
-                                                                                <Plus size={14} /> Agregar Producto
-                                                                            </button>
-                                                                        </div>
-                                                                        
-                                                                        {/* Category Filter for Admin */}
-                                                                        <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => setProductCategoryFilter('Todas')}
-                                                                                className={cn("shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", productCategoryFilter === 'Todas' ? "bg-navy text-white" : "bg-gray-100 text-gray-500")}
-                                                                            >
-                                                                                Todas
-                                                                            </button>
-                                                                            {formData.catalogo_json.categories.map((cat: string) => (
-                                                                                <button
-                                                                                    key={cat}
-                                                                                    type="button"
-                                                                                    onClick={() => setProductCategoryFilter(cat)}
-                                                                                    className={cn("shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all", productCategoryFilter === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-500")}
-                                                                                >
-                                                                                    {cat}
-                                                                                </button>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                                                    {/* Lista de Productos */}
+                                                                    <div className="space-y-4">
                                                                         {formData.catalogo_json.products
-                                                                            .filter((p: any) => productCategoryFilter === 'Todas' || p.categoria === productCategoryFilter)
-                                                                            .map((item: any) => (
-                                                                            <div key={item.id} className="p-5 bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group">
-                                                                                <button 
-                                                                                    type="button"
-                                                                                    onClick={() => {
-                                                                                        setFormData({ 
-                                                                                            ...formData, 
-                                                                                            catalogo_json: { 
-                                                                                                ...formData.catalogo_json, 
-                                                                                                products: formData.catalogo_json.products.filter((p: any) => p.id !== item.id) 
-                                                                                            } 
-                                                                                        });
-                                                                                    }}
-                                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110"
-                                                                                >
-                                                                                    <Trash2 size={12} />
-                                                                                </button>
-                                                                                
-                                                                                <div className="flex flex-col sm:flex-row gap-6">
-                                                                                    <div className="w-full sm:w-1/3">
-                                                                                        <div className="relative aspect-square bg-gray-50 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200 group/img">
-                                                                                            {item.url ? (
-                                                                                                <img src={item.url} className="w-full h-full object-cover" />
+                                                                            .filter(p => !p.isHidden) // No mostrar si está oculto (si aplica)
+                                                                            .filter(p => productCategoryFilter === 'Todas' || p.category === productCategoryFilter)
+                                                                            .map((prod, pIdx) => (
+                                                                                <div key={prod.id || pIdx} className="bg-gray-50 p-4 rounded-2xl border border-gray-200 relative group animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                                                                    <button 
+                                                                                        onClick={() => {
+                                                                                            if (confirm('¿Eliminar producto?')) {
+                                                                                                const updatedProducts = formData.catalogo_json.products.filter((_, i) => i !== pIdx);
+                                                                                                setFormData({
+                                                                                                    ...formData,
+                                                                                                    catalogo_json: { ...formData.catalogo_json, products: updatedProducts }
+                                                                                                });
+                                                                                            }
+                                                                                        }}
+                                                                                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                                    >
+                                                                                        <X size={14} />
+                                                                                    </button>
+
+                                                                                    <div className="grid grid-cols-[80px_1fr] gap-4">
+                                                                                        <div className="relative aspect-square rounded-xl bg-gray-200 overflow-hidden group/img">
+                                                                                            {prod.image ? (
+                                                                                                <img src={prod.image} className="w-full h-full object-cover" />
                                                                                             ) : (
-                                                                                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-4 text-center">
-                                                                                                    <ImageIcon size={24} className="mb-2" />
-                                                                                                    <span className="text-[10px] font-bold">Imagen</span>
-                                                                                                </div>
+                                                                                                <div className="w-full h-full flex items-center justify-center text-gray-400 font-black text-xl italic uppercase">IMG</div>
                                                                                             )}
-                                                                                            <label className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity text-white">
-                                                                                                <Edit size={20} className="mb-1" />
-                                                                                                <span className="text-[10px] font-black uppercase">Subir</span>
+                                                                                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity cursor-pointer">
+                                                                                                <Edit size={16} className="text-white" />
                                                                                                 <input 
                                                                                                     type="file" 
                                                                                                     accept="image/*" 
                                                                                                     className="hidden" 
                                                                                                     onChange={async (e) => {
                                                                                                         const file = e.target.files?.[0];
-                                                                                                        if (file) {
-                                                                                                            setLoading(true);
-                                                                                                            const fd = new FormData();
-                                                                                                            fd.append('file', file);
-                                                                                                            const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                                                                            if (res.ok) {
-                                                                                                                const { url } = await res.json();
-                                                                                                                const newList = formData.catalogo_json.products.map((p: any) => 
-                                                                                                                    p.id === item.id ? { ...p, url } : p
-                                                                                                                );
-                                                                                                                setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
-                                                                                                            }
-                                                                                                            setLoading(false);
+                                                                                                        if (!file) return;
+                                                                                                        const fd = new FormData();
+                                                                                                        fd.append('file', file);
+                                                                                                        const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                                                                        if (res.ok) {
+                                                                                                            const { url } = await res.json();
+                                                                                                            const updatedProducts = [...formData.catalogo_json.products];
+                                                                                                            updatedProducts[pIdx] = { ...prod, image: url };
+                                                                                                            setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: updatedProducts } });
                                                                                                         }
                                                                                                     }} 
                                                                                                 />
                                                                                             </label>
                                                                                         </div>
-                                                                                    </div>
-                                                                                    <div className="flex-1 space-y-3">
-                                                                                        <div className="grid grid-cols-2 gap-3">
-                                                                                            <div className="space-y-1">
-                                                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Categoría</label>
-                                                                                                <select 
-                                                                                                    className="w-full text-[11px] font-bold border-none bg-gray-50 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500/20"
-                                                                                                    value={item.categoria}
-                                                                                                    onChange={(e) => {
-                                                                                                        const newList = formData.catalogo_json.products.map((p: any) => 
-                                                                                                            p.id === item.id ? { ...p, categoria: e.target.value } : p
-                                                                                                        );
-                                                                                                        setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
-                                                                                                    }}
-                                                                                                >
-                                                                                                    {formData.catalogo_json.categories.length > 0 ? (
-                                                                                                        formData.catalogo_json.categories.map((cat:string) => (
-                                                                                                            <option key={cat} value={cat}>{cat}</option>
-                                                                                                        ))
-                                                                                                    ) : (
-                                                                                                        <option value="General">General</option>
-                                                                                                    )}
-                                                                                                </select>
-                                                                                            </div>
-                                                                                            <div className="space-y-1">
-                                                                                                <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Precio</label>
-                                                                                                <input 
-                                                                                                    className="w-full text-[11px] font-bold border-none bg-gray-50 rounded-xl p-2.5 focus:ring-2 focus:ring-orange-500/20"
-                                                                                                    placeholder="Ej: $10.00"
-                                                                                                    value={item.precio}
-                                                                                                    onChange={(e) => {
-                                                                                                        const newList = formData.catalogo_json.products.map((p: any) => 
-                                                                                                            p.id === item.id ? { ...p, precio: e.target.value } : p
-                                                                                                        );
-                                                                                                        setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
-                                                                                                    }}
-                                                                                                />
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div className="space-y-1">
-                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Título del Producto</label>
+                                                                                        <div className="space-y-2">
                                                                                             <input 
-                                                                                                className="w-full text-xs font-black border-none bg-gray-50 rounded-xl p-3 focus:ring-2 focus:ring-orange-500/20 uppercase"
-                                                                                                placeholder="Ej: Hamburguesa de la Casa"
-                                                                                                value={item.titulo}
+                                                                                                className="w-full bg-transparent border-0 border-b border-navy/10 p-1 text-sm font-black uppercase text-navy outline-none italic placeholder:text-navy/20" 
+                                                                                                value={prod.name} 
                                                                                                 onChange={(e) => {
-                                                                                                    const newList = formData.catalogo_json.products.map((p: any) => 
-                                                                                                        p.id === item.id ? { ...p, titulo: e.target.value } : p
-                                                                                                    );
-                                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
+                                                                                                    const updatedProducts = [...formData.catalogo_json.products];
+                                                                                                    updatedProducts[pIdx] = { ...prod, name: e.target.value };
+                                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: updatedProducts } });
                                                                                                 }}
+                                                                                                placeholder="Nombre Producto" 
                                                                                             />
-                                                                                        </div>
-                                                                                        <div className="space-y-1">
-                                                                                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Descripción</label>
+                                                                                            
+                                                                                            <div className="flex gap-2">
+                                                                                                <div className="flex-1">
+                                                                                                    <p className="text-[8px] font-black uppercase opacity-40 mb-1">Precio</p>
+                                                                                                    <input 
+                                                                                                        className="w-full bg-white border border-gray-200 rounded-lg p-1.5 text-xs font-black text-navy" 
+                                                                                                        value={prod.price} 
+                                                                                                        onChange={(e) => {
+                                                                                                            const updatedProducts = [...formData.catalogo_json.products];
+                                                                                                            updatedProducts[pIdx] = { ...prod, price: e.target.value };
+                                                                                                            setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: updatedProducts } });
+                                                                                                        }}
+                                                                                                        placeholder="0.00" 
+                                                                                                    />
+                                                                                                </div>
+                                                                                                <div className="flex-[1.5]">
+                                                                                                    <p className="text-[8px] font-black uppercase opacity-40 mb-1">Categoría</p>
+                                                                                                    <select 
+                                                                                                        className="w-full bg-white border border-gray-200 rounded-lg p-1.5 text-[9px] font-black uppercase"
+                                                                                                        value={prod.category}
+                                                                                                        onChange={(e) => {
+                                                                                                            const updatedProducts = [...formData.catalogo_json.products];
+                                                                                                            updatedProducts[pIdx] = { ...prod, category: e.target.value };
+                                                                                                            setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: updatedProducts } });
+                                                                                                        }}
+                                                                                                    >
+                                                                                                        <option value="Sin Categoría">Sin Categoría</option>
+                                                                                                        {formData.catalogo_json.categories.map(c => (
+                                                                                                            <option key={c} value={c}>{c}</option>
+                                                                                                        ))}
+                                                                                                    </select>
+                                                                                                </div>
+                                                                                            </div>
+
                                                                                             <textarea 
-                                                                                                className="w-full text-[11px] font-medium border-none bg-gray-50 rounded-xl p-3 focus:ring-2 focus:ring-orange-500/20"
-                                                                                                placeholder="Escribe los ingredientes o detalles aquí..."
-                                                                                                rows={2}
-                                                                                                value={item.descripcion}
+                                                                                                className="w-full bg-white border border-gray-200 rounded-lg p-2 text-[10px] font-medium min-h-[50px] resize-none" 
+                                                                                                value={prod.description} 
                                                                                                 onChange={(e) => {
-                                                                                                    const newList = formData.catalogo_json.products.map((p: any) => 
-                                                                                                        p.id === item.id ? { ...p, descripcion: e.target.value } : p
-                                                                                                    );
-                                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: newList } });
+                                                                                                    const updatedProducts = [...formData.catalogo_json.products];
+                                                                                                    updatedProducts[pIdx] = { ...prod, description: e.target.value };
+                                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: updatedProducts } });
                                                                                                 }}
+                                                                                                placeholder="Describe tu producto..." 
                                                                                             />
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
-                                                                            </div>
-                                                                        ))}
-                                                                        {formData.catalogo_json.products.length === 0 && (
-                                                                            <div className="py-20 text-center bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100">
-                                                                                <Store className="mx-auto mb-4 text-gray-300" size={48} />
-                                                                                <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Aún no has agregado productos</p>
-                                                                                <p className="text-[10px] text-gray-300 mt-2">Haz clic en "Agregar Producto" para comenzar</p>
-                                                                            </div>
-                                                                        )}
+                                                                            ))}
+                                                                            {formData.catalogo_json.products.filter(p => productCategoryFilter === 'Todas' || p.category === productCategoryFilter).length === 0 && (
+                                                                                <div className="text-center py-10 opacity-30 italic font-medium text-navy">
+                                                                                    No hay productos en esta categoría
+                                                                                </div>
+                                                                            )}
                                                                     </div>
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    )}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         {step === 'success' && (
-                            <div className="flex flex-col items-center justify-center py-10 text-center">
-                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 text-green-600">
-                                    <CheckCircle size={40} />
+                            <div className="flex flex-col items-center justify-center py-20 text-center animate-in zoom-in duration-500 px-4">
+                                <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-8 shadow-2xl shadow-green-200 relative">
+                                    <CheckCircle size={56} className="text-white" />
+                                    <motion.div 
+                                        className="absolute inset-0 rounded-full border-4 border-green-500"
+                                        animate={{ scale: [1, 1.5, 1.5, 1], opacity: [1, 0, 0, 0] }}
+                                        transition={{ duration: 1, repeat: Infinity }}
+                                    />
                                 </div>
-                                <h3 className="text-2xl font-black text-navy mb-2">¡VCard Actualizada!</h3>
-                                <p className="text-gray-500 mb-8 max-w-xs text-sm">
-                                    Los cambios ya están en línea. Recarga la página para ver el nuevo diseño de tu Hero y datos.
+                                <h3 className="text-4xl font-black text-navy mb-4 tracking-tighter uppercase italic leading-none">
+                                    ¡Cambios<br/>Guardados!
+                                </h3>
+                                <p className="text-gray-500 font-bold mb-10 max-w-sm uppercase text-xs tracking-widest decoration-primary decoration-4">
+                                    Tu perfil ha sido actualizado. Los cambios serán visibles de inmediato.
                                 </p>
-                                <button
+                                <button 
                                     onClick={() => window.location.reload()}
-                                    className="bg-primary text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                                    className="bg-navy text-white font-black py-4 px-12 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all uppercase tracking-[0.2em] text-sm"
                                 >
-                                    Ver Cambios Ahora
+                                    Cerrar y Ver Perfil
                                 </button>
                             </div>
                         )}
@@ -1065,12 +1033,19 @@ export default function VCardEditModal({
 
                     {/* Footer Actions */}
                     {step === 'edit' && (
-                        <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 shrink-0">
-                            <button onClick={onClose} className="px-6 py-2 rounded-xl border border-gray-300 font-bold text-gray-500 hover:bg-gray-100 transition-colors uppercase text-xs">
-                                Cancelar
+                        <div className="p-6 bg-white border-t flex justify-center gap-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] relative z[60]">
+                            <button 
+                                onClick={onClose}
+                                className="flex-1 max-w-[160px] bg-gray-100 text-navy font-black py-3 rounded-xl hover:bg-gray-200 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                            >
+                                <X size={16} /> Cancelar
                             </button>
-                            <button onClick={handleSave} disabled={loading} className="px-6 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors uppercase text-xs flex items-center gap-2">
-                                {loading ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                            <button 
+                                onClick={handleSave}
+                                disabled={loading}
+                                className="flex-1 max-w-[300px] bg-primary text-white font-black py-3 rounded-xl hover:scale-[1.02] active:scale-100 transition-all uppercase tracking-[0.1em] text-xs flex items-center justify-center gap-3 shadow-lg shadow-primary/20 disabled:opacity-50"
+                            >
+                                {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                                 Guardar Perfil
                             </button>
                         </div>

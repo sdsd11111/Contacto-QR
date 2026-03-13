@@ -20,7 +20,6 @@ interface CatalogGalleryProps {
 }
 
 export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) {
-    const [activeCategory, setActiveCategory] = useState<string>('Todas');
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
 
     // Normalize data
@@ -36,16 +35,18 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
 
     // Extract categories
     const categories = useMemo(() => {
+        const cats = Array.from(new Set(items.map(item => item.categoria))).filter(Boolean);
         if (customCategories && customCategories.length > 0) {
-            return ['Todas', ...customCategories];
+            return customCategories;
         }
-        const cats = new Set(items.map(item => item.categoria));
-        return ['Todas', ...Array.from(cats)].filter(Boolean);
+        return cats;
     }, [items, customCategories]);
+
+    const [activeCategory, setActiveCategory] = useState<string>(() => categories[0] || '');
 
     // Filter items based on active category
     const filteredItems = useMemo(() => {
-        if (activeCategory === 'Todas') return items;
+        if (!activeCategory) return items;
         return items.filter(item => item.categoria === activeCategory);
     }, [items, activeCategory]);
 
@@ -54,13 +55,13 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
     }
 
     return (
-        <div className="w-full mt-16 pt-10 border-t border-white/10 flex flex-col gap-8">
+        <div className="w-full mt-8 md:mt-16 pt-6 md:pt-10 border-t border-white/10 flex flex-col gap-8">
             <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-2 flex items-center gap-2">
                 <ZoomIn size={14} /> CATÁLOGO INTERACTIVO
             </h4>
 
             {/* Category Filters */}
-            {categories.length > 2 && ( // Only show filters if there's more than 1 category besides 'Todas'
+            {categories.length > 1 && ( // Show filters if there's more than 1 category
                 <div className="flex flex-wrap gap-2 mb-6">
                     {categories.map((cat) => (
                         <button
@@ -125,32 +126,32 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/90 backdrop-blur-xl"
+                        className="fixed inset-0 z-[100] flex items-start justify-center p-0 md:p-10 bg-black/95 backdrop-blur-xl overflow-y-auto"
                         onClick={() => setSelectedItem(null)}
                     >
-                        {/* Close Button */}
-                        <button 
-                            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-[var(--theme-primary)] text-white rounded-full transition-colors z-[101]"
-                            onClick={(e) => { e.stopPropagation(); setSelectedItem(null); }}
-                        >
-                            <X size={24} />
-                        </button>
-
                         <motion.div
                             initial={{ y: 50, scale: 0.95 }}
                             animate={{ y: 0, scale: 1 }}
                             exit={{ y: 20, scale: 0.95 }}
-                            className="relative max-w-5xl w-full flex flex-col md:flex-row bg-[#111322] rounded-[32px] md:rounded-[48px] overflow-hidden border border-white/10 shadow-2xl"
+                            className="relative max-w-5xl w-full my-auto flex flex-col md:flex-row bg-[#111322] md:rounded-[48px] overflow-hidden border-x border-b border-white/10 shadow-2xl"
                             onClick={(e) => e.stopPropagation()}
                         >
+                            {/* Mobile/Global Close Button - Fixed on mobile to always stay visible */}
+                            <button 
+                                className="fixed top-4 right-4 md:absolute md:top-8 md:right-8 p-3 bg-red-500/90 hover:bg-red-500 text-white rounded-full transition-all z-[120] shadow-xl hover:scale-110 active:scale-95"
+                                onClick={() => setSelectedItem(null)}
+                            >
+                                <X size={20} className="md:w-6 md:h-6" />
+                            </button>
+
                             {/* Image Section */}
                             <div className="w-full md:w-3/5 bg-black/50 aspect-square md:aspect-auto flex items-center justify-center relative p-8">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={selectedItem.url || 'https://via.placeholder.com/600x600?text=Cargando...'}
-                                    alt={selectedItem.titulo}
-                                    className="max-w-full max-h-[70vh] object-contain rounded-2xl md:rounded-[32px] shadow-2xl"
-                                />
+                                    <img
+                                        src={selectedItem.url || 'https://via.placeholder.com/600x600?text=Cargando...'}
+                                        alt={selectedItem.titulo}
+                                        className="max-w-full max-h-[50vh] md:max-h-[70vh] object-contain rounded-2xl md:rounded-[32px] shadow-2xl"
+                                    />
                             </div>
 
                             {/* Details Section */}

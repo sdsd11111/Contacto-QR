@@ -828,155 +828,181 @@ export default function HomeClient() {
             </section >
 
             {/* Pricing Section */}
-            < section className="py-24 bg-cream" id="precios" style={{ position: 'relative', zIndex: 10 }
-            }>
-                <div className="max-w-7xl mx-auto px-6">
+            < section className="py-24 bg-cream relative overflow-hidden" id="precios" style={{ position: 'relative', zIndex: 10 }}>
+                {/* Background Decorators */}
+                <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
+                    <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[100px]"></div>
+                    <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-green-500/10 rounded-full blur-[120px]"></div>
+                </div>
+
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase">Elige tu Plan</h2>
-                        <p className="text-navy/60 mt-4 text-lg">Todo incluido. Sin sorpresas. Sin mensualidades.</p>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-primary border border-primary/20 mb-6"
+                        >
+                            <ShieldCheck size={14} fill="currentColor" className="text-primary/20" /> Planes Transparentes
+                        </motion.div>
+                        <h2 className="text-4xl md:text-6xl font-black text-navy tracking-tighter uppercase">
+                            Impulsa tu <span className="text-primary italic">Presencia</span>
+                        </h2>
+                        <p className="text-navy/60 mt-4 text-xl font-medium max-w-2xl mx-auto">
+                            Elige el plan que mejor se adapte a tu nivel de negocio. Todo incluido, sin mensualidades.
+                        </p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-end max-w-6xl mx-auto">
-                        {/* Plan 1: Profesional */}
+                        {/* Plan 1: Contacto Digital */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="bg-white p-8 rounded-[2rem] shadow-lg border-2 border-navy/10 flex flex-col relative overflow-hidden hover:shadow-xl transition-shadow"
+                            className="bg-white/80 backdrop-blur-xl p-8 rounded-[2rem] shadow-lg border border-navy/10 flex flex-col relative overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 group"
                         >
-                            <h3 className="text-lg font-black text-navy uppercase tracking-widest mb-4">Profesional</h3>
-                            <div className="flex items-baseline gap-1 mb-2">
-                                <span className="text-5xl font-black text-navy">$20</span>
-                                <span className="text-navy/40 text-xs font-bold uppercase tracking-widest">/año</span>
+                            <div className="w-12 h-12 bg-navy/5 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+                                <Smartphone size={24} />
                             </div>
-                            <p className="text-navy/50 text-sm font-medium mb-6 border-b border-navy/10 pb-6">1 contacto digital profesional</p>
+                            <h3 className="text-xl font-black text-navy uppercase tracking-widest mb-2">Contacto Digital</h3>
+                            <p className="text-navy/50 text-sm font-medium mb-6 min-h-[40px]">Lo esencial para que te encuentren siempre.</p>
+                            
+                            <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-navy/10">
+                                <span className="text-5xl font-black text-navy">$20</span>
+                                <span className="text-navy/40 text-xs font-bold uppercase tracking-widest">/anual</span>
+                            </div>
 
-                            <ul className="space-y-3 mb-8 flex-1">
-                                <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Contacto Digital con Foto
+                            <ul className="space-y-4 mb-8 flex-1">
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Contacto Digital con Foto</span>
                                 </li>
-                                <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <QrCode size={18} className="text-primary shrink-0" /> Código QR Dinámico
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Redes Sociales</span> (IG, FB, TikTok, etc)
                                 </li>
-                                <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <Smartphone size={18} className="text-primary shrink-0" /> Guardado en agenda con 1 clic
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Código QR Dinámico</span>
                                 </li>
-                                <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Etiquetas para búsqueda rápida
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Guardado con 1 clic</span> en agendas
                                 </li>
-                                <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                    <ShieldCheck size={18} className="text-primary shrink-0" /> Soporte WhatsApp
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Etiquetas clave</span> para buscadores
                                 </li>
                             </ul>
 
-                            <a href="/registro" className="block w-full bg-navy text-white py-4 rounded-full font-black text-base uppercase tracking-widest text-center hover:bg-navy/90 transition-colors">
-                                Empezar
+                            <a href="/registro" className="block w-full bg-navy/5 text-navy py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-center hover:bg-navy hover:text-white transition-all">
+                                Elegir Digital
                             </a>
-                            <p className="text-[10px] text-center text-navy/40 leading-tight font-medium mt-3">
-                                Renovación anual de $20
-                            </p>
                         </motion.div>
 
-                        {/* Plan 2: Equipo (MÁS POPULAR) */}
+                        {/* Plan 2: Contacto Business (MÁS POPULAR) */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="bg-white p-8 md:p-10 rounded-[2rem] shadow-2xl border-4 border-primary flex flex-col relative overflow-hidden hover:shadow-xl transition-shadow md:-mt-8 md:mb-0"
+                            className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl border-4 border-primary flex flex-col relative overflow-hidden hover:shadow-xl transition-all duration-300 md:-mt-8 md:mb-0 group"
                         >
-                            <div className="absolute top-0 left-0 right-0 bg-primary text-white text-center text-[10px] font-black uppercase tracking-[0.2em] py-2">
-                                ⭐ Más Popular
+                            <div className="absolute top-0 right-0 bg-primary w-24 h-24 rounded-bl-full flex items-start justify-end p-4 z-0">
+                                <Star fill="#fff" className="text-white w-6 h-6 animate-pulse" />
+                            </div>
+                            
+                            <div className="inline-block bg-primary text-white text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full mb-6 w-max shadow-md relative z-10">
+                                MÁS POPULAR
                             </div>
 
-                            <div className="mt-6">
-                                <h3 className="text-lg font-black text-navy uppercase tracking-widest mb-4">Equipo</h3>
-                                <div className="flex items-baseline gap-1 mb-1">
-                                    <span className="text-6xl font-black text-primary">$80</span>
-                                    <span className="text-navy/40 text-xs font-bold uppercase tracking-widest">/año</span>
-                                </div>
-                                <div className="flex items-center gap-2 mb-2">
-                                    <span className="text-navy/30 text-sm line-through font-bold">$100</span>
-                                    <span className="bg-[#66bf19] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">Ahorra 20%</span>
-                                </div>
-                                <p className="text-navy/50 text-sm font-medium mb-6 border-b border-primary/20 pb-6">5 contactos · <span className="text-primary font-black">$16 c/u</span></p>
-
-                                <ul className="space-y-3 mb-8 flex-1">
-                                    <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                        <CheckCircle2 size={18} className="text-primary shrink-0" /> Todo del Plan Profesional
-                                    </li>
-                                    <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                        <QrCode size={18} className="text-primary shrink-0" /> <span className="bg-[#66bf19] text-white px-2 py-0.5 rounded-lg">5 Códigos QR Dinámicos</span>
-                                    </li>
-                                    <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                        <Users size={18} className="text-primary shrink-0" /> Ideal para equipos de trabajo
-                                    </li>
-                                    <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                        <BarChart3 size={18} className="text-primary shrink-0" /> Dashboard de equipo
-                                    </li>
-                                    <li className="flex items-center gap-3 text-navy font-medium text-sm">
-                                        <ShieldCheck size={18} className="text-primary shrink-0" /> Soporte Prioritario
-                                    </li>
-                                </ul>
-
-                                <a href="/registro" className="block w-full bg-primary text-white py-5 rounded-full font-black text-lg uppercase tracking-widest shadow-primary hover:shadow-xl transition-all text-center">
-                                    Elegir Equipo
-                                </a>
-                                <p className="text-[10px] text-center text-navy/40 leading-tight font-medium mt-3">
-                                    Renovación anual de $80
-                                </p>
+                            <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform relative z-10">
+                                <Users size={28} />
                             </div>
+                            
+                            <h3 className="text-2xl font-black text-navy uppercase tracking-widest mb-2 relative z-10">Contacto Business</h3>
+                            <p className="text-navy/50 text-sm font-medium mb-4 min-h-[40px] relative z-10">Identidad corporativa con enlaces de venta.</p>
+
+                            <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-primary/20 relative z-10">
+                                <span className="text-6xl font-black text-primary">$60</span>
+                                <span className="text-navy/40 text-xs font-bold uppercase tracking-widest">/anual</span>
+                            </div>
+
+                            <ul className="space-y-4 mb-8 flex-1 relative z-10">
+                                <li className="flex items-start gap-3 text-navy font-bold text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> Todo lo del plan Digital
+                                </li>
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <Star size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold bg-primary/10 px-2 py-0.5 rounded-md text-primary uppercase text-[10px]">Nuevo</span> <span className="font-bold">Ofertas & Marketing Destacado</span>
+                                </li>
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <QrCode size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Perfil Empresarial Profesional</span>
+                                </li>
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <ShieldCheck size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Enlaces sociales y web</span> ilimitados
+                                </li>
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold">Ubicación Maps & CTAs</span> de venta
+                                </li>
+                                <li className="flex items-start gap-3 text-navy font-medium text-sm leading-tight">
+                                    <ShieldCheck size={18} className="text-primary shrink-0 mt-0.5" /> Soporte prioritario empresarial
+                                </li>
+                            </ul>
+
+                            <a href="/registro" className="block w-full bg-primary text-white py-5 rounded-2xl font-black text-base uppercase tracking-widest shadow-lg shadow-primary/30 hover:-translate-y-1 hover:shadow-xl transition-all text-center relative z-10">
+                                Empezar Business
+                            </a>
                         </motion.div>
 
-                        {/* Plan 3: Empresa */}
+                        {/* Plan 3: Business + Catálogo */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.2 }}
-                            className="bg-navy p-8 rounded-[2rem] shadow-lg border-2 border-white/10 flex flex-col relative overflow-hidden hover:shadow-xl transition-shadow"
+                            className="bg-navy p-8 rounded-[2rem] shadow-xl border border-white/5 flex flex-col relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 group"
                         >
-                            <h3 className="text-lg font-black text-white uppercase tracking-widest mb-4">Empresa</h3>
-                            <div className="flex items-baseline gap-1 mb-1">
-                                <span className="text-5xl font-black text-white">$140</span>
-                                <span className="text-white/40 text-xs font-bold uppercase tracking-widest">/año</span>
-                            </div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-white/30 text-sm line-through font-bold">$200</span>
-                                <span className="bg-[#66bf19] text-white text-[10px] font-black uppercase px-2 py-0.5 rounded-full">Ahorra 30%</span>
-                            </div>
-                            <p className="text-white/50 text-sm font-medium mb-6 border-b border-white/10 pb-6">10 contactos · <span className="text-primary font-black">$14 c/u</span></p>
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none"></div>
 
-                            <ul className="space-y-3 mb-8 flex-1">
-                                <li className="flex items-center gap-3 text-white/80 font-medium text-sm">
-                                    <CheckCircle2 size={18} className="text-primary shrink-0" /> Todo del Plan Equipo
+                            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6 text-white group-hover:scale-110 transition-transform">
+                                <BarChart3 size={24} />
+                            </div>
+                            
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest mb-2 relative z-10 leading-tight">Business + Catálogo</h3>
+                            <p className="text-white/50 text-sm font-medium mb-6 min-h-[40px] relative z-10">Tu vitrina de ventas interactiva integrada.</p>
+
+                            <div className="flex items-baseline gap-1 mb-6 pb-6 border-b border-white/10 relative z-10">
+                                <span className="text-5xl font-black text-white">$120</span>
+                                <span className="text-white/40 text-xs font-bold uppercase tracking-widest">/anual</span>
+                            </div>
+
+                            <ul className="space-y-4 mb-8 flex-1 relative z-10">
+                                <li className="flex items-start gap-3 text-white/90 font-bold text-sm leading-tight">
+                                    <CheckCircle2 size={18} className="text-primary shrink-0 mt-0.5" /> Todo lo del plan Business
                                 </li>
-                                <li className="flex items-center gap-3 text-white/80 font-medium text-sm">
-                                    <QrCode size={18} className="text-primary shrink-0" /> 10 Códigos QR Dinámicos
+                                <li className="flex items-start gap-3 text-white/80 font-medium text-sm leading-tight">
+                                    <QrCode size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold text-white bg-white/10 px-2 py-0.5 rounded-md">Catálogo de Productos</span> interactivo
                                 </li>
-                                <li className="flex items-center gap-3 text-white/80 font-medium text-sm">
-                                    <Users size={18} className="text-primary shrink-0" /> Para franquicias y sucursales
+                                <li className="flex items-start gap-3 text-white/80 font-medium text-sm leading-tight">
+                                    <Users size={18} className="text-primary shrink-0 mt-0.5" /> <span className="font-bold text-white">Galería premium</span> (hasta 50 imágenes)
                                 </li>
-                                <li className="flex items-center gap-3 text-white/80 font-medium text-sm">
-                                    <BarChart3 size={18} className="text-primary shrink-0" /> Gestión de perfiles por sucursal
+                                <li className="flex items-start gap-3 text-white/80 font-medium text-sm leading-tight">
+                                    <BarChart3 size={18} className="text-primary shrink-0 mt-0.5" /> Pedidos estructurados al <span className="font-bold text-white">WhatsApp</span>
                                 </li>
-                                <li className="flex items-center gap-3 text-white/80 font-medium text-sm">
-                                    <ShieldCheck size={18} className="text-primary shrink-0" /> Soporte VIP Dedicado
+                                <li className="flex items-start gap-3 text-white/80 font-medium text-sm leading-tight">
+                                    <ShieldCheck size={18} className="text-primary shrink-0 mt-0.5" /> Soporte <span className="font-black text-primary">VIP Dedicado</span>
                                 </li>
                             </ul>
 
-                            <a href="/registro" className="block w-full bg-white text-navy py-4 rounded-full font-black text-base uppercase tracking-widest text-center hover:bg-white/90 transition-colors">
-                                Contactar Ventas
+                            <a href="/registro" className="block w-full bg-white text-navy py-4 rounded-2xl font-black text-sm uppercase tracking-widest text-center hover:bg-cream transition-all relative z-10">
+                                Quiero el Catálogo
                             </a>
-                            <p className="text-[10px] text-center text-white/40 leading-tight font-medium mt-3">
-                                Renovación anual de $140
-                            </p>
                         </motion.div>
                     </div>
 
-                    <p className="text-center text-navy/40 text-xs mt-10 font-medium max-w-lg mx-auto">
-                        *Todos los planes incluyen hosting, dominio, mantenimiento y actualizaciones por 1 año.
-                    </p>
+                    <div className="mt-12 flex flex-col items-center justify-center">
+                        <div className="flex items-center gap-3 bg-white/50 backdrop-blur-sm border border-navy/5 px-6 py-3 rounded-full shadow-sm">
+                            <ShieldCheck size={18} className="text-green-500" />
+                            <p className="text-navy/60 text-xs font-bold uppercase tracking-widest text-center">
+                                Todos los planes incluyen hosting por su primer año.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </section >
 

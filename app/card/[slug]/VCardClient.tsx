@@ -40,6 +40,13 @@ const isPlaceholderUrl = (url: string | null | undefined) => {
     return placeholders.some(p => url.toLowerCase().includes(p));
 };
 
+const getYouTubeID = (url: string) => {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+};
+
 interface VCardClientProps {
     showCatalog?: boolean;
 }
@@ -400,7 +407,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             {/* Floating Edit Button */}
             <button
                 onClick={() => setIsEditModalOpen(true)}
-                className="fixed top-6 right-6 z-[60] bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 shadow-lg group"
+                className="fixed top-6 left-6 z-[60] bg-white/10 backdrop-blur-md p-3 rounded-full border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 shadow-lg group"
                 title="Configurar Perfil"
             >
                 <Settings size={20} className="group-hover:rotate-90 transition-transform duration-500" />
@@ -518,14 +525,14 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                 {/* Name & Profession */}
                                 <div className="text-center md:text-left flex-1 min-w-0 w-full">
                                     {!showHero && (
-                                        <>
-                                            <h1 className="text-2xl md:text-3xl lg:text-5xl xl:text-5xl font-black tracking-tighter leading-[1.05] mb-4 uppercase italic text-white break-words drop-shadow-md">
+                                        <div className="flex flex-col items-center w-full">
+                                            <h1 className="text-2xl md:text-3xl lg:text-5xl xl:text-5xl font-black tracking-tighter leading-[1.05] mb-4 uppercase italic text-white break-words drop-shadow-md text-center">
                                                 {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
                                             </h1>
-                                            <p className="text-sm md:text-lg lg:text-xl font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] mb-8 drop-shadow-sm break-words opacity-90">
+                                            <p className="text-sm md:text-lg lg:text-xl font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] mb-8 drop-shadow-sm break-words opacity-90 text-center">
                                                 {data.profesion || "Profesional Estratégico"}
                                             </p>
-                                        </>
+                                        </div>
                                     )}
 
                                     {data.empresa && (
@@ -535,9 +542,47 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                         </div>
                                     )}
 
+                                    {/* YouTube Video Embed */}
+                                    {(() => {
+                                        const videoId = getYouTubeID(data.youtube_video_url) || getYouTubeID(data.youtube);
+                                        if (!videoId) return null;
+                                        
+                                        return (
+                                            <div className="w-full max-w-sm mx-auto mb-10 rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black/20 group relative">
+                                                <div className="aspect-video sm:aspect-video video-container">
+                                                    <iframe
+                                                        width="100%"
+                                                        height="100%"
+                                                        src={`https://www.youtube.com/embed/${videoId}`}
+                                                        title="YouTube video player"
+                                                        frameBorder="0"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowFullScreen
+                                                        className="w-full h-full"
+                                                    ></iframe>
+                                                </div>
+                                                <style jsx>{`
+                                                    .video-container :global(iframe) {
+                                                        aspect-ratio: 16/9;
+                                                    }
+                                                    @media (max-width: 640px) {
+                                                        .video-container :global(iframe) {
+                                                            aspect-ratio: 9/16;
+                                                            max-height: 70vh;
+                                                        }
+                                                        .video-container {
+                                                            aspect-ratio: 9/16;
+                                                            max-height: 70vh;
+                                                        }
+                                                    }
+                                                `}</style>
+                                            </div>
+                                        );
+                                    })()}
+
 
                                     {/* Action Button Container */}
-                                    <div className="w-full flex justify-center md:justify-start">
+                                    <div className="w-full flex justify-center">
                                         <div className="w-full md:w-auto max-w-sm relative z-20">
                                             <button
                                                 onClick={() => {
@@ -707,7 +752,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                         </div>
                                     )}
 
-                                    {data.productos_servicios && (
+                                    {data.productos_servicios && (!showCatalog || !data.catalogo_json) && (
                                         <div>
                                             <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-4 flex items-center gap-2">
                                                 <Briefcase size={14} /> PRODUCTOS Y SERVICIOS
@@ -784,27 +829,25 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                     )}
                                 </motion.div>
                             )}
-
-                            {/* Bio / Description and Products */}
-                            {(data.bio || data.productos_servicios) && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.4 }}
-                                    className="mt-12 md:mt-16 pt-10 border-t border-white/10 flex flex-col gap-10"
-                                >
-                                    {/* ... existing bio and products code ... */}
-                                </motion.div>
-                            )}
                         </div>
                     </motion.div>
+
+                    {/* Catalog Section (Now integrated in main flow) */}
+                    {showCatalog && data.catalogo_json && (
+                        <div className="lg:col-span-12 order-2 xl:order-3 mt-6 md:mt-24">
+                            <CatalogGallery 
+                                data={typeof data.catalogo_json === 'string' ? JSON.parse(data.catalogo_json) : data.catalogo_json} 
+                                whatsapp={data.whatsapp}
+                            />
+                        </div>
+                    )}
 
                     {/* Right Column: Contact Details (Adjusted spans) */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="lg:col-span-12 xl:col-span-3 flex flex-col gap-6 w-full"
+                        className="lg:col-span-12 xl:col-span-3 flex flex-col gap-6 w-full order-3 xl:order-2"
                     >
                         {/* Social & Contact Grid */}
                         <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-10 shadow-2xl w-full">
@@ -863,16 +906,6 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                         </div>
                     </motion.div>
                 </div>
-
-                    {/* Catalog Section (Now integrated in main flow) */}
-                    {showCatalog && data.catalogo_json && (
-                        <div className="mt-16 md:mt-24">
-                            <CatalogGallery 
-                                data={typeof data.catalogo_json === 'string' ? JSON.parse(data.catalogo_json) : data.catalogo_json} 
-                                whatsapp={data.whatsapp}
-                            />
-                        </div>
-                    )}
                 </div>
 
                 {/* Map Section (Full Width) */}

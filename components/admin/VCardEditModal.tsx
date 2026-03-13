@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock } from 'lucide-react';
+import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Youtube } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming this utility exists
 
 interface VCardEditModalProps {
@@ -128,6 +128,12 @@ export default function VCardEditModal({
                                 {editingRegistro.plan}
                             </span>
                         </div>
+                        <button 
+                            onClick={onClose}
+                            className="p-3 bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 rounded-2xl transition-all"
+                        >
+                            <CloseIcon size={24} />
+                        </button>
                     </div>
 
                     <div className="p-8 space-y-12">
@@ -329,11 +335,22 @@ export default function VCardEditModal({
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">YouTube (Link)</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">YouTube (Perfil/Canal)</label>
                                         <input
                                             className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
                                             value={editingRegistro.youtube || ''}
                                             onChange={e => setEditingRegistro({ ...editingRegistro, youtube: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block ml-1 flex items-center gap-2">
+                                            <Youtube size={12} /> Video Promocional (YouTube Embed)
+                                        </label>
+                                        <input
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 font-bold outline-none focus:border-primary/40 transition-all text-xs"
+                                            value={editingRegistro.youtube_video_url || ''}
+                                            onChange={e => setEditingRegistro({ ...editingRegistro, youtube_video_url: e.target.value })}
+                                            placeholder="https://www.youtube.com/watch?v=..."
                                         />
                                     </div>
                                     <div>

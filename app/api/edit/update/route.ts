@@ -90,10 +90,11 @@ export async function POST(req: NextRequest) {
                     hero_step3_title = ?,
                     hero_step3_text = ?,
                     catalogo_json = ?,
+                    youtube_video_url = ?,
                     edit_uses_remaining = edit_uses_remaining - 1,
                     last_edited_at = NOW()
             `;
- 
+
             const queryParams: any[] = [
                 formatPhoneEcuador(data.whatsapp || ''),
                 data.profession,
@@ -134,7 +135,8 @@ export async function POST(req: NextRequest) {
                 data.hero_step2_text || null,
                 data.hero_step3_title || 'Conéctate a la Red',
                 data.hero_step3_text || null,
-                data.catalogo_json ? (typeof data.catalogo_json === 'string' ? data.catalogo_json : JSON.stringify(data.catalogo_json)) : null
+                data.catalogo_json ? (typeof data.catalogo_json === 'string' ? data.catalogo_json : JSON.stringify(data.catalogo_json)) : null,
+                data.youtube_video_url || null
             ];
 
             // If foto_url is provided (base64 from frontend), update it
