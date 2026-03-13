@@ -38,12 +38,14 @@ import {
     TrendingUp,
     Smartphone,
     Store,
-    Library
+    Library,
+    Plus
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Link from "next/link";
 import StatsModal from "@/components/admin/StatsModal";
+import VCardEditModal from "@/components/admin/VCardEditModal";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -98,6 +100,10 @@ export default function AdminDashboard() {
     const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
     const [isHeroPromptOpen, setIsHeroPromptOpen] = useState(false);
     const [promptRegistro, setPromptRegistro] = useState<any>(null);
+    const [setupTarget, setSetupTarget] = useState<'view' | 'catalog'>('view');
+    const [setupProducts, setSetupProducts] = useState<any[]>([
+        { id: Date.now().toString(), categoria: '', titulo: '', descripcion: '', precio: '', url: '' }
+    ]);
 
     // Estados para Catálogo
     const [isCatalogManagerOpen, setIsCatalogManagerOpen] = useState(false);
@@ -648,9 +654,31 @@ export default function AdminDashboard() {
         // Si no tiene imágenes o son placeholders, abrir el modal de diseño
         if (isPlaceholderUrl(registro.portada_desktop) || isPlaceholderUrl(registro.portada_movil)) {
             setPromptRegistro(registro);
+            setSetupTarget('view');
             setIsHeroPromptOpen(true);
         } else {
             window.open(`/card/${registro.slug || registro.id}`, '_blank');
+        }
+    };
+
+    const handleCatalogSetup = (registro: any) => {
+        const catItems = typeof registro.catalogo_json === 'string' ? JSON.parse(registro.catalogo_json || '[]') : (registro.catalogo_json || []);
+        
+        // Si el catálogo está vacío, SIEMPRE abrir el modal de setup rápido
+        if (catItems.length === 0) {
+            setPromptRegistro(registro);
+            setSetupTarget('catalog');
+            setIsHeroPromptOpen(true);
+            return;
+        }
+
+        // Si ya tiene catálogo pero faltan imágenes hero, pedir eso
+        if (isPlaceholderUrl(registro.portada_desktop) || isPlaceholderUrl(registro.portada_movil)) {
+            setPromptRegistro(registro);
+            setSetupTarget('catalog');
+            setIsHeroPromptOpen(true);
+        } else {
+            window.open(`/catalog/${registro.slug || registro.id}`, '_blank');
         }
     };
 
@@ -727,13 +755,48 @@ export default function AdminDashboard() {
     const handleHeroUploadConfirm = async () => {
         if (!promptRegistro) return;
         
+        // Si hay datos de catálogo en el setup rápido, guardarlos primero
+        const productsToSave = setupProducts.filter(p => p.titulo.trim() || p.categoria.trim());
+        
+        if (productsToSave.length > 0) {
+            // Aseguramos que tengan IDs válidos y valores por defecto
+            const formattedProducts = productsToSave.map((p, idx) => ({
+                id: p.id || (Date.now() + idx).toString(),
+                categoria: p.categoria.trim() || 'General',
+                titulo: p.titulo.trim() || `Producto ${idx + 1}`,
+                descripcion: p.descripcion.trim(),
+                precio: p.precio.trim(),
+                url: p.url || '' 
+            }));
+            
+            try {
+                await fetch('/api/admin/registros', {
+                    method: 'PATCH',
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'x-admin-key': localStorage.getItem('admin_access_key') || '' 
+                    },
+                    body: JSON.stringify({ 
+                        id: promptRegistro.id, 
+                        catalogo_json: JSON.stringify(formattedProducts) 
+                    })
+                });
+            } catch (err) {
+                console.error("Error saving initial catalog items", err);
+            }
+        }
+
         // Refresh registries to reflect new images
         fetchRegistros();
         setIsHeroPromptOpen(false);
+        setSetupProducts([{ id: Date.now().toString(), categoria: '', titulo: '', descripcion: '', precio: '', url: '' }]);
         
-        // Open the profile after a short delay to ensure DB update is perceived
+        const path = setupTarget === 'catalog' ? 'catalog' : 'card';
+        const suffix = setupTarget === 'catalog' ? '?setup=true' : '';
+        
+        // Open the profile/catalog after a short delay to ensure DB update is perceived
         setTimeout(() => {
-            window.open(`/card/${promptRegistro.slug || promptRegistro.id}`, '_blank');
+            window.open(`/${path}/${promptRegistro.slug || promptRegistro.id}${suffix}`, '_blank');
         }, 500);
     };
 
@@ -1501,22 +1564,9 @@ export default function AdminDashboard() {
                                                 </button>
 
                                                 <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        let catItems: any[] = [];
-                                                        try {
-                                                            catItems = typeof r.catalogo_json === 'string' ? JSON.parse(r.catalogo_json || '[]') : (r.catalogo_json || []);
-                                                        } catch (err) {}
-                                                        
-                                                        if (catItems.length > 0) {
-                                                            window.open(`/catalog/${r.slug || r.id}`, '_blank');
-                                                        } else {
-                                                            alert('El catálogo está vacío. Por favor, agrega mínimo 1 categoría y 1 producto antes de visualizarlo.');
-                                                            openCatalogManager(r);
-                                                        }
-                                                    }}
+                                                    onClick={() => handleCatalogSetup(r)}
                                                     className="p-2 bg-[#f66739]/10 text-[#f66739] rounded-xl hover:bg-[#f66739] hover:text-white transition-all shadow-lg shadow-[#f66739]/10"
-                                                    title="Ver Catálogo"
+                                                    title="Ver Catálogo / Productos"
                                                 >
                                                     <Store size={18} />
                                                 </button>
@@ -1574,586 +1624,16 @@ export default function AdminDashboard() {
 
             <AnimatePresence>
                 {isEditModalOpen && editingRegistro && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto pt-20 pb-20">
-                        <motion.div
-                            initial={{ opacity: 0, y: 50 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 50 }}
-                            className="w-full max-w-4xl bg-navy-light rounded-[40px] border border-white/10 shadow-3xl overflow-hidden"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
-                                <div>
-                                    <h3 className="text-2xl font-black uppercase italic tracking-tighter">Editar Registro</h3>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-1">ID: {editingRegistro.id}</p>
-                                </div>
-                                <button
-                                    onClick={() => setIsEditModalOpen(false)}
-                                    className="p-4 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/40 hover:text-white"
-                                >
-                                    <X size={20} />
-                                </button>
-                            </div>
-
-                            <div className="p-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
-                                <div className="space-y-12">
-                                    <div className="space-y-6">
-                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">FOTO DE PERFIL</h4>
-                                        <div className="flex flex-col items-center gap-4">
-                                            <div className="w-32 h-32 rounded-full bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
-                                                {editingRegistro.foto_url && !isPlaceholderUrl(editingRegistro.foto_url) ? (
-                                                    <img src={editingRegistro.foto_url} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <User size={40} className="text-white/10" />
-                                                )}
-                                                <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
-                                                    <Upload size={20} className="text-white" />
-                                                    <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
-                                                </label>
-                                            </div>
-                                            <p className="text-[10px] font-bold text-white/40 text-center uppercase">Formatos: JPG, PNG. Máx 5MB.</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-6">
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">PORTADA DESKTOP (PC)</h4>
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-full aspect-video rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
-                                                    {editingRegistro.portada_desktop ? (
-                                                        <img src={editingRegistro.portada_desktop} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <ImageIcon size={40} className="text-white/10" />
-                                                    )}
-                                                    <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
-                                                        <Upload size={20} className="text-white" />
-                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handlePortadaUpload(e, 'portada_desktop')} />
-                                                    </label>
-                                                </div>
-                                                <p className="text-[10px] font-bold text-white/40 text-center uppercase">Horizontal (1920x1080px)</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-6">
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">PORTADA MÓVIL</h4>
-                                            <div className="flex flex-col items-center gap-4">
-                                                <div className="w-[180px] aspect-[9/16] rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
-                                                    {editingRegistro.portada_movil ? (
-                                                        <img src={editingRegistro.portada_movil} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <Smartphone size={40} className="text-white/10" />
-                                                    )}
-                                                    <label className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer">
-                                                        <Upload size={20} className="text-white" />
-                                                        <input type="file" className="hidden" accept="image/*" onChange={(e) => handlePortadaUpload(e, 'portada_movil')} />
-                                                    </label>
-                                                </div>
-                                                <p className="text-[10px] font-bold text-white/40 text-center uppercase">Vertical (1080x1920px)</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-6">
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">INFO PERSONAL</h4>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre Completo</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.nombre || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, nombre: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Profesión</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.profesion || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, profesion: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">WhatsApp (con código)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.whatsapp || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, whatsapp: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Email</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.email || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, email: e.target.value })}
-                                                />
-                                            </div>
-
-                                            <div className="pt-4 border-t border-white/5">
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 block ml-1">Tipo de Perfil</label>
-                                                <div className="flex gap-4">
-                                                    <button
-                                                        onClick={() => setEditingRegistro({ ...editingRegistro, tipo_perfil: 'persona' })}
-                                                        className={cn(
-                                                            "flex-1 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all border",
-                                                            editingRegistro.tipo_perfil === 'persona' ? "bg-primary text-navy border-primary" : "bg-white/5 text-white/40 border-white/10"
-                                                        )}
-                                                    >
-                                                        Persona
-                                                    </button>
-                                                    <button
-                                                        onClick={() => setEditingRegistro({ ...editingRegistro, tipo_perfil: 'negocio' })}
-                                                        className={cn(
-                                                            "flex-1 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all border",
-                                                            editingRegistro.tipo_perfil === 'negocio' ? "bg-primary text-navy border-primary" : "bg-white/5 text-white/40 border-white/10"
-                                                        )}
-                                                    >
-                                                        Negocio
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {editingRegistro.tipo_perfil === 'persona' ? (
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombres</label>
-                                                        <input
-                                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
-                                                            value={editingRegistro.nombres || ''}
-                                                            onChange={e => setEditingRegistro({ ...editingRegistro, nombres: e.target.value })}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Apellidos</label>
-                                                        <input
-                                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
-                                                            value={editingRegistro.apellidos || ''}
-                                                            onChange={e => setEditingRegistro({ ...editingRegistro, apellidos: e.target.value })}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    <div>
-                                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre del Negocio</label>
-                                                        <input
-                                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
-                                                            value={editingRegistro.nombre_negocio || ''}
-                                                            onChange={e => setEditingRegistro({ ...editingRegistro, nombre_negocio: e.target.value })}
-                                                        />
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre Contacto</label>
-                                                            <input
-                                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
-                                                                value={editingRegistro.contacto_nombre || ''}
-                                                                onChange={e => setEditingRegistro({ ...editingRegistro, contacto_nombre: e.target.value })}
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[10px) font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Apellido Contacto</label>
-                                                            <input
-                                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
-                                                                value={editingRegistro.contacto_apellido || ''}
-                                                                onChange={e => setEditingRegistro({ ...editingRegistro, contacto_apellido: e.target.value })}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="space-y-6">
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">REDES Y LINKS</h4>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Facebook (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.facebook || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, facebook: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">TikTok (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.tiktok || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, tiktok: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Instagram (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.instagram || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, instagram: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">LinkedIn (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.linkedin || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, linkedin: e.target.value })}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">YouTube (Link)</label>
-                                                    <input
-                                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
-                                                        value={editingRegistro.youtube || ''}
-                                                        onChange={e => setEditingRegistro({ ...editingRegistro, youtube: e.target.value })}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">X / Twitter (Link)</label>
-                                                    <input
-                                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
-                                                        value={editingRegistro.x || ''}
-                                                        onChange={e => setEditingRegistro({ ...editingRegistro, x: e.target.value })}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Carta/Menú Digital (URL)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.menu_digital || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, menu_digital: e.target.value })}
-                                                    placeholder="https://ejemplo.com/menu.pdf"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-6 pt-4">
-                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4">CONTENIDO Y SEO</h4>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Bio / Descripción</label>
-                                            <textarea
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all resize-none overflow-hidden"
-                                                rows={3}
-                                                value={editingRegistro.bio || ''}
-                                                onChange={e => {
-                                                    setEditingRegistro({ ...editingRegistro, bio: e.target.value });
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = `${e.target.scrollHeight}px`;
-                                                }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Productos / Servicios</label>
-                                            <textarea
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all resize-none overflow-hidden"
-                                                rows={3}
-                                                value={editingRegistro.productos_servicios || ''}
-                                                onChange={e => {
-                                                    setEditingRegistro({ ...editingRegistro, productos_servicios: e.target.value });
-                                                    e.target.style.height = 'auto';
-                                                    e.target.style.height = `${e.target.scrollHeight}px`;
-                                                }}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Etiquetas (Separadas por coma)</label>
-                                            <input
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                value={editingRegistro.etiquetas || ''}
-                                                onChange={e => setEditingRegistro({ ...editingRegistro, etiquetas: e.target.value })}
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Estado del Registro</label>
-                                                <select
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none"
-                                                    value={editingRegistro.status}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, status: e.target.value })}
-                                                >
-                                                    <option value="pendiente" className="bg-navy">Pendiente</option>
-                                                    <option value="pagado" className="bg-navy">Pagado</option>
-                                                    <option value="entregado" className="bg-navy">Entregado</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Plan contratado</label>
-                                                <select
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none uppercase"
-                                                    value={editingRegistro.plan || 'basic'}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, plan: e.target.value })}
-                                                >
-                                                    <option value="basic" className="bg-navy">Básico ($10)</option>
-                                                    <option value="pro" className="bg-navy">Pro ($20)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Ubicación / Dirección</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.direccion || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, direccion: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Google Maps (URL compartida)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.google_business || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, google_business: e.target.value })}
-                                                    placeholder="https://maps.app.goo.gl/..."
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre de Red WiFi (SSID)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.wifi_ssid || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, wifi_ssid: e.target.value })}
-                                                    placeholder="Ej. MiLocal_Guest"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Contraseña del WiFi</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.wifi_password || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, wifi_password: e.target.value })}
-                                                    placeholder="Opcional"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block ml-1 italic">Texto Botón Hero (Oferta)</label>
-                                                <input
-                                                    className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary transition-all"
-                                                    value={editingRegistro.hero_button_text || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, hero_button_text: e.target.value })}
-                                                    placeholder="Ej. ACCEDE A NUESTRO INTERNET"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Sitio Web</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.web || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, web: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Instagram (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.instagram || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, instagram: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">TikTok (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.tiktok || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, tiktok: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Facebook (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.facebook || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, facebook: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">LinkedIn (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.linkedin || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, linkedin: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">YouTube (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.youtube || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, youtube: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">X (Twitter) (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.x || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, x: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Menú Digital (Link)</label>
-                                                <input
-                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
-                                                    value={editingRegistro.menu_digital || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, menu_digital: e.target.value })}
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20">
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-6 flex items-center gap-2">
-                                                <QrCode size={16} /> GESTIÓN DE CÓDIGOS QR
-                                            </h4>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                {/* QR DE DESCARGA VCF */}
-                                                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Opción 1: Descarga Directa (Archivo .vcf)</p>
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="bg-white p-3 rounded-2xl">
-                                                            <img
-                                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/vcard/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                                alt="QR Descarga"
-                                                                className="w-20 h-20"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <p className="text-[10px] font-bold text-white/60 leading-tight">Ideal para tarjetas físicas básicas. Al escanear, el contacto se guarda al instante.</p>
-                                                            <a
-                                                                href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/api/vcard/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                                target="_blank"
-                                                                className="inline-flex items-center gap-2 text-primary text-[10px] font-black uppercase hover:underline"
-                                                            >
-                                                                <Download size={12} /> Descargar QR Alta Res.
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* QR DE PERFIL DIGITAL */}
-                                                <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-4">
-                                                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Opción 2: Perfil Digital (Visualización)</p>
-                                                    <div className="flex items-center gap-6">
-                                                        <div className="bg-white p-3 rounded-2xl">
-                                                            <img
-                                                                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                                alt="QR Perfil"
-                                                                className="w-20 h-20"
-                                                            />
-                                                        </div>
-                                                        <div className="space-y-2">
-                                                            <p className="text-[10px] font-bold text-white/60 leading-tight">Muestra el perfil completo con fotos y botones. El cliente elige cuándo guardar el contacto.</p>
-                                                            <a
-                                                                href={`https://api.qrserver.com/v1/create-qr-code/?size=1000x1000&data=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : ''}/card/${editingRegistro.slug || editingRegistro.id}`)}`}
-                                                                target="_blank"
-                                                                className="inline-flex items-center gap-2 text-primary text-[10px] font-black uppercase hover:underline"
-                                                            >
-                                                                <ExternalLink size={12} /> Descargar QR Alta Res.
-                                                            </a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* GESTIÓN DE COMISIONES (SUBIDA DE QR DE GESTIÓN) */}
-                                            <div className="mt-8 pt-8 border-t border-white/10">
-                                                <div className="max-w-md">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-4 block ml-1">Estado de la Comisión (Socio)</label>
-                                                    <select
-                                                        className="w-full bg-white/5 border border-white/10 rounded-[24px] px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none"
-                                                        value={editingRegistro.commission_status || 'pending'}
-                                                        onChange={e => {
-                                                            const val = e.target.value;
-                                                            setEditingRegistro({
-                                                                ...editingRegistro,
-                                                                commission_status: val,
-                                                                leader_paid_at: val === 'paid_to_leader' ? new Date().toISOString() : editingRegistro.leader_paid_at
-                                                            });
-                                                        }}
-                                                    >
-                                                        <option value="pending" className="bg-navy">⏳ Pendiente</option>
-                                                        <option value="paid_to_leader" className="bg-navy">🚚 Enviada a Líder</option>
-                                                        <option value="completed" className="bg-navy">✅ Confirmada por Vendedor</option>
-                                                    </select>
-                                                    {editingRegistro.commission_status === 'paid_to_leader' && editingRegistro.leader_paid_at && (
-                                                        <div className="mt-4 flex items-center gap-3 p-4 bg-primary/10 rounded-2xl border border-primary/20">
-                                                            <Clock size={16} className="text-primary" />
-                                                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                                                Pagado al líder el: {new Date(editingRegistro.leader_paid_at).toLocaleString()}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-4">
-                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-white/30 border-b border-white/5 pb-4 mb-6">GALERÍA DE TRABAJOS</h4>
-                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                                                {(editingRegistro.galeria_urls || []).map((url: string, idx: number) => (
-                                                    <div key={idx} className="relative aspect-square rounded-2xl bg-white/5 overflow-hidden group">
-                                                        <img src={url} className="w-full h-full object-cover" />
-                                                        <button
-                                                            onClick={() => removeGalleryItem(idx)}
-                                                            className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                                        >
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                                {(editingRegistro.galeria_urls || []).length < 5 && (
-                                                    <label className="aspect-square rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-white/10 transition-all">
-                                                        <Upload size={20} className="text-white/20" />
-                                                        <span className="text-[8px] font-black uppercase tracking-widest opacity-20">Subir</span>
-                                                        <input type="file" className="hidden" multiple accept="image/*" onChange={handleGalleryUpload} />
-                                                    </label>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-8 border-t border-white/10 bg-white/[0.02] flex justify-end gap-4 overflow-x-auto">
-                                <button
-                                    onClick={() => setIsEditModalOpen(false)}
-                                    className="px-8 py-4 rounded-2xl bg-white/5 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all"
-                                >
-                                    Cerrar
-                                </button>
-
-                                {editingRegistro && (
-                                    <a
-                                        href={`/api/vcard/${editingRegistro.slug || editingRegistro.id}`}
-                                        download={`${editingRegistro.slug || editingRegistro.id}.vcf`}
-                                        className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 text-white"
-                                    >
-                                        <Download size={14} />
-                                        Descargar vCard
-                                    </a>
-                                )}
-
-                                <button
-                                    onClick={handleSaveEdit}
-                                    disabled={isSaving}
-                                    className="px-10 py-4 rounded-2xl bg-primary shadow-orange font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all text-navy flex items-center gap-2 whitespace-nowrap"
-                                >
-                                    {isSaving ? (
-                                        <RefreshCw size={14} className="animate-spin" />
-                                    ) : (
-                                        <Save size={14} />
-                                    )}
-                                    {isSaving ? 'Guardando...' : 'Guardar y Cerrar'}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </div>
+                    <VCardEditModal
+                        isOpen={isEditModalOpen}
+                        onClose={() => setIsEditModalOpen(false)}
+                        registro={editingRegistro}
+                        setRegistro={setEditingRegistro}
+                        onSave={handleSaveEdit}
+                        onPhotoUpload={handlePhotoUpload}
+                        onPortadaUpload={handlePortadaUpload}
+                        isSaving={isSaving}
+                    />
                 )}
             </AnimatePresence>
             <AnimatePresence>
@@ -2432,11 +1912,17 @@ export default function AdminDashboard() {
                         >
                             <div className="p-10 text-center">
                                 <div className="w-20 h-20 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
-                                    <ImageIcon size={40} />
+                                    {setupTarget === 'catalog' ? <Store size={40} /> : <ImageIcon size={40} />}
                                 </div>
-                                <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-4">¡Diseño Premium Pendiente!</h3>
+                                <h3 className="text-3xl font-black uppercase italic tracking-tighter mb-4">
+                                    {setupTarget === 'catalog' ? '¡Activación de Catálogo!' : '¡Diseño Premium Pendiente!'}
+                                </h3>
                                 <p className="text-white/60 text-sm mb-12 max-w-sm mx-auto leading-relaxed">
-                                    Para que la VCard de <span className="text-white font-bold">{promptRegistro.nombre}</span> se vea profesional, necesitamos configurar las imágenes del Hero primero.
+                                    {setupTarget === 'catalog' 
+                                        ? `Configura la primera categoría y producto para activar el catálogo de `
+                                        : `Para que la VCard de `}
+                                    <span className="text-white font-bold">{promptRegistro.nombre}</span>
+                                    {setupTarget === 'catalog' ? ` y asegúrate de que las imágenes luzcan profesionales.` : ` se vea profesional, necesitamos configurar las imágenes del Hero primero.`}
                                 </p>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
@@ -2512,13 +1998,157 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
+                                {setupTarget === 'catalog' && (
+                                    <div className="mb-12 space-y-8">
+                                        <div className="flex items-center justify-between px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(255,107,0,0.5)]" />
+                                                <h4 className="text-[12px] font-black uppercase tracking-[0.2em] text-white">Configuración del Catálogo</h4>
+                                            </div>
+                                            <button 
+                                                onClick={() => setSetupProducts([...setupProducts, { id: Date.now().toString(), categoria: '', titulo: '', descripcion: '', precio: '', url: '' }])}
+                                                className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl transition-all border border-primary/20 group"
+                                            >
+                                                <Plus size={16} className="group-hover:scale-110 transition-transform" />
+                                                <span className="text-[10px] font-black uppercase tracking-wider">Añadir Producto</span>
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                                            {setupProducts.map((p, index) => (
+                                                <div key={p.id} className="p-6 bg-white/5 rounded-[32px] border border-white/10 group relative transition-all hover:bg-white/[0.07] hover:border-primary/30">
+                                                    {setupProducts.length > 1 && (
+                                                        <button 
+                                                            onClick={() => setSetupProducts(setupProducts.filter(item => item.id !== p.id))}
+                                                            className="absolute -top-3 -right-3 w-8 h-8 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transition-all opacity-0 group-hover:opacity-100 z-20"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    )}
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-[160px_1fr] gap-8">
+                                                        {/* Product Image Upload */}
+                                                        <div className="space-y-3">
+                                                            <p className="text-[9px] font-bold text-white/40 uppercase tracking-widest px-1">Imagen</p>
+                                                            <div className="aspect-square bg-[#1A1B3A] rounded-2xl border-2 border-dashed border-white/5 flex items-center justify-center overflow-hidden group relative transition-all hover:border-primary/30">
+                                                                {p.url ? (
+                                                                    <img src={p.url} className="w-full h-full object-cover" />
+                                                                ) : (
+                                                                    <div className="text-center p-4">
+                                                                        <Upload size={20} className="text-white/10 mx-auto mb-2" />
+                                                                        <p className="text-[8px] font-bold text-white/20 uppercase">Subir</p>
+                                                                    </div>
+                                                                )}
+                                                                <label htmlFor={`setup-product-image-${p.id}`} className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-[2px] z-10">
+                                                                    <ImageIcon size={18} className="text-white" />
+                                                                </label>
+                                                                <input 
+                                                                    id={`setup-product-image-${p.id}`}
+                                                                    type="file" 
+                                                                    className="hidden" 
+                                                                    accept="image/*" 
+                                                                    onChange={async (e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (!file) return;
+                                                                        const formData = new FormData();
+                                                                        formData.append('file', file);
+                                                                        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                                                        if (res.ok) {
+                                                                            const { url } = await res.json();
+                                                                            const newProducts = [...setupProducts];
+                                                                            newProducts[index].url = url;
+                                                                            setSetupProducts(newProducts);
+                                                                        }
+                                                                    }} 
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Product Details Inputs */}
+                                                        <div className="space-y-4">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div className="space-y-2 text-left">
+                                                                    <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest px-2">Categoría</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        placeholder="Ej. Platos Fuertes"
+                                                                        value={p.categoria}
+                                                                        onChange={(e) => {
+                                                                            const newProducts = [...setupProducts];
+                                                                            newProducts[index].categoria = e.target.value;
+                                                                            setSetupProducts(newProducts);
+                                                                        }}
+                                                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-3 text-sm font-bold focus:border-primary/50 transition-all outline-none"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-2 text-left">
+                                                                    <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest px-2">Nombre del Producto</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        placeholder="Ej. Arroz con Pollo"
+                                                                        value={p.titulo}
+                                                                        onChange={(e) => {
+                                                                            const newProducts = [...setupProducts];
+                                                                            newProducts[index].titulo = e.target.value;
+                                                                            setSetupProducts(newProducts);
+                                                                        }}
+                                                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-3 text-sm font-bold focus:border-primary/50 transition-all outline-none"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-1 md:grid-cols-[1fr_120px] gap-4">
+                                                                <div className="space-y-2 text-left">
+                                                                    <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest px-2">Descripción Corta</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        placeholder="Detalles rápidos..."
+                                                                        value={p.descripcion}
+                                                                        onChange={(e) => {
+                                                                            const newProducts = [...setupProducts];
+                                                                            newProducts[index].descripcion = e.target.value;
+                                                                            setSetupProducts(newProducts);
+                                                                        }}
+                                                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-3 text-sm font-bold focus:border-primary/50 transition-all outline-none"
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-2 text-left">
+                                                                    <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest px-2">Precio</label>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        placeholder="Ej. 15.00"
+                                                                        value={p.precio}
+                                                                        onChange={(e) => {
+                                                                            const newProducts = [...setupProducts];
+                                                                            newProducts[index].precio = e.target.value;
+                                                                            setSetupProducts(newProducts);
+                                                                        }}
+                                                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-3 text-sm font-bold focus:border-primary/50 transition-all outline-none text-primary"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        
+                                        <div className="pt-4 px-4 flex items-center gap-3">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                            <p className="text-[10px] font-medium text-white/40 uppercase tracking-[0.1em]">
+                                                {setupProducts.length} producto(s) listo(s) para ser publicados en el catálogo.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex flex-col gap-4">
                                     <button
                                         onClick={handleHeroUploadConfirm}
-                                        disabled={!promptRegistro.portada_desktop || !promptRegistro.portada_movil}
+                                        disabled={(!promptRegistro.portada_desktop || !isPlaceholderUrl(promptRegistro.portada_desktop)) && (!promptRegistro.portada_movil || !isPlaceholderUrl(promptRegistro.portada_movil)) ? false : (setupTarget === 'view')}
                                         className="w-full bg-primary text-navy py-5 rounded-[24px] font-black uppercase tracking-widest shadow-orange hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
                                     >
-                                        Guardar y Ver Perfil
+                                        {setupTarget === 'catalog' ? 'Activar Catálogo y Continuar' : 'Guardar y Ver Perfil'}
                                     </button>
                                     <button
                                         onClick={() => setIsHeroPromptOpen(false)}

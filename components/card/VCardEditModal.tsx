@@ -10,16 +10,25 @@ interface VCardEditModalProps {
     onClose: () => void;
     initialSlug: string;
     allowCatalog?: boolean;
+    initialSection?: 'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo';
+    isSetup?: boolean;
 }
 
-export default function VCardEditModal({ isOpen, onClose, initialSlug, allowCatalog = false }: VCardEditModalProps) {
+export default function VCardEditModal({ 
+    isOpen, 
+    onClose, 
+    initialSlug, 
+    allowCatalog = false,
+    initialSection = 'perfil',
+    isSetup = false
+}: VCardEditModalProps) {
     const [step, setStep] = useState<'code' | 'edit' | 'success'>('code');
     const [editCode, setEditCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [userData, setUserData] = useState<any>(null);
     const [usesRemaining, setUsesRemaining] = useState(0);
-    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo' | 'code' | 'success' | null>('perfil');
+    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo' | 'code' | 'success' | null>(initialSection);
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
 
@@ -653,16 +662,30 @@ export default function VCardEditModal({ isOpen, onClose, initialSlug, allowCata
                                     </div>
 
                                     {/* SECCIÓN 4: IMÁGENES DE PORTADA */}
-                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                    <div className={cn(
+                                        "border rounded-2xl overflow-hidden shadow-sm transition-all",
+                                        isSetup && (!formData.portada_desktop || !formData.portada_movil) ? "border-primary ring-2 ring-primary/20" : "border-gray-100"
+                                    )}>
                                         <button 
                                             onClick={() => setActiveSection(activeSection === 'portada' ? null : 'portada')}
-                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                            className={cn(
+                                                "w-full flex items-center justify-between p-4 transition-colors",
+                                                isSetup && (!formData.portada_desktop || !formData.portada_movil) ? "bg-primary/5 hover:bg-primary/10" : "bg-gray-50/50 hover:bg-gray-100"
+                                            )}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                                <div className={cn(
+                                                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                                                    isSetup && (!formData.portada_desktop || !formData.portada_movil) ? "bg-primary text-white" : "bg-blue-500/10 text-blue-500"
+                                                )}>
                                                     <ImageIcon size={18} />
                                                 </div>
-                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Imágenes de Portada</span>
+                                                <div className="text-left">
+                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter block">Imágenes de Portada</span>
+                                                    {isSetup && (!formData.portada_desktop || !formData.portada_movil) && (
+                                                        <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">¡Faltan imágenes!</span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'portada' && "rotate-180")} />
                                         </button>
@@ -717,18 +740,32 @@ export default function VCardEditModal({ isOpen, onClose, initialSlug, allowCata
                                         </AnimatePresence>
                                     </div>
 
-                                    {/* SECCIÓN 5: GESTIÓN DE CATÁLOGO */}
+                                    {/* SECCIÓN 5: CATÁLOGO DIGITAL */}
                                     {allowCatalog && (
-                                        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <div className={cn(
+                                            "border rounded-2xl overflow-hidden shadow-sm transition-all",
+                                            isSetup && formData.catalogo_json.products.length === 0 ? "border-primary ring-2 ring-primary/20" : "border-gray-100"
+                                        )}>
                                             <button 
                                                 onClick={() => setActiveSection(activeSection === 'catalogo' ? null : 'catalogo')}
-                                                className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                                className={cn(
+                                                    "w-full flex items-center justify-between p-4 transition-colors",
+                                                    isSetup && formData.catalogo_json.products.length === 0 ? "bg-primary/5 hover:bg-primary/10" : "bg-gray-50/50 hover:bg-gray-100"
+                                                )}
                                             >
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                                    <div className={cn(
+                                                        "w-8 h-8 rounded-lg flex items-center justify-center",
+                                                        isSetup && formData.catalogo_json.products.length === 0 ? "bg-primary text-white" : "bg-orange-500/10 text-orange-500"
+                                                    )}>
                                                         <Store size={18} />
                                                     </div>
-                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter">Catálogo de Productos</span>
+                                                    <div className="text-left">
+                                                        <span className="font-black text-navy uppercase text-sm tracking-tighter block">Catálogo de Productos</span>
+                                                        {isSetup && formData.catalogo_json.products.length === 0 && (
+                                                            <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">¡Sin productos!</span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'catalogo' && "rotate-180")} />
                                             </button>

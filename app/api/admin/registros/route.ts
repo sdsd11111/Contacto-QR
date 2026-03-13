@@ -61,7 +61,10 @@ export async function GET(req: NextRequest) {
  */
 export async function PATCH(req: NextRequest) {
     const adminKey = req.headers.get('x-admin-key');
-    if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
+    const sellerIdHeader = req.headers.get('x-seller-id');
+    const isAdmin = adminKey === process.env.ADMIN_API_KEY;
+
+    if (!isAdmin && !sellerIdHeader) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
@@ -71,6 +74,14 @@ export async function PATCH(req: NextRequest) {
 
         if (!id) {
             return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
+        }
+
+        // Verify seller ownership if not admin
+        if (!isAdmin && sellerIdHeader) {
+            const [checkRows]: any = await pool.execute('SELECT seller_id FROM registraya_vcard_registros WHERE id = ?', [id]);
+            if (!checkRows.length || String(checkRows[0].seller_id) !== String(sellerIdHeader)) {
+                return NextResponse.json({ error: 'No autorizado para este registro' }, { status: 403 });
+            }
         }
 
         const keys = Object.keys(updateFields);

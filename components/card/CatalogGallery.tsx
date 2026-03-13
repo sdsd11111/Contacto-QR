@@ -98,7 +98,7 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                         >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                                src={item.url}
+                                src={item.url || 'https://via.placeholder.com/600x600?text=Cargando...'}
                                 alt={item.titulo}
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
@@ -147,7 +147,7 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                             <div className="w-full md:w-3/5 bg-black/50 aspect-square md:aspect-auto flex items-center justify-center relative p-8">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    src={selectedItem.url}
+                                    src={selectedItem.url || 'https://via.placeholder.com/600x600?text=Cargando...'}
                                     alt={selectedItem.titulo}
                                     className="max-w-full max-h-[70vh] object-contain rounded-2xl md:rounded-[32px] shadow-2xl"
                                 />

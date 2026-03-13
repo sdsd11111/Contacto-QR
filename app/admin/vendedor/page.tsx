@@ -7,6 +7,7 @@ import DirectVCardRegistration from "@/components/vendedor/DirectVCardRegistrati
 import SupportModal from "@/components/vendedor/SupportModal";
 import ContractModal from "@/components/vendedor/ContractModal";
 import BankDetailsModal from "@/components/vendedor/BankDetailsModal";
+import VCardEditModal from "@/components/admin/VCardEditModal";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     LayoutDashboard,
@@ -28,7 +29,11 @@ import {
     X,
     Settings,
     HelpCircle,
-    ExternalLink
+    ExternalLink,
+    FileText,
+    Edit,
+    Loader2,
+    Eye
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -65,6 +70,57 @@ export default function SellerDashboard() {
     const [showTeamModal, setShowTeamModal] = useState(false);
     const [isCreatingMember, setIsCreatingMember] = useState(false);
     const [newMember, setNewMember] = useState({ nombre: '', email: '', password: '' });
+    const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
+
+    // Edit Modal State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingRegistro, setEditingRegistro] = useState<any>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Generar PDF y enviarlo al WhatsApp del vendedor
+    const handleGeneratePdf = async (registroId: string) => {
+        if (!seller) return;
+        setGeneratingPdfId(registroId);
+        try {
+            // Format seller whatsapp: ensure it has country code
+            let sellerWa = seller.whatsapp || seller.telefono || '';
+            if (sellerWa && !sellerWa.startsWith('593')) {
+                sellerWa = '593' + sellerWa.replace(/^0+/, '');
+            }
+
+            const res = await fetch('/api/admin/generate-review-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({ id: registroId, sellerWhatsapp: sellerWa })
+            });
+
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Revision_Cliente.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                const waSent = res.headers.get('X-WhatsApp-Sent');
+                if (waSent === 'true') {
+                    alert('✅ PDF generado y enviado a tu WhatsApp.');
+                } else {
+                    alert('📄 PDF generado. (No se pudo enviar por WhatsApp)');
+                }
+            } else {
+                const err = await res.json();
+                alert('Error: ' + (err.error || 'No se pudo generar el PDF'));
+            }
+        } catch (err: any) {
+            alert('Error de conexión: ' + err.message);
+        }
+        setGeneratingPdfId(null);
+    };
 
     useEffect(() => {
         const savedSeller = localStorage.getItem("vcard_seller_data");
@@ -243,6 +299,110 @@ export default function SellerDashboard() {
             alert("Error de conexión");
         }
         setIsLoggingIn(false);
+    };
+
+    const handleSaveRegistro = async (recalculatedNombre: string) => {
+        if (!editingRegistro) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({
+                    id: editingRegistro.id,
+                    nombre: recalculatedNombre,
+                    apellido: editingRegistro.apellido,
+                    negocio: editingRegistro.negocio,
+                    email: editingRegistro.email,
+                    whatsapp: editingRegistro.whatsapp,
+                    slug: editingRegistro.slug,
+                    plan: editingRegistro.plan,
+                    status: editingRegistro.status,
+                    galeria_urls: editingRegistro.galeria_urls || [],
+                    video_url: editingRegistro.video_url || '',
+                    custom_color: editingRegistro.custom_color || '#FF6B00',
+                    map_url: editingRegistro.map_url || '',
+                    bio: editingRegistro.bio || '',
+                    menu_digital: editingRegistro.menu_digital || '',
+                    etiquetas: editingRegistro.etiquetas || ''
+                })
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                setRegistros(prev => prev.map(r => r.id === editingRegistro.id ? { ...editingRegistro, nombre: recalculatedNombre } : r));
+                setIsEditModalOpen(false);
+                setEditingRegistro(null);
+            } else {
+                alert("Error al guardar cambios: " + (result.error || 'Error desconocido'));
+            }
+        } catch (err: any) {
+            alert("Error al guardar cambios: " + err.message);
+        }
+        setIsSaving(false);
+    };
+
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !editingRegistro) return;
+
+        setIsSaving(true);
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+            if (!uploadRes.ok) throw new Error('Error subiendo foto al servidor');
+            const { url: publicUrl } = await uploadRes.json();
+
+            setEditingRegistro({ ...editingRegistro, foto_url: publicUrl });
+
+            await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({ id: editingRegistro.id, foto_url: publicUrl })
+            });
+
+        } catch (err: any) {
+            alert("Error subiendo foto: " + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handlePortadaUpload = async (e: React.ChangeEvent<HTMLInputElement>, tipo: 'portada_desktop' | 'portada_movil') => {
+        const file = e.target.files?.[0];
+        if (!file || !editingRegistro) return;
+
+        setIsSaving(true);
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+            if (!uploadRes.ok) throw new Error(`Error subiendo ${tipo} al servidor`);
+            const { url: publicUrl } = await uploadRes.json();
+
+            setEditingRegistro({ ...editingRegistro, [tipo]: publicUrl });
+
+            await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({ id: editingRegistro.id, [tipo]: publicUrl })
+            });
+
+        } catch (err: any) {
+            alert(`Error subiendo ${tipo}: ` + err.message);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleLogout = () => {
@@ -711,12 +871,13 @@ export default function SellerDashboard() {
                                             <th className="px-8 py-6">Vendedor</th>
                                             <th className="px-8 py-6">Estado / Venta</th>
                                             <th className="px-8 py-6 text-right">Pago / Comisión</th>
+                                            <th className="px-8 py-6 text-center">Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
                                         {registros.length === 0 ? (
                                             <tr>
-                                                <td colSpan={5} className="px-8 py-20 text-center">
+                                                <td colSpan={8} className="px-8 py-20 text-center">
                                                     <div className="max-w-xs mx-auto opacity-20">
                                                         <Users size={48} className="mx-auto mb-4" />
                                                         <p className="text-sm font-bold uppercase tracking-widest">Aún no tienes registros</p>
@@ -807,6 +968,39 @@ export default function SellerDashboard() {
                                                                     Confirmar Recibo
                                                                 </button>
                                                             )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            {/* Editar: solo pro ($20) y NO entregados */}
+                                                            {r.plan === 'pro' && r.status !== 'entregado' && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingRegistro(r);
+                                                                        setIsEditModalOpen(true);
+                                                                    }}
+                                                                    className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all w-full justify-center"
+                                                                >
+                                                                    <Edit size={12} /> Editar
+                                                                </button>
+                                                            )}
+                                                            {r.plan === 'pro' && r.status === 'entregado' && (
+                                                                <span className="flex items-center gap-1.5 px-3 py-2 bg-white/5 text-white/20 rounded-xl text-[9px] font-black uppercase tracking-widest w-full justify-center cursor-not-allowed">
+                                                                    <CheckCircle size={12} /> Entregado
+                                                                </span>
+                                                            )}
+                                                            {/* Generar PDF */}
+                                                            <button
+                                                                onClick={() => handleGeneratePdf(r.id)}
+                                                                disabled={generatingPdfId === r.id}
+                                                                className="flex items-center gap-1.5 px-3 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all disabled:opacity-50 w-full justify-center"
+                                                            >
+                                                                {generatingPdfId === r.id ? (
+                                                                    <><Loader2 size={12} className="animate-spin" /> Generando...</>
+                                                                ) : (
+                                                                    <><FileText size={12} /> PDF</>
+                                                                )}
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -1038,6 +1232,22 @@ export default function SellerDashboard() {
                             </form>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* VCard Edit Modal */}
+            <AnimatePresence>
+                {isEditModalOpen && editingRegistro && (
+                    <VCardEditModal
+                        isOpen={isEditModalOpen}
+                        onClose={() => setIsEditModalOpen(false)}
+                        registro={editingRegistro}
+                        setRegistro={setEditingRegistro}
+                        onSave={handleSaveRegistro}
+                        onPhotoUpload={handlePhotoUpload}
+                        onPortadaUpload={handlePortadaUpload}
+                        isSaving={isSaving}
+                    />
                 )}
             </AnimatePresence>
         </div>

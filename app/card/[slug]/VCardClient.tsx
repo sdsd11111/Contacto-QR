@@ -28,6 +28,18 @@ function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
 }
 
+// Utilidad para detectar URLs de marcador de posición o no válidas
+const isPlaceholderUrl = (url: string | null | undefined) => {
+    if (!url) return true;
+    if (url.startsWith('data:image')) return false;
+    const placeholders = [
+        'photo.com', 'example.com', 'placeholder.com', 'placehold.co', 
+        'placeholder.supabase.co', 'supabase.co/storage',
+        '_default.png', 'hero_desktop_default', 'hero_mobile_default'
+    ];
+    return placeholders.some(p => url.toLowerCase().includes(p));
+};
+
 interface VCardClientProps {
     showCatalog?: boolean;
 }
@@ -40,6 +52,8 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const [wifiStep, setWifiStep] = useState(1);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isProductsExpanded, setIsProductsExpanded] = useState(false);
+    const [setupSection, setSetupSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo'>('perfil');
+    const [isSetupMode, setIsSetupMode] = useState(false);
 
     const [extractedBg, setExtractedBg] = useState<string>('#001549');
     const [themePrimary, setThemePrimary] = useState<string>('#f66739');
@@ -105,6 +119,37 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         };
         if (slug) fetchData();
     }, [slug]);
+
+    useEffect(() => {
+        if (data && typeof window !== 'undefined') {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('setup') === 'true') {
+                // Parse products
+                let catItems = [];
+                try {
+                    catItems = typeof data.catalogo_json === 'string' ? JSON.parse(data.catalogo_json || '[]') : (data.catalogo_json || []);
+                } catch (e) {}
+
+                // Determine if we REALLY need to show setup
+                const hasNoProducts = showCatalog && catItems.length === 0;
+                const hasNoPortadas = !data.portada_desktop || !data.portada_movil || isPlaceholderUrl(data.portada_desktop) || isPlaceholderUrl(data.portada_movil);
+
+                if (hasNoProducts || hasNoPortadas) {
+                    setIsSetupMode(true);
+                    let section: any = 'perfil';
+                    
+                    if (hasNoProducts) {
+                        section = 'catalogo';
+                    } else if (hasNoPortadas) {
+                        section = 'portada';
+                    }
+
+                    setSetupSection(section);
+                    setIsEditModalOpen(true);
+                }
+            }
+        }
+    }, [data, showCatalog]);
 
     const downloadVCF = async () => {
         if (!data || data.status === 'pendiente') return;
@@ -906,6 +951,8 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             onClose={() => setIsEditModalOpen(false)}
             initialSlug={slug as string}
             allowCatalog={showCatalog}
+            initialSection={setupSection}
+            isSetup={isSetupMode}
         />
         </div>
     );

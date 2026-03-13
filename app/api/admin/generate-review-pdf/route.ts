@@ -67,13 +67,16 @@ const COLORS = {
 
 export async function POST(req: NextRequest) {
     try {
-        // Auth check
+        // Auth check: either admin key OR seller who owns the record
         const adminKey = req.headers.get('x-admin-key') || '';
-        if (adminKey !== process.env.ADMIN_API_KEY) {
+        const sellerIdHeader = req.headers.get('x-seller-id') || '';
+        const isAdmin = adminKey === process.env.ADMIN_API_KEY;
+        
+        if (!isAdmin && !sellerIdHeader) {
             return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
         }
 
-        const { id } = await req.json();
+        const { id, sellerWhatsapp } = await req.json();
         if (!id) {
             return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
         }
@@ -89,6 +92,13 @@ export async function POST(req: NextRequest) {
         }
 
         const r = rows[0];
+
+        // If seller auth, verify the seller owns this record
+        if (!isAdmin && sellerIdHeader) {
+            if (String(r.seller_id) !== String(sellerIdHeader)) {
+                return NextResponse.json({ error: 'No autorizado para este registro' }, { status: 403 });
+            }
+        }
 
         // Parse JSON fields
         let galeriaUrls: string[] = [];
@@ -706,7 +716,7 @@ export async function POST(req: NextRequest) {
         const apiUrl = process.env.EVOLUTION_API_URL;
         const evolutionKey = process.env.EVOLUTION_API_KEY;
         const instance = process.env.EVOLUTION_INSTANCE;
-        const targetNumber = '593963410409';
+        const targetNumber = sellerWhatsapp || '593963410409';
 
         if (apiUrl && evolutionKey && instance) {
             try {
