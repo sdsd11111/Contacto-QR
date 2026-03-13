@@ -353,7 +353,18 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             if (data.hero_file_url) {
                 const a = document.createElement('a');
                 a.href = data.hero_file_url;
-                a.download = ''; // Let the browser determine filename from URL
+                
+                // If it's Base64, we should provide a extension based on the MIME type
+                if (data.hero_file_url.startsWith('data:')) {
+                    const mime = data.hero_file_url.match(/data:(.*?);/)?.[1] || 'application/octet-stream';
+                    const ext = mime.split('/')[1] || 'bin';
+                    // Convert vcard to vcf for better compatibility
+                    const finalExt = ext === 'vcard' ? 'vcf' : ext;
+                    a.download = `archivo_${data.nombre.replace(/\s/g, '_')}.${finalExt}`;
+                } else {
+                    a.download = ''; // Let browser decide for external URLs
+                }
+                
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
