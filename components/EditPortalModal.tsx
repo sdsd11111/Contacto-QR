@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, ArrowRight } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
@@ -17,6 +17,15 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
     const [error, setError] = useState('');
     const [userData, setUserData] = useState<any>(null);
     const [usesRemaining, setUsesRemaining] = useState(0);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+    // Load code from localStorage on mount
+    useEffect(() => {
+        const savedCode = localStorage.getItem('rya_edit_code');
+        if (savedCode) {
+            setEditCode(savedCode);
+        }
+    }, []);
 
     // Form fields editable
     const [formData, setFormData] = useState({
@@ -67,6 +76,7 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
             const data = await res.json();
 
             if (res.ok) {
+                localStorage.setItem('rya_edit_code', cleanedCode);
                 setUserData(data.data);
                 setUsesRemaining(data.usesRemaining);
                 setFormData({
@@ -144,6 +154,40 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
             alert('Error al guardar cambios');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingPhoto(true);
+        setError('');
+
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+
+            const uploadRes = await fetch('/api/upload', {
+                method: 'POST',
+                body: uploadFormData
+            });
+
+            if (!uploadRes.ok) throw new Error('Error al procesar la imagen');
+            
+            const result = await uploadRes.json();
+            
+            if (result.url) {
+                // result.url is the base64 string optimized by the server (WebP 80%)
+                setFormData(prev => ({ ...prev, foto_url: result.url }));
+            } else {
+                setError('No se recibió la URL de la imagen');
+            }
+        } catch (err: any) {
+            console.error('Error subiendo foto:', err);
+            setError('Error al subir la imagen. Intenta con una más pequeña.');
+        } finally {
+            setUploadingPhoto(false);
         }
     };
 
@@ -586,23 +630,22 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
                                                     type="file"
                                                     accept="image/*"
                                                     className="hidden"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (file) {
-                                                            const reader = new FileReader();
-                                                            reader.onloadend = () => {
-                                                                setFormData({ ...formData, foto_url: reader.result as string });
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        }
-                                                    }}
+                                                    onChange={handlePhotoUpload}
                                                 />
                                             </label>
                                         </div>
-                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
-                                            Sube una foto clara de ti o de tu negocio. <br/>
-                                            <span className="text-primary opacity-60">Se actualizará en tu tarjeta digital y vCard.</span>
-                                        </p>
+                                        <div className="flex flex-col">
+                                            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
+                                                Sube una foto clara de ti o de tu negocio. <br/>
+                                                <span className="text-primary opacity-60">Se actualizará en tu tarjeta digital y vCard.</span>
+                                            </p>
+                                            {uploadingPhoto && (
+                                                <div className="flex items-center gap-2 mt-2 text-primary font-black animate-pulse text-[10px] uppercase">
+                                                    <Loader2 size={12} className="animate-spin" />
+                                                    Procesando y optimizando imagen...
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -653,13 +696,13 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
                                 Cancelar
                             </button>
                             <button
-                                onClick={handleSave}
-                                disabled={loading}
-                                className="px-6 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors uppercase text-sm flex items-center gap-2"
-                            >
-                                {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                                Guardar Cambios
-                            </button>
+                                 onClick={handleSave}
+                                 disabled={loading || uploadingPhoto}
+                                 className="px-6 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors uppercase text-sm flex items-center gap-2 disabled:opacity-50"
+                             >
+                                 {loading ? <Loader2 className="animate-spin" size={18} /> : (uploadingPhoto ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />)}
+                                 {loading ? 'Guardando...' : (uploadingPhoto ? 'Procesando...' : 'Guardar Cambios')}
+                             </button>
                         </div>
                     )}
                 </motion.div>

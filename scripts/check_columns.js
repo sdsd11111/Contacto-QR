@@ -2,29 +2,24 @@ const mysql = require('mysql2/promise');
 require('dotenv').config({ path: '.env.local' });
 
 async function checkColumns() {
-    const connection = await mysql.createConnection({
-        host: process.env.MYSQL_HOST,
-        port: process.env.MYSQL_PORT,
-        user: process.env.MYSQL_USER,
-        password: process.env.MYSQL_PASSWORD,
-        database: process.env.MYSQL_DATABASE
-    });
-
+    let conn;
     try {
-        const [rows] = await connection.execute(
-            `SELECT COLUMN_NAME 
-             FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_SCHEMA = '${process.env.MYSQL_DATABASE}' 
-             AND TABLE_NAME = 'registraya_vcard_registros'`
-        );
+        conn = await mysql.createConnection({
+            host: process.env.MYSQL_HOST,
+            port: parseInt(process.env.MYSQL_PORT || '42755'),
+            user: process.env.MYSQL_USER,
+            password: process.env.MYSQL_PASSWORD,
+            database: process.env.MYSQL_DATABASE
+        });
 
-        console.log('Columnas de registraya_vcard_registros:');
-        rows.forEach(r => console.log(r.COLUMN_NAME));
+        const [rows] = await conn.execute('DESCRIBE registraya_vcard_registros');
+        console.log('Columns:');
+        console.log(JSON.stringify(rows, null, 2));
 
-    } catch (error) {
-        console.error('Error:', error);
-    } finally {
-        await connection.end();
+        await conn.end();
+    } catch (e) {
+        console.error('Failed to check columns:', e);
+        if (conn) await conn.end();
     }
 }
 

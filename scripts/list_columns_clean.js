@@ -12,9 +12,9 @@ async function listColumns() {
             database: process.env.MYSQL_DATABASE
         });
 
-        const [rows] = await conn.execute('DESCRIBE registraya_vcard_registros');
-        console.log('Columns in registraya_vcard_registros:');
-        rows.forEach(r => console.log(`- ${r.Field}`));
+        const [rows] = await conn.execute('SHOW COLUMNS FROM registraya_vcard_registros');
+        console.log('Columns:');
+        rows.forEach(r => console.log(r.Field));
 
         await conn.end();
     } catch (e) {

@@ -1,0 +1,13 @@
+--- ID Match (from screenshot) ---
+[
+  {
+    "id": "f2620beb-0d26-4891-b28e-f98eade2b418",
+    "slug": "the-paulas-s-bakery-fkl8",
+    "nombre": "The Paula's Bakery",
+    "last_edited_at": "2026-03-15T01:23:48.000Z",
+    "bio": "La dulzura de lo artesanal hecho con amor. Especialistas en postres, panes y pasteles con ingredientes frescos y de la mejor calidad. ¡Visítanos y endulza tu día!"
+  }
+]
+
+--- Broad Search Results ---
+ID: f2620beb-0d26-4891-b28e-f98eade2b418 | SLUG: [the-paulas-s-bakery-fkl8] | NAME: [The Paula's Bakery] | Last Edited: Sat Mar 14 2026 20:23:48 GMT-0500 (hora de Ecuador) | Bio: La dulzura de lo artesanal hecho con amor. Especia...
