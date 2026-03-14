@@ -48,7 +48,8 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
         foto_url: '', // For profile image update (base64)
         portada_desktop: '', // New hero desktop
         portada_movil: '',   // New hero mobile
-        hero_button_text: '' // Custom hero button text
+        hero_button_text: '', // Custom hero button text
+        sellerCode: ''
     });
 
     const validateCode = async () => {
@@ -97,7 +98,8 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
                     foto_url: '', // Keep empty on load, only set if changed. Use userData.foto_url for display.
                     portada_desktop: data.data.portada_desktop || '',
                     portada_movil: data.data.portada_movil || '',
-                    hero_button_text: data.data.hero_button_text || ''
+                    hero_button_text: data.data.hero_button_text || '',
+                    sellerCode: data.data.sellerCode || ''
                 });
                 setStep('edit');
             } else {
@@ -148,98 +150,27 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
     const downloadVCard = async () => {
         if (!userData) return;
 
-        setLoading(true); // Re-use loading state for visual feedback
+        setLoading(true);
 
-        let photoBase64 = "";
+        try {
+            // Usar la misma API que /admin usa — genera el VCF completo
+            // con foto JPEG, tags de WhatsApp, redes sociales, etc.
+            const response = await fetch(`/api/vcard/${userData.slug}`);
+            if (!response.ok) throw new Error('Error al generar vCard');
 
-        // Intentar descargar y convertir la foto a Base64 si existe
-        // Usamos formData.foto_url si es nueva (ya es base64) o userData.foto_url
-        const currentPhotoUrl = formData.foto_url || userData.foto_url;
-
-        if (currentPhotoUrl) {
-            // Si ya es base64 (empieza con data:image), usarla directo limpiando el header
-            if (currentPhotoUrl.startsWith('data:image')) {
-                photoBase64 = currentPhotoUrl.split(',')[1];
-            } else {
-                // Si es URL externa, intentar fetch (puede fallar por CORS si no está configurado)
-                try {
-                    const response = await fetch(currentPhotoUrl);
-                    const blob = await response.blob();
-                    const reader = new FileReader();
-                    photoBase64 = await new Promise((resolve) => {
-                        reader.onloadend = () => {
-                            const base64 = (reader.result as string).split(',')[1];
-                            resolve(base64);
-                        };
-                        reader.readAsDataURL(blob);
-                    });
-                } catch (error) {
-                    console.error("Error al procesar la imagen para vCard", error);
-                }
-            }
+            const vcfBlob = await response.blob();
+            const url = window.URL.createObjectURL(vcfBlob);
+            const a = document.createElement("a");
+            a.href = url;
+            const filename = `${userData.nombre.replace(/[^a-zA-Z0-9]/g, '_')}.vcf`;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error descargando VCF:", error);
         }
-
-        const currentUrl = `${window.location.origin}/card/${userData.slug}`;
-
-        // Variables para construir la vCard estructurada
-        let fullName = '';
-        let structuredName = ''; // Campo N:
-        let organization = '';   // Campo ORG:
-
-        if (formData.tipo_perfil === 'persona') {
-            fullName = `${formData.nombres} ${formData.apellidos}`.trim();
-            structuredName = `${formData.apellidos};${formData.nombres};;;`;
-            organization = formData.company || '';
-        } else {
-            fullName = formData.nombre_negocio;
-            organization = formData.nombre_negocio;
-            if (formData.contacto_nombre || formData.contacto_apellido) {
-                structuredName = `${formData.contacto_apellido || ''};${formData.contacto_nombre || ''};;;`;
-            } else {
-                structuredName = ';;;;';
-            }
-        }
-
-        let vcard = `BEGIN:VCARD
-VERSION:3.0
-FN:${fullName}
-N:${structuredName}
-ORG:${organization}
-TITLE:${formData.profession || ""}
-TEL;TYPE=CELL,VOICE:${formData.whatsapp}
-EMAIL;TYPE=WORK,INTERNET:${formData.email || ""}
-URL:${currentUrl}
-NOTE:${formData.bio || "Generado por ActivaQR"}`;
-
-        if (photoBase64) {
-            vcard += `
-PHOTO;ENCODING=b;TYPE=JPEG:${photoBase64}`;
-        }
-
-        if (formData.address) {
-            vcard += `
-ADR;TYPE=WORK:;;${formData.address};;;;`;
-        }
-
-        if (formData.instagram) vcard += `\nURL;type=Instagram:${formData.instagram.startsWith('http') ? formData.instagram : `https://instagram.com/${formData.instagram.replace('@', '')}`}`;
-        if (formData.linkedin) vcard += `\nURL;type=LinkedIn:${formData.linkedin}`;
-        if (formData.web) vcard += `\nURL;type=Website:${formData.web}`;
-        if (formData.facebook) vcard += `\nURL;type=Facebook:${formData.facebook}`;
-        if (formData.tiktok) vcard += `\nURL;type=TikTok:${formData.tiktok.startsWith('http') ? formData.tiktok : `https://tiktok.com/@${formData.tiktok.replace('@', '')}`}`;
-        if (formData.menu_digital) vcard += `\nURL;type=MenuDigital:${formData.menu_digital}`;
-
-        vcard += `\nEND:VCARD`;
-
-        const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        const filename = `${userData.nombre.replace(/[^a-zA-Z0-9]/g, '_')}.vcf`;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
 
         setLoading(false);
     };
@@ -346,396 +277,332 @@ ADR;TYPE=WORK:;;${formData.address};;;;`;
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Image Upload & Dynamic Name Fields */}
-                                    <div className="col-span-full border-b pb-6 mb-2">
-                                        <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-                                            <div className="relative group w-24 h-24 shrink-0">
-                                                <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-md">
-                                                    {formData.foto_url || userData.foto_url ? (
-                                                        <img
-                                                            src={formData.foto_url || userData.foto_url}
-                                                            alt="Profile"
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-2xl">?</div>
-                                                    )}
-                                                </div>
-                                                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                                    <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
-                                                        <Edit size={20} className="text-white" />
-                                                    </div>
+                                {/* 1. IDENTIDAD (Paso 1 de /registro) */}
+                                <div className="col-span-full border-b pb-4 mb-4">
+                                    <h4 className="text-sm font-black text-primary uppercase mb-4 flex items-center gap-2 italic">
+                                        <span className="w-1.5 h-4 bg-primary rounded-full"></span>
+                                        1. Identidad
+                                    </h4>
+                                    <div className="space-y-4">
+                                        {formData.tipo_perfil === 'persona' ? (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="form-group">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Nombres</label>
                                                     <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        onChange={(e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                const reader = new FileReader();
-                                                                reader.onloadend = () => {
-                                                                    setFormData({ ...formData, foto_url: reader.result as string });
-                                                                };
-                                                                reader.readAsDataURL(file);
-                                                            }
-                                                        }}
+                                                        className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                        value={formData.nombres}
+                                                        onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
+                                                        placeholder="Ej. Juan"
                                                     />
-                                                </label>
+                                                </div>
+                                                <div className="form-group">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Apellidos</label>
+                                                    <input
+                                                        className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                        value={formData.apellidos}
+                                                        onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
+                                                        placeholder="Ej. Pérez"
+                                                    />
+                                                </div>
                                             </div>
-
-                                            <div className="flex-1 w-full space-y-4">
-                                                {formData.tipo_perfil === 'persona' ? (
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="form-group">
-                                                            <label className="text-[10px] font-black text-primary uppercase mb-1 block">Nombres</label>
-                                                            <input
-                                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
-                                                                value={formData.nombres}
-                                                                onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
-                                                                placeholder="Ej. Juan"
-                                                            />
-                                                        </div>
-                                                        <div className="form-group">
-                                                            <label className="text-[10px] font-black text-primary uppercase mb-1 block">Apellidos</label>
-                                                            <input
-                                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
-                                                                value={formData.apellidos}
-                                                                onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
-                                                                placeholder="Ej. Pérez"
-                                                            />
-                                                        </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <div className="form-group">
+                                                    <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Nombre del Negocio / Local</label>
+                                                    <input
+                                                        className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                        value={formData.nombre_negocio}
+                                                        onChange={(e) => setFormData({ ...formData, nombre_negocio: e.target.value })}
+                                                        placeholder="Ej. Restaurante El Sol"
+                                                    />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <div className="form-group">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Contacto Nombre (Opcional)</label>
+                                                        <input
+                                                            className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                            value={formData.contacto_nombre}
+                                                            onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })}
+                                                        />
                                                     </div>
-                                                ) : (
-                                                    <div className="space-y-4">
-                                                        <div className="form-group">
-                                                            <label className="text-[10px] font-black text-primary uppercase mb-1 block">Nombre del Negocio / Local</label>
-                                                            <input
-                                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
-                                                                value={formData.nombre_negocio}
-                                                                onChange={(e) => setFormData({ ...formData, nombre_negocio: e.target.value })}
-                                                                placeholder="Ej. Restaurante El Sol"
-                                                            />
-                                                        </div>
-                                                        <div className="grid grid-cols-2 gap-4">
-                                                            <div className="form-group">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Contacto Nombre (Opcional)</label>
-                                                                <input
-                                                                    className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
-                                                                    value={formData.contacto_nombre}
-                                                                    onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })}
-                                                                />
-                                                            </div>
-                                                            <div className="form-group">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Contacto Apellido (Opcional)</label>
-                                                                <input
-                                                                    className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
-                                                                    value={formData.contacto_apellido}
-                                                                    onChange={(e) => setFormData({ ...formData, contacto_apellido: e.target.value })}
-                                                                />
-                                                            </div>
-                                                        </div>
+                                                    <div className="form-group">
+                                                        <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Contacto Apellido (Opcional)</label>
+                                                        <input
+                                                            className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                            value={formData.contacto_apellido}
+                                                            onChange={(e) => setFormData({ ...formData, contacto_apellido: e.target.value })}
+                                                        />
                                                     </div>
-                                                )}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="form-group">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">WhatsApp</label>
+                                                <input
+                                                    className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                    value={formData.whatsapp}
+                                                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Email</label>
+                                                <input
+                                                    className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                    value={formData.email}
+                                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                                />
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Editable Fields */}
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Profesión</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.profession}
-                                            onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Empresa</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.company}
-                                            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="col-span-full">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Bio / Descripción</label>
-                                        <textarea
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            rows={2}
-                                            value={formData.bio}
-                                            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">WhatsApp</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.whatsapp}
-                                            onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Email</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        />
-                                    </div>
-
-                                    {/* Dirección y Web - SECCIÓN NUEVA */}
-                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
-                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
-                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
-                                            Ubicación y Web
-                                        </h4>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Dirección</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.address}
-                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                            placeholder="Ciudad, País"
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Sitio Web</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.web}
-                                            onChange={(e) => setFormData({ ...formData, web: e.target.value })}
-                                            placeholder="https://..."
-                                        />
-                                    </div>
-                                    <div className="col-span-full form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Google Business (Link)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.google_business}
-                                            onChange={(e) => setFormData({ ...formData, google_business: e.target.value })}
-                                            placeholder="https://maps.app.goo.gl/..."
-                                        />
-                                    </div>
-                                    <div className="form-group mb-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Nombre de Red WiFi (SSID)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.wifi_ssid}
-                                            onChange={(e) => setFormData({ ...formData, wifi_ssid: e.target.value })}
-                                            placeholder="Ej. MiLocal_Guest"
-                                        />
-                                    </div>
-                                    <div className="form-group mb-2">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Contraseña del WiFi</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.wifi_password}
-                                            onChange={(e) => setFormData({ ...formData, wifi_password: e.target.value })}
-                                            placeholder="Opcional"
-                                        />
-                                    </div>
-
-                                    {/* Redes Sociales - SECCIÓN NUEVA */}
-                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
-                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
-                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
-                                            Redes Sociales
-                                        </h4>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Instagram (Usuario)</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-gray-400 font-bold">@</span>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Código de Vendedor / Promocional</label>
                                             <input
-                                                className="w-full border rounded-lg p-2 pl-7 font-medium"
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm uppercase"
+                                                value={formData.sellerCode}
+                                                onChange={(e) => setFormData({ ...formData, sellerCode: e.target.value })}
+                                                placeholder="Ej. 001"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 2. PERFIL PROFESIONAL (Paso 2 de /registro) */}
+                                <div className="col-span-full border-b pb-4 mb-4">
+                                    <h4 className="text-sm font-black text-primary uppercase mb-4 flex items-center gap-2 italic">
+                                        <span className="w-1.5 h-4 bg-primary rounded-full"></span>
+                                        2. Perfil Profesional
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Profesión / Título</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.profession}
+                                                onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Empresa (Opcional)</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.company}
+                                                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-span-full">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Tu Bio o Descripción</label>
+                                            <textarea
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm resize-none"
+                                                rows={2}
+                                                value={formData.bio}
+                                                onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-span-full">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Productos o Servicios</label>
+                                            <textarea
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm resize-none"
+                                                rows={3}
+                                                value={formData.products}
+                                                onChange={(e) => setFormData({ ...formData, products: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3. CONECTIVIDAD Y OFERTA (Paso 2 de /registro) */}
+                                <div className="col-span-full border-b pb-4 mb-4">
+                                    <h4 className="text-sm font-black text-primary uppercase mb-4 flex items-center gap-2 italic">
+                                        <span className="w-1.5 h-4 bg-primary rounded-full"></span>
+                                        3. Conectividad y Oferta
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="col-span-full form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Dirección / Ubicación</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.address}
+                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                placeholder="Ej. Oficina 203, Edificio X"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Nombre Red WiFi</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.wifi_ssid}
+                                                onChange={(e) => setFormData({ ...formData, wifi_ssid: e.target.value })}
+                                                placeholder="MiLocal_Guest"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Contraseña WiFi</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.wifi_password}
+                                                onChange={(e) => setFormData({ ...formData, wifi_password: e.target.value })}
+                                                placeholder="Opcional"
+                                            />
+                                        </div>
+                                        <div className="col-span-full form-group">
+                                            <label className="text-[10px] font-black text-primary uppercase mb-1 block italic">Texto Personalizado Botón de Oferta (Hero)</label>
+                                            <input
+                                                className="w-full border-2 border-primary/20 rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.hero_button_text}
+                                                onChange={(e) => setFormData({ ...formData, hero_button_text: e.target.value })}
+                                                placeholder="Ej. ACCEDE A NUESTRO INTERNET o DIA DE LA MUJER"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 4. ENLACES Y REDES (Paso 2 de /registro) */}
+                                <div className="col-span-full border-b pb-4 mb-4">
+                                    <h4 className="text-sm font-black text-primary uppercase mb-4 flex items-center gap-2 italic">
+                                        <span className="w-1.5 h-4 bg-primary rounded-full"></span>
+                                        4. Enlaces y Redes
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Sitio Web</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.web}
+                                                onChange={(e) => setFormData({ ...formData, web: e.target.value })}
+                                                placeholder="www.tuempresa.com"
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Google Business / Maps</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.google_business}
+                                                onChange={(e) => setFormData({ ...formData, google_business: e.target.value })}
+                                                placeholder="https://maps.app.goo.gl/..."
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Instagram (Link)</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
                                                 value={formData.instagram}
                                                 onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
-                                                placeholder="usuario"
+                                                placeholder="https://instagram.com/..."
                                             />
                                         </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">TikTok (Usuario)</label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-2.5 text-gray-400 font-bold">@</span>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">TikTok (Link)</label>
                                             <input
-                                                className="w-full border rounded-lg p-2 pl-7 font-medium"
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
                                                 value={formData.tiktok}
                                                 onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
-                                                placeholder="usuario"
+                                                placeholder="https://tiktok.com/@..."
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Facebook (Link)</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.facebook}
+                                                onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">LinkedIn (Link)</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.linkedin}
+                                                onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">YouTube (Canal)</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.youtube}
+                                                onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">X / Twitter (Link)</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.x}
+                                                onChange={(e) => setFormData({ ...formData, x: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="col-span-full form-group">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">🍽️ Menú Digital (Link)</label>
+                                            <input
+                                                className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
+                                                value={formData.menu_digital}
+                                                onChange={(e) => setFormData({ ...formData, menu_digital: e.target.value })}
                                             />
                                         </div>
                                     </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Facebook (Link)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.facebook}
-                                            onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                                            placeholder="https://facebook.com/..."
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">LinkedIn (Link)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.linkedin}
-                                            onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-                                            placeholder="https://linkedin.com/in/..."
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">YouTube (Canal)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.youtube}
-                                            onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
-                                            placeholder="https://youtube.com/..."
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">X / Twitter (Link)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.x}
-                                            onChange={(e) => setFormData({ ...formData, x: e.target.value })}
-                                            placeholder="https://x.com/..."
-                                        />
-                                    </div>
-                                    <div className="col-span-full form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">🍽️ Menú Digital (Link)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.menu_digital}
-                                            onChange={(e) => setFormData({ ...formData, menu_digital: e.target.value })}
-                                            placeholder="https://menu.turestaurante.com"
-                                        />
-                                    </div>
+                                </div>
 
-                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
-                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
-                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
-                                            Oferta
-                                        </h4>
-                                    </div>
-                                    <div className="col-span-full form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Productos / Servicios</label>
-                                        <textarea
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            rows={2}
-                                            value={formData.products}
-                                            onChange={(e) => setFormData({ ...formData, products: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
-                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
-                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
-                                            Oferta (Hero)
-                                        </h4>
-                                    </div>
-                                    <div className="col-span-full form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Texto del Botón Hero (Oferta)</label>
-                                        <input
-                                            className="w-full border rounded-lg p-2 font-medium"
-                                            value={formData.hero_button_text}
-                                            onChange={(e) => setFormData({ ...formData, hero_button_text: e.target.value })}
-                                            placeholder="Ej. ACCEDE A NUESTRO INTERNET o DIA DE LA MUJER"
-                                        />
-                                        <p className="text-[10px] text-gray-400 mt-1 uppercase font-bold text-center">Si se deja vacío, mostrará "ACCEDE A NUESTRO INTERNET" (si hay WiFi) o "VER PERFIL".</p>
-                                    </div>
-
-                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
-                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
-                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
-                                            Diseño Premium (Imágenes)
-                                        </h4>
-                                    </div>
+                                {/* 5. SEO (Paso 2 de /registro) */}
+                                <div className="col-span-full border-b pb-4 mb-4">
+                                    <h4 className="text-sm font-black text-primary uppercase mb-4 flex items-center gap-2 italic">
+                                        <span className="w-1.5 h-4 bg-primary rounded-full"></span>
+                                        5. SEO y Etiquetas
+                                    </h4>
                                     <div className="form-group">
-                                        <label className="text-[10px] font-black text-primary uppercase mb-2 block">Imagen de Portada (PC)</label>
-                                        <div className="aspect-video bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group relative">
-                                            {formData.portada_desktop ? (
-                                                <img src={formData.portada_desktop} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="flex flex-col items-center text-gray-400 gap-1">
-                                                    <Loader2 size={24} className="opacity-20" />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest">Sin imagen</span>
-                                                </div>
-                                            )}
-                                            <label htmlFor="edit-portada-desktop" className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10">
-                                                <Edit size={20} className="text-white" />
-                                            </label>
-                                            <input 
-                                                id="edit-portada-desktop"
-                                                type="file" 
-                                                className="hidden" 
-                                                accept="image/*" 
-                                                onChange={async (e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (!file) return;
-                                                    const fd = new FormData();
-                                                    fd.append('file', file);
-                                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                    if (res.ok) {
-                                                        const { url } = await res.json();
-                                                        setFormData({ ...formData, portada_desktop: url });
-                                                    }
-                                                }} 
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="form-group">
-                                        <label className="text-[10px] font-black text-primary uppercase mb-2 block">Imagen de Portada (Móvil)</label>
-                                        <div className="aspect-[9/16] h-32 mx-auto bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden group relative">
-                                            {formData.portada_movil ? (
-                                                <img src={formData.portada_movil} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="flex flex-col items-center text-gray-400 gap-1">
-                                                    <Loader2 size={24} className="opacity-20" />
-                                                    <span className="text-[9px] font-black uppercase tracking-widest">Sin imagen</span>
-                                                </div>
-                                            )}
-                                            <label htmlFor="edit-portada-movil" className="absolute inset-0 bg-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer z-10">
-                                                <Edit size={20} className="text-white" />
-                                            </label>
-                                            <input 
-                                                id="edit-portada-movil"
-                                                type="file" 
-                                                className="hidden" 
-                                                accept="image/*" 
-                                                onChange={async (e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (!file) return;
-                                                    const fd = new FormData();
-                                                    fd.append('file', file);
-                                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                    if (res.ok) {
-                                                        const { url } = await res.json();
-                                                        setFormData({ ...formData, portada_movil: url });
-                                                    }
-                                                }} 
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="col-span-full border-t pt-4 mt-2 mb-2">
-                                        <h4 className="text-sm font-black text-navy uppercase mb-3 flex items-center gap-2">
-                                            <span className="w-1 h-4 bg-primary rounded-full"></span>
-                                            Categorías y Etiquetas
-                                        </h4>
-                                    </div>
-                                    <div className="col-span-full form-group">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Categorías / Etiquetas</label>
+                                        <label className="text-[10px] font-black text-gray-400 uppercase mb-1 block">Etiquetas de Búsqueda (Separadas por comas)</label>
                                         <input
-                                            className="w-full border rounded-lg p-2 font-medium"
+                                            className="w-full border rounded-xl p-2.5 font-bold text-navy focus:border-primary outline-none transition-all text-sm"
                                             value={formData.categories}
                                             onChange={(e) => setFormData({ ...formData, categories: e.target.value })}
-                                            placeholder="Ej. Marketing, Ventas, Consultoría (Separado por comas)"
+                                            placeholder="ej. goteras, fugas, tuberías"
                                         />
+                                    </div>
+                                </div>
+
+                                {/* 6. IDENTIDAD VISUAL (Paso 3 de /registro) */}
+                                <div className="col-span-full mb-6">
+                                    <h4 className="text-sm font-black text-primary uppercase mb-4 flex items-center gap-2 italic">
+                                        <span className="w-1.5 h-4 bg-primary rounded-full"></span>
+                                        6. Foto de Perfil
+                                    </h4>
+                                    <div className="flex items-center gap-6">
+                                        <div className="relative group w-24 h-24 shrink-0">
+                                            <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-md">
+                                                {formData.foto_url || userData.foto_url ? (
+                                                    <img
+                                                        src={formData.foto_url || userData.foto_url}
+                                                        alt="Profile"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-2xl">?</div>
+                                                )}
+                                            </div>
+                                            <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
+                                                    <Edit size={20} className="text-white" />
+                                                </div>
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            const reader = new FileReader();
+                                                            reader.onloadend = () => {
+                                                                setFormData({ ...formData, foto_url: reader.result as string });
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
+                                        </div>
+                                        <p className="text-xs text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
+                                            Sube una foto clara de ti o de tu negocio. <br/>
+                                            <span className="text-primary opacity-60">Se actualizará en tu tarjeta digital y vCard.</span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>

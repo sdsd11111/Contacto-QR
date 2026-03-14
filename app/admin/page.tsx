@@ -891,10 +891,28 @@ export default function AdminDashboard() {
 
             if (!res.ok) throw new Error(data.error || 'Error enviando correo');
 
-            alert("✅ Correo enviado con éxito");
+            if (res.ok) {
+                alert("✅ Correo enviado con éxito");
+                
+                // Actualizar estado a entregado Y marcar como enviado automáticamente
+                const adminKey = getAdminKey();
+                await fetch('/api/admin/registros', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-key': adminKey
+                    },
+                    body: JSON.stringify({ 
+                        id: registro.id, 
+                        status: 'entregado',
+                        auto_email_sent: 1 
+                    })
+                });
 
-            if (registro.status !== 'entregado') {
-                await updateStatus(registro.id, 'entregado');
+                // Actualizar estado local
+                setRegistros(prev => prev.map(r => 
+                    r.id === registro.id ? { ...r, status: 'entregado', auto_email_sent: 1 } : r
+                ));
             }
 
         } catch (error: any) {

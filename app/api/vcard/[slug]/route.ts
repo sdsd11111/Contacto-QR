@@ -165,10 +165,18 @@ export async function GET(
         // Procesar foto
         if (user.foto_url) {
             try {
+                // Use sharp to convert to JPEG and resize for compatibility
                 const photoResp = await fetch(user.foto_url, { next: { revalidate: 3600 } });
                 if (photoResp.ok) {
-                    const buffer = await photoResp.arrayBuffer();
-                    const b64 = Buffer.from(buffer).toString('base64');
+                    const originalBuffer = await photoResp.arrayBuffer();
+                    const sharp = require('sharp');
+                    
+                    const processedBuffer = await sharp(Buffer.from(originalBuffer))
+                        .resize(400, 400, { fit: 'inside', withoutEnlargement: true })
+                        .jpeg({ quality: 80 })
+                        .toBuffer();
+
+                    const b64 = processedBuffer.toString('base64');
 
                     // Fold base64 string every 74 characters to be safe for vCard specification
                     const foldedB64 = b64.match(/.{1,74}/g)?.join('\r\n ') || b64;
@@ -176,6 +184,18 @@ export async function GET(
                 }
             } catch (e) {
                 console.error("Error inline photo:", e);
+                // Fallback to original logic if sharp fails
+                try {
+                    const photoResp = await fetch(user.foto_url);
+                    if (photoResp.ok) {
+                        const buffer = await photoResp.arrayBuffer();
+                        const b64 = Buffer.from(buffer).toString('base64');
+                        const foldedB64 = b64.match(/.{1,74}/g)?.join('\r\n ') || b64;
+                        vcardLines.push(`PHOTO;ENCODING=b;TYPE=JPEG:${foldedB64}`);
+                    }
+                } catch (innerE) {
+                    console.error("Critical fallback photo error:", innerE);
+                }
             }
         }
 
