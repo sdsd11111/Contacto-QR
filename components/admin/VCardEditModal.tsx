@@ -196,7 +196,14 @@ export default function VCardEditModal({
                                     <input
                                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all"
                                         value={editingRegistro.nombre || ''}
-                                        onChange={e => setEditingRegistro({ ...editingRegistro, nombre: e.target.value })}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            const updates: any = { nombre: val };
+                                            if (editingRegistro.tipo_perfil === 'negocio') {
+                                                updates.nombre_negocio = val;
+                                            }
+                                            setEditingRegistro({ ...editingRegistro, ...updates });
+                                        }}
                                     />
                                 </div>
                                 <div>
@@ -274,7 +281,7 @@ export default function VCardEditModal({
                                             <input
                                                 className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
                                                 value={editingRegistro.nombre_negocio || ''}
-                                                onChange={e => setEditingRegistro({ ...editingRegistro, nombre_negocio: e.target.value })}
+                                                onChange={e => setEditingRegistro({ ...editingRegistro, nombre_negocio: e.target.value, nombre: e.target.value })}
                                             />
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">

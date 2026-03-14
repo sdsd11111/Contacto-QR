@@ -448,9 +448,13 @@ export default function AdminDashboard() {
         let recalculatedNombre = editingRegistro.nombre;
         if (editingRegistro.tipo_perfil === 'negocio') {
             recalculatedNombre = editingRegistro.nombre_negocio || editingRegistro.nombre;
+            // Asegurar que ambos campos estén sincronizados antes de guardar
+            editingRegistro.nombre = recalculatedNombre;
+            editingRegistro.nombre_negocio = recalculatedNombre;
         } else if (editingRegistro.tipo_perfil === 'persona') {
             const combined = `${editingRegistro.nombres || ''} ${editingRegistro.apellidos || ''}`.trim();
             if (combined) recalculatedNombre = combined;
+            editingRegistro.nombre = recalculatedNombre;
         }
 
         try {
