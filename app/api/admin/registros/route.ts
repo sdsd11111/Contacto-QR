@@ -23,7 +23,14 @@ export async function GET(req: NextRequest) {
     try {
         let query = `
             SELECT 
-                r.*, 
+                r.id, r.slug, r.nombre, r.nombre_negocio, r.empresa, r.email, r.whatsapp, 
+                r.status, r.plan, r.created_at, r.foto_url, r.commission_status, r.seller_id, 
+                r.tipo_perfil, r.profesion, r.bio, r.direccion, r.web, r.instagram, r.linkedin, 
+                r.facebook, r.tiktok, r.productos_servicios, r.etiquetas, r.youtube, r.x, 
+                r.menu_digital, r.nombres, r.apellidos, r.contacto_nombre, r.contacto_apellido, 
+                r.portada_desktop, r.portada_movil, r.wifi_ssid, r.wifi_password, 
+                r.hero_button_text, r.leader_paid_at,
+                -- Explicitly omitting: catalogo_json, galeria_urls to save massive bandwidth
                 s.nombre as sold_by_name, 
                 s.codigo as sold_by_code,
                 s.parent_id,

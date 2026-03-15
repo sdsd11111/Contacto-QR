@@ -429,15 +429,31 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleEdit = (registro: any) => {
-        // galeria_urls puede venir como string JSON desde MySQL, hay que parsearlo
-        let galeriaUrls = registro.galeria_urls;
-        if (typeof galeriaUrls === 'string') {
-            try { galeriaUrls = JSON.parse(galeriaUrls); } catch { galeriaUrls = []; }
+    const handleEdit = async (registro: any) => {
+        setIsSaving(true);
+        try {
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const res = await fetch(`/api/admin/registros/single?id=${registro.id}`, {
+                headers: { 'x-admin-key': adminKey }
+            });
+            const data = await res.json();
+            if (res.ok && data.data) {
+                const fullRegistro = data.data;
+                let galeriaUrls = fullRegistro.galeria_urls;
+                if (typeof galeriaUrls === 'string') {
+                    try { galeriaUrls = JSON.parse(galeriaUrls); } catch { galeriaUrls = []; }
+                }
+                if (!Array.isArray(galeriaUrls)) galeriaUrls = [];
+                setEditingRegistro({ ...fullRegistro, galeria_urls: galeriaUrls });
+                setIsEditModalOpen(true);
+            } else {
+                alert("Error al obtener datos completos del registro.");
+            }
+        } catch (e) {
+            alert("Error de red.");
+        } finally {
+            setIsSaving(false);
         }
-        if (!Array.isArray(galeriaUrls)) galeriaUrls = [];
-        setEditingRegistro({ ...registro, galeria_urls: galeriaUrls });
-        setIsEditModalOpen(true);
     };
 
     const handleSaveEdit = async () => {
@@ -665,31 +681,56 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleCatalogSetup = (registro: any) => {
-        const catItems = typeof registro.catalogo_json === 'string' ? JSON.parse(registro.catalogo_json || '[]') : (registro.catalogo_json || []);
-        
-        // Si el catálogo está vacío, SIEMPRE abrir el modal de setup rápido
-        if (catItems.length === 0) {
-            setPromptRegistro(registro);
-            setSetupTarget('catalog');
-            setIsHeroPromptOpen(true);
-            return;
-        }
-
-        // Si ya tiene catálogo pero faltan imágenes hero, pedir eso
-        if (isPlaceholderUrl(registro.portada_desktop) || isPlaceholderUrl(registro.portada_movil)) {
-            setPromptRegistro(registro);
-            setSetupTarget('catalog');
-            setIsHeroPromptOpen(true);
-        } else {
-            window.open(`/catalog/${registro.slug || registro.id}`, '_blank');
+    const handleCatalogSetup = async (registro: any) => {
+        setIsSaving(true);
+        try {
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const res = await fetch(`/api/admin/registros/single?id=${registro.id}`, { headers: { 'x-admin-key': adminKey } });
+            const data = await res.json();
+            if (res.ok && data.data) {
+                const fullRegistro = data.data;
+                const catItems = typeof fullRegistro.catalogo_json === 'string' ? JSON.parse(fullRegistro.catalogo_json || '[]') : (fullRegistro.catalogo_json || []);
+                
+                if (catItems.length === 0) {
+                    setPromptRegistro(fullRegistro);
+                    setSetupTarget('catalog');
+                    setIsHeroPromptOpen(true);
+                } else if (isPlaceholderUrl(fullRegistro.portada_desktop) || isPlaceholderUrl(fullRegistro.portada_movil)) {
+                    setPromptRegistro(fullRegistro);
+                    setSetupTarget('catalog');
+                    setIsHeroPromptOpen(true);
+                } else {
+                    window.open(`/catalog/${fullRegistro.slug || fullRegistro.id}`, '_blank');
+                }
+            } else {
+                alert("Error al cargar los datos del catálogo.");
+            }
+        } catch (e) {
+            alert("Error de red.");
+        } finally {
+            setIsSaving(false);
         }
     };
 
-    const openCatalogManager = (registro: any) => {
-        setCatalogRegistro(registro);
-        setCatalogItems(typeof registro.catalogo_json === 'string' ? JSON.parse(registro.catalogo_json || '[]') : (registro.catalogo_json || []));
-        setIsCatalogManagerOpen(true);
+    const openCatalogManager = async (registro: any) => {
+        setIsSaving(true);
+        try {
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const res = await fetch(`/api/admin/registros/single?id=${registro.id}`, { headers: { 'x-admin-key': adminKey } });
+            const data = await res.json();
+            if (res.ok && data.data) {
+                const fullRegistro = data.data;
+                setCatalogRegistro(fullRegistro);
+                setCatalogItems(typeof fullRegistro.catalogo_json === 'string' ? JSON.parse(fullRegistro.catalogo_json || '[]') : (fullRegistro.catalogo_json || []));
+                setIsCatalogManagerOpen(true);
+            } else {
+                alert("Error al cargar los datos." );
+            }
+        } catch (e) {
+            alert("Error de conexión.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleAddCatalogItem = async () => {

@@ -86,7 +86,11 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                 className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6"
             >
                 <AnimatePresence mode="popLayout">
-                    {filteredItems.map((item) => (
+                    {filteredItems.map((item) => {
+                        const isPopular = item.titulo.toLowerCase().includes('equipo');
+                        const isPremium = item.titulo.toLowerCase().includes('master');
+                        
+                        return (
                         <motion.div
                             key={item.id}
                             layout
@@ -94,9 +98,34 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
                             transition={{ duration: 0.3 }}
-                            className="group relative aspect-square rounded-2xl md:rounded-[32px] overflow-hidden cursor-pointer border border-white/5 hover:border-[var(--theme-primary)]/50 shadow-lg hover:shadow-[var(--theme-primary)]/20"
+                            className={cn(
+                                "group relative aspect-square rounded-2xl md:rounded-[32px] overflow-hidden cursor-pointer border hover:border-[var(--theme-primary)]/50 hover:shadow-[0_10px_30px_-10px_var(--theme-primary)] transition-all duration-300",
+                                isPopular ? "border-[var(--theme-primary)]/40 shadow-[0_0_20px_rgba(246,103,57,0.15)]" : "border-white/10"
+                            )}
                             onClick={() => setSelectedItem(item)}
                         >
+                            {/* Shine effect */}
+                            <div className="absolute inset-0 z-20 group-hover:translate-x-[200%] -translate-x-[150%] bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 ease-in-out pointer-events-none" />
+                            
+                            {/* Badges */}
+                            <div className="absolute top-3 left-3 md:top-4 md:left-4 z-20 flex flex-col gap-1.5">
+                                {isPopular && (
+                                    <span className="inline-flex items-center gap-1 w-fit px-2.5 py-1 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider rounded-full shadow-lg">
+                                        ⭐ Más Popular
+                                    </span>
+                                )}
+                                {isPremium && (
+                                    <span className="inline-flex items-center gap-1 w-fit px-2.5 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[9px] md:text-[10px] font-black uppercase tracking-wider rounded-full shadow-lg">
+                                        👑 Premium
+                                    </span>
+                                )}
+                                {isPopular && (
+                                    <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 bg-black/60 backdrop-blur-md text-[#25D366] border border-[#25D366]/30 text-[8px] md:text-[9px] font-bold uppercase tracking-widest rounded-full">
+                                        Ahorra 20%
+                                    </span>
+                                )}
+                            </div>
+
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={item.url || 'https://via.placeholder.com/600x600?text=Cargando...'}
@@ -104,18 +133,18 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                             />
                             {/* Overlay Gradient */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 md:p-6">
-                                <h3 className="text-white font-black text-sm md:text-lg uppercase tracking-wide truncate">
+                            <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/95 via-black/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 md:p-6 pb-5 md:pb-8">
+                                <h3 className="text-white font-black text-sm md:text-xl uppercase tracking-wide leading-tight mb-1 group-hover:text-[var(--theme-primary)] transition-colors">
                                     {item.titulo}
                                 </h3>
                                 {item.precio && (
-                                    <p className="text-[var(--theme-primary)] font-black text-xs md:text-sm mt-1">
+                                    <p className="inline-block w-fit px-3 py-1 bg-[var(--theme-primary)]/20 border border-[var(--theme-primary)]/50 rounded-lg text-[var(--theme-primary)] font-black text-xs md:text-sm mt-1 backdrop-blur-sm shadow-inner">
                                         {item.precio}
                                     </p>
                                 )}
                             </div>
                         </motion.div>
-                    ))}
+                    )})}
                 </AnimatePresence>
             </motion.div>
 
@@ -155,23 +184,43 @@ export default function CatalogGallery({ data, whatsapp }: CatalogGalleryProps) 
                             </div>
 
                             {/* Details Section */}
-                            <div className="w-full md:w-2/5 p-8 md:p-12 flex flex-col justify-center border-t md:border-t-0 md:border-l border-white/5 bg-gradient-to-br from-white/5 to-transparent">
-                                <div className="inline-block px-3 py-1 mb-6 rounded-full bg-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest w-fit">
-                                    {selectedItem.categoria}
-                                </div>
-                                
-                                <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight mb-4">
-                                    {selectedItem.titulo}
-                                </h2>
-                                
-                                {selectedItem.precio && (
-                                    <div className="flex items-center gap-2 mb-8">
-                                        <div className="w-10 h-10 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)]">
-                                            <DollarSign size={20} />
+                            <div className="w-full md:w-2/5 p-8 md:p-12 flex flex-col justify-center border-t md:border-t-0 md:border-l border-white/5 bg-gradient-to-br from-[#111322] to-[#0a0b14] relative">
+                                {/* Decorative Glow */}
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--theme-primary)]/10 rounded-full blur-[80px] pointer-events-none" />
+
+                                <div className="relative z-10">
+                                    <div className="flex flex-wrap items-center gap-2 mb-6">
+                                        <div className="inline-block px-3 py-1 rounded-full bg-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest w-fit border border-white/5">
+                                            {selectedItem.categoria}
                                         </div>
-                                        <span className="text-xl md:text-2xl font-black text-[var(--theme-primary)]">{selectedItem.precio}</span>
+                                        {selectedItem.titulo.toLowerCase().includes('equipo') && (
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 text-yellow-400 text-[10px] font-black uppercase tracking-widest rounded-full">
+                                                ⭐ Más Popular
+                                            </div>
+                                        )}
+                                        {selectedItem.titulo.toLowerCase().includes('master') && (
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-500/30 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-full">
+                                                👑 Premium
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                    
+                                    <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight mb-4 leading-none">
+                                        {selectedItem.titulo}
+                                    </h2>
+                                    
+                                    {selectedItem.precio && (
+                                        <div className="flex items-center gap-4 mb-8 bg-white/5 w-fit p-3 pr-6 rounded-2xl border border-white/10 backdrop-blur-md">
+                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-primary)]/50 flex items-center justify-center text-white shadow-lg shadow-[var(--theme-primary)]/20">
+                                                <DollarSign size={24} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] text-white/50 font-black uppercase tracking-widest mb-0.5">Inversión</span>
+                                                <span className="text-2xl md:text-3xl font-black text-white leading-none">{selectedItem.precio}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
 
                                 {selectedItem.descripcion && (
                                     <div>

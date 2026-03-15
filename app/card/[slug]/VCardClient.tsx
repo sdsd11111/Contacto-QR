@@ -17,7 +17,8 @@ import {
     Clock,
     ShieldAlert,
     Settings,
-    ChevronDown
+    ChevronDown,
+    MessageSquare
 } from "lucide-react";
 import VCardEditModal from '@/components/card/VCardEditModal';
 import CatalogGallery from '@/components/card/CatalogGallery';
@@ -540,9 +541,23 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                             <h1 className="text-2xl md:text-3xl lg:text-5xl xl:text-5xl font-black tracking-tighter leading-[1.05] mb-4 uppercase italic text-white break-words drop-shadow-md text-center">
                                                 {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
                                             </h1>
-                                            <p className="text-sm md:text-lg lg:text-xl font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] mb-8 drop-shadow-sm break-words opacity-90 text-center">
+                                            <p className="text-sm md:text-lg lg:text-xl font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] mb-4 drop-shadow-sm break-words opacity-90 text-center">
                                                 {data.profesion || "Profesional Estratégico"}
                                             </p>
+                                            
+                                            {data.tipo_perfil === 'negocio' && (data.contacto_nombre || data.contacto_apellido) && (
+                                                <div className="mb-6 flex flex-col items-center">
+                                                    <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)]">
+                                                            <User size={16} />
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Atención Directa</p>
+                                                            <p className="text-sm font-bold text-white mb-0 leading-none">{data.contacto_nombre} {data.contacto_apellido}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -753,21 +768,50 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                     className="mt-12 md:mt-16 pt-10 border-t border-white/10 flex flex-col gap-10"
                                 >
                                     {data.bio && (
-                                        <div>
-                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-4 flex items-center gap-2">
-                                                <Zap size={14} /> SOBRE MÍ
+                                        <div className="bg-gradient-to-br from-white/[0.05] to-transparent p-6 md:p-8 rounded-[32px] border border-white/10 relative overflow-hidden group">
+                                            {/* Decorative background glow */}
+                                            <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--theme-primary)]/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-opacity group-hover:opacity-100 opacity-50 pointer-events-none" />
+                                            
+                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-[var(--theme-primary)] mb-5 flex items-center gap-3 relative z-10">
+                                                <span className="w-6 h-6 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
+                                                    <User size={12} className="text-[var(--theme-primary)]" />
+                                                </span>
+                                                PERFIL PROFESIONAL
                                             </h4>
-                                            <p className="text-sm md:text-lg font-medium leading-relaxed text-white/80 italic break-words max-w-4xl whitespace-pre-wrap">
-                                                "{data.bio}"
-                                            </p>
+                                            
+                                            <div className="relative z-10">
+                                                <p className="text-sm md:text-base font-medium leading-relaxed text-white/90 break-words max-w-4xl whitespace-pre-wrap relative pl-6">
+                                                    <span className="absolute left-0 top-0 text-4xl text-[var(--theme-primary)]/30 font-serif leading-none -mt-2">"</span>
+                                                    {data.bio}
+                                                    <span className="text-[var(--theme-primary)]/30 text-4xl font-serif leading-none ml-1 relative top-2">"</span>
+                                                </p>
+                                            </div>
+                                            
+                                            {data.etiquetas && (
+                                                <div className="mt-8 flex flex-wrap gap-2 relative z-10">
+                                                    {data.etiquetas.replace(/^Etiquetas Especializadas:\s*/i, '').split(',').filter((t: string) => t.trim()).slice(0, 5).map((tag: string, i: number) => (
+                                                        <span key={i} className="px-3.5 py-1.5 bg-white/5 hover:bg-[var(--theme-primary)]/20 border border-white/10 hover:border-[var(--theme-primary)]/50 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-white/70 hover:text-white transition-all cursor-default">
+                                                            {tag.trim()}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
                                     {data.productos_servicios && (!showCatalog || !data.catalogo_json) && (
-                                        <div>
-                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-4 flex items-center gap-2">
-                                                <Briefcase size={14} /> PRODUCTOS Y SERVICIOS
-                                            </h4>
+                                        <div className="mt-4">
+                                            <div className="flex items-center justify-between mb-6">
+                                                <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[var(--theme-primary)] flex items-center gap-3">
+                                                    <span className="w-6 h-6 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
+                                                        <Briefcase size={12} className="text-[var(--theme-primary)]" />
+                                                    </span>
+                                                    SOLUCIONES DESTACADAS
+                                                </h4>
+                                                <span className="hidden md:inline-flex px-3 py-1 bg-white/5 rounded-full text-[9px] font-black uppercase tracking-widest text-white/40 border border-white/5">
+                                                    Especialidad
+                                                </span>
+                                            </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm md:text-base font-medium leading-relaxed text-white/80 max-w-4xl">
                                                 {(() => {
                                                     const allProducts = data.productos_servicios
@@ -812,11 +856,30 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                                                                 const hasExistingEmoji = /^(\p{Emoji}|\u200d)+/u.test(line);
                                                                 
                                                                 return (
-                                                                    <div key={index} className="flex gap-3 items-center bg-white/5 p-3 rounded-2xl border border-white/5 hover:border-white/20 transition-colors">
-                                                                        <span className="shrink-0 text-xl w-8 h-8 rounded-full bg-black/20 flex items-center justify-center">
-                                                                            {hasExistingEmoji ? '' : emoji}
-                                                                        </span>
-                                                                        <span className="capitalize">{hasExistingEmoji ? line : line.replace(/^[-•*]\s*/, '')}</span>
+                                                                    <div key={index} className="group relative flex flex-col gap-3 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-4 md:p-5 rounded-[24px] border border-white/10 hover:border-[var(--theme-primary)]/50 transition-all duration-300 hover:shadow-[0_10px_30px_-10px_var(--theme-primary)] hover:-translate-y-1 overflow-hidden">
+                                                                        {/* Shine effect */}
+                                                                        <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out pointer-events-none" />
+                                                                        
+                                                                        <div className="flex items-center gap-4 z-10 w-full">
+                                                                            <span className="shrink-0 text-xl md:text-2xl w-10 h-10 md:w-12 md:h-12 rounded-[16px] bg-gradient-to-br from-[var(--theme-primary)]/20 to-white/5 border border-[var(--theme-primary)]/20 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300 text-[var(--theme-primary)]">
+                                                                                {hasExistingEmoji ? '' : emoji}
+                                                                            </span>
+                                                                            <div className="flex flex-col flex-1 justify-center">
+                                                                                <span className="capitalize font-bold text-sm md:text-base text-white/90 group-hover:text-white transition-colors leading-tight">
+                                                                                    {hasExistingEmoji ? line : line.replace(/^[-•*]\s*/, '')}
+                                                                                </span>
+                                                                                {index === 0 && (
+                                                                                    <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 mt-1.5 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 text-yellow-400 text-[9px] font-black uppercase tracking-wider rounded-full border border-yellow-500/30 shadow-[0_0_10px_rgba(234,179,8,0.2)]">
+                                                                                        ⭐ Más Popular
+                                                                                    </span>
+                                                                                )}
+                                                                                {index === 1 && (
+                                                                                    <span className="inline-flex items-center gap-1 w-fit px-2 py-0.5 mt-1.5 bg-gradient-to-r from-[#25D366]/20 to-[#25D366]/10 text-[#25D366] text-[9px] font-black uppercase tracking-wider rounded-full border border-[#25D366]/30">
+                                                                                        ⚡ Alta Demanda
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
                                                                 );
                                                             })}
@@ -989,6 +1052,31 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                     </div>
                 </footer>
             </main>
+
+            {/* Floating Quick Action Bar (Mobile Only) */}
+            <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-sm">
+                <div className="bg-black/80 backdrop-blur-2xl border border-white/20 rounded-[28px] p-2 flex items-center justify-between shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                    <a href={`tel:${data.whatsapp}`} className="flex-1 flex flex-col items-center gap-1 py-1 text-white/60 hover:text-white transition-colors">
+                        <Phone size={18} />
+                        <span className="text-[7px] font-black uppercase tracking-widest">Llamar</span>
+                    </a>
+                    <a 
+                        href={`https://wa.me/${data.whatsapp.replace(/\+/g, '').replace(/\s/g, '')}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="bg-[var(--theme-primary)] w-14 h-14 rounded-2xl flex items-center justify-center text-[var(--theme-text-on-primary)] shadow-lg shadow-[var(--theme-primary)]/30 -mt-8 border-4 border-[var(--theme-bg)] hover:scale-110 active:scale-95 transition-all"
+                    >
+                        <MessageSquare size={24} />
+                    </a>
+                    <button 
+                        onClick={downloadVCF} 
+                        className="flex-1 flex flex-col items-center gap-1 py-1 text-white/60 hover:text-white transition-colors"
+                    >
+                        <Download size={18} />
+                        <span className="text-[7px] font-black uppercase tracking-widest">Contacto</span>
+                    </button>
+                </div>
+            </div>
 
         <VCardEditModal 
             isOpen={isEditModalOpen}

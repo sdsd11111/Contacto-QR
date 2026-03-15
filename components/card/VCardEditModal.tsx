@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2 } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
@@ -26,11 +26,20 @@ export default function VCardEditModal({
     const [editCode, setEditCode] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const [usesRemaining, setUsesRemaining] = useState(0);
     const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo' | 'code' | 'success' | null>(initialSection);
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
+
+    // Load code from localStorage on mount
+    useEffect(() => {
+        const savedCode = localStorage.getItem('rya_edit_code_biz');
+        if (savedCode) {
+            setEditCode(savedCode);
+        }
+    }, []);
 
     const [formData, setFormData] = useState({
         tipo_perfil: 'persona' as 'persona' | 'negocio',
@@ -73,6 +82,7 @@ export default function VCardEditModal({
         hero_step2_text: '',
         hero_step3_title: 'Conéctate a la Red',
         hero_step3_text: '',
+        etiquetas: '',
         catalogo_json: { categories: [], products: [] } as { categories: string[], products: any[] }
     });
 
@@ -91,6 +101,7 @@ export default function VCardEditModal({
             const data = await res.json();
 
             if (res.ok) {
+                localStorage.setItem('rya_edit_code_biz', cleanedCode);
                 setUserData(data.data);
                 setUsesRemaining(data.usesRemaining);
                 setFormData({
@@ -120,7 +131,7 @@ export default function VCardEditModal({
                     x: data.data.x || '',
                     wifi_ssid: data.data.wifi_ssid || '',
                     wifi_password: data.data.wifi_password || '',
-                    foto_url: '',
+                    foto_url: data.data.foto_url || '',
                     portada_desktop: data.data.portada_desktop || '', 
                     portada_movil: data.data.portada_movil || '',
                     hero_button_text: data.data.hero_button_text || '',
@@ -134,6 +145,7 @@ export default function VCardEditModal({
                     hero_step2_text: data.data.hero_step2_text || '',
                     hero_step3_title: data.data.hero_step3_title || 'Conéctate a la Red',
                     hero_step3_text: data.data.hero_step3_text || '',
+                    etiquetas: data.data.etiquetas || '', // Preserve tags
                     catalogo_json: (() => {
                         const raw = data.data.catalogo_json ? (typeof data.data.catalogo_json === 'string' ? JSON.parse(data.data.catalogo_json) : data.data.catalogo_json) : null;
                         if (!raw) return { categories: [], products: [] };
@@ -192,7 +204,7 @@ export default function VCardEditModal({
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, field: 'foto_url' | 'portada_desktop' | 'portada_movil') => {
         const file = e.target.files?.[0];
         if (!file) return;
-        setLoading(true);
+        setUploadingImage(true);
         const fd = new FormData();
         fd.append('file', file);
         try {
@@ -200,11 +212,14 @@ export default function VCardEditModal({
             if (res.ok) {
                 const { url } = await res.json();
                 setFormData({ ...formData, [field]: url });
+            } else {
+                alert('Error al procesar la imagen');
             }
         } catch (err) {
             console.error('Error uploading image:', err);
+            alert('Error de conexión al subir imagen');
         } finally {
-            setLoading(false);
+            setUploadingImage(false);
         }
     };
 
@@ -292,6 +307,11 @@ export default function VCardEditModal({
                                     {loading ? <Loader2 className="animate-spin" /> : <CheckCircle size={20} />}
                                     Validar Acceso
                                 </button>
+                                {error && error.includes('RYA-') && (
+                                    <p className="mt-4 text-[10px] text-gray-400 font-bold uppercase italic border-t pt-4 w-full max-w-xs">
+                                        Tip: Revisa tu correo de bienvenida para el código de edición.
+                                    </p>
+                                )}
                             </div>
                         )}
 
@@ -346,12 +366,15 @@ export default function VCardEditModal({
                                                                         <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl">?</div>
                                                                     )}
                                                                 </div>
-                                                                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                                                    <Edit size={16} className="text-white" />
-                                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'foto_url')} />
-                                                                </label>
-                                                            </div>
-                                                            <div className="flex-1 space-y-3">
+                                                                 <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                                      {uploadingImage ? <Loader2 size={16} className="text-white animate-spin" /> : <Edit size={16} className="text-white" />}
+                                                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'foto_url')} disabled={uploadingImage} />
+                                                                  </label>
+                                                             </div>
+                                                             <div className="flex-1 space-y-3">
+                                                                 {uploadingImage && (
+                                                                     <p className="text-[10px] text-primary font-black animate-pulse uppercase italic">Optimizando imagen...</p>
+                                                                 )}
                                                                 <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
                                                                     {['persona', 'negocio'].map((t) => (
                                                                         <button key={t} onClick={() => setFormData({ ...formData, tipo_perfil: t as any })} className={cn("flex-1 py-1.5 rounded-md font-bold text-[10px] uppercase tracking-widest transition-all", formData.tipo_perfil === t ? "bg-white text-primary shadow-sm" : "text-gray-500")}>
@@ -384,10 +407,26 @@ export default function VCardEditModal({
                                                                 <textarea className="w-full border rounded-lg p-3 text-sm font-medium bg-gray-50" rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Cuéntales qué haces..." />
                                                             </div>
                                                             <div className="col-span-full space-y-1">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Productos y Servicios</label>
-                                                                <textarea className="w-full border rounded-lg p-3 text-sm font-medium bg-gray-50" rows={3} value={formData.products} onChange={(e) => setFormData({ ...formData, products: e.target.value })} placeholder="Lista tus servicios principales..." />
-                                                            </div>
-                                                        </div>
+                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Productos y Servicios</label>
+                                                                 <textarea className="w-full border rounded-lg p-3 text-sm font-medium bg-gray-50" rows={3} value={formData.products} onChange={(e) => setFormData({ ...formData, products: e.target.value })} placeholder="Lista tus servicios principales..." />
+                                                             </div>
+                                                             {formData.tipo_perfil === 'negocio' && (
+                                                                 <div className="col-span-full grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                                                     <div className="space-y-1">
+                                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nombres Responsable</label>
+                                                                         <input className="w-full border rounded-lg p-3 text-sm font-bold bg-white" value={formData.contacto_nombre} onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })} placeholder="Ej. Juan" />
+                                                                     </div>
+                                                                     <div className="space-y-1">
+                                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Apellidos Responsable</label>
+                                                                         <input className="w-full border rounded-lg p-3 text-sm font-bold bg-white" value={formData.contacto_apellido} onChange={(e) => setFormData({ ...formData, contacto_apellido: e.target.value })} placeholder="Ej. Perez" />
+                                                                     </div>
+                                                                 </div>
+                                                             )}
+                                                             <div className="col-span-full space-y-1">
+                                                                 <label className="text-[10px] font-black text-primary uppercase tracking-widest">Etiquetas / Tags (Separados por coma)</label>
+                                                                 <input className="w-full border rounded-lg p-3 text-sm font-bold bg-primary/5 border-primary/20" value={formData.categories} onChange={(e) => setFormData({ ...formData, categories: e.target.value })} placeholder="Ej. Parrillada, Eventos, Gourmet" />
+                                                             </div>
+                                                         </div>
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -1041,13 +1080,13 @@ export default function VCardEditModal({
                                 <X size={16} /> Cancelar
                             </button>
                             <button 
-                                onClick={handleSave}
-                                disabled={loading}
-                                className="flex-1 max-w-[300px] bg-primary text-white font-black py-3 rounded-xl hover:scale-[1.02] active:scale-100 transition-all uppercase tracking-[0.1em] text-xs flex items-center justify-center gap-3 shadow-lg shadow-primary/20 disabled:opacity-50"
-                            >
-                                {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                                Guardar Perfil
-                            </button>
+                                 onClick={handleSave}
+                                 disabled={loading || uploadingImage}
+                                 className="flex-1 max-w-[300px] bg-primary text-white font-black py-3 rounded-xl hover:scale-[1.02] active:scale-100 transition-all uppercase tracking-[0.1em] text-xs flex items-center justify-center gap-3 shadow-lg shadow-primary/20 disabled:opacity-50"
+                             >
+                                 {loading ? <Loader2 className="animate-spin" size={18} /> : (uploadingImage ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />)}
+                                 {loading ? 'Guardando...' : (uploadingImage ? 'Procesando...' : 'Guardar Perfil')}
+                             </button>
                         </div>
                     )}
                 </motion.div>
