@@ -1,0 +1,74 @@
+﻿node.exe : D:\Abel 
+paginas\Generador QR 
+contacto\Generador de vcard 
+y codigos QR\vcard-app\node_
+modules\openai\src\client.ts
+:376
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" "C:\U
+sers\Smart\AppData\Roaming\ 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (D:\Ab  
+  el paginas...c\client.t   
+ s:376:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+      throw new 
+Errors.OpenAIError(
+            ^
+
+OpenAIError: Missing 
+credentials. Please pass an 
+`apiKey`, or set the 
+`OPENAI_API_KEY` 
+environment variable.
+    at new OpenAI (D:\Abel 
+paginas\Generador QR 
+contacto\Generador de vcard 
+y codigos QR\vcard-app\node_
+modules\openai\src\client.ts
+:376:13)
+    at pool (D:\Abel 
+paginas\Generador QR 
+contacto\Generador de vcard 
+y codigos QR\vcard-app\lib\o
+penai-bot.ts:4:16)
+    at Object.<anonymous> 
+(D:\Abel paginas\Generador 
+QR contacto\Generador de 
+vcard y codigos QR\vcard-app
+\lib\openai-bot.ts:347:23)
+    at Module._compile (node
+:internal/modules/cjs/loader
+:1760:14)
+    at Object.transformer 
+(D:\Abel paginas\Generador 
+QR contacto\Generador de 
+vcard y codigos QR\vcard-app
+\node_modules\tsx\dist\regis
+ter-D46fvsV_.cjs:3:1104)
+    at Module.load (node:int
+ernal/modules/cjs/loader:148
+0:32)
+    at Module._load (node:in
+ternal/modules/cjs/loader:12
+99:12)
+    at 
+TracingChannel.traceSync (no
+de:diagnostics_channel:328:1
+4)
+    at wrapModuleLoad (node:
+internal/modules/cjs/loader:
+244:24)
+    at Module.require (node:
+internal/modules/cjs/loader:
+1503:12)
+
+Node.js v24.9.0

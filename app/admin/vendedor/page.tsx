@@ -1,0 +1,1351 @@
+"use client";
+
+import RecorridoTab from "@/components/vendedor/RecorridoTab";
+
+import { useEffect, useState } from "react";
+import DirectVCardRegistration from "@/components/vendedor/DirectVCardRegistration";
+import SupportModal from "@/components/vendedor/SupportModal";
+import ContractModal from "@/components/vendedor/ContractModal";
+import BankDetailsModal from "@/components/vendedor/BankDetailsModal";
+import VCardEditModal from "@/components/admin/VCardEditModal";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    LayoutDashboard,
+    LogOut,
+    User,
+    BarChart3,
+    Clock,
+    CheckCircle,
+    Home,
+    Search,
+    RefreshCw,
+    ShieldCheck,
+    DollarSign,
+    Users,
+    ChevronDown,
+    Trash2,
+    Info,
+    ChevronRight,
+    X,
+    Settings,
+    HelpCircle,
+    ExternalLink,
+    FileText,
+    Edit,
+    Loader2,
+    Eye
+} from "lucide-react";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import Link from "next/link";
+
+function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+
+export default function SellerDashboard() {
+    // TODO: Restaurar autenticación mañana al integrar BD
+    const MOCK_SELLER = { id: 1, nombre: "Abel", email: "abel@activaqr.com", role: "seller", comision: 30, codigo: "001" };
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [activeTab, setActiveTab] = useState<"ventas" | "recorrido" | "generar" | "soporte">("recorrido");
+    const [seller, setSeller] = useState<any>(null); // Inicia como null para forzar login real
+    const [registros, setRegistros] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [loginEmail, setLoginEmail] = useState("");
+    const [loginPass, setLoginPass] = useState("");
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Recuperar Contraseña
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState("");
+    const [isSendingForgot, setIsSendingForgot] = useState(false);
+
+    // Profile State
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [profilePass, setProfilePass] = useState("");
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+    // Team State
+    const [team, setTeam] = useState<any[]>([]);
+    const [showTeamModal, setShowTeamModal] = useState(false);
+    const [isCreatingMember, setIsCreatingMember] = useState(false);
+    const [newMember, setNewMember] = useState({ nombre: '', email: '', password: '' });
+    const [generatingPdfId, setGeneratingPdfId] = useState<string | null>(null);
+
+    // Edit Modal State
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingRegistro, setEditingRegistro] = useState<any>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Generar PDF y enviarlo al WhatsApp del vendedor
+    const handleGeneratePdf = async (registroId: string) => {
+        if (!seller) return;
+        setGeneratingPdfId(registroId);
+        try {
+            // Format seller whatsapp: ensure it has country code
+            let sellerWa = seller.whatsapp || seller.telefono || '';
+            if (sellerWa && !sellerWa.startsWith('593')) {
+                sellerWa = '593' + sellerWa.replace(/^0+/, '');
+            }
+
+            const res = await fetch('/api/admin/generate-review-pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({ id: registroId, sellerWhatsapp: sellerWa })
+            });
+
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Revision_Cliente.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                const waSent = res.headers.get('X-WhatsApp-Sent');
+                if (waSent === 'true') {
+                    alert('✅ PDF generado y enviado a tu WhatsApp.');
+                } else {
+                    const waErrorRaw = res.headers.get('X-WhatsApp-Error') || '';
+                    const waError = waErrorRaw ? decodeURIComponent(waErrorRaw) : '';
+                    alert(`📄 PDF generado. (No se pudo enviar por WhatsApp: ${waError || 'Error desconocido'})`);
+                }
+            } else {
+                const err = await res.json();
+                alert('Error: ' + (err.error || 'No se pudo generar el PDF'));
+            }
+        } catch (err: any) {
+            alert('Error de conexión: ' + err.message);
+        }
+        setGeneratingPdfId(null);
+    };
+
+    useEffect(() => {
+        const savedSeller = localStorage.getItem("vcard_seller_data");
+        if (savedSeller) {
+            const data = JSON.parse(savedSeller);
+            // Verificar sesión en servidor y obtener datos frescos de la DB
+            fetch(`/api/seller/me?id=${data.id}`)
+                .then(res => res.json())
+                .then(serverData => {
+                    if (serverData.success && serverData.seller) {
+                        // Actualizar localStorage con datos frescos (incluye terminos_aceptados_en actualizado)
+                        const freshSeller = serverData.seller;
+                        localStorage.setItem("vcard_seller_data", JSON.stringify(freshSeller));
+                        setSeller(freshSeller);
+                        setIsAuthorized(true);
+                        fetchSellerSales(freshSeller.id);
+                        fetchTeam(freshSeller.id);
+                    } else {
+                        // Sesión inválida: limpiar localStorage y mostrar login
+                        localStorage.removeItem("vcard_seller_data");
+                        setIsAuthorized(false);
+                        setSeller(null);
+                    }
+                })
+                .catch(() => {
+                    // Si hay error de red, usar datos locales temporalmente
+                    setSeller(data);
+                    setIsAuthorized(true);
+                    fetchSellerSales(data.id);
+                    fetchTeam(data.id);
+                });
+        }
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const fetchTeam = async (parentId: number) => {
+        try {
+            const res = await fetch(`/api/seller/team?parent_id=${parentId}`);
+            const data = await res.json();
+            if (data.data) setTeam(data.data);
+        } catch (err) {
+            console.error("Error fetching team:", err);
+        }
+    };
+
+    const handleCreateMember = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreatingMember(true);
+        try {
+            const res = await fetch("/api/seller/team", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...newMember, parent_id: seller.id })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert("Miembro agregado con éxito. Su código es: " + data.data.codigo);
+                setNewMember({ nombre: '', email: '', password: '' });
+                fetchTeam(seller.id);
+                setShowTeamModal(false);
+            } else {
+                alert(data.error || "Error al crear miembro");
+            }
+        } catch (err) {
+            alert("Error de conexión");
+        }
+        setIsCreatingMember(false);
+    };
+
+    const handleConfirmPayment = async (registroId: number) => {
+        if (!confirm("¿Confirmas que has recibido el pago total de tu comisión por esta venta?")) return;
+
+        try {
+            const res = await fetch("/api/seller/confirm-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ registroId, sellerId: seller.id })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message);
+                fetchSellerSales(seller.id);
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (err: any) {
+            alert("Error: " + err.message);
+        }
+    };
+
+    const handleDeleteMember = async (memberId: number) => {
+        if (!confirm("¿Estás seguro de que deseas desactivar a este asesor? Ya no podrá acceder a su panel ni registrar ventas.")) return;
+
+        try {
+            const res = await fetch(`/api/seller/team?id=${memberId}&parent_id=${seller.id}`, {
+                method: "DELETE"
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                fetchTeam(seller.id);
+            } else {
+                alert(data.error || "Error al eliminar miembro");
+            }
+        } catch (err) {
+            alert("Error de conexión");
+        }
+    };
+
+    const handleProfileUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsUpdatingProfile(true);
+        try {
+            const res = await fetch("/api/seller/profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: seller.id, password: profilePass })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert("Perfil actualizado correctamente");
+                setShowProfileModal(false);
+                // Update local storage and state optionally if we return updated seller 
+            } else {
+                alert(data.error || "Error al actualizar perfil");
+            }
+        } catch (err) {
+            alert("Error de conexión");
+        }
+        setIsUpdatingProfile(false);
+    };
+
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSendingForgot(true);
+        try {
+            const res = await fetch("/api/auth/seller/forgot-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: forgotEmail })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                alert("Si tu correo está registrado, te hemos enviado tu contraseña actual por email.");
+                setShowForgotPassword(false);
+                setForgotEmail("");
+            } else {
+                alert(data.error || "Ocurrió un error al enviar el correo.");
+            }
+        } catch (err) {
+            alert("Error de conexión");
+        }
+        setIsSendingForgot(false);
+    };
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoggingIn(true);
+        try {
+            const res = await fetch("/api/auth/seller/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: loginEmail, password: loginPass })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                localStorage.setItem("vcard_seller_data", JSON.stringify(data.seller));
+                // Set attribution cookie/storage for the redirect to home
+                localStorage.setItem("vcard_attribution_id", data.seller.id);
+                setSeller(data.seller);
+                setIsAuthorized(true);
+                fetchSellerSales(data.seller.id);
+            } else {
+                alert(data.error || "Error al iniciar sesión");
+            }
+        } catch (err) {
+            alert("Error de conexión");
+        }
+        setIsLoggingIn(false);
+    };
+
+    const handleEdit = async (registro: any) => {
+        setIsSaving(true);
+        try {
+            const res = await fetch(`/api/admin/registros/single?id=${registro.id}`, {
+                headers: { 'x-seller-id': String(seller.id) }
+            });
+            const data = await res.json();
+            if (res.ok && data.data) {
+                const fullRegistro = data.data;
+
+                // Parse catalogo_json
+                let catalogoJson = fullRegistro.catalogo_json;
+                if (typeof catalogoJson === 'string') {
+                    try { catalogoJson = JSON.parse(catalogoJson); } catch { catalogoJson = null; }
+                }
+                if (Array.isArray(catalogoJson)) {
+                    // Legacy format: array of products
+                    catalogoJson = {
+                        categories: Array.from(new Set(catalogoJson.map((p: any) => p.categoria || p.category || 'Todas'))),
+                        products: catalogoJson
+                    };
+                }
+                if (!catalogoJson || typeof catalogoJson !== 'object') {
+                    catalogoJson = { categories: [], products: [] };
+                }
+
+                setEditingRegistro({ ...fullRegistro, catalogo_json: catalogoJson });
+                setIsEditModalOpen(true);
+            } else {
+                alert("Error al obtener datos completos del registro.");
+            }
+        } catch (e) {
+            alert("Error de red.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveRegistro = async (recalculatedNombre: string) => {
+        if (!editingRegistro) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({
+                    id: editingRegistro.id,
+                    nombre: recalculatedNombre,
+                    negocio: editingRegistro.negocio,
+                    profesion: editingRegistro.profesion,
+                    empresa: editingRegistro.empresa,
+                    bio: editingRegistro.bio,
+                    whatsapp: editingRegistro.whatsapp,
+                    email: editingRegistro.email,
+                    instagram: editingRegistro.instagram,
+                    linkedin: editingRegistro.linkedin,
+                    facebook: editingRegistro.facebook,
+                    tiktok: editingRegistro.tiktok,
+                    youtube: editingRegistro.youtube,
+                    x: editingRegistro.x,
+                    web: editingRegistro.web,
+                    direccion: editingRegistro.direccion,
+                    slug: editingRegistro.slug,
+                    productos_servicios: editingRegistro.productos_servicios,
+                    responsable: editingRegistro.responsable,
+                    etiquetas: editingRegistro.etiquetas,
+                    tipo_perfil: editingRegistro.tipo_perfil,
+                    nombres: editingRegistro.nombres,
+                    apellidos: editingRegistro.apellidos,
+                    nombre_negocio: editingRegistro.nombre_negocio,
+                    contacto_nombre: editingRegistro.contacto_nombre,
+                    contacto_apellido: editingRegistro.contacto_apellido,
+                    menu_digital: editingRegistro.menu_digital,
+                    google_business: editingRegistro.google_business,
+                    google_rating: editingRegistro.google_rating,
+                    google_reviews_count: editingRegistro.google_reviews_count,
+                    youtube_video_url: editingRegistro.youtube_video_url,
+                    hero_button_text: editingRegistro.hero_button_text,
+                    hero_action: editingRegistro.hero_action,
+                    hero_file_url: editingRegistro.hero_file_url,
+                    hero_external_link: editingRegistro.hero_external_link,
+                    hero_wifi_steps: Array.isArray(editingRegistro.hero_wifi_steps) ? JSON.stringify(editingRegistro.hero_wifi_steps) : editingRegistro.hero_wifi_steps,
+                    hero_section_title: editingRegistro.hero_section_title,
+                    hero_step1_title: editingRegistro.hero_step1_title,
+                    hero_step1_text: editingRegistro.hero_step1_text,
+                    hero_step2_title: editingRegistro.hero_step2_title,
+                    hero_step2_text: editingRegistro.hero_step2_text,
+                    hero_step3_title: editingRegistro.hero_step3_title,
+                    hero_step3_text: editingRegistro.hero_step3_text,
+                    galeria_urls: editingRegistro.galeria_urls,
+                    portada_desktop: editingRegistro.portada_desktop,
+                    portada_movil: editingRegistro.portada_movil,
+                    wifi_ssid: editingRegistro.wifi_ssid,
+                    wifi_password: editingRegistro.wifi_password,
+                    catalogo_json: editingRegistro.catalogo_json ? JSON.stringify(
+                        typeof editingRegistro.catalogo_json === 'string' 
+                            ? JSON.parse(editingRegistro.catalogo_json) 
+                            : editingRegistro.catalogo_json
+                    ) : null,
+                    plan: editingRegistro.plan,
+                    status: editingRegistro.status,
+                })
+            });
+
+            const result = await res.json();
+            if (res.ok) {
+                setRegistros(prev => prev.map(r => r.id === editingRegistro.id ? { ...editingRegistro, nombre: recalculatedNombre } : r));
+                setIsEditModalOpen(false);
+                setEditingRegistro(null);
+                fetchSellerSales(seller.id);
+            } else {
+                alert("Error al guardar cambios: " + (result.error || 'Error desconocido'));
+            }
+        } catch (err: any) {
+            alert("Error al guardar cambios: " + err.message);
+        }
+        setIsSaving(false);
+    };
+
+
+
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !editingRegistro) return;
+
+        setIsSaving(true);
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+            if (!uploadRes.ok) throw new Error('Error subiendo foto al servidor');
+            const { url: publicUrl } = await uploadRes.json();
+
+            setEditingRegistro({ ...editingRegistro, foto_url: publicUrl });
+
+            await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({ id: editingRegistro.id, foto_url: publicUrl })
+            });
+
+        } catch (err: any) {
+            alert("Error subiendo foto: " + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handlePortadaUpload = async (e: React.ChangeEvent<HTMLInputElement>, tipo: 'portada_desktop' | 'portada_movil') => {
+        const file = e.target.files?.[0];
+        if (!file || !editingRegistro) return;
+
+        setIsSaving(true);
+        try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
+            if (!uploadRes.ok) throw new Error(`Error subiendo ${tipo} al servidor`);
+            const { url: publicUrl } = await uploadRes.json();
+
+            setEditingRegistro({ ...editingRegistro, [tipo]: publicUrl });
+
+            await fetch('/api/admin/registros', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-seller-id': String(seller.id)
+                },
+                body: JSON.stringify({ id: editingRegistro.id, [tipo]: publicUrl })
+            });
+
+        } catch (err: any) {
+            alert(`Error subiendo ${tipo}: ` + err.message);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem("vcard_seller_data");
+        // We keep attribution id even after logout if they want to keep tracking? 
+        // Or remove it? Usually SAS keep it.
+        setIsAuthorized(false);
+        setSeller(null);
+    };
+
+    const fetchSellerSales = async (sellerId: number) => {
+        setLoading(true);
+        try {
+            // We need an API that returns ONLY the sales for THIS seller
+            const res = await fetch(`/api/admin/registros?seller_id=${sellerId}`);
+            // The API should handle seller-level authorization or use a public-safe seller endpoint
+            const data = await res.json();
+            if (data.data) {
+                // Mostramos todo para que el vendedor vea su "pipeline"
+                // Pero los totales solo cuentan lo confirmado
+                setRegistros(data.data);
+            }
+        } catch (err) {
+            console.error("SellerDashboard: Error fetching sales:", err);
+        }
+        setLoading(false);
+    };
+
+    if (!isAuthorized) {
+        return (
+            <div className="min-h-screen bg-[#050B1C] flex items-center justify-center p-6 font-sans">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="max-w-md w-full bg-[#0A1229] border border-white/10 rounded-[40px] p-12 text-center shadow-2xl"
+                >
+                    <div className="w-20 h-20 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(255,107,0,0.2)]">
+                        <ShieldCheck size={40} />
+                    </div>
+                    <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">Panel de Vendedores</h2>
+                    <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-10">Ingresa tus credenciales para gestionar tus ventas</p>
+
+                    {showForgotPassword ? (
+                        <form onSubmit={handleForgotPassword} className="space-y-6">
+                            <p className="text-[10px] text-white/50 leading-relaxed mb-6 font-bold uppercase tracking-widest text-left">
+                                Ingresa el correo electrónico asociado a tu cuenta. Te enviaremos tus credenciales de acceso.
+                            </p>
+                            <div className="space-y-2 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Correo Electrónico</label>
+                                <input
+                                    type="email"
+                                    placeholder="tu@email.com"
+                                    value={forgotEmail}
+                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/40 text-white font-bold transition-all"
+                                    required
+                                />
+                            </div>
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={isSendingForgot || !forgotEmail}
+                                    className="w-full bg-white/10 hover:bg-white/20 py-4 rounded-xl font-black uppercase tracking-widest text-white transition-all shadow-lg active:scale-95 disabled:opacity-50 text-xs mb-4"
+                                >
+                                    {isSendingForgot ? "Enviando..." : "Enviar Credenciales"}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowForgotPassword(false)}
+                                    className="w-full text-white/40 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
+                                >
+                                    Volver al Login
+                                </button>
+                            </div>
+                        </form>
+                    ) : (
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            <div className="space-y-2 text-left">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-white/30 ml-2">Correo Electrónico</label>
+                                <input
+                                    type="email"
+                                    placeholder="tu@email.com"
+                                    value={loginEmail}
+                                    onChange={(e) => setLoginEmail(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/40 text-white font-bold transition-all"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2 text-left">
+                                <div className="flex justify-between items-center px-2">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Contraseña</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowForgotPassword(true)}
+                                        className="text-[9px] text-primary hover:text-white uppercase tracking-widest font-black transition-colors"
+                                    >
+                                        ¿Olvidaste tu clave?
+                                    </button>
+                                </div>
+                                <input
+                                    type="password"
+                                    placeholder="••••••••"
+                                    value={loginPass}
+                                    onChange={(e) => setLoginPass(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/40 text-white font-bold transition-all"
+                                    required
+                                />
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={isLoggingIn}
+                                className="w-full bg-primary hover:bg-[#FF8A33] py-5 rounded-2xl font-black uppercase tracking-widest shadow-[0_10px_25px_rgba(255,107,0,0.3)] text-[#050B1C] transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+                            >
+                                {isLoggingIn ? "Validando..." : "Entrar a mi Panel"}
+                                {!isLoggingIn && <LayoutDashboard className="group-hover:translate-x-1 transition-transform" size={20} />}
+                            </button>
+                        </form>
+                    )}
+
+                    <div className="mt-8 pt-8 border-t border-white/5">
+                        <Link href="/" className="text-white/30 hover:text-white font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
+                            <Home size={14} /> Volver al Inicio
+                        </Link>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    }
+
+    // 1. First Priority: Legal Terms / Contract
+    if (seller && !seller.terminos_aceptados_en) {
+        return (
+            <ContractModal
+                seller={seller}
+                onAccept={() => {
+                    const now = new Date().toISOString();
+                    const updatedSeller = { ...seller, terminos_aceptados_en: now };
+                    setSeller(updatedSeller);
+                    localStorage.setItem('vcard_seller_data', JSON.stringify(updatedSeller));
+                }}
+            />
+        );
+    }
+
+    const isSubSeller = !!(seller?.parent_id);
+    const skipBankDetails = isSubSeller || seller?.nombre?.toLowerCase().includes('cesar reyes');
+
+    if (seller && seller.terminos_aceptados_en && !seller.datos_bancarios_completados && !skipBankDetails) {
+        return (
+            <BankDetailsModal
+                sellerId={seller.id}
+                onSuccess={() => {
+                    const updatedSeller = { ...seller, datos_bancarios_completados: 1 };
+                    setSeller(updatedSeller);
+                    localStorage.setItem('vcard_seller_data', JSON.stringify(updatedSeller));
+                }}
+            />
+        );
+    }
+
+    // Filtro estricto por mes calendario actual para calcular Cuotas y Rangos
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const registrosThisMonth = registros.filter(r => {
+        if (!r.created_at) return false;
+        const d = new Date(r.created_at);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    // Separación de Ventas Personales (VVP) y de Equipo del MES ACTUAL
+    const personalRegistros = registrosThisMonth.filter(r => r.seller_id === seller?.id);
+    const teamRegistros = registrosThisMonth.filter(r => r.seller_id !== seller?.id);
+
+    const personalPaidSales = personalRegistros.filter(r => r.status === 'pagado' || r.status === 'entregado').length;
+    const teamPaidSales = teamRegistros.filter(r => r.status === 'pagado' || r.status === 'entregado').length;
+    const totalPaidSales = personalPaidSales + teamPaidSales;
+
+    const totalSales = registros.filter(r => r.status !== 'cancelado').length;
+    const pendingSales = registros.filter(r => r.status === 'pendiente').length;
+
+    // Lógica de Comisiones Dinámicas (Anti-Freeloader)
+    const getCommissionTier = (salesCount: number) => {
+        if (salesCount >= 200) return { percentage: 50, nextTier: null, goal: 200, currentTierMin: 200 };
+        if (salesCount >= 100) return { percentage: 40, nextTier: 200, goal: 100, currentTierMin: 100 };
+        return { percentage: 30, nextTier: 100, goal: 0, currentTierMin: 0 };
+    };
+
+    // Si el vendedor tiene comisión 0% en DB (Socio), respetamos eso.
+    // De lo contrario, usamos la lógica de niveles dinámicos.
+    const dbCommission = seller ? parseFloat(seller.comision_porcentaje) : 0;
+    const isPartner = dbCommission === 0;
+
+    let tier;
+    let earnsTeamOverride = false;
+
+    if (isPartner) {
+        tier = { percentage: 0, nextTier: null, goal: 0, currentTierMin: 0 };
+        earnsTeamOverride = true; // El socio siempre ve todo el equipo
+    } else if (isSubSeller) {
+        // Asesores siempre ganan basados en sus propias ventas
+        tier = getCommissionTier(personalPaidSales);
+    } else {
+        // Líderes: Regla "La Llave de Oro" (Mínimo 30 ventas directas)
+        if (personalPaidSales >= 30) {
+            tier = getCommissionTier(totalPaidSales); // Suma equipo
+            earnsTeamOverride = true;
+        } else {
+            tier = getCommissionTier(personalPaidSales); // Solo cuenta VVP
+            earnsTeamOverride = false;
+        }
+    }
+
+    const currentPercentage = isPartner ? 0 : tier.percentage;
+    const eligiblePaidSales = earnsTeamOverride ? totalPaidSales : personalPaidSales;
+
+    // Comisiones Pagadas
+    const paidCommissions = registros.reduce((acc, r) => {
+        if ((r.status === 'pagado' || r.status === 'entregado') && r.commission_status === 'paid') {
+            // Precios según plan: digital: 20, business: 60, catalog: 120
+            const planPrices: Record<string, number> = { 'digital': 20, 'business': 60, 'catalog': 120, 'pro': 20, 'basic': 20, 'card': 10 };
+            const price = planPrices[r.plan] || 20;
+            const isPersonalSale = r.seller_id === seller?.id;
+
+            if (isPersonalSale) {
+                return acc + (price * (currentPercentage / 100));
+            } else {
+                if (!earnsTeamOverride) return acc; // Líder Inactivo pierde el diferencial
+                // Diferencial: Asumimos que sub-vendedor gana su 30% base. Líder gana la diferencia.
+                const overridePercentage = Math.max(0, currentPercentage - 30);
+                return acc + (price * (overridePercentage / 100));
+            }
+        }
+        return acc;
+    }, 0);
+
+    // Pendiente de Cobro
+    const pendingCommissions = registros.reduce((acc, r) => {
+        if ((r.status === 'pagado' || r.status === 'entregado') && r.commission_status !== 'paid') {
+            const planPrices: Record<string, number> = { 'digital': 20, 'business': 60, 'catalog': 120, 'pro': 20, 'basic': 20, 'card': 10 };
+            const price = planPrices[r.plan] || 20;
+            const isPersonalSale = r.seller_id === seller?.id;
+
+            if (isPersonalSale) {
+                return acc + (price * (currentPercentage / 100));
+            } else {
+                if (!earnsTeamOverride) return acc;
+                const overridePercentage = Math.max(0, currentPercentage - 30);
+                return acc + (price * (overridePercentage / 100));
+            }
+        }
+        return acc;
+    }, 0);
+
+    // Valor Total Histórico
+    const totalCommission = paidCommissions + pendingCommissions;
+
+    // Soporte Centralizado (Número del Admin)
+    const SUPPORT_NUMBER = "593983237491"; // WhatsApp Soporte ActivaQR
+    const SUPPORT_URL = `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent("Hola ActivaQR necesito soporte 😊")}`;
+
+    return (
+        <div className="min-h-screen bg-[#050B1C] text-white p-4 sm:p-8 font-sans">
+            <div className="max-w-7xl mx-auto">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="bg-primary/20 text-primary text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-primary/20">
+                                {isSubSeller ? "Asesor de Ventas" : "Vendedor Oficial"} • {seller?.codigo || seller?.code}
+                            </span>
+                        </div>
+                        <h1 className="text-4xl font-black uppercase italic tracking-tighter flex items-center gap-3">
+                            Hola, {seller?.nombre.split(' ')[0]}!
+                        </h1>
+                        <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mt-1">Este es tu resumen de ventas y comisiones</p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 sm:gap-4 w-full md:w-auto">
+                        <Link href="/"
+                            onClick={() => localStorage.setItem("vcard_attribution_id", seller.id)}
+                            className="flex-1 sm:flex-none justify-center bg-white/5 border border-white/10 px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 shadow-xl"
+                        >
+                            <Home size={16} className="shrink-0" /> <span className="whitespace-nowrap">Ir a Inicio</span>
+                        </Link>
+                        {/* Gestionar Equipo: solo el líder lo ve */}
+                        {!isSubSeller && (
+                            <button onClick={() => setShowTeamModal(true)}
+                                className="flex-1 sm:flex-none justify-center bg-primary/20 text-primary border border-primary/20 px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-primary/30 transition-all flex items-center gap-2 shadow-xl"
+                            >
+                                <Users size={16} className="shrink-0" /> <span className="whitespace-nowrap">Equipo</span>
+                            </button>
+                        )}
+                        <button onClick={() => {
+                            setActiveTab("soporte");
+                        }}
+                            className="flex-1 sm:flex-none justify-center bg-green-500/10 text-green-500 border border-green-500/20 px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-green-500/20 transition-all flex items-center gap-2 shadow-xl"
+                        >
+                            <HelpCircle size={16} className="shrink-0" /> <span className="whitespace-nowrap">Soporte</span>
+                        </button>
+                        <button onClick={handleLogout}
+                            className="bg-[#FF3E3E] px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-black text-[10px] sm:text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 cursor-pointer hover:scale-105 transition-all text-white flex items-center gap-2 ml-auto sm:ml-0"
+                        >
+                            <LogOut size={16} className="shrink-0" /> <span className="whitespace-nowrap">Salir</span>
+                        </button>
+                    </div>
+                </header>
+
+                {/* ── TABS DE NAVEGACIÓN ── */}
+                <div className="flex gap-1.5 sm:gap-2 mb-10 bg-white/5 rounded-2xl p-1.5 border border-white/10 overflow-x-auto no-scrollbar">
+                    <button
+                        onClick={() => setActiveTab("recorrido")}
+                        className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${activeTab === "recorrido"
+                            ? "bg-primary text-[#050B1C] shadow-lg shadow-primary/30"
+                            : "text-white/40 hover:text-white/70"
+                            }`}
+                    >
+                        <span className="sm:inline">🗺️</span> <span className="whitespace-nowrap">Recorrido</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("ventas")}
+                        className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${activeTab === "ventas"
+                            ? "bg-white/15 text-white shadow"
+                            : "text-white/40 hover:text-white/70"
+                            }`}
+                    >
+                        <span className="sm:inline">💰</span> <span className="whitespace-nowrap">Mis Ventas</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("generar")}
+                        className={`flex-1 min-w-fit flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${activeTab === "generar"
+                            ? "bg-green-500/20 text-green-400 shadow-lg shadow-green-500/10 border border-green-500/30"
+                            : "text-white/40 hover:text-white/70"
+                            }`}
+                    >
+                        <span className="sm:inline">⚡</span> <span className="whitespace-nowrap">Contacto Digital</span>
+                    </button>
+                </div>
+
+                {/* ── CONTENIDO DEL TAB GENERAR ── */}
+                {activeTab === "generar" && (
+                    <DirectVCardRegistration
+                        seller={seller}
+                        onSuccess={() => {
+                            setActiveTab("ventas");
+                            fetchSellerSales(seller.id);
+                        }}
+                        onCancel={() => setActiveTab("recorrido")}
+                    />
+                )}
+
+                {/* ── CONTENIDO DEL TAB RECORRIDO ── */}
+                {activeTab === "recorrido" && (
+                    <RecorridoTab seller={seller} />
+                )}
+
+                {/* ── MENSAJE DE GARANTÍA ACTIVAQR ── */}
+                {activeTab === "ventas" && (
+                    <div className="mb-8 p-6 bg-brand/10 border border-brand/20 rounded-3xl flex items-center gap-4">
+                        <ShieldCheck className="text-brand shrink-0" size={24} />
+                        <p className="text-sm font-bold text-brand/90 leading-tight">
+                            Tu pago está respaldado por la administración de <span className="uppercase">ActivaQR</span>.
+                            Si tu comisión figura como <span className="italic">"Enviada a Líder"</span> pero no la recibes en 24h, usa el botón de Soporte para avisarnos.
+                        </p>
+                    </div>
+                )}
+
+                {activeTab === "ventas" && (
+                    <div>
+
+                        {/* Barra de Progreso y Motivación - Solo para Líderes (Vendedor Oficial) */}
+                        {!isSubSeller ? (
+                            <div className="mb-12 bg-[#0A1229] border border-primary/20 rounded-[40px] p-10 relative overflow-hidden shadow-2xl">
+                                <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
+                                    <DollarSign size={120} className="text-primary" />
+                                </div>
+
+                                <div className="relative z-10">
+                                    <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-8">
+                                        <div>
+                                            <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">Tu Nivel de Comisión: <span className="text-primary">{currentPercentage}%</span></h2>
+                                            <p className="text-white/40 text-[11px] font-black uppercase tracking-widest">
+                                                {tier.nextTier
+                                                    ? `¡Estás a ${tier.nextTier - eligiblePaidSales} ventas de subir al ${currentPercentage + 10}%!`
+                                                    : "¡HAS ALCANZADO EL NIVEL MÁXIMO DE COMISIÓN! 🚀"}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Volumen Comisionable</p>
+                                            <p className="text-3xl font-black italic tracking-tighter text-white">{eligiblePaidSales} / {tier.nextTier || '∞'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Barra de progreso */}
+                                    <div className="h-6 w-full bg-white/5 rounded-full overflow-hidden border border-white/10 p-1">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${tier.nextTier ? Math.min(100, ((eligiblePaidSales - tier.currentTierMin) / (tier.nextTier - tier.currentTierMin)) * 100) : 100}%` }}
+                                            className="h-full bg-gradient-to-r from-primary to-[#FF8A33] rounded-full shadow-[0_0_20px_rgba(255,107,0,0.4)]"
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-between mt-4 text-[10px] font-black uppercase tracking-widest">
+                                        <span className={cn(eligiblePaidSales >= 0 ? "text-primary" : "text-white/20")}>Nivel 1 (30%)</span>
+                                        <span className={cn(eligiblePaidSales >= 100 ? "text-primary" : "text-white/20")}>Nivel 2 (40%)</span>
+                                        <span className={cn(eligiblePaidSales >= 200 ? "text-primary" : "text-white/20")}>Nivel Pro (50%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="mb-12 bg-[#0A1229] border border-white/5 rounded-[40px] p-8 flex flex-col md:flex-row items-center gap-6 shadow-2xl">
+                                <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary">
+                                    <DollarSign size={40} />
+                                </div>
+                                <div className="text-center md:text-left flex-1">
+                                    <h2 className="text-2xl font-black uppercase italic tracking-tighter text-white mb-1">Tu Comisión Fija: <span className="text-primary">30%</span></h2>
+                                    <p className="text-white/40 text-[11px] font-black uppercase tracking-widest">Por cada venta confirmada recibes el 30% del valor del plan.</p>
+                                </div>
+                                <div className="bg-white/5 px-6 py-4 rounded-2xl border border-white/10">
+                                    <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mb-1">Puesto</p>
+                                    <p className="text-lg font-black italic tracking-tighter text-white">Asesor de Ventas</p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+                            <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform"><Users size={48} /></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Total Clientes</p>
+                                <p className="text-4xl font-black italic tracking-tighter">{totalSales}</p>
+                            </div>
+                            <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-yellow-500"><Clock size={48} /></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-500 mb-3">Ventas Pendientes</p>
+                                <p className="text-4xl font-black italic tracking-tighter text-yellow-500">{pendingSales}</p>
+                            </div>
+                            <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-accent"><DollarSign size={48} /></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-3">Ventas Confirmadas</p>
+                                <p className="text-4xl font-black italic tracking-tighter text-accent">{totalPaidSales}</p>
+                            </div>
+                            <div className="bg-[#0A1229] border border-white/5 rounded-[32px] p-8 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-green-500"><CheckCircle size={48} /></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-green-500 mb-3">Ya Cobrado</p>
+                                <p className="text-4xl font-black italic tracking-tighter text-green-500">${paidCommissions.toFixed(2)}</p>
+                            </div>
+                            <div className="bg-[#0A1229] border border-primary/20 rounded-[32px] p-8 relative overflow-hidden group shadow-lg shadow-primary/5">
+                                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-primary"><BarChart3 size={48} /></div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-3">Pendiente de Cobro</p>
+                                <p className="text-4xl font-black italic tracking-tighter text-primary">${pendingCommissions.toFixed(2)}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-[#0A1229] border border-white/10 rounded-[40px] overflow-hidden shadow-2xl">
+                            <div className="p-8 border-b border-white/10 flex flex-col md:flex-row justify-between items-center gap-6 bg-white/[0.02]">
+                                <div className="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto">
+                                    <h3 className="text-xl font-black uppercase italic tracking-tighter">Mis Registros Recientes</h3>
+                                    <div className="relative w-full md:w-64">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Buscar cliente..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-3 text-xs font-bold outline-none focus:border-primary/40 transition-all"
+                                        />
+                                    </div>
+                                </div>
+                                <button onClick={() => fetchSellerSales(seller.id)} className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
+                                    <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                                </button>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="text-[10px] font-black uppercase tracking-widest text-white/30 bg-white/[0.01]">
+                                            <th className="px-8 py-6">Fecha</th>
+                                            <th className="px-8 py-6">Cliente / Plan</th>
+                                            <th className="px-8 py-6">Contacto</th>
+                                            <th className="px-8 py-6">Vendedor</th>
+                                            <th className="px-8 py-6">Estado / Venta</th>
+                                            <th className="px-8 py-6 text-right">Pago / Comisión</th>
+                                            <th className="px-8 py-6 text-center">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {registros.filter(r => 
+                                            r.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            r.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            r.whatsapp?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            r.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                            r.id?.toString().includes(searchTerm)
+                                        ).length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="px-8 py-20 text-center">
+                                                    <div className="max-w-xs mx-auto opacity-20">
+                                                        <Users size={48} className="mx-auto mb-4" />
+                                                        <p className="text-sm font-bold uppercase tracking-widest">No se encontraron registros</p>
+                                                        <p className="text-[10px] mt-2">Prueba con otro término de búsqueda</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            registros
+                                                .filter(r => 
+                                                    r.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                    r.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                    r.whatsapp?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                    r.slug?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                                    r.id?.toString().includes(searchTerm)
+                                                )
+                                                .map((r) => (
+                                                <tr key={r.id} className="hover:bg-white/[0.01] transition-all">
+                                                    <td className="px-8 py-6">
+                                                        <p className="text-xs font-bold text-white/40">{new Date(r.created_at).toLocaleDateString()}</p>
+                                                        <p className="text-[10px] text-white/20 mt-1">{new Date(r.created_at).toLocaleTimeString()}</p>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex flex-col gap-1">
+                                                            <p className="font-bold text-sm text-white uppercase italic tracking-tighter">{r.nombre}</p>
+                                                            <span className={cn(
+                                                                "px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border",
+                                                                (r.plan === 'business' || r.plan === 'catalog')
+                                                                    ? "bg-primary/10 text-primary border-primary/20"
+                                                                    : "bg-white/5 text-white/30 border-white/5"
+                                                            )}>
+                                                                {r.plan === 'pro' || r.plan === 'basic' ? 'Digital' : (r.plan || 'Digital')}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <p className="text-xs font-medium text-white/60">{r.email}</p>
+                                                        <p className="text-[10px] text-white/40 mt-1">{r.whatsapp}</p>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex flex-col gap-1">
+                                                            <p className="text-xs font-bold text-white/60 uppercase">
+                                                                {r.sold_by_name ? (r.sold_by_name === seller.nombre ? "Tú" : r.sold_by_name.split(' ')[0]) : "Tú"}
+                                                            </p>
+                                                            <span className="text-[8px] font-black uppercase tracking-widest text-white/20">
+                                                                {r.sold_by_code || seller.codigo}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={cn(
+                                                                "w-2 h-2 rounded-full",
+                                                                (r.status === 'pagado' || r.status === 'entregado') ? "bg-[#00F0FF]" : r.status === 'cancelado' ? "bg-red-500" : "bg-yellow-500"
+                                                            )} />
+                                                            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">
+                                                                {r.status === 'pagado' || r.status === 'entregado' ? 'Confirmado' : r.status === 'cancelado' ? 'Cancelado' : 'Pendiente Pago'}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-right">
+                                                        <div className="flex flex-col items-end gap-2">
+                                                            <span className={cn(
+                                                                "inline-block px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border",
+                                                                r.commission_status === 'completed'
+                                                                    ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                                                    : r.commission_status === 'paid_to_leader'
+                                                                        ? "bg-brand/10 text-brand border-brand/20"
+                                                                        : "bg-white/5 text-white/30 border-white/5"
+                                                            )}>
+                                                                {r.commission_status === 'completed'
+                                                                    ? 'Comisión Cobrada ✅'
+                                                                    : r.commission_status === 'paid_to_leader'
+                                                                        ? 'Enviada a Líder 🚚'
+                                                                        : 'Pendiente Cobro'}
+                                                            </span>
+
+                                                            {/* Botón de Confirmación para Sub-vendedores */}
+                                                            {r.commission_status === 'paid_to_leader' && (
+                                                                <button
+                                                                    onClick={() => handleConfirmPayment(r.id)}
+                                                                    className="px-4 py-2 bg-brand text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand/20"
+                                                                >
+                                                                    Confirmar Recibo
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex flex-col items-center gap-2">
+                                                            {/* Editar: solo pro ($20), business o catalog y NO entregados */}
+                                                            {(r.plan === 'pro' || r.plan === 'business' || r.plan === 'catalog' || r.plan === 'digital' || r.plan === 'basic') && r.status !== 'entregado' && (
+                                                                <button
+                                                                    onClick={() => handleEdit(r)}
+                                                                    className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all w-full justify-center"
+                                                                >
+                                                                    <Edit size={12} /> Editar
+                                                                </button>
+                                                            )}
+                                                            {r.plan === 'pro' && r.status === 'entregado' && (
+                                                                <span className="flex items-center gap-1.5 px-3 py-2 bg-white/5 text-white/20 rounded-xl text-[9px] font-black uppercase tracking-widest w-full justify-center cursor-not-allowed">
+                                                                    <CheckCircle size={12} /> Entregado
+                                                                </span>
+                                                            )}
+                                                            {/* Generar PDF */}
+                                                            <button
+                                                                onClick={() => handleGeneratePdf(r.id)}
+                                                                disabled={generatingPdfId === r.id}
+                                                                className="flex items-center gap-1.5 px-3 py-2 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-500/20 transition-all disabled:opacity-50 w-full justify-center"
+                                                            >
+                                                                {generatingPdfId === r.id ? (
+                                                                    <><Loader2 size={12} className="animate-spin" /> Generando...</>
+                                                                ) : (
+                                                                    <><FileText size={12} /> PDF</>
+                                                                )}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )} {/* Fin tab Mis Ventas */}
+
+                {/* Modal de Gestión de Equipo */}
+                <AnimatePresence>
+                    {showTeamModal && (
+                        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setShowTeamModal(false)}
+                                className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                            />
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                                className="relative w-full max-w-4xl bg-[#0A1229] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+                            >
+                                <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                                    <div>
+                                        <h3 className="text-2xl font-black uppercase italic tracking-tighter">Mi Equipo de Trabajo</h3>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-1">Gana comisión por las ventas de tus referidos</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowTeamModal(false)}
+                                        className="p-3 hover:bg-white/10 rounded-full transition-all"
+                                    >
+                                        <LogOut className="rotate-180" size={24} />
+                                    </button>
+                                </div>
+
+                                <div className="px-8 pt-8">
+                                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 flex gap-4 items-start">
+                                        <Info className="text-primary flex-shrink-0 mt-1" size={20} />
+                                        <div>
+                                            <h4 className="text-primary font-black uppercase italic tracking-widest text-xs mb-1">¿Cómo funciona mi equipo?</h4>
+                                            <p className="text-white/60 text-[11px] leading-relaxed">
+                                                Aquí puedes dar de alta a tus <strong>Sub-vendedores</strong>. La regla de oro es: <strong className="text-white">Ellos ganarán siempre un 30%</strong> por cada venta. La gran ventaja para ti es que <strong className="text-primary">TODAS sus ventas suman a tu volumen total</strong>, ayudándote a subir tu propio porcentaje de comisión global hasta el 50%.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto p-8 pt-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                    {/* Lista de Miembros */}
+                                    <div className="space-y-6">
+                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-4">Miembros Activos ({team.length})</h4>
+                                        <div className="space-y-4">
+                                            {team.length === 0 ? (
+                                                <div className="text-center py-10 border border-dashed border-white/10 rounded-3xl">
+                                                    <p className="text-sm font-bold text-white/20 uppercase tracking-widest">No hay miembros aún</p>
+                                                </div>
+                                            ) : (
+                                                team.map((m: any) => (
+                                                    <div key={m.id} className="bg-white/5 border border-white/10 p-5 rounded-2xl flex justify-between items-center group hover:border-primary/20 transition-all">
+                                                        <div>
+                                                            <p className="font-bold text-sm uppercase italic tracking-tight">{m.nombre}</p>
+                                                            <p className="text-[10px] text-white/40 mt-1 uppercase font-black tracking-widest">{m.code}</p>
+                                                        </div>
+                                                        <div className="text-right flex items-center gap-4">
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase text-primary mb-1">{m.ventas_pagadas} Ventas</p>
+                                                                <p className="text-[8px] text-white/20 uppercase">Total: {m.total_ventas}</p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => handleDeleteMember(m.id)}
+                                                                className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                                title="Desactivar Asesor"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Formulario de Registro */}
+                                    <div className="bg-white/[0.03] border border-white/10 p-8 rounded-3xl self-start">
+                                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-2">Agregar Nuevo Miembro</h4>
+                                        <p className="text-[9px] text-white/40 uppercase tracking-widest mb-6 border-b border-white/5 pb-4">
+                                            Quedará registrado bajo tu código ({seller?.code})
+                                        </p>
+                                        <form onSubmit={handleCreateMember} className="space-y-4">
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-white/30 ml-2">Nombre Completo</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={newMember.nombre}
+                                                    onChange={(e) => setNewMember({ ...newMember, nombre: e.target.value })}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-sm focus:border-primary/40 outline-none transition-all"
+                                                    placeholder="Ej. Juan Pérez"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-white/30 ml-2">Correo Electrónico</label>
+                                                <input
+                                                    type="email"
+                                                    required
+                                                    value={newMember.email}
+                                                    onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-sm focus:border-primary/40 outline-none transition-all"
+                                                    placeholder="juan@ejemplo.com"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] font-black uppercase tracking-widest text-white/30 ml-2">Contraseña Temporal</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={newMember.password}
+                                                    onChange={(e) => setNewMember({ ...newMember, password: e.target.value })}
+                                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-sm focus:border-primary/40 outline-none transition-all"
+                                                    placeholder="Min. 6 caracteres"
+                                                />
+                                            </div>
+                                            <button
+                                                type="submit"
+                                                disabled={isCreatingMember}
+                                                className="w-full bg-primary hover:bg-[#FF8A33] py-4 rounded-xl font-black uppercase tracking-widest text-[#050B1C] transition-all shadow-lg active:scale-95 disabled:opacity-50 text-xs mt-4"
+                                            >
+                                                {isCreatingMember ? 'Procesando...' : 'Crear Acceso ahora'}
+                                            </button>
+                                        </form>
+                                        <p className="text-[9px] text-white/20 mt-6 leading-relaxed italic">
+                                            * Al crear un miembro, se le generará un código derivado del tuyo. Sus ventas se sumarán a tu total de nivel, pero él podrá ver sus propios registros.
+                                        </p>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                <SupportModal
+                    isOpen={activeTab === "soporte"}
+                    onClose={() => setActiveTab("recorrido")}
+                    seller={seller}
+                />
+            </div>{/* max-w-7xl */}
+
+            {/* Modal de Mi Perfil */}
+            <AnimatePresence>
+                {showProfileModal && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowProfileModal(false)}
+                            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-md bg-[#0A1229] border border-white/10 rounded-[40px] shadow-2xl overflow-hidden"
+                        >
+                            <div className="p-8 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                                <div>
+                                    <h3 className="text-2xl font-black uppercase italic tracking-tighter">Mi Perfil</h3>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-1">Gestión de Cuenta</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowProfileModal(false)}
+                                    className="p-3 hover:bg-white/10 rounded-full transition-all"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleProfileUpdate} className="p-8 space-y-6">
+                                <div className="space-y-4">
+                                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10 mb-6 flex flex-col items-center">
+                                        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-3">
+                                            <User size={24} />
+                                        </div>
+                                        <p className="font-black uppercase tracking-widest text-sm">{seller?.nombre}</p>
+                                        <p className="text-[10px] text-white/40 uppercase tracking-widest mt-1">{seller?.email}</p>
+                                        <div className="mt-3 bg-primary/20 text-primary text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-widest">
+                                            Código: {seller?.code}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2">Actualizar Contraseña</label>
+                                        <input
+                                            type="text"
+                                            minLength={4}
+                                            value={profilePass}
+                                            onChange={(e) => setProfilePass(e.target.value)}
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-sm font-bold focus:border-primary/40 outline-none transition-all"
+                                            placeholder="Nueva contraseña (opcional)"
+                                        />
+                                        <p className="text-[9px] text-white/30 italic ml-2 mt-1">Déjalo en blanco si no quieres cambiarla</p>
+                                    </div>
+
+                                    <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl flex gap-3 items-start">
+                                        <ShieldCheck className="text-yellow-500 shrink-0 mt-0.5" size={16} />
+                                        <div className="space-y-1">
+                                            <p className="text-yellow-500 font-bold text-[10px] uppercase tracking-widest">Seguridad de Pagos</p>
+                                            <p className="text-[9px] text-white/50 leading-tight">
+                                                Tus datos bancarios para el cobro de comisiones solo pueden ser modificados por la Administración Central de <span className="uppercase">ActivaQR</span>.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isUpdatingProfile || !profilePass}
+                                    className="w-full bg-primary hover:bg-[#FF8A33] text-[#050B1C] py-4 rounded-xl font-black uppercase tracking-widest shadow-[0_10px_25px_rgba(255,107,0,0.3)] transition-all flex justify-center items-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isUpdatingProfile ? "Guardando..." : "Guardar Cambios"}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* VCard Edit Modal */}
+            <AnimatePresence>
+                {isEditModalOpen && editingRegistro && (
+                    <VCardEditModal
+                        isOpen={isEditModalOpen}
+                        onClose={() => setIsEditModalOpen(false)}
+                        registro={editingRegistro}
+                        setRegistro={setEditingRegistro}
+                        onSave={handleSaveRegistro}
+                        onPhotoUpload={handlePhotoUpload}
+                        onPortadaUpload={handlePortadaUpload}
+                        isSaving={isSaving}
+                    />
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}

@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard ActivaQR - Estrategia Completa</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00C853;
+            --primary-light: #4ADE80;
+            --primary-dark: #00A844;
+            --text: #1A1A1A;
+            --text-light: #6B7280;
+            --background: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --sidebar-bg: #1A1A1A;
+            --accent-blue: #3B82F6;
+            --accent-purple: #8B5CF6;
+            --accent-orange: #F97316;
+            --accent-pink: #EC4899;
+            --border: #E5E7EB;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .dashboard { display: flex; min-height: 100vh; }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--sidebar-bg);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+        
+        .sidebar-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 8px 30px rgba(0, 200, 83, 0.4);
+        }
+        
+        .sidebar-brand { text-align: center; margin-bottom: 40px; }
+        
+        .sidebar-brand h2 { color: white; font-size: 1.5rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+        .sidebar-brand p { color: #888; font-size: 0.85rem; margin-top: 5px; }
+        
+        .sidebar-nav { flex: 1; }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+        
+        .nav-item.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0, 200, 83, 0.3);
+        }
+        
+        .nav-icon { font-size: 1.2rem; width: 24px; text-align: center; }
+        
+        .sidebar-footer {
+            border-top: 1px solid #333;
+            padding-top: 20px;
+            margin-top: auto;
+        }
+        
+        .active-users { display: flex; align-items: center; gap: 8px; }
+        
+        .active-users-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            border: 2px solid var(--sidebar-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .active-users-text { color: #666; font-size: 0.8rem; }
+        
+        /* Main */
+        .main {
+            flex: 1;
+            margin-left: 260px;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .bg-decoration { position: fixed; pointer-events: none; z-index: 0; }
+        .bg-circle-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(0, 200, 83, 0.08) 0%, transparent 70%); top: -200px; right: -200px; }
+        .bg-circle-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(59, 130, 246, 0.06) 0%, transparent 70%); bottom: -100px; left: -100px; }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08); }
+        
+        .card.active-card {
+            border: 2px solid var(--primary);
+            box-shadow: 0 8px 30px rgba(0, 200, 83, 0.2);
+        }
+        
+        .card-dark {
+            background: linear-gradient(135deg, var(--sidebar-bg) 0%, #2D2D2D 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-title {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .card-dark .card-title { color: #888; }
+        
+        .card-value { font-size: 2.5rem; font-weight: 700; color: var(--text); font-family: 'Space Grotesk', sans-serif; }
+        .card-value.primary { color: var(--primary); }
+        .card-subtitle { font-size: 0.9rem; color: var(--text-light); margin-top: 5px; }
+        
+        .span-2 { grid-column: span 2; }
+        .span-3 { grid-column: span 3; }
+        
+        .click-hint {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .card:hover .click-hint { opacity: 1; }
+        
+        /* Detail Panel */
+        .detail-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: -500px;
+            width: 500px;
+            height: 100vh;
+            background: white;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.1);
+            z-index: 200;
+            overflow-y: auto;
+            transition: right 0.4s ease;
+            padding: 40px;
+        }
+        
+        .detail-panel.open { display: block; right: 0; }
+        
+        .detail-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: var(--background);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .detail-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+        .detail-section { margin-bottom: 25px; }
+        .detail-section h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; color: var(--primary); }
+        .detail-section p { font-size: 0.9rem; line-height: 1.7; color: var(--text-light); }
+        .detail-section ul { list-style: none; padding-left: 0; }
+        .detail-section li { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text); }
+        .detail-section li:last-child { border-bottom: none; }
+        
+        .detail-table { width: 100%; border-collapse: collapse; }
+        .detail-table th, .detail-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        .detail-table th { color: var(--text-light); font-weight: 500; }
+        
+        /* Colors */
+        .colors-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+        .color-item { text-align: center; }
+        .color-box { width: 70px; height: 70px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.7rem; color: white; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); }
+        .color-name { font-size: 0.75rem; font-weight: 600; }
+        .color-hex { font-size: 0.7rem; color: var(--text-light); font-family: monospace; }
+        
+        /* Steps */
+        .steps-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .step-card { display: flex; gap: 14px; align-items: flex-start; }
+        .step-number { width: 36px; height: 36px; background: var(--primary); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .step-content h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 4px; }
+        .step-content p { font-size: 0.8rem; color: var(--text-light); }
+        
+        /* Claim */
+        .claim-main { font-size: 1.4rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1.4; margin-bottom: 15px; }
+        .claim-sub { color: #888; font-size: 0.95rem; line-height: 1.6; }
+        
+        .floating-illustration { position: absolute; right: 20px; bottom: 20px; font-size: 4rem; opacity: 0.3; }
+        
+        /* Budget */
+        .budget-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .budget-card { background: var(--background); border-radius: 14px; padding: 20px; text-align: center; transition: all 0.3s; }
+        .budget-card:hover { transform: scale(1.02); }
+        .budget-card.featured { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; }
+        .budget-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; }
+        .budget-amount { font-size: 1.8rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; }
+        .budget-card.featured .budget-amount { color: white; }
+        .budget-desc { font-size: 0.75rem; opacity: 0.8; }
+        
+        /* Script list */
+        .script-list { display: flex; flex-direction: column; gap: 12px; }
+        .script-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--background); border-radius: 12px; cursor: pointer; transition: all 0.3s; }
+        .script-item:hover { background: #EEFDF4; }
+        .script-number { width: 28px; height: 28px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.8rem; }
+        .script-title { flex: 1; font-size: 0.85rem; font-weight: 500; }
+        .script-duration { font-size: 0.75rem; color: var(--text-light); }
+        
+        /* Table */
+        .data-table { width: 100%; }
+        .table-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .table-row:last-child { border-bottom: none; }
+        .table-icon { width: 36px; height: 36px; background: var(--background); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 14px; font-size: 1rem; }
+        .table-info { flex: 1; }
+        .table-name { font-weight: 600; font-size: 0.9rem; }
+        .table-email { font-size: 0.75rem; color: var(--text-light); }
+        .table-badge { background: #EEFDF4; color: var(--primary); padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        
+        /* Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.3);
+            z-index: 150;
+        }
+        .overlay.open { display: block; }
+        
+        /* Nav content */
+        .nav-content { display: none; }
+        .nav-content.active { display: block; }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .grid-container { grid-template-columns: repeat(2, 1fr); }
+            .span-2, .span-3 { grid-column: span 2; }
+        }
+        
+        @media (max-width: 900px) {
+            .sidebar { width: 80px; padding: 20px 10px; }
+            .sidebar-avatar { width: 50px; height: 50px; font-size: 1.2rem; }
+            .sidebar-brand h2, .sidebar-brand p, .nav-label, .active-users-text { display: none; }
+            .main { margin-left: 80px; }
+            .grid-container { grid-template-columns: 1fr; }
+            .span-2, .span-3 { grid-column: span 1; }
+            .budget-grid, .steps-grid { grid-template-columns: 1fr; }
+            .detail-panel { width: 100%; right: -100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-avatar">AQ</div>
+            <div class="sidebar-brand">
+                <h2>ActivaQR</h2>
+                <p>Estrategia 2026</p>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" onclick="showNav('overview')">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Overview</span>
+                </div>
+                <div class="nav-item" onclick="showNav('brand')">
+                    <span class="nav-icon">🎨</span>
+                    <span class="nav-label">Brand Kit</span>
+                </div>
+                <div class="nav-item" onclick="showNav('web')">
+                    <span class="nav-icon">🌐</span>
+                    <span class="nav-label">Web & Landing</span>
+                </div>
+                <div class="nav-item" onclick="showNav('content')">
+                    <span class="nav-icon">📝</span>
+                    <span class="nav-label">Contenido</span>
+                </div>
+                <div class="nav-item" onclick="showNav('scripts')">
+                    <span class="nav-icon">🎬</span>
+                    <span class="nav-label">Guiones</span>
+                </div>
+                <div class="nav-item" onclick="showNav('ads')">
+                    <span class="nav-icon">📺</span>
+                    <span class="nav-label">Ads & TV</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="active-users">
+                    <div class="active-users-avatar" style="background: var(--primary);">1</div>
+                    <div class="active-users-avatar" style="background: var(--accent-blue);">2</div>
+                    <div class="active-users-avatar" style="background: var(--accent-purple);">3</div>
+                    <span class="active-users-text">+12 docs</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main -->
+        <main class="main">
+            <div class="bg-decoration bg-circle-1"></div>
+            <div class="bg-decoration bg-circle-2"></div>
+            
+            <!-- Overlay -->
+            <div class="overlay" onclick="closeDetail()"></div>
+            
+            <!-- Detail Panel -->
+            <div class="detail-panel" id="detailPanel">
+                <button class="detail-close" onclick="closeDetail()">✕</button>
+                <div id="detailContent"></div>
+            </div>
+            
+            <!-- OVERVIEW -->
+            <div id="overview" class="nav-content active">
+                <div class="grid-container">
+                    <div class="card card-dark span-3" onclick="showDetail('hero')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div style="position: relative; z-index: 1;">
+                            <div class="card-title" style="color: #888;">CLAIM PRINCIPAL</div>
+                            <div class="claim-main">"Tu cliente te tiene en su teléfono"</div>
+                            <div class="claim-sub">Un código QR que descarga tu contacto automáticamente. Sin apps, sin búsquedas, sin que te olviden.</div>
+                        </div>
+                        <div class="floating-illustration">📱</div>
+                    </div>
+                    
+                    <div class="card" onclick="showDetail('colors')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">COLORES</div>
+                        <div class="colors-grid">
+                            <div class="color-item">
+                                <div class="color-box" style="background: #00C853;">PRIMARY</div>
+                                <div class="color-name">Verde</div>
+                                <div class="color-hex">#00C853</div>
+                            </div>
+                            <div class="color-item">
+                                <div class="color-box" style="background: #1A1A1A;">TEXT</div>
+                                <div class="color-name">Negro</div>
+                                <div class="color-hex">#1A1A1A</div>
+                            </div>
+                            <div class="color-item">
+                                <div class="color-box" style="background: #3B82F6;">ACCENT</div>
+                                <div class="color-name">Azul</div>
+                                <div class="color-hex">#3B82F6</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" onclick="showDetail('budget')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">PRESUPUESTO</div>
+                        <div class="card-value primary">$2,300<span style="font-size: 1rem; color: var(--text-light);">/mes</span></div>
+                        <div class="card-subtitle">Facebook + Google + TV Local</div>
+                    </div>
+                    
+                    <div class="card" onclick="showDetail('timeline')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">PRÓXIMOS PASOS</div>
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">S1</span>
+                                <span style="font-size: 0.85rem;">Brand Kit</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="background: var(--primary); color: white; padding: 4px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 600;">S2</span>
+                                <span style="font-size: 0.85rem;">Web + WhatsApp</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card span-2" onclick="showDetail('metrics')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">METAS 90 DÍAS</div>
+                        <div style="display: flex; justify-content: space-around; text-align: center; margin-top: 15px;">
+                            <div><div style="font-size: 2rem; font-weight: 700; color: var(--primary);">500+</div><div style="font-size: 0.8rem; color: var(--text-light);">Seguidores</div></div>
+                            <div><div style="font-size: 2rem; font-weight: 700; color: var(--accent-blue);">50+</div><div style="font-size: 0.8rem; color: var(--text-light);">Leads</div></div>
+                            <div><div style="font-size: 2rem; font-weight: 700; color: var(--accent-purple);">20+</div><div style="font-size: 0.8rem; color: var(--text-light);">Clientes</div></div>
+                            <div><div style="font-size: 2rem; font-weight: 700; color: var(--accent-orange);">3x</div><div style="font-size: 0.8rem; color: var(--text-light);">ROAS</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BRAND -->
+            <div id="brand" class="nav-content">
+                <div class="grid-container">
+                    <div class="card card-dark span-3" onclick="showDetail('positioning')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title" style="color: #888;">POSICIONAMIENTO</div>
+                        <div class="claim-main">"El especialista en contactos que se guardan"</div>
+                        <div class="claim-sub">Focus: SOLO contacto vCard para profesionales independientes</div>
+                    </div>
+                    
+                    <div class="card" onclick="showDetail('competitors')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">COMPETIDORES</div>
+                        <div style="font-size: 0.9rem; line-height: 1.8;">
+                            <p>QRCode Monkey, Canva, Haystack, Popl, Linktree, Beaconstac</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card span-2" onclick="showDetail('colors')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">PALETA DE COLORES</div>
+                        <div class="colors-grid">
+                            <div class="color-item"><div class="color-box" style="background: #00C853;">PRIMARY</div><div class="color-name">Verde</div><div class="color-hex">#00C853</div></div>
+                            <div class="color-item"><div class="color-box" style="background: #00A844;">DARK</div><div class="color-name">Verde Oscuro</div><div class="color-hex">#00A844</div></div>
+                            <div class="color-item"><div class="color-box" style="background: #1A1A1A;">TEXT</div><div class="color-name">Negro</div><div class="color-hex">#1A1A1A</div></div>
+                            <div class="color-item"><div class="color-box" style="background: #FFFFFF; color: #1A1A1A;">WHITE</div><div class="color-name">Blanco</div><div class="color-hex">#FFFFFF</div></div>
+                            <div class="color-item"><div class="color-box" style="background: #3B82F6;">ACCENT</div><div class="color-name">Azul</div><div class="color-hex">#3B82F6</div></div>
+                            <div class="color-item"><div class="color-box" style="background: #F97316;">WARNING</div><div class="color-name">Naranja</div><div class="color-hex">#F97316</div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card span-3" onclick="showDetail('voice')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">VOZ DE MARCA</div>
+                        <div class="steps-grid">
+                            <div class="step-card"><div class="step-number">1</div><div class="step-content"><h4>Profesional pero cercano</h4><p>No tech-heavy</p></div></div>
+                            <div class="step-card"><div class="step-number">2</div><div class="step-content"><h4>Directo</h4><p>Sin jerga técnica</p></div></div>
+                            <div class="step-card"><div class="step-number">3</div><div class="step-content"><h4>Emocional</h4><p>Toca el dolor</p></div></div>
+                            <div class="step-card"><div class="step-number">4</div><div class="step-content"><h4>Confiado</h4><p>Diferenciación clara</p></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- WEB -->
+            <div id="web" class="nav-content">
+                <div class="grid-container">
+                    <div class="card card-dark span-3" onclick="showDetail('hero')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title" style="color: #888;">HERO SECTION</div>
+                        <div class="claim-main">H1: "Tu cliente te tiene en su teléfono"</div>
+                        <div class="claim-sub">CTA: "Crear mi código QR - $20"</div>
+                    </div>
+                    
+                    <div class="card span-2" onclick="showDetail('structure')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">ESTRUCTURA DEL SITIO</div>
+                        <div class="data-table">
+                            <div class="table-row"><div class="table-icon">🏠</div><div class="table-info"><div class="table-name">Home</div><div class="table-email">Landing principal con demo</div></div></div>
+                            <div class="table-row"><div class="table-icon">📖</div><div class="table-info"><div class="table-name">Blog</div><div class="table-email">5 artículos</div></div><div class="table-badge">CTAs</div></div>
+                            <div class="table-row"><div class="table-icon">💰</div><div class="table-info"><div class="table-name">Precios</div><div class="table-email">$20 individual</div></div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" onclick="showDetail('seo')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">SEO</div>
+                        <div style="font-size: 0.85rem; line-height: 1.8;">
+                            <p>Title: ActivaQR - Tu Contacto Siempre</p>
+                            <p>Keywords: código qr contacto, tarjeta digital</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card span-3" onclick="showDetail('funnel')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">FUNNEL DE CONVERSIÓN</div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 30px; padding: 20px 0;">
+                            <div style="text-align: center;"><div style="font-size: 2rem;">📱</div><div style="font-weight: 600;">TikTok</div></div>
+                            <div style="color: var(--primary); font-size: 1.5rem;">→</div>
+                            <div style="text-align: center;"><div style="font-size: 2rem;">🌐</div><div style="font-weight: 600;">Web</div></div>
+                            <div style="color: var(--primary); font-size: 1.5rem;">→</div>
+                            <div style="text-align: center;"><div style="font-size: 2rem;">💬</div><div style="font-weight: 600;">WhatsApp</div></div>
+                            <div style="color: var(--primary); font-size: 1.5rem;">→</div>
+                            <div style="text-align: center;"><div style="font-size: 2rem;">💰</div><div style="font-weight: 600;">Venta</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CONTENT -->
+            <div id="content" class="nav-content">
+                <div class="grid-container">
+                    <div class="card card-dark span-3" onclick="showDetail('calendar')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title" style="color: #888;">CALENDARIO SEMANAL</div>
+                        <div class="claim-main">Contenido por día de la semana</div>
+                    </div>
+                    
+                    <div class="card span-2" onclick="showDetail('blog')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">ARTÍCULOS DEL BLOG</div>
+                        <div class="data-table">
+                            <div class="table-row"><div class="table-icon">1</div><div class="table-info"><div class="table-name">10 Razones por las que un Código QR puede mejorar tu negocio</div></div><div class="table-badge">CTAs</div></div>
+                            <div class="table-row"><div class="table-icon">2</div><div class="table-info"><div class="table-name">5 Errores comunes al usar Códigos QR</div></div><div class="table-badge">CTAs</div></div>
+                            <div class="table-row"><div class="table-icon">3</div><div class="table-info"><div class="table-name">Cómo usar los Códigos QR para aumentar ventas</div></div><div class="table-badge">CTAs</div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" onclick="showDetail('platforms')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">PLATAFORMAS</div>
+                        <div class="steps-grid">
+                            <div class="step-card"><div class="step-number" style="background: linear-gradient(135deg, #833AB4, #FD1D1D);">IG</div><div class="step-content"><h4>Instagram</h4><p>Alta prioridad</p></div></div>
+                            <div class="step-card"><div class="step-number" style="background: #1877F2;">FB</div><div class="step-content"><h4>Facebook</h4><p>Alta prioridad</p></div></div>
+                            <div class="step-card"><div class="step-number" style="background: #000;">TT</div><div class="step-content"><h4>TikTok</h4><p>Baja*</p></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- SCRIPTS -->
+            <div id="scripts" class="nav-content">
+                <div class="grid-container">
+                    <div class="card card-dark span-3" onclick="showDetail('scripts')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title" style="color: #888;">BIBLIOTECA DE GUIONES</div>
+                        <div class="claim-main">14 Guiones Listos para Grabar</div>
+                    </div>
+                    
+                    <div class="card span-2" onclick="showDetail('scripts-list')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">GUIONES PRINCIPALES</div>
+                        <div class="script-list">
+                            <div class="script-item"><div class="script-number">1</div><div class="script-title">El Problema del "Maestro de la Casa Azul"</div><div class="script-duration">25-30s</div></div>
+                            <div class="script-item"><div class="script-number">2</div><div class="script-title">Las Tarjetas se Pierden</div><div class="script-duration">20-25s</div></div>
+                            <div class="script-item"><div class="script-number">3</div><div class="script-title">Demo Paso a Paso</div><div class="script-duration">45-60s</div></div>
+                            <div class="script-item"><div class="script-number">4</div><div class="script-title">No es Linktree</div><div class="script-duration">30-35s</div></div>
+                            <div class="script-item"><div class="script-number">5</div><div class="script-title">Testimonio Enfermera</div><div class="script-duration">30-45s</div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" onclick="showDetail('tips')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">CATEGORÍAS</div>
+                        <div class="steps-grid">
+                            <div class="step-card"><div class="step-content"><h4>🎯 Problema</h4><p>3 guiones</p></div></div>
+                            <div class="step-card"><div class="step-content"><h4>💡 Solución</h4><p>3 guiones</p></div></div>
+                            <div class="step-card"><div class="step-content"><h4>⭐ Testimonios</h4><p>2 guiones</p></div></div>
+                            <div class="step-card"><div class="step-content"><h4>💰 Venta</h4><p>3 guiones</p></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- ADS -->
+            <div id="ads" class="nav-content">
+                <div class="grid-container">
+                    <div class="card card-dark span-3" onclick="showDetail('ads-budget')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title" style="color: #888;">PUBLICIDAD</div>
+                        <div class="claim-main">Presupuesto Recomendado: $2,300/mes</div>
+                    </div>
+                    
+                    <div class="card span-3" onclick="showDetail('ads-detail')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">OPCIONES DE PRESUPUESTO</div>
+                        <div class="budget-grid">
+                            <div class="budget-card"><div class="budget-title">Conservador</div><div class="budget-amount">$900</div><div class="budget-desc">Ads + Radio</div></div>
+                            <div class="budget-card featured"><div class="budget-title">⭐ Recomendado</div><div class="budget-amount">$2,300</div><div class="budget-desc">Ads + TV + Radio</div></div>
+                            <div class="budget-card"><div class="budget-title">Agresivo</div><div class="budget-amount">$6,500</div><div class="budget-desc">TV Nacional + Ads</div></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card span-3" onclick="showDetail('ads-channels')">
+                        <span class="click-hint">Clic para ver →</span>
+                        <div class="card-title">CANALES PRIORITARIOS</div>
+                        <div class="steps-grid">
+                            <div class="step-card"><div class="step-number">1</div><div class="step-content"><h4>WhatsApp</h4><p>Directo - Alta prioridad</p></div></div>
+                            <div class="step-card"><div class="step-number">2</div><div class="step-content"><h4>Facebook/IG</h4><p>Ads - Alta prioridad</p></div></div>
+                            <div class="step-card"><div class="step-number">3</div><div class="step-content"><h4>Radio</h4><p>Local - Media prioridad</p></div></div>
+                            <div class="step-card"><div class="step-number">4</div><div class="step-content"><h4>Google Ads</h4><p>Búsqueda - Media</p></div></div>
+                            <div class="step-card"><div class="step-number">5</div><div class="step-content"><h4>TV Local</h4><p>Credibilidad - Media</p></div></div>
+                            <div class="step-card"><div class="step-number" style="background: #666;">✕</div><div class="step-content"><h4>TikTok Ads</h4><p>No recomendado</p></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Navigation
+        function showNav(navId) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.querySelectorAll('.nav-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(navId).classList.add('active');
+        }
+        
+        // Detail content
+        const details = {
+            'hero': `
+                <h2 class="detail-title">🏠 Hero Section - Homepage</h2>
+                <div class="detail-section">
+                    <h3>Título Principal (H1)</h3>
+                    <p style="font-size: 1.3rem; font-weight: 700; color: var(--primary);">"Tu cliente te tiene en su teléfono"</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Subtítulo</h3>
+                    <p>Un código QR que descarga tu contacto automáticamente. Sin apps, sin búsquedas, sin que te olviden.</p>
+                </div>
+                <div class="detail-section">
+                    <h3>CTA Principal</h3>
+                    <p style="font-weight: 600; color: var(--primary);">"Crear mi código QR - $20"</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Elemento Visual</h3>
+                    <p>Demo en vivo: Captura de pantalla de un teléfono mostrando cómo se guarda el contacto + Código QR real para escanear</p>
+                </div>
+            `,
+            'colors': `
+                <h2 class="detail-title">🎨 Paleta de Colores</h2>
+                <div class="detail-section">
+                    <h3>Colores Principales</h3>
+                    <table class="detail-table">
+                        <tr><th>Color</th><th>Hex</th><th>RGB</th><th>Uso</th></tr>
+                        <tr><td>Verde ActivaQR</td><td>#00C853</td><td>0, 200, 83</td><td>CTAs, acentos</td></tr>
+                        <tr><td>Verde Oscuro</td><td>#00A844</td><td>0, 168, 68</td><td>Hover states</td></tr>
+                        <tr><td>Negro Profundo</td><td>#1A1A1A</td><td>26, 26, 26</td><td>Texto, fondos</td></tr>
+                        <tr><td>Blanco Puro</td><td>#FFFFFF</td><td>255, 255, 255</td><td>Fondos</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>Colores Secundarios</h3>
+                    <table class="detail-table">
+                        <tr><th>Color</th><th>Hex</th><th>Uso</th></tr>
+                        <tr><td>Azul Confianza</td><td>#2196F3</td><td>Links, información</td></tr>
+                        <tr><td>Naranja Energía</td><td>#FF9800</td><td>Alertas, urgencia</td></tr>
+                        <tr><td>Rojo Alerta</td><td>#F44336</td><td>Errores</td></tr>
+                    </table>
+                </div>
+            `,
+            'budget': `
+                <h2 class="detail-title">💰 Presupuesto de Marketing</h2>
+                <div class="detail-section">
+                    <h3>Escenario Recomendado: $2,300/mes</h3>
+                    <table class="detail-table">
+                        <tr><th>Canal</th><th>Monto</th><th>Porcentaje</th></tr>
+                        <tr><td>Facebook/Instagram Ads</td><td>$1,000</td><td>43%</td></tr>
+                        <tr><td>Google Ads</td><td>$500</td><td>22%</td></tr>
+                        <tr><td>TV Local</td><td>$500</td><td>22%</td></tr>
+                        <tr><td>Radio Local</td><td>$300</td><td>13%</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>Por qué este presupuesto?</h3>
+                    <p>Tu público (35-65 años, antitecnológico) responde mejor a publicidad tradicional + Facebook. Con $2,300/mes puedes esperar:</p>
+                    <ul>
+                        <li>50+ leads/mes</li>
+                        <li>15-25 clientes nuevos</li>
+                        <li>ROAS objetivo: 3x</li>
+                    </ul>
+                </div>
+            `,
+            'timeline': `
+                <h2 class="detail-title">📅 Cronograma de Implementación</h2>
+                <div class="detail-section">
+                    <h3>Semana 1-2: Fundamentos</h3>
+                    <ul>
+                        <li>Diseñar Brand Kit completo (logo, colores, tipografía)</li>
+                        <li>Migrar a www.activaqr.com</li>
+                        <li>Configurar WhatsApp Business</li>
+                        <li>Agregar CTAs a los 5 artículos del blog</li>
+                        <li>Configurar Google Analytics y Facebook Pixel</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Semana 3-4: Contenido</h3>
+                    <ul>
+                        <li>Grabar primeros 10 videos</li>
+                        <li>Publicar en TikTok + Instagram</li>
+                        <li>Primer mes de contenido (4-5 posts/semana)</li>
+                        <li>Crear templates para contenido</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Mes 2: Ads Digitales</h3>
+                    <ul>
+                        <li>Lanzar Facebook/Instagram Ads ($10/día)</li>
+                        <li>Iniciar Google Ads (búsqueda)</li>
+                        <li>Probar radio local</li>
+                        <li>Medir y optimizar semanalmente</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Mes 3+: Expansión</h3>
+                    <ul>
+                        <li>TV Local (si hay presupuesto)</li>
+                        <li>Escalar lo que funciona</li>
+                        <li>Replicar vendedores</li>
+                        <li>Medir ROI</li>
+                    </ul>
+                </div>
+            `,
+            'metrics': `
+                <h2 class="detail-title">📊 Metas y Métricas</h2>
+                <div class="detail-section">
+                    <h3>Métricas Clave</h3>
+                    <table class="detail-table">
+                        <tr><th>Métrica</th><th>Mes 1</th><th>Mes 3</th><th>Mes 6</th></tr>
+                        <tr><td>Seguidores redes</td><td>100</td><td>500</td><td>2,000</td></tr>
+                        <tr><td>Leads/mes</td><td>10</td><td>50</td><td>150</td></tr>
+                        <tr><td>Clientes nuevos</td><td>5</td><td>20</td><td>60</td></tr>
+                        <tr><td>Ingresos</td><td>$100</td><td>$400</td><td>$1,200</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>KPI de Ads</h3>
+                    <ul>
+                        <li><strong>CPM:</strong> <$5 (costo por 1,000 impresiones)</li>
+                        <li><strong>CPC:</strong> <$0.50 (costo por clic)</li>
+                        <li><strong>CTR:</strong> >2% (tasa de clic)</li>
+                        <li><strong>Costo por lead:</strong> <$5</li>
+                        <li><strong>ROAS:</strong> >3x</li>
+                    </ul>
+                </div>
+            `,
+            'positioning': `
+                <h2 class="detail-title">🎯 Posicionamiento de Marca</h2>
+                <div class="detail-section">
+                    <h3>Claim Principal</h3>
+                    <p style="font-size: 1.2rem; font-weight: 600;">"Tu cliente te tiene en su teléfono"</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Claim Secundario</h3>
+                    <p>Un código QR que descarga tu contacto automáticamente.</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Tu Diferenciación</h3>
+                    <p>Focus en <strong>SOLO contacto vCard</strong> para profesionales independientes. No genérico, no enterprise, no múltiples funciones.</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Tu Oportunidad</h3>
+                    <p>No existe una marca enfocada SOLO en contacto vCard para profesionales independientes. Tu ventaja: simplicidad radical + enfoque en el problema emocional (perder clientes).</p>
+                </div>
+            `,
+            'competitors': `
+                <h2 class="detail-title">🏢 Análisis de Competidores</h2>
+                <div class="detail-section">
+                    <h3>Competidores Principales</h3>
+                    <table class="detail-table">
+                        <tr><th>Competidor</th><th>Tipo</th><th>Precio</th><th>Fortalezas</th></tr>
+                        <tr><td>QRCode Monkey</td><td>Generador QR</td><td>Gratis</td><td>Popular, gratuito</td></tr>
+                        <tr><td>Canva</td><td>Diseño + QR</td><td>$13-30/mes</td><td>Diseño hermoso</td></tr>
+                        <tr><td>Haystack</td><td>Tarjetas digitales</td><td>$8-25/mes</td><td>Bonitas, profesional</td></tr>
+                        <tr><td>Popl</td><td>Tarjetas QR</td><td>$10-30/mes</td><td>Sistema físico</td></tr>
+                        <tr><td>Linktree</td><td>Links múltiples</td><td>Gratis</td><td>MUY popular</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>Tu Ventaja Competitiva</h3>
+                    <ul>
+                        <li>✅ Simplicidad radical (SOLO contacto)</li>
+                        <li>✅ Enfoque en profesionales independientes</li>
+                        <li>✅ Precio simple: $20/año</li>
+                        <li>✅ Resuelve problema emocional</li>
+                    </ul>
+                </div>
+            `,
+            'voice': `
+                <h2 class="detail-title">📢 Voz y Tono de Marca</h2>
+                <div class="detail-section">
+                    <h3>Cómo Hablamos</h3>
+                    <table class="detail-table">
+                        <tr><th>✅ SÍ Decimos</th><th>❌ NO Decimos</th></tr>
+                        <tr><td>Tu cliente te tiene en su teléfono</td><td>Generamos códigos QR vCard dinámicos</td></tr>
+                        <tr><td>No más tarjetas perdidas</td><td>Solución SaaS de gestión de contactos</td></tr>
+                        <tr><td>¿Te ha pasado que...?</td><td>Optimización de flujo de contactos</td></tr>
+                        <tr><td>Se guarda automáticamente</td><td>Interfaz intuitiva con UX optimizado</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>Atributos del Tono</h3>
+                    <ul>
+                        <li><strong>Profesional</strong> pero NO corporativo</li>
+                        <li><strong>Cercano</strong> - habla como un amigo</li>
+                        <li><strong>Directo</strong> - sin jerga técnica</li>
+                        <li><strong>Emocional</strong> - toca el dolor de perder clientes</li>
+                        <li><strong>Confiado</strong> - diferenciación clara</li>
+                    </ul>
+                </div>
+            `,
+            'structure': `
+                <h2 class="detail-title">🌐 Estructura del Sitio Web</h2>
+                <div class="detail-section">
+                    <h3>Páginas Principales</h3>
+                    <ul>
+                        <li><strong>/</strong> - Homepage (hero + demo + CTA)</li>
+                        <li><strong>/como-funciona</strong> - Explicación paso a paso</li>
+                        <li><strong>/precios</strong> - Planes: $20, $16/u, $14/u</li>
+                        <li><strong>/blog</strong> - Artículos educativos</li>
+                        <li><strong>/contacto</strong> - Formulario + WhatsApp</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Landing Pages</h3>
+                    <ul>
+                        <li><strong>/profesionales</strong> - Para técnicos, doctores</li>
+                        <li><strong>/negocios</strong> - Para restaurantes, tiendas</li>
+                        <li><strong>/equipos</strong> - Para empresas</li>
+                    </ul>
+                </div>
+            `,
+            'seo': `
+                <h2 class="detail-title">🔍 SEO - Optimización</h2>
+                <div class="detail-section">
+                    <h3>Meta Tags - Homepage</h3>
+                    <table class="detail-table">
+                        <tr><th>Elemento</th><th>Contenido</th></tr>
+                        <tr><td>Title</td><td>ActivaQR - Tu Contacto Siempre en el Teléfono del Cliente</td></tr>
+                        <tr><td>Description</td><td>Crea un código QR que descarga tu contacto automáticamente. La solución para profesionales que no quieren perder clientes. Desde $20.</td></tr>
+                        <tr><td>Keywords</td><td>código qr contacto, tarjeta digital, contacto vcard, qr para negocio</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>Palabras Clave Objetivo</h3>
+                    <ul>
+                        <li>Primarias: código qr contacto, generar código qr vcard</li>
+                        <li>Secundarias: tarjeta de visita digital, qr para negocio</li>
+                        <li>Larga cola: código qr que se guarda en contactos</li>
+                    </ul>
+                </div>
+            `,
+            'funnel': `
+                <h2 class="detail-title">🔄 Funnel de Conversión</h2>
+                <div class="detail-section">
+                    <h3>Etapas del Funnel</h3>
+                    <table class="detail-table">
+                        <tr><th>Etapa</th><th>Canal</th><th>Objetivo</th><th>Conversión</th></tr>
+                        <tr><td>Awareness</td><td>TikTok, Radio, TV</td><td>Conocimiento</td><td>Impresiones</td></tr>
+                        <tr><td>Interés</td><td>Instagram, Blog</td><td>Educación</td><td>Visitas</td></tr>
+                        <tr><td>Decisión</td><td>Landing, Demo</td><td>Consideración</td><td>Leads</td></tr>
+                        <tr><td>Acción</td><td>WhatsApp, Venta</td><td>Conversión</td><td>Clientes</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>Métricas del Funnel</h3>
+                    <ul>
+                        <li>Visitante → Landing: >40% bounce rate acceptable</li>
+                        <li>Landing → Demo: >2 min tiempo en página</li>
+                        <li>Demo → CTA click: >5% CTR</li>
+                        <li>CTA → WhatsApp: >10% conversión</li>
+                        <li>WhatsApp → Venta: >30% cierre</li>
+                    </ul>
+                </div>
+            `,
+            'calendar': `
+                <h2 class="detail-title">📅 Calendario de Contenido Semanal</h2>
+                <div class="detail-section">
+                    <h3>Lunes - Blog</h3>
+                    <p>Nuevo artículo optimizado SEO (800-1500 palabras)</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Martes - Video Problema</h3>
+                    <p>Reel/TikTok: "El problema del maestro de la casa azul"</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Miércoles - Stories</h3>
+                    <p>Behind the scenes, Q&A, encuestas</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Jueves - Demo</h3>
+                    <p>Video: Demo paso a paso de cómo funciona</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Viernes - Testimonio</h3>
+                    <p>Testimonio de cliente (enfermero, técnico, etc.)</p>
+                </div>
+                <div class="detail-section">
+                    <h3>Sábado - Repost</h3>
+                    <p>Recap del mejor contenido de la semana</p>
+                </div>
+            `,
+            'blog': `
+                <h2 class="detail-title">📝 Estado del Blog</h2>
+                <div class="detail-section">
+                    <h3>Artículos Publicados</h3>
+                    <table class="detail-table">
+                        <tr><th>#</th><th>Título</th><th>Estado</th><th>Acción</th></tr>
+                        <tr><td>1</td><td>10 Razones por las que un Código QR puede mejorar tu negocio</td><td>✅</td><td>Agregar CTA</td></tr>
+                        <tr><td>2</td><td>5 Errores comunes al usar Códigos QR en tu negocio</td><td>✅</td><td>Agregar CTA</td></tr>
+                        <tr><td>3</td><td>Cómo usar los Códigos QR para aumentar tus ventas</td><td>✅</td><td>Agregar CTA</td></tr>
+                        <tr><td>4</td><td>La importancia de tener una tarjeta de presentación digital</td><td>✅</td><td>Agregar CTA</td></tr>
+                        <tr><td>5</td><td>Cómo hacer que tus clientes te recuerden siempre</td><td>✅</td><td>Agregar CTA</td></tr>
+                    </table>
+                </div>
+                <div class="detail-section">
+                    <h3>CTA a Incluir en Cada Artículo</h3>
+                    <p style="background: #EEFDF4; padding: 15px; border-radius: 10px; text-align: center;">
+                        <strong>¿Te gustaría que tus clientes te recuerden siempre?</strong><br><br>
+                        <span style="color: var(--primary);">Crear mi código QR - $20</span><br><br>
+                        ¿Tienes preguntas? <span style="color: var(--accent-blue);">Escríbenos al WhatsApp</span>
+                    </p>
+                </div>
+            `,
+            'platforms': `
+                <h2 class="detail-title">📱 Estrategia por Plataforma</h2>
+                <div class="detail-section">
+                    <h3>Instagram (Alta Prioridad)</h3>
+                    <ul>
+                        <li>Reels: 4-5/semana</li>
+                        <li>Stories: Diario (5-10)</li>
+                        <li>Feed: 2-3/semana</li>
+                        <li>Audiencia: 30-55 años</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Facebook (Alta Prioridad)</h3>
+                    <ul>
+                        <li>Posts: 3/semana</li>
+                        <li>Videos: 2/semana</li>
+                        <li>Grupos: Participar en grupos locales</li>
+                        <li>Audiencia: 35-65 años</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>TikTok (Baja Prioridad)</h3>
+                    <p>Tu público objetivo (35-65 años, antitecnológico) está más en Facebook/Instagram. TikTok es para público más joven (18-35).</p>
+                </div>
+            `,
+            'scripts': `
+                <h2 class="detail-title">🎬 Guiones para Videos</h2>
+                <div class="detail-section">
+                    <h3>1. El Problema del "Maestro de la Casa Azul"</h3>
+                    <p><strong>Duración:</strong> 25-30 segundos</p>
+                    <p><strong>Hook:</strong> ¿Te ha pasado esto?</p>
+                    <p><strong>Contenido:</strong> Das tu tarjeta y te anotan como "Pedrito el carpintero", "Maestro de la casa azul"</p>
+                    <p><strong>CTA:</strong> ¿Te pasa? Comenta "SÍ" y te cuento más</p>
+                </div>
+                <div class="detail-section">
+                    <h3>2. Las Tarjetas se Pierden</h3>
+                    <p><strong>Duración:</strong> 20-25 segundos</p>
+                    <p><strong>Hook:</strong> ¿Qué haces con tus tarjetas de presentación?</p>
+                    <p><strong>Contenido:</strong> Se pierden, se tiran, nadie recuerda</p>
+                    <p><strong>CTA:</strong> ¿Sigues para más tips?</p>
+                </div>
+                <div class="detail-section">
+                    <h3>3. Demo Paso a Paso</h3>
+                    <p><strong>Duración:</strong> 45-60 segundos</p>
+                    <p><strong>Contenido:</strong> Paso 1: Escanea, Paso 2: Se abre contacto, Paso 3: Guardar, Paso 4: ¡Listo!</p>
+                    <p><strong>CTA:</strong> ¿Quieres el tuyo? Click al enlace en mi bio</p>
+                </div>
+            `,
+            'scripts-list': `
+                <h2 class="detail-title">📋 Lista Completa de Guiones</h2>
+                <div class="detail-section">
+                    <h3>Categoría: Problema (3 guiones)</h3>
+                    <ol>
+                        <li>El Problema del "Maestro de la Casa Azul" - 25-30s</li>
+                        <li>Las Tarjetas se Pierden - 20-25s</li>
+                        <li>¿Por qué no me llaman? - 20-25s</li>
+                    </ol>
+                </div>
+                <div class="detail-section">
+                    <h3>Categoría: Solución (3 guiones)</h3>
+                    <ol>
+                        <li>Demo Completa Paso a Paso - 45-60s</li>
+                        <li>Lo que Incluye el Contacto - 30-35s</li>
+                        <li>Cómo Creo un Código QR - 40-50s</li>
+                    </ol>
+                </div>
+                <div class="detail-section">
+                    <h3>Categoría: Objeción (2 guiones)</h3>
+                    <ol>
+                        <li>No es Linktree - 30-35s</li>
+                        <li>¿Pero yo ya tengo Instagram? - 30-35s</li>
+                    </ol>
+                </div>
+                <div class="detail-section">
+                    <h3>Categoría: Prueba Social (2 guiones)</h3>
+                    <ol>
+                        <li>Testimonio de la Enfermera - 30-45s</li>
+                        <li>Testimonio del Técnico - 30-40s</li>
+                    </ol>
+                </div>
+                <div class="detail-section">
+                    <h3>Categoría: Venta (3 guiones)</h3>
+                    <ol>
+                        <li>¿Por qué $20 Vale la Pena? - 25-30s</li>
+                        <li>Oferta del Mes - 20-25s</li>
+                        <li>3 Tips para que te Recuerden - 20-25s</li>
+                    </ol>
+                </div>
+            `,
+            'tips': `
+                <h2 class="detail-title">💡 Tips de Producción</h2>
+                <div class="detail-section">
+                    <h3>Configuración de Cámara</h3>
+                    <ul>
+                        <li>Celular: Vertical (9:16)</li>
+                        <li>Resolución: 1080p</li>
+                        <li>Luz: De frente, evitar sombras</li>
+                        <li>Audio: Claro, sin ruido</li>
+                        <li>Duración: 15-60 segundos</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Estilo Visual</h3>
+                    <ul>
+                        <li>Fondo limpio o simple</li>
+                        <li>Ropa de color sólido</li>
+                        <li>Usar el QR como props</li>
+                        <li>Mostrar teléfono en demos</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Tips de Energía</h3>
+                    <ul>
+                        <li>Hablar con convicción</li>
+                        <li>Hacer pausas dramáticas</li>
+                        <li>Usar las manos para gesticular</li>
+                        <li>Sonreír al dar la CTA</li>
+                    </ul>
+                </div>
+            `,
+            'ads-budget': `
+                <h2 class="detail-title">💰 Presupuesto Detallado</h2>
+                <div class="detail-section">
+                    <h3>Escenario Conservador: $900/mes</h3>
+                    <ul>
+                        <li>Facebook/Instagram Ads: $500</li>
+                        <li>Google Ads: $200</li>
+                        <li>Radio local: $200</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>⭐ Recomendado: $2,300/mes</h3>
+                    <ul>
+                        <li>Facebook/Instagram Ads: $1,000</li>
+                        <li>Google Ads: $500</li>
+                        <li>TV Local: $500</li>
+                        <li>Radio: $300</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Agresivo: $6,500/mes</h3>
+                    <ul>
+                        <li>Facebook/Instagram Ads: $2,000</li>
+                        <li>Google Ads: $1,000</li>
+                        <li>TV Nacional: $3,000</li>
+                        <li>Radio: $500</li>
+                    </ul>
+                </div>
+            `,
+            'ads-detail': `
+                <h2 class="detail-title">📊 Detalle de Ads</h2>
+                <div class="detail-section">
+                    <h3>Facebook/Instagram Ads</h3>
+                    <ul>
+                        <li>Audiencia: 35-65 años, Ecuador</li>
+                        <li>Intereses: Negocios, entrepreneurship, oficios</li>
+                        <li>Formatos: Video 15-30s, Carrusel, Imagen</li>
+                        <li>Objetivo: Tráfico, Leads</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>Google Ads</h3>
+                    <ul>
+                        <li>Keywords: código qr contacto, generar código qr, tarjeta digital qr</li>
+                        <li>CPC estimado: $0.50-1.50</li>
+                        <li>Tipo: Búsqueda</li>
+                    </ul>
+                </div>
+                <div class="detail-section">
+                    <h3>TV Local</h3>
+                    <ul>
+                        <li>Horarios: Noticieros (mañana/tarde)</li>
+                        <li>Formato: 30 segundos</li>
+                        <li>Costo estimado: $500-2,000/mes</li>
+                    </ul>
+                </div>
+            `,
+            'ads-channels': `
+                <h2 class="detail-title">📺 Canales de Publicidad</h2>
+                <div class="detail-section">
+                    <h3>Orden de Prioridad</h3>
+                    <table class="detail-table">
+                        <tr><th>#</th><th>Canal</th><th>Prioridad</th><th>Por qué</th></tr>
+                        <tr><td>1</td><td>WhatsApp</td><td>🔴 Alta</td><td>Tu público responde por chat</td></tr>
+                        <tr><td>2</td><td>Facebook/IG</td><td>🔴 Alta</td><td>Público 35-65 está ahí</td></tr>
+                        <tr><td>3</td><td>Radio</td><td>🟡 Media</td><td>Tu público escucha radio</td></tr>
+                        <tr><td>4</td><td>Google</td><td>🟡 Media</td><td>Captura demanda activa</td></tr>
+                        <tr><td>5</td><td>TV Local</td><td>🟡 Media</td><td>Credibilidad</td></tr>
+                        <tr><td>6</td><td>TikTok</td><td>🔴 Baja</td><td>Público muy joven</td></tr>
+                    </table>
+                </div>
+            `
+        };
+        
+        function showDetail(key) {
+            const content = details[key] || '<p>Contenido no disponible</p>';
+            document.getElementById('detailContent').innerHTML = content;
+            document.getElementById('detailPanel').classList.add('open');
+            document.querySelector('.overlay').classList.add('open');
+        }
+        
+        function closeDetail() {
+            document.getElementById('detailPanel').classList.remove('open');
+            document.querySelector('.overlay').classList.remove('open');
+        }
+    </script>
+</body>
+</html>
