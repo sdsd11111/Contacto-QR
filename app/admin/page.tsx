@@ -570,8 +570,14 @@ export default function AdminDashboard() {
                 if (!catalogoJson || typeof catalogoJson !== 'object') {
                     catalogoJson = { categories: [], products: [] };
                 }
+                // Parse hero_slides_json
+                let heroSlidesJson = fullRegistro.hero_slides_json;
+                if (typeof heroSlidesJson === 'string') {
+                    try { heroSlidesJson = JSON.parse(heroSlidesJson); } catch { heroSlidesJson = []; }
+                }
+                if (!Array.isArray(heroSlidesJson)) heroSlidesJson = [];
 
-                setEditingRegistro({ ...fullRegistro, galeria_urls: galeriaUrls, catalogo_json: catalogoJson });
+                setEditingRegistro({ ...fullRegistro, galeria_urls: galeriaUrls, catalogo_json: catalogoJson, hero_slides_json: heroSlidesJson });
                 setIsEditModalOpen(true);
             } else {
                 alert("Error al obtener datos completos del registro.");
@@ -657,10 +663,13 @@ export default function AdminDashboard() {
                     google_rating: editingRegistro.google_rating,
                     google_reviews_count: editingRegistro.google_reviews_count,
                     youtube_video_url: editingRegistro.youtube_video_url,
-                    catalogo_json: editingRegistro.catalogo_json ? JSON.stringify(
-                        typeof editingRegistro.catalogo_json === 'string'
-                            ? JSON.parse(editingRegistro.catalogo_json)
-                            : editingRegistro.catalogo_json
+                    expires_reminder_7d_sent: editingRegistro.expires_reminder_7d_sent,
+                    expires_reminder_0d_sent: editingRegistro.expires_reminder_0d_sent,
+                    json_override: editingRegistro.json_override || null,
+                    hero_slides_json: editingRegistro.hero_slides_json ? (
+                        typeof editingRegistro.hero_slides_json === 'string' 
+                            ? editingRegistro.hero_slides_json 
+                            : JSON.stringify(editingRegistro.hero_slides_json)
                     ) : null,
                 })
             });
@@ -1944,6 +1953,7 @@ export default function AdminDashboard() {
                         onPhotoUpload={handlePhotoUpload}
                         onPortadaUpload={handlePortadaUpload}
                         isSaving={isSaving}
+                        isAdmin={true}
                     />
                 )}
             </AnimatePresence>

@@ -92,9 +92,9 @@ export async function POST(req: NextRequest) {
                 const isCatalog = plan === 'catalogo';
                 editCodeSection = `
                     <div style="background-color: #F8FAFC; border: 2px solid #3B82F6; border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center;">
-                        <h3 style="color: #1E3A8A; margin: 0 0 12px 0; font-size: 18px; font-weight: 800; text-transform: uppercase;">✏️ Actualiza tu Información</h3>
+                        <h3 style="color: #1E3A8A; margin: 0 0 12px 0; font-size: 18px; font-weight: 800; text-transform: uppercase;">✏️ Ediciones Ilimitadas</h3>
                         <p style="margin: 0 0 16px 0; font-size: 15px; color: #475569; line-height: 1.5;">
-                            ¿Cambiaste de número o agregaste un nuevo producto? Tu plan incluye <strong>2 cambios gratuitos</strong>.
+                            Tu plan incluye acceso <strong>ilimitado y sin costo extra</strong> a tu editor. Podrás actualizar tus <strong>Banners Promocionales</strong> (las imágenes del inicio), agregar nuevos productos o cambiar tus números cuando lo necesites.
                             Para editar, abre tu enlace interactivo y presiona el <strong>ícono de la rueda (engranaje)</strong> en la esquina superior izquierda. 
                             Luego ingresa tu código secreto:
                         </p>
@@ -103,17 +103,14 @@ export async function POST(req: NextRequest) {
                             <span style="font-family: 'Courier New', monospace; font-size: 28px; font-weight: 900; color: #1E3A8A; letter-spacing: 4px;">${edit_code}</span>
                         </div>
                         <a href="https://activaqr.com/${isCatalog ? 'catalog' : 'card'}/${slug}" style="background-color: #3B82F6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 800; display: inline-block; margin-bottom: 16px; font-size: 14px; text-transform: uppercase;">Abrir Tarjeta para Editar →</a>
-                        <p style="margin: 16px 0 0 0; font-size: 12px; color: #94A3B8; font-style: italic;">
-                            Nota: Los primeros 2 cambios son gratuitos. A partir del 3er cambio, el costo es de <strong>$2.00 USD</strong> por actualización.
-                        </p>
                     </div>
                 `;
             } else {
                 editCodeSection = `
                     <div style="background-color: #F8FAFC; border: 2px solid #3B82F6; border-radius: 16px; padding: 24px; margin: 24px 0; text-align: center;">
-                        <h3 style="color: #1E3A8A; margin: 0 0 12px 0; font-size: 18px; font-weight: 800; text-transform: uppercase;">✏️ Actualiza tu Contacto</h3>
+                        <h3 style="color: #1E3A8A; margin: 0 0 12px 0; font-size: 18px; font-weight: 800; text-transform: uppercase;">✏️ Ediciones Ilimitadas</h3>
                         <p style="margin: 0 0 16px 0; font-size: 15px; color: #475569; line-height: 1.5;">
-                            ¿Cambiaste de celular o nombre? Tu plan incluye <strong>2 cambios gratuitos</strong>.
+                            Tu plan incluye <strong>ediciones ilimitadas</strong>. ¿Cambiaste de celular o nombre? Actualiza todo tu perfil en cualquier momento, sin costo extra.
                             Para editar, ingresa a la página principal de ActivaQR con tu código secreto:
                         </p>
                         <div style="background-color: #EEF2FF; border: 1px dashed #6366F1; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
@@ -121,9 +118,6 @@ export async function POST(req: NextRequest) {
                             <span style="font-family: 'Courier New', monospace; font-size: 28px; font-weight: 900; color: #1E3A8A; letter-spacing: 4px;">${edit_code}</span>
                         </div>
                         <a href="https://activaqr.com/#editar" style="background-color: #3B82F6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 800; display: inline-block; margin-bottom: 16px; font-size: 14px; text-transform: uppercase;">Ir al Editor Principal →</a>
-                        <p style="margin: 16px 0 0 0; font-size: 12px; color: #94A3B8; font-style: italic;">
-                            Nota: Los primeros 2 cambios son gratuitos. A partir del 3er cambio, el costo es de <strong>$2.00 USD</strong> por actualización.
-                        </p>
                     </div>
                 `;
             }

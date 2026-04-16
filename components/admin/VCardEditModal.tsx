@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Youtube, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon } from 'lucide-react';
+import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Youtube, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VCardEditModalProps {
@@ -12,6 +12,7 @@ interface VCardEditModalProps {
     onPhotoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onPortadaUpload: (e: React.ChangeEvent<HTMLInputElement>, tipo: 'portada_desktop' | 'portada_movil') => void;
     isSaving: boolean;
+    isAdmin?: boolean;
 }
 
 export default function VCardEditModal({
@@ -22,12 +23,166 @@ export default function VCardEditModal({
     onSave,
     onPhotoUpload,
     onPortadaUpload,
-    isSaving
+    isSaving,
+    isAdmin = false
 }: VCardEditModalProps) {
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
+    const [heroSectionOpen, setHeroSectionOpen] = useState(false);
+
+    // ── Hero Slides Management ──
+    const heroSlides = (() => {
+        let raw = editingRegistro?.hero_slides_json;
+        if (!raw) return [];
+        if (typeof raw === 'string') {
+            try { raw = JSON.parse(raw); } catch { return []; }
+        }
+        return Array.isArray(raw) ? raw : [];
+    })();
+
+    const updateHeroSlides = (slides: any[]) => {
+        setEditingRegistro({ ...editingRegistro, hero_slides_json: slides });
+    };
+
+    const addHeroSlide = () => {
+        if (heroSlides.length >= 10) {
+            alert('Máximo 10 banners permitidos.');
+            return;
+        }
+        const newSlide = {
+            id: `slide_${Date.now()}`,
+            portada_desktop: '',
+            portada_movil: '',
+            title: '',
+            active: true
+        };
+        updateHeroSlides([...heroSlides, newSlide]);
+    };
+
+    const removeHeroSlide = (slideId: string) => {
+        if (heroSlides.length <= 1) {
+            alert('Debe haber al menos 1 banner.');
+            return;
+        }
+        updateHeroSlides(heroSlides.filter((s: any) => s.id !== slideId));
+    };
+
+    const toggleHeroSlideActive = (slideId: string, currentlyActive: boolean) => {
+        if (currentlyActive) {
+            const activeCount = heroSlides.filter((s: any) => s.active).length;
+            if (activeCount <= 1) {
+                alert('Debe haber al menos 1 banner activo.');
+                return;
+            }
+        }
+        updateHeroSlides(heroSlides.map((s: any) => s.id === slideId ? { ...s, active: !s.active } : s));
+    };
+
+    const handleHeroSlideImageUpload = async (file: File, slideId: string, field: 'portada_desktop' | 'portada_movil') => {
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (res.ok) {
+                const { url } = await res.json();
+                updateHeroSlides(heroSlides.map((s: any) => s.id === slideId ? { ...s, [field]: url } : s));
+            } else {
+                alert('Error al subir la imagen.');
+            }
+        } catch (err) {
+            console.error('Error uploading hero slide image:', err);
+            alert('Error de conexión al subir imagen.');
+        }
+    };
 
     if (!isOpen || !editingRegistro) return null;
+
+    // Parse JSON Override for VIP Easy Labels
+    const vipMappings = (() => {
+        const raw = editingRegistro.json_override;
+        
+        // Si ya hay datos guardados, los devolvemos
+        if (raw && raw !== '{}') {
+            try {
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                return Object.entries(parsed).map(([find, replace]) => ({ find, replace: String(replace) }));
+            } catch (e) {
+                console.error("Error parsing json_override:", e);
+            }
+        }
+
+        // --- SÚPER ESCÁNER AUTOMÁTICO ---
+        const autoTags: { find: string, replace: string }[] = [];
+        
+        // Función para extraer textos de cualquier objeto o array (recursivo)
+        const extractTexts = (obj: any) => {
+            if (!obj) return;
+            if (typeof obj === 'string') {
+                const trimmed = obj.trim();
+                // Si es un texto corto, NO ES UNA FECHA, NO ES EMAIL, y relevante (< 45 carac)
+                const isDate = /^\d{4}-\d{2}-\d{2}/.test(trimmed);
+                const isEmail = trimmed.includes('@');
+                const isHash = /^[a-f0-9-]{20,}$/i.test(trimmed);
+
+                if (trimmed.length > 2 && trimmed.length < 45 && !trimmed.startsWith('http') && !isDate && !isEmail && !isHash) {
+                    if (!autoTags.some(t => t.find === trimmed)) {
+                        autoTags.push({ find: trimmed, replace: '' });
+                    }
+                }
+            } else if (Array.isArray(obj)) {
+                obj.forEach(item => extractTexts(item));
+            } else if (typeof obj === 'object') {
+                Object.entries(obj).forEach(([key, value]) => {
+                    // Ignoramos campos técnicos o URLs
+                    if (['url', 'image', 'icon', 'id', 'slug', 'color', 'status', 'plan'].includes(key)) return;
+                    extractTexts(value);
+                });
+            }
+        };
+
+        // Escaneamos TODO el registro (Campos base y JSONs)
+        Object.entries(editingRegistro).forEach(([key, value]) => {
+            // Saltamos campos que sabemos que no son etiquetas de vCard
+            if (['id', 'user_id', 'slug', 'status', 'json_override', 'catalogo_json', 'foto_url', 'portada_url'].includes(key)) return;
+            
+            if (typeof value === 'string' && (value.startsWith('{') || value.startsWith('['))) {
+                try {
+                    const parsed = JSON.parse(value);
+                    extractTexts(parsed);
+                } catch (e) {
+                    extractTexts(value);
+                }
+            } else {
+                extractTexts(value);
+            }
+        });
+
+        return autoTags;
+    })();
+
+    const updateVipMappings = (mappings: { find: string, replace: string }[]) => {
+        const obj: Record<string, string> = {};
+        mappings.forEach(m => {
+            if (m.find) obj[m.find] = m.replace;
+        });
+        setEditingRegistro({ ...editingRegistro, json_override: JSON.stringify(obj) });
+    };
+
+    // Preparar sugerencias/atajos rápidos para este perfil
+    const quickShortcuts = [
+        { label: '🖋️ Estudio de Tatuajes', value: 'Estudio de Tatuajes' },
+        { label: '🚬 Vape & Smoke Shop', value: 'Vape & Smoke Shop' },
+        { label: '👕 Tienda Ropa Urbana', value: 'Tienda Ropa Urbana' }
+    ];
+
+    const suggestions = [
+        ...(editingRegistro.empresa ? [{ label: '🏢 Empresa', value: editingRegistro.empresa }] : []),
+        ...(editingRegistro.profesion ? [{ label: '👔 Profesión', value: editingRegistro.profesion }] : []),
+        ...(editingRegistro.nombre ? [{ label: '👤 Nombre', value: editingRegistro.nombre }] : []),
+    ].filter((s, index, self) => 
+        s.value && s.value.trim() !== '' && 
+        self.findIndex(t => t.value === s.value) === index
+    );
 
     // Parse catalogo_json into a usable object
     const catalogoJson = (() => {
@@ -161,39 +316,157 @@ export default function VCardEditModal({
                                     </label>
                                 </div>
                             </div>
-                            
-                            {(editingRegistro.plan === 'business' || editingRegistro.plan === 'catalog') && (
-                                <div className="col-span-2 grid grid-cols-2 gap-8">
-                                    <div className="space-y-4 flex flex-col items-center">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-4">Hero Desktop (Banners)</h4>
-                                        <div className="w-full aspect-video bg-white/5 rounded-3xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
-                                            {editingRegistro.portada_desktop ? (
-                                                <img src={editingRegistro.portada_desktop} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="text-[10px] uppercase font-black text-white/20">Sin Portada</span>
-                                            )}
-                                            <label className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
-                                                <Upload size={24} className="text-white" />
-                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => onPortadaUpload(e, 'portada_desktop')} />
-                                            </label>
+                                <div className="col-span-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setHeroSectionOpen(!heroSectionOpen)}
+                                        className="w-full flex items-center justify-between p-5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all mb-4"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                                                <ImageIcon size={18} />
+                                            </div>
+                                            <div className="text-left">
+                                                <span className="font-black text-white uppercase text-sm tracking-tighter block">Banners Dinámicos Hero</span>
+                                                <span className="text-[9px] font-black text-white/30 uppercase tracking-widest">{heroSlides.length}/10 Banners Creados</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="space-y-4 flex flex-col items-center">
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-4">Hero Móvil (1080x1920)</h4>
-                                        <div className="h-48 aspect-[9/16] bg-white/5 rounded-3xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
-                                            {editingRegistro.portada_movil ? (
-                                                <img src={editingRegistro.portada_movil} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="text-[10px] uppercase font-black text-white/20 text-center px-4">Sin Portada</span>
-                                            )}
-                                            <label className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
-                                                <Upload size={24} className="text-white" />
-                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => onPortadaUpload(e, 'portada_movil')} />
-                                            </label>
-                                        </div>
-                                    </div>
+                                        <ChevronDown size={20} className={cn("text-white/30 transition-transform", heroSectionOpen && "rotate-180")} />
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {heroSectionOpen && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="p-6 bg-white/5 border border-white/10 rounded-3xl space-y-6">
+                                                    {/* Info Box */}
+                                                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3 text-blue-300">
+                                                        <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                                        <div className="text-xs">
+                                                            <p className="font-bold">Mínimo 1 Banner Activo</p>
+                                                            <p className="opacity-60 mt-1">El sistema requiere que siempre haya al menos una imagen activa para mostrar en el inicio.</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Slides List */}
+                                                    <div className="space-y-6">
+                                                        {heroSlides.map((slide: any, index: number) => (
+                                                            <div key={slide.id} className={cn(
+                                                                "border rounded-2xl p-5 transition-colors relative",
+                                                                slide.active ? "border-white/10 bg-white/5" : "border-white/5 bg-white/[0.02] opacity-60"
+                                                            )}>
+                                                                {/* Slide Header */}
+                                                                <div className="flex justify-between items-center mb-4">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="bg-primary text-navy text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{index + 1}</span>
+                                                                        <span className="text-sm font-bold text-white uppercase">Banner</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => toggleHeroSlideActive(slide.id, slide.active)}
+                                                                            className={cn(
+                                                                                "px-3 py-1 rounded-full text-[10px] font-black uppercase transition-colors",
+                                                                                slide.active ? "bg-green-500/20 text-green-400" : "bg-white/10 text-white/40"
+                                                                            )}
+                                                                        >
+                                                                            {slide.active ? 'Activo' : 'Inactivo'}
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removeHeroSlide(slide.id)}
+                                                                            className="w-7 h-7 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-colors"
+                                                                        >
+                                                                            <Trash2 size={12} />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                                    {/* Title */}
+                                                                    <div>
+                                                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 block">Título del Banner</label>
+                                                                        <input
+                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-primary/40 transition-all"
+                                                                            value={slide.title || ''}
+                                                                            onChange={e => updateHeroSlides(heroSlides.map((s: any) => s.id === slide.id ? { ...s, title: e.target.value } : s))}
+                                                                            placeholder="Ej. Oferta del Hero"
+                                                                        />
+                                                                    </div>
+                                                                    {/* Description */}
+                                                                    <div>
+                                                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-2 block">Descripción del Banner</label>
+                                                                        <input
+                                                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-primary/40 transition-all"
+                                                                            value={slide.description || ''}
+                                                                            onChange={e => updateHeroSlides(heroSlides.map((s: any) => s.id === slide.id ? { ...s, description: e.target.value } : s))}
+                                                                            placeholder="Ej. Soluciones de Contacto Digital Premium"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Images */}
+                                                                <div className="grid grid-cols-2 gap-4">
+                                                                    {/* Desktop */}
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/20 block">Desktop (16:9)</label>
+                                                                        <div className="w-full aspect-video bg-white/5 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative">
+                                                                            {slide.portada_desktop ? (
+                                                                                <img src={slide.portada_desktop} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <span className="text-[9px] uppercase font-black text-white/20">Sin Imagen</span>
+                                                                            )}
+                                                                            <label className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
+                                                                                <Upload size={18} className="text-white" />
+                                                                                <input type="file" className="hidden" accept="image/*" onChange={e => {
+                                                                                    const file = e.target.files?.[0];
+                                                                                    if (file) handleHeroSlideImageUpload(file, slide.id, 'portada_desktop');
+                                                                                }} />
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                    {/* Mobile */}
+                                                                    <div className="space-y-2">
+                                                                        <label className="text-[9px] font-black uppercase tracking-widest text-white/20 block">Móvil (4:5)</label>
+                                                                        <div className="h-32 aspect-[4/5] bg-white/5 rounded-xl border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden group relative mx-auto">
+                                                                            {slide.portada_movil ? (
+                                                                                <img src={slide.portada_movil} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <span className="text-[9px] uppercase font-black text-white/20 text-center px-2">Sin Imagen</span>
+                                                                            )}
+                                                                            <label className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
+                                                                                <Upload size={18} className="text-white" />
+                                                                                <input type="file" className="hidden" accept="image/*" onChange={e => {
+                                                                                    const file = e.target.files?.[0];
+                                                                                    if (file) handleHeroSlideImageUpload(file, slide.id, 'portada_movil');
+                                                                                }} />
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    {/* Add Banner Button */}
+                                                    {heroSlides.length < 10 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={addHeroSlide}
+                                                            className="w-full py-4 border-2 border-dashed border-white/10 hover:border-primary/40 rounded-2xl text-white/30 hover:text-primary font-black uppercase text-[10px] tracking-widest transition-all flex items-center justify-center gap-2"
+                                                        >
+                                                            <Plus size={16} /> Añadir Banner ({heroSlides.length}/10)
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
-                            )}
                         </div>
 
                         {/* INFO PERSONAL Y REDES */}
@@ -820,6 +1093,97 @@ export default function VCardEditModal({
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* CONFIGURACIÓN VIP (OVERRIDE FÁCIL) */}
+                        <div className="bg-purple-500/5 p-8 rounded-[2.5rem] border border-purple-500/20 space-y-8 animate-in fade-in zoom-in-95">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-purple-400 flex items-center gap-2">
+                                        <ShieldCheck size={16} /> PERSONALIZACIÓN VIP (ETIQUETAS FÁCILES)
+                                    </h4>
+                                    <button 
+                                        onClick={() => updateVipMappings([...vipMappings, { find: '', replace: '' }])}
+                                        className="bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                                    >
+                                        <Plus size={14} /> Añadir Etiqueta
+                                    </button>
+                                </div>
+                                
+                                <p className="text-[10px] text-purple-300/40 font-bold uppercase tracking-widest leading-relaxed max-w-2xl px-1">
+                                    Usa esta sección para forzar cambios en la vCard descargable sin cambiar el perfil digital. 
+                                </p>
+
+                                <div className="space-y-4">
+                                    <p className="text-[9px] font-black text-purple-400/60 uppercase tracking-widest flex items-center gap-2">
+                                        <Zap size={10} /> Atajos rápidos para este cliente:
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {quickShortcuts.map((s, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => {
+                                                    // Buscamos si ya existe el par en los mapeos
+                                                    const existingMapping = vipMappings.find(m => m.find === s.value);
+                                                    
+                                                    if (!existingMapping) {
+                                                        // Si no existe, lo añadimos con el valor de reemplazo vacío
+                                                        updateVipMappings([...vipMappings, { find: s.value, replace: '' }]);
+                                                    } else {
+                                                        // Si ya existe, podemos resaltar la fila (opcional) pero garantizamos que esté ahí
+                                                        console.log("Ya existe este mapeo especial:", s.value);
+                                                    }
+                                                }}
+                                                className="bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 px-3 py-2 rounded-xl text-[9px] font-black text-purple-300 uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+                                            >
+                                                {s.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+
+                                <div className="space-y-3">
+                                    {vipMappings.length === 0 ? (
+                                        <div className="py-8 text-center border-2 border-dashed border-purple-500/10 rounded-3xl">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-purple-500/20">No hay personalizaciones VIP activas</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {vipMappings.map((m, i) => (
+                                                <div key={i} className="flex gap-4 items-center animate-in slide-in-from-left-2 transition-all">
+                                                    <div className="flex-1 grid grid-cols-2 gap-4">
+                                                        <input 
+                                                            placeholder="Texto Original (Ej: Empresa)"
+                                                            className="bg-purple-500/5 border border-purple-500/20 rounded-xl px-5 py-3 text-xs font-bold text-white outline-none focus:border-purple-400/50 transition-all"
+                                                            value={m.find}
+                                                            onChange={e => {
+                                                                const newM = [...vipMappings];
+                                                                newM[i].find = e.target.value;
+                                                                updateVipMappings(newM);
+                                                            }}
+                                                        />
+                                                        <input 
+                                                            placeholder="Nuevo Texto (Ej: Mi Marca)"
+                                                            className="bg-white/5 border border-white/10 rounded-xl px-5 py-3 text-xs font-bold text-white outline-none focus:border-primary/40 transition-all"
+                                                            value={m.replace}
+                                                            onChange={e => {
+                                                                const newM = [...vipMappings];
+                                                                newM[i].replace = e.target.value;
+                                                                updateVipMappings(newM);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => updateVipMappings(vipMappings.filter((_, idx) => idx !== i))}
+                                                        className="p-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl transition-all"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                         </div>
 
                         {/* CATÁLOGO (Solo Plan Catalog) */}

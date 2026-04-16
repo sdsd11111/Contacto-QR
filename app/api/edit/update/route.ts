@@ -32,9 +32,7 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: 'Código inválido para este perfil' }, { status: 401 });
             }
 
-            if (user.edit_uses_remaining <= 0) {
-                return NextResponse.json({ error: 'Sin ediciones restantes' }, { status: 403 });
-            }
+
 
             // Calculate new nombre, but preserve existing if new would be empty
             let nombreLegacy = data.tipo_perfil === 'negocio'
@@ -96,10 +94,10 @@ export async function POST(req: NextRequest) {
                     hero_step3_title = ?,
                     hero_step3_text = ?,
                     catalogo_json = ?,
+                    hero_slides_json = ?,
                     youtube_video_url = ?,
                     google_rating = ?,
                     google_reviews_count = ?,
-                    edit_uses_remaining = edit_uses_remaining - 1,
                     last_edited_at = NOW()
             `;
 
@@ -145,6 +143,7 @@ export async function POST(req: NextRequest) {
                 data.hero_step3_title || 'Conéctate a la Red',
                 data.hero_step3_text || null,
                 data.catalogo_json ? (typeof data.catalogo_json === 'string' ? data.catalogo_json : JSON.stringify(data.catalogo_json)) : null,
+                data.hero_slides_json ? (typeof data.hero_slides_json === 'string' ? data.hero_slides_json : JSON.stringify(data.hero_slides_json)) : null,
                 data.youtube_video_url || null,
                 data.google_rating || null,
                 data.google_reviews_count || null
@@ -164,7 +163,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({
                 success: true,
                 message: 'Perfil actualizado correctamente',
-                remaining: user.edit_uses_remaining - 1
+                remaining: 'Ilimitado'
             });
 
         } finally {

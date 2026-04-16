@@ -95,6 +95,7 @@ export default function VCardEditModal({
         hero_step3_text: '',
         google_rating: '',
         google_reviews_count: '',
+        hero_slides_json: [] as Array<{ id: string, portada_desktop: string, portada_movil: string, title: string, active: boolean, description?: string }>,
         catalogo_json: { categories: [], products: [] } as { categories: string[], products: any[] }
     });
 
@@ -160,6 +161,22 @@ export default function VCardEditModal({
 
                     google_rating: data.data.google_rating || '',
                     google_reviews_count: data.data.google_reviews_count || '',
+                    hero_slides_json: (() => {
+                        const raw = data.data.hero_slides_json ? (typeof data.data.hero_slides_json === 'string' ? JSON.parse(data.data.hero_slides_json) : data.data.hero_slides_json) : null;
+                        if (!raw || !Array.isArray(raw) || raw.length === 0) {
+                            if (data.data.portada_desktop || data.data.portada_movil) {
+                                return [{
+                                    id: `slide_${Math.random().toString(36).substr(2, 9)}`,
+                                    portada_desktop: data.data.portada_desktop || '',
+                                    portada_movil: data.data.portada_movil || '',
+                                    title: data.data.hero_section_title || 'Oferta del Hero',
+                                    active: true
+                                }];
+                            }
+                            return [];
+                        }
+                        return raw;
+                    })(),
                     catalogo_json: (() => {
                         const raw = data.data.catalogo_json ? (typeof data.data.catalogo_json === 'string' ? JSON.parse(data.data.catalogo_json) : data.data.catalogo_json) : null;
                         if (!raw) return { categories: [], products: [] };
@@ -204,7 +221,7 @@ export default function VCardEditModal({
     };
 
     const handleSave = async () => {
-        if (!confirm('¿Estás seguro de guardar los cambios? Se descontará 1 uso de edición.')) return;
+        if (!confirm('¿Estás seguro de guardar los cambios?')) return;
 
         const formattedData = {
             ...formData,
@@ -248,14 +265,104 @@ export default function VCardEditModal({
                 const { url } = await res.json();
                 setFormData({ ...formData, [field]: url });
             } else {
-                alert('Error al procesar la imagen');
+                alert('Error al subir imagen');
             }
         } catch (err) {
-            console.error('Error uploading image:', err);
-            alert('Error de conexión al subir imagen');
+            alert('Error al subir imagen');
         } finally {
             setUploadingImage(false);
         }
+    };
+
+    const handleHeroSlideImage = async (e: React.ChangeEvent<HTMLInputElement>, id: string, type: 'portada_desktop' | 'portada_movil') => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingImage(true);
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (res.ok) {
+                const { url } = await res.json();
+                setFormData({
+                    ...formData,
+                    hero_slides_json: formData.hero_slides_json.map(slide => slide.id === id ? { ...slide, [type]: url } : slide)
+                });
+            } else {
+                alert('Error al subir imagen de slide');
+            }
+        } catch (err) {
+            alert('Error al subir imagen de slide');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const addHeroSlide = () => {
+        if (formData.hero_slides_json.length >= 10) {
+            alert('Máximo 10 Banners permitidos');
+            return;
+        }
+        const newSlide = {
+            id: `slide_${Math.random().toString(36).substr(2, 9)}`,
+            portada_desktop: formData.portada_desktop || '', // Use current single portadas as default to avoid empty initially if possible
+            portada_movil: formData.portada_movil || '',
+            title: 'Nuevo Banner',
+            active: true
+        };
+        setFormData({
+            ...formData,
+            hero_slides_json: [...formData.hero_slides_json, newSlide]
+        });
+    };
+
+    const toggleHeroSlideActive = (id: string, currentlyActive: boolean) => {
+        if (currentlyActive) {
+            const activeCount = formData.hero_slides_json.filter(s => s.active).length;
+            if (activeCount <= 1) {
+                alert('Debes mantener al menos 1 Banner Hero activo.');
+                return;
+            }
+        }
+        setFormData({
+            ...formData,
+            hero_slides_json: formData.hero_slides_json.map(slide => 
+                slide.id === id ? { ...slide, active: !currentlyActive } : slide
+            )
+        });
+    };
+
+    const removeHeroSlide = (id: string) => {
+        const slideToRemove = formData.hero_slides_json.find(s => s.id === id);
+        if (slideToRemove?.active) {
+            const activeCount = formData.hero_slides_json.filter(s => s.active).length;
+            if (activeCount <= 1) {
+                alert('No puedes eliminar este banner activo porque debe haber al menos 1 Banner Hero activo. Apaga u enciende otros primero.');
+                return;
+            }
+        }
+        setFormData({
+            ...formData,
+            hero_slides_json: formData.hero_slides_json.filter(s => s.id !== id)
+        });
+    };
+
+    const updateHeroSlideTitle = (id: string, title: string) => {
+        setFormData({
+            ...formData,
+            hero_slides_json: formData.hero_slides_json.map(slide => 
+                slide.id === id ? { ...slide, title } : slide
+            )
+        });
+    };
+
+    const updateHeroSlideDescription = (id: string, description: string) => {
+        setFormData({
+            ...formData,
+            hero_slides_json: formData.hero_slides_json.map(slide => 
+                slide.id === id ? { ...slide, description } : slide
+            )
+        });
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -788,8 +895,7 @@ export default function VCardEditModal({
                                     </div>
                                      )}
 
-                                    {/* SECCIÓN 4: IMÁGENES DE PORTADA */}
-                                     {(userData?.plan === 'business' || userData?.plan === 'catalog') && (
+                                    {/* SECCIÓN 4: CARRUSEL DE BANNERS (HERO) */}
                                     <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                         <button 
                                             onClick={() => setActiveSection(activeSection === 'portada' ? null : 'portada')}
@@ -799,7 +905,10 @@ export default function VCardEditModal({
                                                 <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
                                                     <ImageIcon size={18} />
                                                 </div>
-                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Imágenes de Portada</span>
+                                                <div className="text-left leading-none">
+                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter">Banners Dinámicos Hero</span>
+                                                    <p className="text-[9px] font-black text-navy/40 uppercase tracking-widest mt-0.5">{formData.hero_slides_json?.length || 0}/10 Banners Creados</p>
+                                                </div>
                                             </div>
                                             <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'portada' && "rotate-180")} />
                                         </button>
@@ -812,45 +921,132 @@ export default function VCardEditModal({
                                                     className="overflow-hidden bg-white border-t border-gray-100"
                                                 >
                                                     <div className="p-6 space-y-6">
-                                                        <div className="space-y-3">
-                                                            <div className="flex justify-between items-center">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Portada Desktop (PC)</label>
-                                                                <label className="cursor-pointer bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase hover:bg-primary/20 transition-colors">
-                                                                    Cambiar Imagen
-                                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'portada_desktop')} />
-                                                                </label>
-                                                            </div>
-                                                            <div className="aspect-[21/9] w-full bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200">
-                                                                {formData.portada_desktop ? (
-                                                                    <img src={formData.portada_desktop} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-gray-300 italic font-medium">Sin imagen de escritorio</div>
-                                                                )}
+                                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 text-blue-800">
+                                                            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                                            <div className="text-xs">
+                                                                <p className="font-bold">Mínimo 1 Banner Activo</p>
+                                                                <p className="opacity-80 mt-1">El sistema requiere que siempre haya al menos una imagen activa para mostrar en el inicio.</p>
                                                             </div>
                                                         </div>
 
-                                                        <div className="space-y-3">
-                                                            <div className="flex justify-between items-center">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Portada Móvil (Celular)</label>
-                                                                <label className="cursor-pointer bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase hover:bg-primary/20 transition-colors">
-                                                                    Cambiar Imagen
-                                                                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'portada_movil')} />
-                                                                </label>
-                                                            </div>
-                                                            <div className="aspect-[4/5] w-32 bg-gray-100 rounded-2xl overflow-hidden border-2 border-dashed border-gray-200">
-                                                                {formData.portada_movil ? (
-                                                                    <img src={formData.portada_movil} className="w-full h-full object-cover" />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center text-gray-300 italic font-medium text-center p-2">Sin imagen móvil</div>
-                                                                )}
-                                                            </div>
+                                                        <div className="space-y-6">
+                                                            {formData.hero_slides_json?.map((slide, index) => (
+                                                                <div key={slide.id} className={cn("border rounded-2xl p-4 transition-colors relative", slide.active ? "border-navy/10 bg-white shadow-sm" : "border-gray-200 bg-gray-50 opacity-80")}>
+                                                                    <div className="flex justify-between items-start mb-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="bg-navy text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{index + 1}</span>
+                                                                            <span className="text-sm font-bold text-navy uppercase">Banner</span>
+                                                                        </div>
+                                                                        
+                                                                        <div className="flex items-center gap-3">
+                                                                             <button 
+                                                                                type="button"
+                                                                                onClick={() => toggleHeroSlideActive(slide.id, slide.active)}
+                                                                                className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase transition-colors", slide.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500")}
+                                                                            >
+                                                                                {slide.active ? 'Activo' : 'Inactivo'}
+                                                                            </button>
+                                                                            <button 
+                                                                                type="button"
+                                                                                onClick={() => removeHeroSlide(slide.id)}
+                                                                                className="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
+                                                                                title="Eliminar Banner"
+                                                                            >
+                                                                                <Trash2 size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="space-y-4">
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 block mb-1">Título / Frase</label>
+                                                                            <input 
+                                                                                className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                                                                value={slide.title}
+                                                                                onChange={(e) => updateHeroSlideTitle(slide.id, e.target.value)}
+                                                                                placeholder="Ej. NUEVA COLECCIÓN"
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 block mb-1">Descripción</label>
+                                                                            <input 
+                                                                                className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                                                                value={slide.description || ''}
+                                                                                onChange={(e) => updateHeroSlideDescription(slide.id, e.target.value)}
+                                                                                placeholder="Ej. Soluciones premium"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                            {/* Desktop */}
+                                                                            <div className="space-y-2">
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Desktop (PC) - 16:9</label>
+                                                                                    <label className="cursor-pointer text-primary hover:text-primary/70 text-[10px] font-black uppercase transition-colors">
+                                                                                        Cambiar
+                                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_desktop')} />
+                                                                                    </label>
+                                                                                </div>
+                                                                                <div className="aspect-[21/9] bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 relative group">
+                                                                                    {slide.portada_desktop ? (
+                                                                                        <img src={slide.portada_desktop} className="w-full h-full object-cover" />
+                                                                                    ) : (
+                                                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-2">
+                                                                                            <ImageIcon size={20} className="mb-2 opacity-50" />
+                                                                                            <span className="text-[10px] font-bold text-center">Subir Imagen Ordenador</span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    {!slide.portada_desktop && (
+                                                                                        <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_desktop')} />
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Movil */}
+                                                                            <div className="space-y-2">
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Móvil - Vertical</label>
+                                                                                    <label className="cursor-pointer text-primary hover:text-primary/70 text-[10px] font-black uppercase transition-colors">
+                                                                                        Cambiar
+                                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_movil')} />
+                                                                                    </label>
+                                                                                </div>
+                                                                                <div className="aspect-[4/5] w-24 sm:w-32 bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 relative group">
+                                                                                    {slide.portada_movil ? (
+                                                                                        <img src={slide.portada_movil} className="w-full h-full object-cover" />
+                                                                                    ) : (
+                                                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-2">
+                                                                                            <ImageIcon size={20} className="mb-2 opacity-50" />
+                                                                                            <span className="text-[9px] font-bold text-center leading-tight">Subir Imagen Móvil</span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    {!slide.portada_movil && (
+                                                                                        <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_movil')} />
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
+
+                                                        {formData.hero_slides_json?.length < 10 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={addHeroSlide}
+                                                                className="w-full py-4 border-2 border-dashed border-primary/20 rounded-2xl flex items-center justify-center gap-2 text-primary hover:bg-primary/5 transition-colors font-bold uppercase tracking-wide text-xs"
+                                                            >
+                                                                <Plus size={16} /> Agregar Nuevo Banner Hero
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
                                     </div>
-                                     )}
 
                                     {/* SECCIÓN 5: CATÁLOGO DE PRODUCTOS (VISIBLE SI EL PLAN ES CATALOG O SI SE PERMITE EXPLÍCITAMENTE) */}
                                      {(userData?.plan === 'catalog' || allowCatalog) && (

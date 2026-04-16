@@ -329,8 +329,14 @@ export default function SellerDashboard() {
                 if (!catalogoJson || typeof catalogoJson !== 'object') {
                     catalogoJson = { categories: [], products: [] };
                 }
+                // Parse hero_slides_json
+                let heroSlidesJson = fullRegistro.hero_slides_json;
+                if (typeof heroSlidesJson === 'string') {
+                    try { heroSlidesJson = JSON.parse(heroSlidesJson); } catch { heroSlidesJson = []; }
+                }
+                if (!Array.isArray(heroSlidesJson)) heroSlidesJson = [];
 
-                setEditingRegistro({ ...fullRegistro, catalogo_json: catalogoJson });
+                setEditingRegistro({ ...fullRegistro, catalogo_json: catalogoJson, hero_slides_json: heroSlidesJson });
                 setIsEditModalOpen(true);
             } else {
                 alert("Error al obtener datos completos del registro.");
@@ -408,6 +414,12 @@ export default function SellerDashboard() {
                     ) : null,
                     plan: editingRegistro.plan,
                     status: editingRegistro.status,
+                    json_override: editingRegistro.json_override || null,
+                    hero_slides_json: editingRegistro.hero_slides_json ? (
+                        typeof editingRegistro.hero_slides_json === 'string' 
+                            ? editingRegistro.hero_slides_json 
+                            : JSON.stringify(editingRegistro.hero_slides_json)
+                    ) : null,
                 })
             });
 
@@ -1343,6 +1355,7 @@ export default function SellerDashboard() {
                         onPhotoUpload={handlePhotoUpload}
                         onPortadaUpload={handlePortadaUpload}
                         isSaving={isSaving}
+                        isAdmin={seller?.role === 'admin' || seller?.email === 'abel@activaqr.com'}
                     />
                 )}
             </AnimatePresence>

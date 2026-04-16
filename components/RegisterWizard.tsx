@@ -1130,6 +1130,16 @@ export default function RegisterWizard() {
                 foto_url: photoUrl,
                 portada_movil: heroMobileUrl,
                 portada_desktop: heroDesktopUrl,
+                hero_slides_json: [
+                    {
+                        id: `slide_0_${Math.random().toString(36).substring(2, 9)}`,
+                        portada_desktop: heroDesktopUrl || null,
+                        portada_movil: heroMobileUrl || null,
+                        title: dataToSubmit.hero_section_title || 'Oferta Exclusiva',
+                        description: '',
+                        active: true
+                    }
+                ],
                 catalogo_json: JSON.stringify({
                     categories: catalogItems.map(cat => cat.title || 'Todas'),
                     products: catalogItems.flatMap(cat => 

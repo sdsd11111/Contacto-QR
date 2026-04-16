@@ -21,7 +21,7 @@ Este documento es el cerebro central del agente. Su función es **Orquestar**, n
 - **Compactación:** Al cerrar una fase lógica, resumir todas las notas previas en un documento de "Hito de Reingeniería" y purgar las notas sueltas.
 
 ## 🗂️ Registro de Conocimiento (Tools & Skills)
-- **Skills Locales:** `commercial-steerer`, `frontend-lux`, `dna`, `architecture`.
+- **Skills Locales:** `commercial-steerer`, `frontend-lux`, `dna`, `architecture`, `vcard-vip-override`.
 - **Memoria Externa:** NotebookLM (Log Colaborativo).
 
 > [!IMPORTANT]

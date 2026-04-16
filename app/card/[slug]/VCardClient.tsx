@@ -18,6 +18,8 @@ import {
     ShieldAlert,
     Settings,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     MessageSquare,
     Utensils
 } from "lucide-react";
@@ -108,6 +110,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const [isSetupMode, setIsSetupMode] = useState(false);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [isFooterVisible, setIsFooterVisible] = useState(false);
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
     const [extractedBg, setExtractedBg] = useState<string>('#001549');
     const [themePrimary, setThemePrimary] = useState<string>('#f66739');
@@ -189,6 +192,36 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         };
         if (slug) fetchData();
     }, [slug]);
+
+    // Hero slides - must be before any early returns to respect Hooks rules
+    const activeSlides = (() => {
+        let slides: any[] = [];
+        try {
+            const raw = data?.hero_slides_json ? (typeof data.hero_slides_json === 'string' ? JSON.parse(data.hero_slides_json) : data.hero_slides_json) : null;
+            if (raw && Array.isArray(raw)) {
+                slides = raw.filter((s: any) => s.active);
+            }
+        } catch(e) {}
+        
+        if (slides.length === 0) {
+            slides = [{
+                id: 'default',
+                portada_desktop: data?.portada_desktop || '/images/hero_desktop_default.png',
+                portada_movil: data?.portada_movil || '/images/hero_mobile_default.png',
+                title: data?.hero_section_title || '',
+                active: true
+            }];
+        }
+        return slides;
+    })();
+
+    useEffect(() => {
+        if (activeSlides.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentSlideIndex((prev) => (prev + 1) % activeSlides.length);
+        }, 5000);
+        return () => clearInterval(interval);
+    }, [activeSlides.length]);
 
     useEffect(() => {
         if (data && typeof window !== 'undefined') {
@@ -408,12 +441,18 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         },
     ].filter(s => s.value);
 
-    const heroDesktop = data.portada_desktop || '/images/hero_desktop_default.png';
-    const heroMobile = data.portada_movil || '/images/hero_mobile_default.png';
-    const showHero = data.portada_desktop || data.portada_movil;
+    const showHero = activeSlides.length > 0;
 
     const scrollToProfile = () => {
         document.getElementById('profile-details')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const nextSlide = () => {
+        setCurrentSlideIndex((prev) => (prev + 1) % activeSlides.length);
+    };
+
+    const prevSlide = () => {
+        setCurrentSlideIndex((prev) => (prev - 1 + activeSlides.length) % activeSlides.length);
     };
 
     // Helper function to render social sidebar (avoids duplication)
@@ -573,57 +612,123 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             </div>
 
             {/* =================== FULLSCREEN HERO =================== */}
-            {showHero && (
+            {showHero && activeSlides.length > 0 && (
                 <section className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
-                    {/* Background Image - Mobile */}
-                    <div
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden"
-                        style={{ backgroundImage: `url('${heroMobile}')` }}
-                    />
-                    {/* Background Image - Desktop */}
-                    <div
-                        className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block"
-                        style={{ backgroundImage: `url('${heroDesktop}')` }}
-                    />
+                    <AnimatePresence mode="popLayout">
+                        <motion.div
+                            key={activeSlides[currentSlideIndex].id}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 1 }}
+                            className="absolute inset-0"
+                        >
+                            {/* Background Image - Mobile */}
+                            <div
+                                className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden"
+                                style={{ backgroundImage: `url('${activeSlides[currentSlideIndex].portada_movil}')` }}
+                            />
+                            {/* Background Image - Desktop */}
+                            <div
+                                className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block"
+                                style={{ backgroundImage: `url('${activeSlides[currentSlideIndex].portada_desktop}')` }}
+                            />
+                        </motion.div>
+                    </AnimatePresence>
 
                     {/* Dark overlay for better text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70 z-0" />
+
+                    {/* Navigation Arrows */}
+                    {activeSlides.length > 1 && (
+                        <>
+                            <button 
+                                onClick={prevSlide}
+                                className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/20 hover:bg-black/50 text-white backdrop-blur-sm transition-all border border-white/10 hover:scale-110 z-20"
+                                aria-label="Anterior"
+                            >
+                                <ChevronLeft size={28} />
+                            </button>
+                            <button 
+                                onClick={nextSlide}
+                                className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/20 hover:bg-black/50 text-white backdrop-blur-sm transition-all border border-white/10 hover:scale-110 z-20"
+                                aria-label="Siguiente"
+                            >
+                                <ChevronRight size={28} />
+                            </button>
+                        </>
+                    )}
 
                     {/* Hero Content */}
-                    <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 text-center w-full max-w-5xl pt-20">
+                    <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 md:px-24 text-center w-full max-w-5xl pt-20">
                         <motion.h1
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: 'easeOut' }}
-                            className="text-5xl sm:text-7xl md:text-8xl lg:text-[100px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words"
+                            className="text-4xl sm:text-7xl md:text-8xl lg:text-[100px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words"
                         >
                             {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
                         </motion.h1>
 
-                        {data.profesion && (
-                            <motion.p
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.8, delay: 0.2 }}
-                                className="mt-4 md:mt-6 text-lg sm:text-xl md:text-3xl font-bold uppercase tracking-[0.2em] text-white/90 drop-shadow-lg"
-                            >
-                                {data.profesion}
-                            </motion.p>
-                        )}
+                        <AnimatePresence mode="wait">
+                            {activeSlides[currentSlideIndex].title && (
+                                <motion.h2
+                                    key={activeSlides[currentSlideIndex].id + "_title"}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    transition={{ duration: 0.5, delay: 0.3 }}
+                                    style={{ backgroundColor: 'var(--theme-primary)', color: 'var(--theme-text-on-primary)' }}
+                                    className="mt-4 text-sm md:text-xl font-black uppercase tracking-widest px-6 py-2 rounded-full shadow-lg border border-white/20"
+                                >
+                                    {activeSlides[currentSlideIndex].title}
+                                </motion.h2>
+                            )}
+                        </AnimatePresence>
+
+
+                        <AnimatePresence mode="wait">
+                            {(activeSlides[currentSlideIndex].description || data.profesion) && (
+                                <motion.p
+                                    key={activeSlides[currentSlideIndex].id + "_desc"}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -20 }}
+                                    transition={{ duration: 0.8, delay: 0.2 }}
+                                    className="mt-4 md:mt-6 text-lg sm:text-xl md:text-3xl font-bold uppercase tracking-[0.2em] text-white/90 drop-shadow-lg break-words w-full max-w-[85vw] md:max-w-3xl leading-snug"
+                                >
+                                    {activeSlides[currentSlideIndex].description || data.profesion}
+                                </motion.p>
+                            )}
+                        </AnimatePresence>
 
                         {(data.plan === 'business' || data.plan === 'catalog') && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 0.8, delay: 0.4 }}
-                            className="mt-6"
-                        >
-                            <StarRating rating={data.google_rating} count={data.google_reviews_count} />
-                        </motion.div>
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.8, delay: 0.4 }}
+                                className="mt-6"
+                            >
+                                <StarRating rating={data.google_rating} count={data.google_reviews_count} />
+                            </motion.div>
+                        )}
+                        
+                        {/* Slide Indicators */}
+                        {activeSlides.length > 1 && (
+                            <div className="mt-8 flex items-center justify-center gap-2">
+                                {activeSlides.map((_: any, i: number) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => setCurrentSlideIndex(i)}
+                                        className={cn("h-1.5 rounded-full transition-all duration-300", i === currentSlideIndex ? "bg-[var(--theme-primary)] w-8" : "bg-white/30 w-1.5 hover:bg-white/60 hover:w-3")}
+                                        aria-label={`Ir al slide ${i + 1}`}
+                                    />
+                                ))}
+                            </div>
                         )}
                     </div>
 
-                    {/* Scroll-down CTA at the bottom */}
+                    {/* Scroll Down Indicator */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}

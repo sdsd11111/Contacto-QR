@@ -1,0 +1,21 @@
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//ActivaQR//vCard VIP Generator//ES
+FN:Carlos Vasquez - LITOS Ink
+N:Vasquez;Carlos;;;
+ORG:LITOS ink vape urban shop
+TITLE:Tatuador Profesional
+TEL;TYPE=CELL,VOICE:+593989205907
+X-ABLabel:WhatsApp Personal
+EMAIL;TYPE=WORK,INTERNET:vasquezcarlitos16@gmail.com
+ADR;TYPE=WORK,POSTAL:;;CC. Don Daniel Mall - 18 de Noviembre y Chile (2da planta alta);Loja;;;Ecuador
+item1.URL:https://www.instagram.com/litos_ink_tattoo/
+item1.X-ABLabel:LITOS ink tattoo
+item2.URL:https://www.instagram.com/litos_vape_shop/
+item2.X-ABLabel:LITOS vape shop
+item3.URL:https://www.instagram.com/litos_urban_shop/
+item3.X-ABLabel:LITOS urban shop
+item4.URL:https://maps.app.goo.gl/K1Hxx2QUBBH4pmRR7
+item4.X-ABLabel:Ubicación (Google Maps)
+NOTE:Somos LITOS ink vape urban shop, una marca que nació de la pasión por el tatuaje hace 9 años. Especialistas en: Fine Line, Darkwork, Oriental y Realismo.\n\n- Generado con ActivaQR PRO
+END:VCARD

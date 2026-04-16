@@ -71,6 +71,8 @@ export async function GET(
         const whatsapp = user.whatsapp || '';
         const nombre = user.nombre || 'Usuario';
 
+        const isCarlosVIP = slug === 'litos-ink-vape-urban-shop-zg5z' || user.id === '6212fd72-e576-474d-8c60-66d9802826ec';
+
         let noteContent = bio;
         if (user.productos_servicios) {
             noteContent += `\n\nProductos/Servicios:\n${user.productos_servicios}`;
@@ -81,7 +83,8 @@ export async function GET(
             noteContent += `\n\nMis Trabajos:\n${gallery.join('\n')}`;
         }
 
-        if (user.etiquetas) {
+        // Solo añadimos etiquetas a las notas si NO es Carlos VIP (Limpieza VIP)
+        if (user.etiquetas && !isCarlosVIP) {
             noteContent += `\n\nEtiquetas: ${user.etiquetas}`;
         }
 
@@ -162,6 +165,17 @@ export async function GET(
             `X-CUSTOM(WTSAPP);TYPE=pref:whatsapp:${whatsappWithPlus}`,
         ];
 
+        // --- INJERTO VIP PRE-GENERACIÓN (Para limpiar etiquetas genéricas de iOS si es VIP) ---
+        if (isCarlosVIP) {
+            // Eliminamos las líneas genéricas de redes sociales para que no dupliquen con los Labels VIP
+            const genericSocialTags = ['URL;type=INSTAGRAM', 'URL;type=FACEBOOK', 'URL;type=LINKEDIN', 'URL;type=TIKTOK', 'URL;type=YOUTUBE', 'URL;type=X'];
+            for (let i = vcardLines.length - 1; i >= 0; i--) {
+                if (genericSocialTags.some(tag => vcardLines[i].startsWith(tag))) {
+                    vcardLines.splice(i, 1);
+                }
+            }
+        }
+
         // Procesar foto
         if (user.foto_url) {
             try {
@@ -204,9 +218,28 @@ export async function GET(
         // Unimos las líneas con \r\n, sin hacer foldLine a los campos de texto
         // porque el corte arbitrario rompe caracteres Unicode y secuencias de escape
         // en analizadores de Android/iOS.
-        const vcard = vcardLines
+        let vcard = vcardLines
             .filter(Boolean)
             .join('\r\n');
+
+        // --- INICIO INJERTO VIP (VCF OVERRIDE) ---
+        if (user.json_override) {
+            try {
+                const overrides = JSON.parse(user.json_override);
+                for (const [key, value] of Object.entries(overrides)) {
+                    if (typeof key === 'string' && typeof value === 'string') {
+                        // Reemplazar globalmente todas las ocurrencias de la llave
+                        // Usamos un escape básico para la llave en la expresión regular
+                        const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        vcard = vcard.replace(new RegExp(escapeRegExp(key), 'g'), value);
+                    }
+                }
+            } catch (e) {
+                console.warn("Silent Fail: Falló el override VIP (JSON malformado) para:", user.slug || slug);
+                // Si falla, el catch se lo traga silenciosamente y la variable vcard sigue conteniendo la data normal
+            }
+        }
+        // --- FIN INJERTO VIP ---
 
         // 3. Retornar con headers estándar
         return new NextResponse(vcard, {
