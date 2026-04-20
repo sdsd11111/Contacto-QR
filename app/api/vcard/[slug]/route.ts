@@ -165,12 +165,28 @@ export async function GET(
             `X-CUSTOM(WTSAPP);TYPE=pref:whatsapp:${whatsappWithPlus}`,
         ];
 
-        // --- INJERTO VIP PRE-GENERACIÓN (Para limpiar etiquetas genéricas de iOS si es VIP) ---
+        // --- INJERTO VIP PRE-GENERACIÓN (SOLO Carlos Vásquez - litos-ink-vape-urban-shop-zg5z) ---
         if (isCarlosVIP) {
-            // Eliminamos las líneas genéricas de redes sociales para que no dupliquen con los Labels VIP
-            const genericSocialTags = ['URL;type=INSTAGRAM', 'URL;type=FACEBOOK', 'URL;type=LINKEDIN', 'URL;type=TIKTOK', 'URL;type=YOUTUBE', 'URL;type=X'];
+            // 1. Forzar nombre "Litos ink" en iPhone: Sobreescribir FN, N, añadir ORG y X-ABShowAs
             for (let i = vcardLines.length - 1; i >= 0; i--) {
-                if (genericSocialTags.some(tag => vcardLines[i].startsWith(tag))) {
+                if (vcardLines[i].startsWith('FN:')) {
+                    vcardLines[i] = 'FN:Litos ink';
+                }
+                if (vcardLines[i].startsWith('N:')) {
+                    vcardLines[i] = 'N:;Litos ink;;;';
+                }
+            }
+            // Insertar ORG y X-ABShowAs después de la línea N:
+            const nIndex = vcardLines.findIndex(l => l.startsWith('N:'));
+            if (nIndex !== -1) {
+                vcardLines.splice(nIndex + 1, 0, 'ORG:Litos ink', 'X-ABShowAs:COMPANY');
+            }
+
+            // 2. Eliminar X-SOCIALPROFILE genéricos (los que causan duplicados en iPhone)
+            //    PERO conservar URL;type= para que el json_override pueda reemplazar los nombres
+            const socialProfilesToRemove = ['X-SOCIALPROFILE;type=instagram', 'X-SOCIALPROFILE;type=facebook', 'X-SOCIALPROFILE;type=linkedin', 'X-SOCIALPROFILE;type=tiktok'];
+            for (let i = vcardLines.length - 1; i >= 0; i--) {
+                if (socialProfilesToRemove.some(tag => vcardLines[i].startsWith(tag))) {
                     vcardLines.splice(i, 1);
                 }
             }
