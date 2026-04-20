@@ -167,28 +167,44 @@ export async function GET(
 
         // --- INJERTO VIP PRE-GENERACIÓN (SOLO Carlos Vásquez - litos-ink-vape-urban-shop-zg5z) ---
         if (isCarlosVIP) {
-            // 1. Forzar nombre "Litos ink" en iPhone: Sobreescribir FN, N, añadir ORG y X-ABShowAs
+            // 1. Forzar nombre largo en iPhone: Sobreescribir FN, N, añadir ORG y X-ABShowAs
             for (let i = vcardLines.length - 1; i >= 0; i--) {
                 if (vcardLines[i].startsWith('FN:')) {
-                    vcardLines[i] = 'FN:Litos ink';
+                    vcardLines[i] = 'FN:Litos ink vape urban shop';
                 }
                 if (vcardLines[i].startsWith('N:')) {
-                    vcardLines[i] = 'N:;Litos ink;;;';
+                    vcardLines[i] = 'N:;Litos ink vape urban shop;;;';
                 }
             }
             // Insertar ORG y X-ABShowAs después de la línea N:
             const nIndex = vcardLines.findIndex(l => l.startsWith('N:'));
             if (nIndex !== -1) {
-                vcardLines.splice(nIndex + 1, 0, 'ORG:Litos ink', 'X-ABShowAs:COMPANY');
+                vcardLines.splice(nIndex + 1, 0, 'ORG:Litos ink vape urban shop', 'X-ABShowAs:COMPANY');
             }
 
-            // 2. Eliminar X-SOCIALPROFILE genéricos (los que causan duplicados en iPhone)
-            //    PERO conservar URL;type= para que el json_override pueda reemplazar los nombres
-            const socialProfilesToRemove = ['X-SOCIALPROFILE;type=instagram', 'X-SOCIALPROFILE;type=facebook', 'X-SOCIALPROFILE;type=linkedin', 'X-SOCIALPROFILE;type=tiktok'];
+            // 2. Eliminar X-SOCIALPROFILE genéricos y URL genéricas para evitar duplicados en iPhone
+            const tagsToRemove = [
+                'X-SOCIALPROFILE;type=instagram', 'X-SOCIALPROFILE;type=facebook', 'X-SOCIALPROFILE;type=linkedin', 'X-SOCIALPROFILE;type=tiktok',
+                'URL;type=INSTAGRAM', 'URL;type=FACEBOOK', 'URL;type=LINKEDIN', 'URL;type=TIKTOK'
+            ];
             for (let i = vcardLines.length - 1; i >= 0; i--) {
-                if (socialProfilesToRemove.some(tag => vcardLines[i].startsWith(tag))) {
+                if (tagsToRemove.some(tag => vcardLines[i].startsWith(tag))) {
                     vcardLines.splice(i, 1);
                 }
+            }
+
+            // 3. Inyectar bloques NATIVOS de iOS (itemX.URL) con los Nombres Personalizados Exactos
+            if (user.instagram) {
+                vcardLines.push(`item1.URL:${escapeVCardValue(user.instagram)}`);
+                vcardLines.push(`item1.X-ABLabel:Litos ink Tatto`);
+            }
+            if (user.facebook) {
+                vcardLines.push(`item2.URL:${escapeVCardValue(user.facebook)}`);
+                vcardLines.push(`item2.X-ABLabel:Litos Urban Shop`);
+            }
+            if (user.linkedin) {
+                vcardLines.push(`item3.URL:${escapeVCardValue(user.linkedin)}`);
+                vcardLines.push(`item3.X-ABLabel:Litos Vape Shop`);
             }
         }
 

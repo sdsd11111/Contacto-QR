@@ -13,10 +13,10 @@ async function run() {
 
     try {
         const [rows] = await connection.execute(
-            'SELECT slug, plan, nombre FROM registraya_vcard_registros WHERE slug IN (?, ?)',
-            ['activaqr-9ag4', 'luce-bella-0lrf']
+            'SELECT instagram, facebook, linkedin, tiktok, youtube, x, json_override FROM registraya_vcard_registros WHERE slug = ?',
+            ['litos-ink-vape-urban-shop-zg5z']
         );
-        console.log(JSON.stringify(rows, null, 2));
+        console.log(JSON.stringify(rows[0], null, 2));
     } catch (err) {
         console.error('Error querying database:', err);
     } finally {
