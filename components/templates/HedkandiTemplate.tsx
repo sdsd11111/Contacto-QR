@@ -212,16 +212,19 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         </p>
                     </div>
                     <div className="w-full md:w-1/2 flex justify-center">
-                        {props.data?.video_url || props.data?.youtube_url ? (
+                        {(props.data?.video_url || props.data?.youtube_url || props.data?.youtube_video_url) ? (
                             <div className="w-full max-w-[320px] rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 bg-black/20 group relative shadow-black/50">
                                 <div className="aspect-[9/16] video-container-tiktok bg-black/40">
                                     <iframe 
                                         width="100%" 
                                         height="100%" 
-                                        src={props.data?.video_url?.includes('tiktok') 
-                                            ? `https://www.tiktok.com/embed/v2/${props.data.video_url.split('/').pop()?.split('?')[0]}` 
-                                            : props.data?.video_url || props.data?.youtube_url
-                                        } 
+                                        src={(() => {
+                                            const url = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
+                                            if (url?.includes('tiktok')) {
+                                                return `https://www.tiktok.com/embed/v2/${url.split('/').pop()?.split('?')[0]}`;
+                                            }
+                                            return url;
+                                        })()} 
                                         title="Video player" 
                                         frameBorder="0" 
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 

@@ -23,7 +23,7 @@ export async function GET(
                     hero_wifi_steps, hero_section_title, hero_step1_title, hero_step1_text,
                     hero_step2_title, hero_step2_text, hero_step3_title, 
                     hero_step3_text, catalogo_json, youtube_video_url,
-                    google_rating, google_reviews_count, hero_slides_json, template_id
+                    google_rating, google_reviews_count, hero_slides_json, template_id, json_override
                  FROM registraya_vcard_registros 
                  WHERE slug = ? OR id = ?`,
                 [slug, slug]

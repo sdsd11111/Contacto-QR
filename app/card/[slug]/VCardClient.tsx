@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -56,6 +56,16 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const [isLightboxOpen, setIsLightboxOpen] = useState(false);
     const [setupSection, setSetupSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo'>('perfil');
     const [isSetupMode, setIsSetupMode] = useState(false);
+
+    // ─── Query Param detection ───────────────────────────────────────────────
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('edit') === 'true') {
+                setIsEditModalOpen(true);
+            }
+        }
+    }, []);
 
     // Theme Colors
     const [extractedBg, setExtractedBg] = useState<string>('#001549');
@@ -226,73 +236,73 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         getTikTokID,
     };
 
-    // ─── Construir slots para Hedkandi Template ────────────────────────────
-    const buildHedkandiSlots = (): Partial<HedkandiTemplateProps> => {
-        const slots: Partial<HedkandiTemplateProps> = {};
+    // ─── Menú Digital: parsear una sola vez ───────────────────────────────────────────
+    const menuCategories = safeParse<any[] | null>(data.menu_digital, null);
+    const hasMenu = Array.isArray(menuCategories) && menuCategories.length > 0;
 
-        // ── Menu Digital: si es JSON estructurado → MenuTabs; si es URL → link ──
-        if (data?.menu_digital) {
-            const parsed = safeParse<MenuCategory[] | null>(data.menu_digital, null);
-            if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-                // Es un menú estructurado (categorías + ítems)
-                slots.afterExperienceSlot = (
-                    <MenuTabs
-                        categories={parsed}
-                        accentColor="#dc2626"
-                        title="NUESTRA CARTA"
-                        ctaText="ORDENAR POR WHATSAPP"
-                        onCtaClick={() => window.open(data.whatsapp ? `https://wa.me/${data.whatsapp.replace(/\D/g, '')}` : '#', '_blank')}
-                    />
-                );
-            } else if (typeof data.menu_digital === 'string' && (data.menu_digital.startsWith('http://') || data.menu_digital.startsWith('https://'))) {
-                // Es una URL → botón de acceso al menú
-                slots.beforeMarqueeSlot = (
-                    <section className="bg-white py-16 px-4 text-center">
-                        <a
-                            href={data.menu_digital}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-block bg-red-600 text-white px-12 py-5 font-display-condensed text-2xl tracking-widest uppercase hover:bg-black transition-colors"
-                            style={{ fontFamily: "'Bebas Neue', sans-serif" }}
-                        >
-                            VER MENÚ DIGITAL
-                        </a>
-                    </section>
-                );
-            }
-        }
-
-        return slots;
-    };
+    const menuNode = hasMenu ? (
+        <MenuTabs
+            categories={menuCategories!}
+            accentColor="#dc2626"
+            title="NUESTRA CARTA"
+            ctaText="ORDENAR POR WHATSAPP"
+            onCtaClick={() => window.open(
+                data.whatsapp ? `https://wa.me/${data.whatsapp.replace(/\D/g, '')}` : '#',
+                '_blank'
+            )}
+        />
+    ) : null;
 
     // ─── Selección de plantilla ───────────────────────────────────────────────
     const renderTemplate = () => {
+        // Extraer overrides (VIP Protocol)
+        const overrides = safeParse<any>(data.json_override, {});
+
         switch (data.template_id) {
             case 'showcase':
             case 'hedkandi':
-                return <HedkandiTemplate {...baseProps} {...buildHedkandiSlots()} />;
+                // overrides BEFORE slot so the menu slot always wins
+                return <HedkandiTemplate {...baseProps} {...overrides} afterExperienceSlot={menuNode} />;
             case 'luxury':
             case 'luxury_minimal':
             case 'minimal':
-                return <MinimalTemplate {...baseProps} />;
+                return <MinimalTemplate {...baseProps} {...overrides} />;
             case 'industrial':
-                return <IndustrialTemplate {...baseProps} />;
+                return <IndustrialTemplate {...baseProps} {...overrides} />;
             case 'carrocerias':
-                return <CarroceriasTemplate {...baseProps} />;
+                return <CarroceriasTemplate {...baseProps} {...overrides} />;
             // Templates externos (auditoría / sites existentes)
             case 'nexus-logistics':
             case 'grand-horizon':
             case 'elite-taxi':
-                return <ClassicTemplate {...classicProps} />;
+                return <ClassicTemplate {...classicProps} {...overrides} />;
             case 'classic':
             default:
-                return <ClassicTemplate {...classicProps} />;
+                return <ClassicTemplate {...classicProps} {...overrides} />;
         }
     };
 
     return (
         <div className="relative">
             {renderTemplate()}
+
+            {/* Menú Digital directo: para templates que NO son Hedkandi */}
+            {data?.template_id !== 'hedkandi' && data?.template_id !== 'showcase' && menuNode}
+
+            {/* Botón flotante de edición sutil */}
+            <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 0.4, scale: 1 }}
+                whileHover={{ opacity: 1, scale: 1.1 }}
+                onClick={() => setIsEditModalOpen(true)}
+                className="fixed bottom-6 right-6 z-[9999] bg-black/20 backdrop-blur-md border border-white/10 p-3 rounded-full text-white/50 hover:text-white hover:bg-black/50 transition-all shadow-xl"
+                title="Editar Perfil"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+            </motion.button>
+
             <VCardEditModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}

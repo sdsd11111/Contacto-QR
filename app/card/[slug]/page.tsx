@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function Page({ params }: { params: { slug: string } }) {
-    const slug = (await params).slug;
+    const { slug } = await params;
 
     try {
         const [rows]: any = await pool.execute(
