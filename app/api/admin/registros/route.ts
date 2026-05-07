@@ -1,23 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * GET: Lista todos los registros (requiere admin key)
+ * GET: Lista todos los registros (requiere admin key o seller_id)
  */
 export async function GET(req: NextRequest) {
+    const auth = requireAdmin(req);
     const { searchParams } = new URL(req.url);
     const sellerId = searchParams.get('seller_id');
-    const adminKey = req.headers.get('x-admin-key');
 
-    // Simple security: Admin key allows everything. 
-    // If no admin key, we check if it's a seller request (future: session check)
-    // For now, let's allow it if sellerId is provided, but in production we'd want a token.
-    if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
-        if (!sellerId) {
-            return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-        }
+    // Admin key required unless seller_id is provided (legacy compat)
+    if (auth && !sellerId) {
+        return auth;
     }
 
     try {
@@ -130,10 +127,8 @@ export async function PATCH(req: NextRequest) {
  * DELETE: Eliminar un registro permanentemente (requiere admin key)
  */
 export async function DELETE(req: NextRequest) {
-    const adminKey = req.headers.get('x-admin-key');
-    if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = requireAdmin(req);
+    if (auth) return auth;
 
     try {
         const { searchParams } = new URL(req.url);

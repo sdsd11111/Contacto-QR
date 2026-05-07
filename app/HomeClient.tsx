@@ -170,10 +170,10 @@ export default function HomeClient() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
+        <main className="min-h-screen bg-background selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-foreground">
 
             {/* Hero Section: Premium Horizontal Split */}
-            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-cream">
+            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-background section-dark">
                 {/* Background Image Container - Right Aligned & Full Height */}
                 <div className="absolute inset-0 z-0">
                     <Image
@@ -184,14 +184,14 @@ export default function HomeClient() {
                         className="object-cover"
                     />
                     {/* Subtle Overlay to ensure overall branding consistency */}
-                    <div className="absolute inset-0 bg-cream/20 lg:bg-transparent"></div>
+                    <div className="absolute inset-0 bg-background/20 lg:bg-transparent"></div>
                 </div>
 
                 <div className="container mx-auto relative z-20 px-6 md:px-12 py-20 lg:py-32">
                     <motion.div 
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="max-w-3xl bg-white/40 backdrop-blur-xl p-8 md:p-12 rounded-[3.5rem] border border-white/40 shadow-2xl shadow-navy/5"
+                        className="max-w-3xl glass-card p-8 md:p-12 rounded-premium shadow-2xl shadow-black/20"
                     >
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
@@ -206,7 +206,7 @@ export default function HomeClient() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-3xl md:text-5xl lg:text-6xl font-black text-navy leading-[1.05] mb-6 tracking-tighter"
+                            className="text-3xl md:text-5xl lg:text-6xl font-black text-foreground leading-[1.05] mb-6 tracking-tighter"
                         >
                           <span style={{
                             fontSize: '0.7rem',
@@ -225,7 +225,7 @@ export default function HomeClient() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="text-base md:text-lg text-navy/70 mb-10 leading-relaxed font-medium max-w-xl"
+                            className="text-base md:text-lg text-foreground/70 mb-10 leading-relaxed font-medium max-w-xl"
                         >
                             Deja de repartir papeles que terminan en el suelo. Con ActivaQR tu negocio se instala directamente en la agenda de tus clientes.
                         </motion.p>
@@ -244,14 +244,14 @@ export default function HomeClient() {
                             </a>
                             <a
                                 href="#demo-video"
-                                className="w-full sm:w-auto bg-navy/5 backdrop-blur-sm text-navy px-10 py-6 rounded-full font-bold text-xl border border-navy/10 hover:bg-white transition-all flex items-center justify-center gap-3"
+                                className="w-full sm:w-auto bg-white/5 backdrop-blur-sm text-foreground px-10 py-6 rounded-full font-bold text-xl border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-3"
                             >
                                 <Phone size={24} className="text-primary" /> Ver demo
                             </a>
                         </motion.div>
     
                         {/* Social Proof Text */}
-                        <div className="mt-12 flex items-center gap-4 text-navy/40 font-black uppercase tracking-tighter text-[10px]">
+                        <div className="mt-12 flex items-center gap-4 text-foreground/40 font-black uppercase tracking-tighter text-[10px]">
                             <div className="flex text-primary">
                                 <Star size={14} fill="currentColor" />
                                 <Star size={14} fill="currentColor" />
@@ -273,7 +273,7 @@ export default function HomeClient() {
             </section>
 
             {/* Sección de Reflexión: Gasto en Publicidad */}
-            <section className="bg-navy py-24 px-6 min-h-[600px] flex items-center relative overflow-hidden">
+            <section className="bg-background py-24 px-6 min-h-[600px] flex items-center relative overflow-hidden section-dark">
                 <div className="max-w-4xl mx-auto text-center relative z-10">
                     <motion.h2 
                         initial={{ opacity: 0, y: 20 }}
@@ -291,7 +291,7 @@ export default function HomeClient() {
             </section>
 
             {/* Sección: Video Demo */}
-            <section id="demo-video" className="py-24 bg-white relative overflow-hidden">
+            <section id="demo-video" className="py-24 bg-surface relative overflow-hidden section-light">
                 <div className="max-w-6xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
                         <motion.div
@@ -302,7 +302,7 @@ export default function HomeClient() {
                         >
                             Obtenlo hoy mismo
                         </motion.div>
-                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase mb-6">
+                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter mb-6">
                             Mira cómo funciona <span className="text-primary italic">en menos de 1 minuto</span>
                         </h2>
                         <p className="text-navy/60 max-w-2xl mx-auto text-lg font-medium">
@@ -314,7 +314,7 @@ export default function HomeClient() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
-                        className="relative aspect-video w-full max-w-5xl mx-auto rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white group"
+                        className="relative aspect-video w-full max-w-5xl mx-auto rounded-premium overflow-hidden shadow-2xl border-4 border-navy/10 group"
                     >
                         <iframe
                             src="https://iframe.mediadelivery.net/embed/636136/92abbb19-6a1d-41fe-abe1-09655fd0e1cd?autoplay=false&loop=false&muted=false&preload=true&responsive=true"
@@ -324,11 +324,11 @@ export default function HomeClient() {
                             allowFullScreen
                             title="Demostración estratégica de ActivaQR"
                         ></iframe>
-                        <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-navy/5 rounded-[2.5rem]"></div>
+                        <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-navy/5 rounded-premium"></div>
                     </motion.div>
 
                     <div className="mt-12 flex justify-center">
-                        <div className="flex items-center gap-6 p-4 bg-navy/5 rounded-3xl border border-navy/5 max-w-lg">
+                        <div className="flex items-center gap-6 p-4 bg-navy/5 rounded-3xl border border-navy/10 max-w-lg">
                             <div className="bg-primary/20 p-3 rounded-2xl text-primary">
                                 <CheckCircle2 size={24} />
                             </div>
@@ -340,7 +340,7 @@ export default function HomeClient() {
 
                     <div className="relative flex md:grid md:grid-cols-3 gap-8 mt-24 w-full max-w-5xl mx-auto overflow-x-auto md:overflow-visible pb-12 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
                         {/* Card 1 */}
-                        <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-white transform -rotate-2 md:hover:rotate-0 transition-transform duration-500">
+                        <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-navy/10 transform -rotate-2 md:hover:rotate-0 transition-transform duration-500">
                             <Image
                                 src="/images/Reingenierìa/Portadas%20tipo%20historia/card_35_contacto.webp"
                                 alt="Plan Contacto Digital"
@@ -350,7 +350,7 @@ export default function HomeClient() {
                             />
                         </div>
                         {/* Card 2 */}
-                        <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-white z-10 md:scale-110 shadow-primary/20 transform rotate-1 md:hover:rotate-0 transition-transform duration-500">
+                        <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-navy/10 z-10 md:scale-110 shadow-primary/20 transform rotate-1 md:hover:rotate-0 transition-transform duration-500">
                             <Image
                                 src="/images/Reingenierìa/Portadas%20tipo%20historia/card_100_business.webp"
                                 alt="Plan Contacto Business"
@@ -360,7 +360,7 @@ export default function HomeClient() {
                             />
                         </div>
                         {/* Card 3 */}
-                        <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-white transform rotate-3 md:hover:rotate-0 transition-transform duration-500">
+                        <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-navy/10 transform rotate-3 md:hover:rotate-0 transition-transform duration-500">
                             <Image
                                 src="/images/Reingenierìa/Portadas%20tipo%20historia/card_200_catalogo.webp"
                                 alt="Plan Contacto Catálogo"
@@ -373,7 +373,7 @@ export default function HomeClient() {
                 </div>
 
                 <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-navy/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
             </section>
             
             {/* Pricing Section Modules */}
@@ -381,9 +381,9 @@ export default function HomeClient() {
 
 
             {/* Sección: Logos de Clientes (Confianza Institucional) */}
-            <section className="py-20 bg-white overflow-hidden border-y border-navy/5">
+            <section className="py-20 bg-surface-soft overflow-hidden border-y border-navy/5 section-light">
                 <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
-                    <h3 className="text-xl md:text-2xl font-black text-navy uppercase tracking-tighter italic">
+                    <h3 className="text-xl md:text-2xl font-black text-navy tracking-tighter italic">
                         <span className="text-primary italic">Decenas de negocios y profesionales</span> ya usan ActivaQR
                     </h3>
                 </div>
@@ -404,7 +404,7 @@ export default function HomeClient() {
                                 "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
                                 "Yessy 2026.jpg"
                             ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <Image
                                         src={`/logos_clientes/clientes de Activa QR/${logo}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -422,7 +422,7 @@ export default function HomeClient() {
                                 "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
                                 "Yessy 2026.jpg"
                             ].map((logo, i) => (
-                                <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <Image
                                         src={`/logos_clientes/clientes de Activa QR/${logo}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -447,7 +447,7 @@ export default function HomeClient() {
                                 "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
                                 "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
                             ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <Image
                                         src={`/logos_clientes/clientes de Activa QR/${logo}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -463,7 +463,7 @@ export default function HomeClient() {
                                 "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
                                 "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
                             ].map((logo, i) => (
-                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <Image
                                         src={`/logos_clientes/clientes de Activa QR/${logo}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -477,13 +477,13 @@ export default function HomeClient() {
                     </div>
 
                     {/* Gradientes laterales para suavizar el scroll */}
-                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-surface-soft to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-surface-soft to-transparent z-10 pointer-events-none"></div>
                 </div>
             </section>
 
             {/* Sección: Carrusel de Banners de Conversión Estratégica */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="py-24 bg-surface relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="relative">
                         <AnimatePresence mode="wait">
@@ -500,21 +500,21 @@ export default function HomeClient() {
                                         <div className="inline-block bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
                                             ✨ MÉTODO PRO
                                         </div>
-                                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tighter leading-none mb-6">
-                                            COMPÁRTELO POR <span className="text-primary italic">WHATSAPP</span>
+                                        <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter leading-none mb-6">
+                                            Compártelo por <span className="text-primary italic">WhatsApp</span>
                                         </h2>
                                         <div className="relative mb-8 text-left">
                                             <div className="absolute left-0 top-0 w-1.5 h-full bg-primary rounded-full hidden lg:block"></div>
-                                            <p className="text-xl text-navy/70 font-bold italic lg:pl-8">
+                                            <p className="text-xl text-navy/60 font-bold italic lg:pl-8">
                                                 &quot;Cuando un cliente te escriba por WhatsApp, no solo le des tu número. Envíale este mensaje junto con tu contacto digital de ActivaQR:&quot;
                                             </p>
                                         </div>
                                         <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                                            <div className="flex items-center gap-2 text-navy/80 font-black uppercase text-[10px] tracking-widest bg-gray-50 px-3 py-2 rounded-xl border border-gray-100 italic">
+                                            <div className="flex items-center gap-2 text-navy/70 font-black uppercase text-[10px] tracking-widest bg-navy/5 px-3 py-2 rounded-xl border border-navy/10 italic">
                                                 <div className="w-5 h-5 bg-[#66bf19] text-white rounded-full flex items-center justify-center text-[10px] shadow-sm">✓</div>
                                                 Ideal para clientes de Instagram
                                             </div>
-                                            <div className="flex items-center gap-2 text-navy/80 font-black uppercase text-[10px] tracking-widest bg-gray-50 px-3 py-2 rounded-xl border border-gray-100">
+                                            <div className="flex items-center gap-2 text-navy/70 font-black uppercase text-[10px] tracking-widest bg-navy/5 px-3 py-2 rounded-xl border border-navy/10">
                                                 <div className="w-5 h-5 bg-[#66bf19] text-white rounded-full flex items-center justify-center text-[10px] shadow-sm">✓</div>
                                                 Profesionalismo
                                             </div>
@@ -592,21 +592,21 @@ export default function HomeClient() {
                                         <div className="inline-block bg-green-500/10 text-green-600 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
                                             📈 ENGAGEMENT MÁXIMO
                                         </div>
-                                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tighter leading-none mb-6">
-                                            VENDE POR <span className="text-primary italic">ESTADOS DE WHATSAPP</span>
+                                        <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter leading-none mb-6">
+                                            Vende por <span className="text-primary italic">Estados de WhatsApp</span>
                                         </h2>
                                         <ul className="space-y-4 mb-8 text-left">
                                             <li className="flex items-start gap-4">
                                                 <div className="w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-1">1</div>
-                                                <p className="text-lg text-navy/70 font-bold">Si ellos te agregan y tu los agregas podrán ver tus estados. ¡Mayor engagement y ventas!</p>
+                                                <p className="text-lg text-navy/60 font-bold">Si ellos te agregan y tu los agregas podrán ver tus estados. ¡Mayor engagement y ventas!</p>
                                             </li>
                                             <li className="flex items-start gap-4">
                                                 <div className="w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-xs font-black shrink-0 mt-1">2</div>
-                                                <p className="text-lg text-navy/70 font-bold">Si también los etiquetas, podrán crear difusiones y será más fácil enviar campañas o mensajes personalizados.</p>
+                                                <p className="text-lg text-navy/60 font-bold">Si también los etiquetas, podrán crear difusiones y será más fácil enviar campañas o mensajes personalizados.</p>
                                             </li>
                                         </ul>
                                         <div className="flex gap-4 justify-center lg:justify-start">
-                                            <Link href="/registro" className="bg-navy text-white font-black px-8 py-4 rounded-2xl hover:bg-primary transition-all shadow-xl uppercase tracking-widest text-xs">
+                                            <Link href="/registro" className="bg-primary text-white font-black px-8 py-4 rounded-2xl hover:bg-primary-dark transition-all shadow-xl shadow-primary/20 uppercase tracking-widest text-xs">
                                                 Probar ahora
                                             </Link>
                                         </div>
@@ -634,13 +634,13 @@ export default function HomeClient() {
                                 >
                                     {/* Slide 3: Automatización */}
                                     <div className="relative z-10">
-                                        <div className="inline-block bg-navy/10 text-navy text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
+                                        <div className="inline-block bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full mb-6">
                                             🚀 PARA NEGOCIOS ESCALABLES
                                         </div>
-                                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tighter leading-none mb-6">
-                                            LO HACEMOS <span className="text-primary italic">POR TI</span>
+                                        <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter leading-none mb-6">
+                                            Lo hacemos <span className="text-primary italic">por ti</span>
                                         </h2>
-                                        <p className="text-xl text-navy/70 font-bold mb-8 italic leading-relaxed">
+                                        <p className="text-xl text-navy/60 font-bold mb-8 italic leading-relaxed">
                                             &quot;Si quieres simplemente ver el resultado y no perder meses y mucho dinero intentándolo tú mismo, lo hacemos por ti.&quot;
                                         </p>
                                         <div className="flex gap-4 justify-center lg:justify-start">
@@ -673,14 +673,14 @@ export default function HomeClient() {
                             <div className="ml-4 flex gap-3">
                                 <button
                                     onClick={() => setCurrentSlide((prev) => (prev === 0 ? 2 : prev - 1))}
-                                    className="w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-navy/10 flex items-center justify-center text-navy shadow-lg hover:bg-navy hover:text-white transition-all group active:scale-95"
+                                    className="w-12 h-12 rounded-full bg-white border border-navy/10 flex items-center justify-center text-navy shadow-lg hover:bg-navy hover:text-white transition-all group active:scale-95"
                                     title="Anterior"
                                 >
                                     <span className="group-hover:-translate-x-0.5 transition-transform font-bold">←</span>
                                 </button>
                                 <button
                                     onClick={() => setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1))}
-                                    className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-md border border-navy/10 flex items-center justify-center text-navy shadow-lg hover:bg-navy hover:text-white transition-all group active:scale-95"
+                                    className="w-12 h-12 rounded-full bg-white border border-navy/10 flex items-center justify-center text-navy shadow-lg hover:bg-navy hover:text-white transition-all group active:scale-95"
                                     title="Siguiente"
                                 >
                                     <span className="group-hover:translate-x-0.5 transition-transform font-bold">→</span>
@@ -697,7 +697,7 @@ export default function HomeClient() {
             <ReviewsSection />
 
             {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            <section className="py-24 bg-surface relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
                         <motion.div
@@ -708,7 +708,7 @@ export default function HomeClient() {
                         >
                             <Star size={14} fill="currentColor" /> Resultados Reales
                         </motion.div>
-                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase mb-6">
+                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter mb-6">
                             Profesionales que ya <span className="text-primary italic">están facturando más</span>
                         </h2>
                         <p className="text-navy/60 max-w-2xl mx-auto text-lg font-medium">

@@ -20,6 +20,7 @@ interface AdvancedFAQProps {
     title?: React.ReactNode;
     subtitle?: string;
     sectionTag?: string;
+    variant?: 'light' | 'dark';
 }
 
 // Configuración para BunnyNet Stream
@@ -30,7 +31,8 @@ export function AdvancedFAQ({
     items, 
     title = <>Preguntas <span className="text-primary italic">Frecuentes</span></>,
     subtitle = "Cero rodeos. Abre cualquier interrogante y destruiremos la duda cara a cara.",
-    sectionTag = "Sin textos aburridos"
+    sectionTag = "Sin textos aburridos",
+    variant = 'light'
 }: AdvancedFAQProps) {
     const [activeId, setActiveId] = useState<string | null>(items[0]?.id || null);
 
@@ -38,26 +40,28 @@ export function AdvancedFAQ({
         setActiveId(prev => (prev === id ? null : id));
     };
 
+    const isDark = variant === 'dark';
+
     return (
-        <section className="py-24 bg-white relative overflow-hidden" id="preguntas-frecuentes">
+        <section className={`py-12 relative overflow-hidden ${isDark ? 'bg-transparent' : 'bg-white'}`} id="preguntas-frecuentes">
             {/* Elementos decorativos */}
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+            {!isDark && <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>}
 
             <div className="max-w-4xl mx-auto px-6 relative z-10">
                 {/* Cabecera */}
-                <div className="text-center mb-16">
+                <div className={`text-center mb-16 ${title === "" ? "hidden" : ""}`}>
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="inline-flex items-center gap-2 bg-navy/5 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-navy mb-6"
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest mb-6 ${isDark ? 'bg-white/5 text-white' : 'bg-navy/5 text-navy'}`}
                     >
                         <Play size={14} fill="currentColor" className="text-primary" /> {sectionTag}
                     </motion.div>
-                    <h2 className="text-3xl md:text-5xl font-black text-navy uppercase tracking-tighter mb-4">
+                    <h2 className={`text-3xl md:text-5xl font-black uppercase tracking-tighter mb-4 ${isDark ? 'text-white' : 'text-navy'}`}>
                         {title}
                     </h2>
-                    <p className="text-navy/60 font-medium md:text-lg">
+                    <p className={`font-medium md:text-lg ${isDark ? 'text-white/60' : 'text-navy/60'}`}>
                         {subtitle}
                     </p>
                 </div>
@@ -71,7 +75,9 @@ export function AdvancedFAQ({
                                 layout
                                 key={faq.id}
                                 className={`rounded-[2rem] border transition-colors overflow-hidden ${
-                                    isActive ? 'bg-cream/50 border-navy/10 shadow-lg shadow-navy/5' : 'bg-gray-50 border-gray-100 hover:border-navy/10 hover:bg-gray-100'
+                                    isActive 
+                                        ? (isDark ? 'bg-white/5 border-white/20 shadow-2xl' : 'bg-cream/50 border-navy/10 shadow-lg shadow-navy/5') 
+                                        : (isDark ? 'bg-[#111111] border-white/5 hover:border-white/10 hover:bg-[#1a1a1a]' : 'bg-gray-50 border-gray-100 hover:border-navy/10 hover:bg-gray-100')
                                 }`}
                             >
                                 <button
@@ -80,20 +86,20 @@ export function AdvancedFAQ({
                                 >
                                     <div className="flex items-center gap-4 md:gap-6">
                                         <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 transition-all ${
-                                            isActive ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-400 border border-gray-200'
+                                            isActive ? 'bg-primary text-white shadow-md' : (isDark ? 'bg-white/5 text-gray-500 border border-white/10' : 'bg-white text-gray-400 border border-gray-200')
                                         }`}>
                                             <Play size={18} fill={isActive ? "currentColor" : "none"} className={isActive ? "ml-1" : "ml-0.5 opacity-50"} />
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
                                                 <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full transition-colors ${
-                                                    isActive ? 'bg-primary/10 text-primary' : 'bg-gray-200 text-gray-500'
+                                                    isActive ? 'bg-primary/10 text-primary' : (isDark ? 'bg-white/10 text-white/40' : 'bg-gray-200 text-gray-500')
                                                 }`}>
                                                     {faq.tag}
                                                 </span>
                                             </div>
                                             <h3 className={`font-black uppercase tracking-tight text-base sm:text-xl transition-colors pr-4 ${
-                                                isActive ? 'text-navy' : 'text-navy/60'
+                                                isActive ? (isDark ? 'text-white' : 'text-navy') : (isDark ? 'text-white/40' : 'text-navy/60')
                                             }`}>
                                                 {faq.q}
                                             </h3>
@@ -114,7 +120,7 @@ export function AdvancedFAQ({
                                             transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="pb-8 px-6 sm:px-8 border-t border-navy/5 pt-6 mx-2 sm:mx-4 flex flex-col md:flex-row gap-8 items-center md:items-start">
+                                            <div className={`pb-8 px-6 sm:px-8 border-t pt-6 mx-2 sm:mx-4 flex flex-col md:flex-row gap-8 items-center md:items-start ${isDark ? 'border-white/5' : 'border-navy/5'}`}>
                                                 
                                                 {/* Textos de Alto Impacto con viñetas */}
                                                 <div className="flex-1 order-2 md:order-1 pt-2 w-full">
@@ -124,7 +130,7 @@ export function AdvancedFAQ({
                                                                 <span className="text-primary mt-1 shrink-0">
                                                                     <CheckCircle2 size={18} />
                                                                 </span>
-                                                                <span className="text-navy/80 text-[15px] md:text-base font-medium leading-relaxed">
+                                                                <span className={`text-[15px] md:text-base font-medium leading-relaxed ${isDark ? 'text-white/80' : 'text-navy/80'}`}>
                                                                     {bullet}
                                                                 </span>
                                                             </li>

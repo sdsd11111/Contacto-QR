@@ -1,5 +1,5 @@
 import React from 'react';
-import { Smartphone, MessageSquare, ShoppingBag, Monitor } from 'lucide-react';
+import { Smartphone, MessageSquare, ShoppingBag, Monitor, ShieldCheck } from 'lucide-react';
 
 export interface PlanFeature {
   text: string;
@@ -15,7 +15,7 @@ export interface Plan {
   description: string;
   features: string[];
   image: string;
-  color: 'primary' | 'navy';
+  color: 'primary' | 'navy' | 'black';
   cta: string;
   link: string;
   badge?: string;
@@ -35,7 +35,7 @@ export const PLANES_DATA: Plan[] = [
     image: '/images/Reingenierìa/Portadas%20tipo%20historia/card_35_contacto.webp',
     color: 'primary',
     cta: 'Empezar ahora',
-    link: '/contacto-digital'
+    link: '/contacto-digital-producto'
   },
   {
     id: 'business',
@@ -50,7 +50,7 @@ export const PLANES_DATA: Plan[] = [
     image: '/images/Reingenierìa/Portadas%20tipo%20historia/card_100_business.webp',
     color: 'primary',
     cta: 'Activar Negocio',
-    link: '/contacto-business',
+    link: '/contacto-business-producto',
     isFeatured: true
   },
   {
@@ -65,7 +65,21 @@ export const PLANES_DATA: Plan[] = [
     image: '/images/Reingenierìa/Portadas%20tipo%20historia/card_200_catalogo.webp',
     color: 'primary',
     cta: 'Crear Catálogo',
-    link: '/contacto-business-catalogo'
+    link: '/contacto-business-catalogo-producto'
+  },
+  {
+    id: 'auditoria',
+    name: '¿Qué pasa ahora mismo en tu negocio?',
+    subtitle: 'Antes de que llegue a Google.',
+    price: '',
+    period: '',
+    icon: <ShieldCheck size={28} />,
+    description: 'Sabe exactamente qué pasó, quién estaba y con qué evidencia — sin preguntarle a nadie.',
+    features: [],
+    image: '/images/Reingenierìa/slide_activaqr2/costo_oculto_retail.webp',
+    color: 'black',
+    cta: 'Audita tu negocio hoy →',
+    link: '/auditoria-operativa-producto'
   },
   {
     id: 'web',
@@ -79,6 +93,6 @@ export const PLANES_DATA: Plan[] = [
     image: '/images/Reingenierìa/Portadas%20tipo%20historia/card_1000_ecommerce.webp',
     color: 'navy',
     cta: 'Solicitar Cotización',
-    link: '/sitio-web-completo'
+    link: '/sitio-web-completo-producto'
   }
 ];

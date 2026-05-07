@@ -27,7 +27,11 @@ import {
     Store,
     Youtube,
     ExternalLink,
-    Upload
+    Upload,
+    MessageSquare,
+    ChevronDown,
+    Share2,
+    MapPin
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -36,25 +40,40 @@ import { cn } from "@/lib/utils";
 import VideoStepGuide from "./VideoStepGuide";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { QRCodeSVG } from "qrcode.react";
+import TemplatePreviewModal, { TEMPLATE_DEMOS } from "./TemplatePreviewModal";
 
 const PRODUCT_PLANS = [
     { 
         id: 'digital', 
         name: 'Contacto Digital', 
-        price: 20, 
+        price: 35, 
         features: ['vCard profesional', 'Redes sociales', 'Bio y servicios', 'Soporte 24/7'] 
     },
     { 
         id: 'business', 
         name: 'Contacto Business', 
-        price: 60, 
+        price: 100, 
         features: ['Todo lo anterior', 'Imágenes Hero (Desktop/Móvil)', 'Diseño premium', 'Prioridad en soporte'] 
     },
     { 
-        id: 'catalog', 
+        id: 'catalogo', 
         name: 'Business + Catálogo', 
-        price: 120, 
+        price: 200, 
         features: ['Todo lo anterior', 'Catálogo interactivo', 'Gestión de productos', 'Gestión de categorías'] 
+    },
+    { 
+        id: 'auditoria', 
+        name: 'Auditoría Operativa', 
+        price: 100, 
+        monthlyPrice: 13,
+        period: '/mes',
+        features: ['Control total de tu negocio', 'Evidencia en tiempo real', 'Reportes automáticos', 'Garantía 30 días'] 
+    },
+    {
+        id: 'completo',
+        name: 'Sitio Web Completo',
+        price: 1000,
+        features: ['Todo lo anterior', 'Dominio .com propio', 'Multi-secciones de autoridad', 'SEO & Analytics VIP']
     }
 ];
 
@@ -63,10 +82,21 @@ const steps = [
     { id: 2, title: 'Básico', icon: User },
     { id: 3, title: 'Perfil', icon: Briefcase },
     { id: 4, title: 'Visual', icon: Camera },
-    { id: 5, title: 'Catálogo', icon: Store, conditional: (data: any) => data.plan === 'catalog' },
+    { id: 5, title: 'Catálogo', icon: Store, conditional: (data: any) => data.plan === 'catalogo' },
     { id: 6, title: 'Pago', icon: Smartphone },
     { id: 7, title: 'Final', icon: CheckCircle },
 ];
+
+const PAYMENT_FIRST_STEPS = [
+    { id: 6, title: 'Pago', icon: Smartphone },
+    { id: 2, title: 'Básico', icon: User },
+    { id: 8, title: 'Soporte', icon: MessageSquare },
+    { id: 3, title: 'Perfil', icon: Briefcase },
+    { id: 4, title: 'Visual', icon: Camera },
+    { id: 5, title: 'Catálogo', icon: Store, conditional: (data: any) => data.plan === 'catalogo' },
+    { id: 7, title: 'Final', icon: CheckCircle },
+];
+
 
 const INDUSTRY_TAGS: Record<string, string[]> = {
     'carpintero': ['Carpintería', 'Muebles', 'Madera', 'Reparaciones', 'Diseño'],
@@ -91,8 +121,19 @@ const normalizeText = (text: string) => {
         .trim();
 };
 
-export default function RegisterWizard() {
-    const [step, setStep] = useState(1);
+export default function RegisterWizard({ 
+    paymentFirst = false, 
+    initialPlan = 'digital' 
+}: { 
+    paymentFirst?: boolean;
+    initialPlan?: 'digital' | 'business' | 'catalogo' | 'auditoria' | 'completo';
+}) {
+
+    const wizardSteps = paymentFirst ? PAYMENT_FIRST_STEPS : steps;
+    const [step, setStep] = useState(paymentFirst ? 6 : 1);
+    const [openAccordion, setOpenAccordion] = useState<string | null>(null); // Cerrado por defecto para limpieza visual
+
+    const [isMounted, setIsMounted] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showVideoGuide, setShowVideoGuide] = useState(true);
     const [formData, setFormData] = useState({
@@ -120,7 +161,7 @@ export default function RegisterWizard() {
         menu_digital: '',
         productos_servicios: '',
         etiquetas: '',
-        plan: 'digital' as 'digital' | 'business' | 'catalog',
+        plan: initialPlan,
         photo: null as File | null,
         hero_mobile: null as File | null,
         hero_desktop: null as File | null,
@@ -129,7 +170,7 @@ export default function RegisterWizard() {
         catalogo_json: '[]',
         receipt: null as File | null,
         receiptUrl: '',
-        paymentMethod: 'transfer' as 'transfer' | 'payphone' | 'paypal' | 'crypto',
+        paymentMethod: 'payphone' as 'transfer' | 'payphone' | 'paypal' | 'crypto',
         seller_id: null as string | null,
         sellerCode: '',
         google_rating: '',
@@ -148,6 +189,8 @@ export default function RegisterWizard() {
         hero_step3_text: '',
         wifi_ssid: '', // Kept for legacy if needed, but hero_section_title replaces its usage in UI
         wifi_password: '', // Kept for legacy
+        template_id: 'classic',
+        hero_slides_json: []
     });
 
     const [catalogItems, setCatalogItems] = useState<any[]>([]);
@@ -173,6 +216,16 @@ export default function RegisterWizard() {
     const [recordingTime, setRecordingTime] = useState(0);
     const [isProcessingInterview, setIsProcessingInterview] = useState(false);
     const [transcriptionStatus, setTranscriptionStatus] = useState<'idle' | 'uploading' | 'processing' | 'extracting'>('idle');
+
+    // Template Preview States
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [previewTemplate, setPreviewTemplate] = useState<{id: string, name: string}>({ id: '', name: '' });
+    const [expandedTemplateId, setExpandedTemplateId] = useState<string | null>(null);
+
+    const openPreview = (id: string, name: string) => {
+        setPreviewTemplate({ id, name });
+        setIsPreviewModalOpen(true);
+    };
 
     const startListening = (field: 'bio' | 'productos_servicios') => {
         if (isListening) return; // Prevent double engagement
@@ -208,6 +261,7 @@ export default function RegisterWizard() {
 
     // --- AUTOSAVE TO LOCALSTORAGE ---
     useEffect(() => {
+        setIsMounted(true);
         // Restaurar estado al montar
         if (typeof window !== 'undefined') {
             const savedState = localStorage.getItem('vcard_register_backup');
@@ -215,8 +269,10 @@ export default function RegisterWizard() {
                 try {
                     const parsed = JSON.parse(savedState);
                     // Si completó el flujo (step 5), no restaurantes
-                    if (parsed.step < 5) {
+                    // En modo paymentFirst, no restauramos el step para evitar volver al paso 1
+                    if (parsed.step < 5 && !paymentFirst) {
                         setStep(parsed.step);
+
                         // Mezclar formData actual (que tiene defaults) con el guardado
                         setFormData(prev => ({ ...prev, ...parsed.formData, photo: null, receipt: null }));
                     } else {
@@ -234,8 +290,8 @@ export default function RegisterWizard() {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             const urlPlan = params.get('plan');
-            if (urlPlan && ['digital', 'business', 'catalog'].includes(urlPlan)) {
-                setFormData(prev => ({ ...prev, plan: urlPlan as 'digital' | 'business' | 'catalog' }));
+            if (urlPlan && ['digital', 'business', 'catalogo', 'auditoria', 'completo'].includes(urlPlan)) {
+                setFormData(prev => ({ ...prev, plan: urlPlan as 'digital' | 'business' | 'catalogo' | 'auditoria' | 'completo' }));
             }
             // Optionally auto-advance to step 2 if plan is in URL, uncomment to enable
             // if (urlPlan) setStep(2);
@@ -250,7 +306,7 @@ export default function RegisterWizard() {
             const magic = params.get('magic');
 
             if (magic) {
-                console.log("Magic Link Detected:", magic);
+                // Magic link detectado
                 try {
                     const res = await fetch(`/api/vcard/get-draft?magic=${magic}`);
                     if (!res.ok) return;
@@ -1179,7 +1235,8 @@ export default function RegisterWizard() {
                 hero_step3_text: dataToSubmit.hero_step3_text,
                 google_rating: dataToSubmit.google_rating,
                 google_reviews_count: dataToSubmit.google_reviews_count,
-                youtube_video_url: dataToSubmit.youtube_video_url
+                youtube_video_url: dataToSubmit.youtube_video_url,
+                template_id: dataToSubmit.template_id || 'classic'
             };
 
             console.log("3. UPSERT: Enviando a Supabase...");
@@ -1226,6 +1283,27 @@ export default function RegisterWizard() {
                 console.error("Error al disparar notificación WhatsApp:", notifyErr);
             }
 
+            // 4c. BRIDGE ACTIVAQR2: Enviar Lead al Ecosistema Pro
+            try {
+                fetch('/api/bridge/register-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        lead: {
+                            name: dataToSubmit.tipo_perfil === 'negocio' ? dataToSubmit.nombre_negocio : `${dataToSubmit.nombres} ${dataToSubmit.apellidos}`,
+                            email: dataToSubmit.email,
+                            whatsapp: dataToSubmit.whatsapp,
+                            plan: dataToSubmit.plan,
+                            companyName: dataToSubmit.nombre_negocio || `${dataToSubmit.nombres} ${dataToSubmit.apellidos}`,
+                            slug: slug,
+                            source: 'wizard_contacto_qr'
+                        }
+                    })
+                }).catch(err => console.warn("Bridge ActivaQR2 (Silencioso):", err.message));
+            } catch (bridgeErr) {
+                console.error("Error en Bridge ActivaQR2:", bridgeErr);
+            }
+
             // Nota: El backup por email fue removido porque el endpoint
             // /api/send-vcard ahora requiere autenticación admin.
             // La notificación WhatsApp arriba ya sirve como alerta al admin.
@@ -1242,6 +1320,52 @@ export default function RegisterWizard() {
     };
 
     const handleNext = () => {
+        if (paymentFirst) {
+            // Flujo Payment-First: Pago(6) → Básico(2) → Soporte(8) → Perfil(3) → Visual(4) → [Catálogo(5)] → Final(7)
+            if (step === 6) {
+                // Del pago saltamos a captura de datos básicos
+                setStep(2);
+                return;
+            }
+            if (step === 2) {
+                // Validamos datos básicos y luego mostramos el puente de soporte
+                const hasName = formData.tipo_perfil === 'negocio'
+                    ? !!formData.nombre_negocio
+                    : (!!formData.nombres && !!formData.apellidos);
+
+                if (!hasName || !formData.whatsapp || !validateEmail(formData.email)) {
+                    if (!validateEmail(formData.email)) setEmailError('Ingresa un correo válido');
+                    return;
+                }
+                setEmailError('');
+                // Datos capturados → mostramos opciones de asistencia
+                setStep(8);
+                return;
+            }
+            if (step === 8) {
+                // "Completarlo Ahora" → continuar al Perfil
+                setStep(3);
+                return;
+            }
+            if (step === 3) {
+                setStep(4);
+                return;
+            }
+            if (step === 4) {
+                if (formData.plan === 'catalogo') {
+                    setStep(5);
+                } else {
+                    handleFinalSubmit();
+                }
+                return;
+            }
+            if (step === 5) {
+                handleFinalSubmit();
+                return;
+            }
+        }
+
+        // Lógica ORIGINAL para el Wizard estándar
         if (step === 1) {
             // Plan selection, always valid
         }
@@ -1255,13 +1379,24 @@ export default function RegisterWizard() {
                 return;
             }
             setEmailError('');
+
+            // RAMIFICACIÓN AUDITORÍA: Del paso 2 salta al 4 (Visual)
+            if (formData.plan === 'auditoria') {
+                setStep(4);
+                return;
+            }
         }
         if (step === 3) {
             if (!formData.profession) return;
         }
         // Logic for catalog jump
         if (step === 4) {
-            if (formData.plan === 'catalog') {
+            // RAMIFICACIÓN AUDITORÍA: Del paso 4 salta al 6 (Pago)
+            if (formData.plan === 'auditoria') {
+                setStep(6);
+                return;
+            }
+            if (formData.plan === 'catalogo') {
                 setStep(5);
                 return;
             } else {
@@ -1280,13 +1415,44 @@ export default function RegisterWizard() {
         setStep(s => Math.min(s + 1, 7));
     };
 
+
     const handleBack = () => {
+        if (paymentFirst) {
+            if (step === 6) {
+                window.location.href = '/'; // O volver al inicio del funnel
+                return;
+            }
+            if (step === 2) {
+                // De datos básicos volvemos al pago
+                setStep(6);
+                return;
+            }
+            if (step === 8) {
+                // Del puente de soporte volvemos a datos básicos
+                setStep(2);
+                return;
+            }
+            if (step === 3) {
+                // De Perfil volvemos al puente de soporte
+                setStep(8);
+                return;
+            }
+            if (step === 4) {
+                setStep(3);
+                return;
+            }
+            if (step === 5) {
+                setStep(4);
+                return;
+            }
+        }
+
         if (step === 1) {
             window.location.href = '/';
             return;
         }
         if (step === 6) {
-            if (formData.plan === 'catalog') {
+            if (formData.plan === 'catalogo') {
                 setStep(5);
                 return;
             } else {
@@ -1296,6 +1462,7 @@ export default function RegisterWizard() {
         }
         setStep(s => Math.max(s - 1, 1));
     };
+
 
 
     const updateForm = (field: string, value: any) => {
@@ -1339,7 +1506,7 @@ export default function RegisterWizard() {
                                 responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://activaqr.com/registro",
                                 cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/registro` : "https://activaqr.com/registro",
                                 onComplete: async (model: any, actions: any) => {
-                                    console.log("Pago completado, verificando...", model);
+                                    // Pago PayPhone completado — verificando...
                                     setIsSubmitting(true);
                                     try {
                                         const res = await fetch('/api/payphone/verify', {
@@ -1353,14 +1520,14 @@ export default function RegisterWizard() {
                                         });
                                         const data = await res.json();
                                         if (res.ok && data.success) {
-                                            setStep(7); // Final step
+                                            setStep(paymentFirst ? 8 : 7); // Final step or Bridge
                                         } else {
                                             alert("Error confirmando pago: " + (data.error || "Desconocido"));
-                                            setStep(7); // Final step
+                                            setStep(paymentFirst ? 8 : 7); // Final step or Bridge
                                         }
                                     } catch (err) {
                                         console.error("Verification error:", err);
-                                        setStep(7); // Final step
+                                        setStep(paymentFirst ? 8 : 7); // Final step or Bridge
                                     } finally {
                                         setIsSubmitting(false);
                                     }
@@ -1392,39 +1559,53 @@ export default function RegisterWizard() {
     const planInfo = PRODUCT_PLANS.find(p => p.id === formData.plan) || PRODUCT_PLANS[0];
     const currentPlanPrice = planInfo.price;
 
+    // --- RENDER ---
+    if (!isMounted) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center">
+                <Loader2 className="animate-spin text-primary" size={40} />
+            </div>
+        );
+    }
+
     return (
         <div className="max-w-4xl mx-auto w-full px-4">
             {/* Progress Bar */}
             <div className="mb-12 relative">
                 <div className="flex justify-between items-center relative z-10">
-                    {steps.filter(s => !s.conditional || s.conditional(formData)).map((s, idx, filteredSteps) => (
+                    {wizardSteps.filter(s => !s.conditional || s.conditional(formData)).map((s, idx, filteredSteps) => (
                         <div key={s.id} className="flex flex-col items-center group">
                             <div
+                                onClick={() => !paymentFirst && setStep(s.id)}
                                 className={cn(
                                     "w-10 h-10 md:w-14 md:h-14 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg",
-                                    step >= s.id ? "bg-primary text-white scale-110" : "bg-white text-navy/20"
+                                    step === s.id ? "bg-primary text-white scale-110 shadow-primary/30" : 
+                                    step > s.id ? "bg-primary/20 text-primary" : "bg-white/5 text-white/20",
+                                    !paymentFirst && "cursor-pointer"
                                 )}
                             >
                                 <s.icon size={20} className="md:w-6 md:h-6" />
                             </div>
+
                             <span className={cn(
                                 "mt-4 text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
-                                step >= s.id ? "text-navy" : "text-navy/20"
+                                step >= s.id ? "text-white" : "text-white/20"
                             )}>
                                 {s.title}
                             </span>
                         </div>
                     ))}
                 </div>
-                <div className="absolute top-5 md:top-7 left-0 h-1 bg-navy/5 w-full -z-0 rounded-full overflow-hidden">
+                <div className="absolute top-5 md:top-7 left-0 h-1 bg-white/5 w-full -z-0 rounded-full overflow-hidden">
                     <motion.div
                         initial={{ width: 0 }}
                         animate={{ 
-                            width: `${(steps.filter(s => !s.conditional || s.conditional(formData)).findIndex(s => s.id === step) / (steps.filter(s => !s.conditional || s.conditional(formData)).length - 1)) * 100}%` 
+                            width: `${(wizardSteps.filter(s => !s.conditional || s.conditional(formData)).findIndex(s => s.id === step) / (wizardSteps.filter(s => !s.conditional || s.conditional(formData)).length - 1)) * 100}%` 
                         }}
                         className="h-full bg-primary"
                     />
                 </div>
+
             </div>
 
             <AnimatePresence mode="wait">
@@ -1435,27 +1616,29 @@ export default function RegisterWizard() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
                     className={cn(
-                        "rounded-[40px] shadow-2xl overflow-hidden min-h-[550px] border border-white/20 relative",
-                        step === 6 || step === 7 ? "bg-navy" : "glass-card p-8 md:p-12"
+                        "rounded-[40px] shadow-2xl overflow-hidden min-h-[550px] border border-white/10 relative",
+                        step === 6 || step === 7 ? "bg-background" : "bg-card p-8 md:p-12"
                     )}
+
                 >
                     {isSubmitting && (
-                        <div className="absolute inset-0 z-50 bg-navy/80 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+                        <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center text-white">
                             <Loader2 className="animate-spin text-primary mb-6" size={60} />
                             <h3 className="text-2xl font-black uppercase italic tracking-tighter">Procesando tu orden...</h3>
                             <p className="text-white/60 font-medium mt-2">Personalizando tu identidad digital </p>
                         </div>
                     )}
 
-                    {/* STEP 1: SELECCIÓN DE PLAN */}
-                    {step === 1 &&
+                    {/* STEP 1: SELECCIÓN DE PLAN (BLOQUEADO SI ES PAYMENT_FIRST) */}
+                    {step === 1 && !paymentFirst &&
+
                         <div className="max-w-3xl mx-auto">
                             <div className="text-center mb-10">
-                                <h2 className="text-3xl md:text-4xl font-black text-navy tracking-tighter uppercase italic">Elige tu Plan</h2>
-                                <p className="text-navy/40 text-xs font-bold uppercase tracking-widest mt-2">Potencia tu presencia digital</p>
+                                <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">Elige tu Plan</h2>
+                                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-2">Potencia tu presencia digital</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 {PRODUCT_PLANS.map((plan) => (
                                     <div
                                         key={plan.id}
@@ -1481,13 +1664,22 @@ export default function RegisterWizard() {
                                             )}>
                                                 {plan.id === 'digital' && <Smartphone className={formData.plan === plan.id ? "text-primary" : "text-navy/40"} />}
                                                 {plan.id === 'business' && <Star className={formData.plan === plan.id ? "text-primary" : "text-navy/40"} />}
-                                                {plan.id === 'catalog' && <Store className={formData.plan === plan.id ? "text-primary" : "text-navy/40"} />}
+                                                {plan.id === 'catalogo' && <Store className={formData.plan === plan.id ? "text-primary" : "text-navy/40"} />}
+                                                {plan.id === 'auditoria' && <ShieldCheck className={formData.plan === plan.id ? "text-primary" : "text-navy/40"} />}
                                             </div>
                                             <h3 className="font-black uppercase italic tracking-tighter text-xl leading-none mb-1">{plan.name}</h3>
                                             <p className={cn(
                                                 "text-[10px] font-bold uppercase tracking-widest",
                                                 formData.plan === plan.id ? "text-primary" : "text-navy/40"
-                                            )}>${plan.price} / Pago único</p>
+                                            )}>
+                                                ${plan.id === 'auditoria' ? (plan as any).monthlyPrice : plan.price} 
+                                                {plan.id === 'auditoria' ? ' / mes' : ' / Pago único'}
+                                            </p>
+                                            {plan.id === 'auditoria' && (
+                                                <p className="text-[10px] font-black text-primary uppercase tracking-tighter mt-1">
+                                                    Activación: ${plan.price} (Pago hoy)
+                                                </p>
+                                            )}
                                         </div>
 
                                         <ul className="space-y-3 mb-8 flex-grow">
@@ -1522,8 +1714,8 @@ export default function RegisterWizard() {
                     {step === 2 &&
                         <div className="max-w-xl mx-auto">
                             <div className="text-center mb-10">
-                                <h2 className="text-3xl md:text-4xl font-black text-navy tracking-tighter uppercase italic">¡Empecemos!</h2>
-                                <p className="text-navy/40 text-xs font-bold uppercase tracking-widest mt-2">Tus datos de contacto primarios</p>
+                                <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">¡Empecemos!</h2>
+                                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-2">Tus datos de contacto primarios</p>
                             </div>
 
                             <div className="space-y-6">
@@ -1534,20 +1726,20 @@ export default function RegisterWizard() {
                                         </div>
                                         <div>
                                             <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Tu Llave de Identidad</p>
-                                            <p className="text-[11px] font-bold text-navy/60 leading-relaxed uppercase italic">
-                                                Tu <span className="text-navy font-black">Email</span> y <span className="text-navy font-black">WhatsApp</span> son sagrados. Úsalos siempre igual para actualizar tu perfil sin cambiar tu link.
+                                            <p className="text-[11px] font-bold text-white/60 leading-relaxed uppercase italic">
+                                                Tu <span className="text-white font-black">Email</span> y <span className="text-white font-black">WhatsApp</span> son sagrados. Úsalos siempre igual para actualizar tu perfil sin cambiar tu link.
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Perfil Type Toggle */}
-                                <div className="flex bg-navy/5 p-1 rounded-2xl mb-8">
+                                <div className="flex bg-white/5 p-1 rounded-2xl mb-8 border border-white/5">
                                     <button
                                         onClick={() => updateForm('tipo_perfil', 'persona')}
                                         className={cn(
                                             "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                            formData.tipo_perfil === 'persona' ? "bg-white text-navy shadow-sm" : "text-navy/40 hover:text-navy/60"
+                                            formData.tipo_perfil === 'persona' ? "bg-white text-background shadow-sm" : "text-white/40 hover:text-white/60"
                                         )}
                                     >
                                         <User size={14} />
@@ -1557,7 +1749,7 @@ export default function RegisterWizard() {
                                         onClick={() => updateForm('tipo_perfil', 'negocio')}
                                         className={cn(
                                             "flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                            formData.tipo_perfil === 'negocio' ? "bg-white text-navy shadow-sm" : "text-navy/40 hover:text-navy/60"
+                                            formData.tipo_perfil === 'negocio' ? "bg-white text-background shadow-sm" : "text-white/40 hover:text-white/60"
                                         )}
                                     >
                                         <Briefcase size={14} />
@@ -1576,7 +1768,7 @@ export default function RegisterWizard() {
                                                     value={formData.nombres}
                                                     onChange={(e) => updateForm('nombres', e.target.value)}
                                                     placeholder="Ej. Manuel"
-                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                    className="w-full bg-white/5 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                         </div>
@@ -1589,7 +1781,7 @@ export default function RegisterWizard() {
                                                     value={formData.apellidos}
                                                     onChange={(e) => updateForm('apellidos', e.target.value)}
                                                     placeholder="Ej. Pérez"
-                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                    className="w-full bg-white/5 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                         </div>
@@ -1617,7 +1809,7 @@ export default function RegisterWizard() {
                                                     value={formData.contacto_nombre}
                                                     onChange={(e) => updateForm('contacto_nombre', e.target.value)}
                                                     placeholder="Ej. Juan (Opcional)"
-                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                    className="w-full bg-white/5 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                             <div className="group">
@@ -1627,7 +1819,7 @@ export default function RegisterWizard() {
                                                     value={formData.contacto_apellido}
                                                     onChange={(e) => updateForm('contacto_apellido', e.target.value)}
                                                     placeholder="Ej. Paz (Opcional)"
-                                                    className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                                    className="w-full bg-white/5 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-white transition-all shadow-sm"
                                                 />
                                             </div>
                                         </div>
@@ -1643,7 +1835,7 @@ export default function RegisterWizard() {
                                             value={formData.whatsapp}
                                             onChange={(e) => updateForm('whatsapp', e.target.value)}
                                             placeholder="+593 99 999 9999"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
+                                            className="w-full bg-white/5 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-white transition-all shadow-sm"
                                         />
                                     </div>
                                 </div>
@@ -1685,7 +1877,7 @@ export default function RegisterWizard() {
                                                 <div>
                                                     <p className="text-[10px] font-black uppercase tracking-widest text-[#25D366] mb-1 italic">✨ Cliente ya captado</p>
                                                     <h4 className="text-sm font-black text-navy uppercase leading-none mb-1">Atención Personalizada Activa</h4>
-                                                    <p className="text-[11px] font-bold text-navy/60 leading-tight uppercase italic">
+                                                    <p className="text-[11px] font-bold text-white/60 leading-tight uppercase italic">
                                                         Tu registro está siendo gestionado por <span className="text-[#25D366] font-black">{footprintSeller}</span>.
                                                     </p>
                                                 </div>
@@ -1736,320 +1928,102 @@ export default function RegisterWizard() {
                         </div>
                         }
 
-                    {/* STEP 3: PERFIL PROFESIONAL (WAS 2) */}
+                    {/* STEP 3: PERFIL PROFESIONAL (CON ACORDEONES) */}
                     {step === 3 &&
-                        <div className="max-w-xl mx-auto">
+                        <div className="max-w-2xl mx-auto">
                             <div className="text-center mb-10">
-                                <h2 className="text-3xl md:text-4xl font-black text-navy tracking-tighter uppercase italic">Perfil Profesional</h2>
-                                <p className="text-navy/40 text-xs font-bold uppercase tracking-widest mt-2">Cómo quieres aparecer en las búsquedas</p>
+                                <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">Perfil Profesional</h2>
+                                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-2">Personaliza tu tarjeta digital</p>
                             </div>
 
-                            <div className="space-y-6">
-                                <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-2 flex items-center gap-3">
-                                    <Mic size={16} className="text-primary shrink-0" />
-                                    <p className="text-[10px] font-bold text-navy/60 uppercase leading-tight tracking-widest">
-                                        <span className="text-primary font-black">Pro Tip:</span> Puedes dictar tus textos con el micrófono 🎙️. Si se detiene, dale un espacio y pulsa el botón de nuevo.
-                                    </p>
-                                </div>
-
-                                {/* Voice Interview Button */}
-                                <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary rounded-3xl p-6 mb-6 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
-                                    <div className="relative">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center">
-                                                <Mic className="text-white" size={24} />
+                            <div className="space-y-4">
+                                {/* SECCIÓN 1: IDENTIDAD */}
+                                <div className="border border-white/5 bg-white/5 rounded-[32px] overflow-hidden">
+                                    <button 
+                                        onClick={() => setOpenAccordion(openAccordion === 'identidad' ? null : 'identidad')}
+                                        className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                                                <Briefcase size={20} className="text-primary" />
                                             </div>
-                                            <div>
-                                                <h3 className="text-lg font-black text-navy uppercase italic tracking-tight">Entrevista Inteligente</h3>
-                                                <p className="text-[10px] text-navy/60 font-bold uppercase tracking-widest">Completa tu perfil en segundos con IA</p>
-                                            </div>
+                                            <span className="font-black uppercase tracking-widest text-xs text-white">Identidad y Bio</span>
                                         </div>
-
-                                        {!isRecording && !isProcessingInterview && (
-                                            <>
-                                                <p className="text-sm text-navy/70 font-medium mb-4 leading-relaxed">
-                                                    Graba un audio de 30-90 segundos respondiendo: <strong>¿Quién eres? ¿A qué te dedicas? ¿Qué servicios ofreces?</strong> La IA completará tu perfil automáticamente.
-                                                </p>
-                                                <button
-                                                    onClick={startInterview}
-                                                    className="w-full bg-primary text-white font-black uppercase text-sm py-4 px-6 rounded-2xl hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 group"
-                                                >
-                                                    <Mic size={20} className="group-hover:scale-110 transition-transform" />
-                                                    Empezar entrevista
-                                                </button>
-                                            </>
-                                        )}
-
-                                        {isRecording && (
-                                            <div className="text-center">
-                                                <div className="flex items-center justify-center gap-3 mb-4">
-                                                    <div className="w-4 h-4 rounded-full bg-red-500 animate-pulse"></div>
-                                                    <span className="text-2xl font-black text-navy tabular-nums">{formatTime(recordingTime)}</span>
-                                                </div>
-                                                <p className="text-sm text-navy/60 font-medium mb-4">Grabando... Habla claro y natural</p>
-                                                <button
-                                                    onClick={stopInterview}
-                                                    className="w-full bg-red-500 text-white font-black uppercase text-sm py-4 px-6 rounded-2xl hover:bg-red-600 transition-all shadow-lg flex items-center justify-center gap-2"
-                                                >
-                                                    <Square size={20} />
-                                                    Detener grabación
-                                                </button>
+                                        <ChevronDown size={20} className={cn("text-white/20 transition-transform", openAccordion === 'identidad' && "rotate-180")} />
+                                    </button>
+                                    {openAccordion === 'identidad' && (
+                                        <div className="p-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-300">
+                                            <div className="group">
+                                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-1">Profesión / Título</label>
+                                                <input type="text" value={formData.profession} onChange={(e) => updateForm('profession', e.target.value)} placeholder="Ej. Arquitecto" className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 outline-none font-bold text-white focus:border-primary/50 transition-all shadow-sm" />
                                             </div>
-                                        )}
-
-                                        {isProcessingInterview && (
-                                            <div className="text-center py-4">
-                                                <Loader2 className="animate-spin text-primary mx-auto mb-3" size={40} />
-                                                <p className="text-sm font-black text-navy uppercase">
-                                                    {transcriptionStatus === 'uploading' && 'Enviando audio...'}
-                                                    {transcriptionStatus === 'processing' && 'Transcribiendo entrevista...'}
-                                                    {transcriptionStatus === 'extracting' && 'Extrayendo información profesional...'}
-                                                    {(!transcriptionStatus || transcriptionStatus === 'idle') && 'Procesando entrevista...'}
-                                                </p>
-                                                <p className="text-xs text-navy/50 font-medium mt-1">
-                                                    {transcriptionStatus === 'uploading' && 'Estamos preparando el archivo para la IA'}
-                                                    {transcriptionStatus === 'processing' && 'Abordando tu respuesta con Whisper'}
-                                                    {transcriptionStatus === 'extracting' && 'Organizando tus datos con GPT-4'}
-                                                    {(!transcriptionStatus || transcriptionStatus === 'idle') && 'Un momento por favor...'}
-                                                </p>
+                                            <div className="group">
+                                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-1">Empresa</label>
+                                                <input type="text" value={formData.company} onChange={(e) => updateForm('company', e.target.value)} placeholder="Nombre de tu negocio" className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 outline-none font-bold text-white focus:border-primary/50 transition-all shadow-sm" />
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Profesión / Título</label>
-                                        <input
-                                            type="text"
-                                            value={formData.profession}
-                                            onChange={(e) => updateForm('profession', e.target.value)}
-                                            placeholder="Ej. Plomero Maestro"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Empresa (Opcional)</label>
-                                        <input
-                                            type="text"
-                                            value={formData.company}
-                                            onChange={(e) => updateForm('company', e.target.value)}
-                                            placeholder="Nombre de tu negocio"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm"
-                                        />
-                                    </div>
-                                </div>
-
-
-
-                                <div>
-                                    <div className="flex justify-between items-center mb-3">
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest ml-1">Tu Bio o Descripción</label>
-                                        <button
-                                            onClick={() => startListening('bio')}
-                                            className={cn(
-                                                "text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-                                                isListening === 'bio' ? "text-red-500 animate-pulse" : "text-primary hover:opacity-80"
-                                            )}
-                                        >
-                                            <Mic size={12} />
-                                            <span>{isListening === 'bio' ? 'Escuchando...' : 'Dictar'}</span>
-                                        </button>
-                                    </div>
-                                    <textarea
-                                        value={formData.bio}
-                                        onChange={(e) => {
-                                            updateForm('bio', e.target.value);
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = `${e.target.scrollHeight}px`;
-                                        }}
-                                        placeholder="Cuéntales qué ofreces..."
-                                        rows={2}
-                                        className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm resize-none overflow-hidden"
-                                    />
-                                </div>
-
-                                <div>
-                                    <div className="flex justify-between items-center mb-3">
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest">Productos o Servicios</label>
-                                        <div className="flex gap-4">
-                                            <button
-                                                onClick={() => startListening('productos_servicios')}
-                                                className={cn(
-                                                    "text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all",
-                                                    isListening === 'productos_servicios' ? "text-red-500 animate-pulse" : "text-primary hover:opacity-80"
-                                                )}
-                                            >
-                                                <Mic size={12} />
-                                                <span>{isListening === 'productos_servicios' ? 'Escuchando...' : 'Dictar'}</span>
-                                            </button>
-                                            <label className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
-                                                {isAnalyzingImage ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
-                                                <span>{isAnalyzingImage ? 'Analizando...' : 'Escanear Foto'}</span>
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    className="hidden"
-                                                    onChange={analyzeImageFromPhoto}
-                                                    disabled={isAnalyzingImage}
-                                                />
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <textarea
-                                        value={formData.productos_servicios}
-                                        onChange={(e) => {
-                                            updateForm('productos_servicios', e.target.value);
-                                            e.target.style.height = 'auto';
-                                            e.target.style.height = `${e.target.scrollHeight}px`;
-                                        }}
-                                        placeholder="Ej. Cambio de tuberías, Instalación de grifos... (O dicta tu lista de precios)"
-                                        rows={4}
-                                        className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm resize-none overflow-hidden"
-                                    />
-                                </div>
-
-                                {/* DATOS DE CONTACTO EXTRA */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-navy/5">
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Dirección / Ubicación</label>
-                                        <input
-                                            type="text"
-                                            value={formData.address}
-                                            onChange={(e) => updateForm('address', e.target.value)}
-                                            placeholder="Ej. Oficina 203, Edificio X"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Sitio Web (Opcional)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.web}
-                                            onChange={(e) => updateForm('web', e.target.value)}
-                                            placeholder="www.tuempresa.com"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-[10px] font-black text-primary uppercase tracking-widest mb-3">Enlace Google My Business / Maps (Recomendado)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.google_business}
-                                            onChange={(e) => {
-                                                let val = e.target.value;
-                                                if (val && !val.startsWith('http')) val = 'https://' + val;
-                                                updateForm('google_business', val);
-                                            }}
-                                            placeholder="https://maps.app.goo.gl/..."
-                                            className="w-full bg-primary/5 border-2 border-primary/20 focus:border-primary rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Instagram (Link Completo)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.instagram}
-                                            onChange={(e) => updateForm('instagram', e.target.value)}
-                                            placeholder="https://instagram.com/tuusuario"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">LinkedIn (Link Completo)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.linkedin}
-                                            onChange={(e) => updateForm('linkedin', e.target.value)}
-                                            placeholder="https://linkedin.com/in/tuusuario"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">Facebook (Link Completo)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.facebook}
-                                            onChange={(e) => updateForm('facebook', e.target.value)}
-                                            placeholder="https://facebook.com/tupagina"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">TikTok (Link Completo)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.tiktok}
-                                            onChange={(e) => updateForm('tiktok', e.target.value)}
-                                            placeholder="https://tiktok.com/@tuusuario"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">YouTube (Canal)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.youtube}
-                                            onChange={(e) => updateForm('youtube', e.target.value)}
-                                            placeholder="https://youtube.com/@tucanal"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">X / Twitter (Link)</label>
-                                        <input
-                                            type="url"
-                                            value={formData.x}
-                                            onChange={(e) => updateForm('x', e.target.value)}
-                                            placeholder="https://x.com/tuusuario"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                        />
-                                    </div>
-                                    { formData.plan === 'catalog' && (
-                                        <div>
-                                            <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-3">🍽️ Menú Digital (Link)</label>
-                                            <input
-                                                type="url"
-                                                value={formData.menu_digital}
-                                                onChange={(e) => updateForm('menu_digital', e.target.value)}
-                                                placeholder="https://menu.turestaurante.com"
-                                                className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-6 py-5 outline-none font-bold text-navy transition-all shadow-sm text-sm"
-                                            />
+                                            <div className="md:col-span-2">
+                                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-1">Tu Bio o Descripción</label>
+                                                <textarea value={formData.bio} onChange={(e) => updateForm('bio', e.target.value)} placeholder="Cuéntales qué ofreces..." rows={3} className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 outline-none font-bold text-white focus:border-primary/50 transition-all shadow-sm resize-none" />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
-                                <div>
-                                    <div className="flex justify-between items-center mb-3">
-                                        <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest ml-1">Etiquetas de Búsqueda (Comas)</label>
-                                        <button
-                                            onClick={generateWithAI}
-                                            disabled={isGeneratingTags || !formData.profession}
-                                            className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 hover:opacity-80 transition-opacity disabled:opacity-50"
-                                        >
-                                            {isGeneratingTags ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
-                                            {isGeneratingTags ? 'Generando...' : `Generar con IA (30 etiquetas)`}
-                                        </button>
-                                    </div>
-                                    <div className="relative">
-                                        <Tag className="absolute left-6 top-1/2 -translate-y-1/2 text-navy/20" size={20} />
-                                        <input
-                                            type="text"
-                                            value={formData.etiquetas}
-                                            onChange={(e) => {
-                                                updateForm('etiquetas', e.target.value);
-                                                setHasManualTags(true);
-                                            }}
-                                            placeholder="ej. goteras, fugas, tuberías"
-                                            className="w-full bg-white/50 border-2 border-transparent focus:border-primary/20 rounded-2xl px-16 py-5 outline-none font-bold text-navy transition-all shadow-sm"
-                                        />
-                                    </div>
-                                    <p className="text-[9px] font-bold text-navy/30 uppercase mt-2 tracking-widest">Mejora tu SEO local y visibilidad</p>
+                                {/* SECCIÓN 2: REDES SOCIALES */}
+                                <div className="border border-white/5 bg-white/5 rounded-[32px] overflow-hidden">
+                                    <button 
+                                        onClick={() => setOpenAccordion(openAccordion === 'rrss' ? null : 'rrss')}
+                                        className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                                                <Share2 size={20} className="text-primary" />
+                                            </div>
+                                            <span className="font-black uppercase tracking-widest text-xs text-white">Redes Sociales</span>
+                                        </div>
+                                        <ChevronDown size={20} className={cn("text-white/20 transition-transform", openAccordion === 'rrss' && "rotate-180")} />
+                                    </button>
+                                    {openAccordion === 'rrss' && (
+                                        <div className="p-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-4 duration-300">
+                                            <div className="group"><input type="url" value={formData.instagram} onChange={(e) => updateForm('instagram', e.target.value)} placeholder="Instagram URL" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white" /></div>
+                                            <div className="group"><input type="url" value={formData.tiktok} onChange={(e) => updateForm('tiktok', e.target.value)} placeholder="TikTok URL" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white" /></div>
+                                            <div className="group"><input type="url" value={formData.facebook} onChange={(e) => updateForm('facebook', e.target.value)} placeholder="Facebook URL" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white" /></div>
+                                            <div className="group"><input type="url" value={formData.linkedin} onChange={(e) => updateForm('linkedin', e.target.value)} placeholder="LinkedIn URL" className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl px-4 py-3 text-sm text-white" /></div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* SECCIÓN 3: UBICACIÓN Y SEO */}
+                                <div className="border border-white/5 bg-white/5 rounded-[32px] overflow-hidden">
+                                    <button 
+                                        onClick={() => setOpenAccordion(openAccordion === 'extra' ? null : 'extra')}
+                                        className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                                                <MapPin size={20} className="text-primary" />
+                                            </div>
+                                            <span className="font-black uppercase tracking-widest text-xs text-white">Ubicación y Búsqueda</span>
+                                        </div>
+                                        <ChevronDown size={20} className={cn("text-white/20 transition-transform", openAccordion === 'extra' && "rotate-180")} />
+                                    </button>
+                                    {openAccordion === 'extra' && (
+                                        <div className="p-8 border-t border-white/5 space-y-6 animate-in slide-in-from-top-4 duration-300">
+                                            <div className="group">
+                                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-1">Dirección</label>
+                                                <input type="text" value={formData.address} onChange={(e) => updateForm('address', e.target.value)} placeholder="Calle y Ciudad" className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 text-white" />
+                                            </div>
+                                            <div className="group">
+                                                <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-1">Etiquetas SEO (Comas)</label>
+                                                <input type="text" value={formData.etiquetas} onChange={(e) => updateForm('etiquetas', e.target.value)} placeholder="ej. fontanero, loja, urgente" className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl px-6 py-4 text-white" />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     }
+
 
                     {/* STEP 4: IDENTIDAD VISUAL (WAS 3) */}
                     {step === 4 &&
@@ -2060,6 +2034,123 @@ export default function RegisterWizard() {
                             </div>
 
                             <div className="flex flex-col items-center gap-8">
+                                {/* Template Selection */}
+                                <div className="w-full bg-navy/5 p-6 rounded-[32px] border border-navy/10 mb-4">
+                                    <label className="block text-[10px] font-black text-navy/40 uppercase tracking-widest mb-6 italic">Selecciona tu Estilo Visual</label>
+                                        <div className="flex flex-col gap-4">
+                                        {[
+                                            { 
+                                                id: 'classic', 
+                                                name: 'Activa Clásico', 
+                                                desc: 'Funcional y Directo'
+                                            },
+                                            { 
+                                                id: 'luxury_minimal', 
+                                                name: 'Luxury Minimal', 
+                                                desc: 'Elegante y Moderno'
+                                            },
+                                            { 
+                                                id: 'hedkandi', 
+                                                name: 'Hedkandi', 
+                                                desc: 'Premium & Visual'
+                                            },
+                                            { 
+                                                id: 'nexus-logistics', 
+                                                name: 'Logística', 
+                                                desc: 'Flotas y Transporte'
+                                            },
+                                            { 
+                                                id: 'grand-horizon', 
+                                                name: 'Hotel', 
+                                                desc: 'Hospitalidad y Reservas'
+                                            },
+                                            { 
+                                                id: 'elite-taxi', 
+                                                name: 'Taxis', 
+                                                desc: 'Transporte VIP'
+                                            },
+                                            { 
+                                                id: 'industrial', 
+                                                name: 'Industrial', 
+                                                desc: 'Operaciones B2B'
+                                            },
+                                            { 
+                                                id: 'carrocerias', 
+                                                name: 'Carrocerías', 
+                                                desc: 'Talleres Automotrices'
+                                            }
+                                        ].map((t) => {
+                                            const isExpanded = expandedTemplateId === t.id;
+                                            const isSelected = formData.template_id === t.id;
+                                            return (
+                                                <div key={t.id} className={cn(
+                                                    "flex flex-col rounded-2xl border-2 transition-all w-full overflow-hidden",
+                                                    isSelected ? "border-primary shadow-md" : "border-transparent bg-white/50 hover:bg-white/80"
+                                                )}>
+                                                    {/* Accordion Header */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setExpandedTemplateId(isExpanded ? null : t.id)}
+                                                        className="flex items-center justify-between p-4 w-full text-left bg-white"
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={cn(
+                                                                "w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black uppercase",
+                                                                isSelected ? "bg-primary text-white" : "bg-navy/5 text-navy/40"
+                                                            )}>
+                                                                {isSelected ? <Check size={16} strokeWidth={4} /> : t.name.charAt(0)}
+                                                            </div>
+                                                            <div>
+                                                                <span className="block text-xs font-black text-navy uppercase leading-none mb-1">{t.name}</span>
+                                                                <span className="block text-[10px] text-navy/40 uppercase tracking-widest">{t.desc}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-navy/20">
+                                                            {isExpanded ? <ChevronLeft className="rotate-90" size={20} /> : <ChevronRight size={20} />}
+                                                        </div>
+                                                    </button>
+
+                                                    {/* Accordion Content (Preview) */}
+                                                    <AnimatePresence>
+                                                        {isExpanded && (
+                                                            <motion.div
+                                                                initial={{ height: 0, opacity: 0 }}
+                                                                animate={{ height: 'auto', opacity: 1 }}
+                                                                exit={{ height: 0, opacity: 0 }}
+                                                                className="overflow-hidden border-t border-navy/5"
+                                                            >
+                                                                <div className="p-4 bg-navy/5">
+                                                                    <div className="w-full aspect-[9/16] max-h-[500px] rounded-xl overflow-hidden bg-white shadow-inner relative border border-navy/10 mx-auto max-w-[300px]">
+                                                                        <iframe 
+                                                                            src={TEMPLATE_DEMOS[t.id] || '/hedkandi-hype'}
+                                                                            className="w-full h-full border-none"
+                                                                            title={`Demo ${t.name}`}
+                                                                            loading="lazy"
+                                                                        />
+                                                                    </div>
+                                                                    <div className="mt-4 flex justify-center">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                updateForm('template_id', t.id);
+                                                                                setExpandedTemplateId(null);
+                                                                            }}
+                                                                            className="bg-primary text-white px-8 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all"
+                                                                        >
+                                                                            {isSelected ? 'Seleccionado' : 'Usar este Diseño'}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </motion.div>
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
                                 <div className="flex flex-col md:flex-row gap-8 items-start justify-center w-full">
                                     {/* Perfil Photo - All Plans */}
                                     <div className="flex flex-col items-center gap-4">
@@ -2103,7 +2194,7 @@ export default function RegisterWizard() {
                                     </div>
 
                                     {/* Hero Images - Only for Business and Catalog */}
-                                    {(formData.plan === 'business' || formData.plan === 'catalog') && (
+                                    {(formData.plan === 'business' || formData.plan === 'catalogo') && (
                                         <>
                                             {/* Hero Mobile */}
                                             <div className="flex flex-col items-center gap-4">
@@ -2192,7 +2283,7 @@ export default function RegisterWizard() {
                             </div>
 
                             {/* Configuración del Hero (Business y Catálogo) */}
-                            {(formData.plan === 'business' || formData.plan === 'catalog') && (
+                            {(formData.plan === 'business' || formData.plan === 'catalogo') && (
                                 <div className="mt-12 text-left max-w-xl mx-auto bg-primary/5 border border-primary/20 rounded-[32px] p-8 space-y-8">
                                     <h3 className="text-xl font-black text-navy uppercase italic tracking-tighter flex items-center gap-3">
                                         <Zap size={24} className="text-primary fill-primary" /> Botón de Acción (Hero)
@@ -2363,8 +2454,8 @@ export default function RegisterWizard() {
                     {step === 5 &&
                         <div className="max-w-4xl mx-auto">
                             <div className="text-center mb-10">
-                                <h2 className="text-3xl md:text-4xl font-black text-navy tracking-tighter uppercase italic">Tu Catálogo</h2>
-                                <p className="text-navy/40 text-xs font-bold uppercase tracking-widest mt-2 flex justify-between items-center w-full px-4">
+                                <h2 className="text-3xl md:text-4xl font-black text-white tracking-tighter uppercase italic">Tu Catálogo</h2>
+                                <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-2 flex justify-between items-center w-full px-4">
                                     <span>Organiza tus productos y categorías</span>
                                     {(() => {
                                         const total = catalogItems.reduce((acc: number, cat: any) => acc + (cat.items?.length || 0), 0);
@@ -2394,7 +2485,7 @@ export default function RegisterWizard() {
                                 </button>
 
                                 {catalogItems.map((category, catIdx) => (
-                                    <div key={category.id} className="bg-white/50 border-2 border-white/20 rounded-[32px] p-6 shadow-sm">
+                                    <div key={category.id} className="bg-card border-2 border-white/5 rounded-[32px] p-6 shadow-sm">
                                         <div className="flex justify-between items-center mb-6">
                                             <input
                                                 type="text"
@@ -2404,7 +2495,7 @@ export default function RegisterWizard() {
                                                     newCats[catIdx].title = e.target.value;
                                                     setCatalogItems(newCats);
                                                 }}
-                                                className="bg-transparent border-b-2 border-primary/10 focus:border-primary outline-none text-lg font-black uppercase italic tracking-tight text-navy w-full mr-4"
+                                                className="bg-transparent border-b-2 border-primary/10 focus:border-primary outline-none text-lg font-black uppercase italic tracking-tight text-white w-full mr-4"
                                             />
                                             <button
                                                 onClick={() => {
@@ -2418,7 +2509,7 @@ export default function RegisterWizard() {
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             {category.items.map((item: any, itemIdx: number) => (
-                                                <div key={itemIdx} className="bg-white rounded-2xl p-4 border border-navy/5 shadow-sm relative group">
+                                                <div key={itemIdx} className="bg-white/5 rounded-2xl p-4 border border-white/5 shadow-sm relative group">
                                                     <button
                                                         onClick={() => {
                                                             const newCats = [...catalogItems];
@@ -2454,7 +2545,7 @@ export default function RegisterWizard() {
                                                             {item.image ? (
                                                                 <img src={item.image} className="w-full h-full object-cover" />
                                                             ) : (
-                                                                <Camera className="m-auto text-navy/10" size={24} />
+                                                                <Camera className="m-auto text-white/10" size={24} />
                                                             )}
                                                         </div>
                                                         <div className="flex-grow space-y-2">
@@ -2466,7 +2557,7 @@ export default function RegisterWizard() {
                                                                     newCats[catIdx].items[itemIdx].name = e.target.value;
                                                                     setCatalogItems(newCats);
                                                                 }}
-                                                                className="w-full text-xs font-black uppercase text-navy border-b border-navy/5 outline-none focus:border-primary"
+                                                                className="w-full text-xs font-black uppercase text-white border-b border-navy/5 outline-none focus:border-primary"
                                                             />
                                                             <input
                                                                 placeholder="Precio (ej. 10.00)"
@@ -2486,7 +2577,7 @@ export default function RegisterWizard() {
                                                                     newCats[catIdx].items[itemIdx].description = e.target.value;
                                                                     setCatalogItems(newCats);
                                                                 }}
-                                                                className="w-full text-[9px] font-medium text-navy/60 bg-transparent resize-none outline-none border-b border-navy/5 focus:border-primary"
+                                                                className="w-full text-[9px] font-medium text-white/60 bg-transparent resize-none outline-none border-b border-navy/5 focus:border-primary"
                                                                 rows={2}
                                                             />
                                                         </div>
@@ -2526,8 +2617,8 @@ export default function RegisterWizard() {
 
                             <div className="flex bg-white/5 p-2 rounded-3xl mb-10 max-w-lg mx-auto overflow-x-auto no-scrollbar">
                                 {[
-                                    { id: 'transfer', label: 'Transferencia' },
                                     { id: 'payphone', label: 'PayPhone' },
+                                    { id: 'transfer', label: 'Transferencia' },
                                     { id: 'paypal', label: 'PayPal' },
                                     { id: 'crypto', label: 'Cripto' },
                                 ].map((tab) => (
@@ -2723,7 +2814,7 @@ export default function RegisterWizard() {
                                                     onApprove={async (data, actions) => {
                                                         if (actions.order) {
                                                             return actions.order.capture().then((details) => {
-                                                                console.log("Pago PayPal completado:", details);
+                                                                // Pago PayPal confirmado
                                                                 handleFinalSubmit('pagado');
                                                             });
                                                         }
@@ -2764,6 +2855,73 @@ export default function RegisterWizard() {
                         </div>
                     }
 
+                    {/* STEP 8: ASSISTANCE BRIDGE */}
+                    {step === 8 &&
+                        <div className="max-w-2xl mx-auto text-center text-white py-10">
+                            <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="w-24 h-24 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8 border border-green-500/30"
+                            >
+                                <CheckCircle size={48} strokeWidth={2.5} />
+                            </motion.div>
+                            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase italic mb-4">¡Pago Exitoso!</h2>
+                            <p className="text-white/60 font-medium text-lg mb-12">
+                                Ya tenemos tus datos. Ahora elige cómo quieres construir tu perfil.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Option 1: Do it yourself */}
+                                <div 
+                                    onClick={() => handleNext()}
+                                    className="bg-white/5 border border-white/10 hover:border-primary hover:bg-white/10 p-8 rounded-[32px] cursor-pointer transition-all group flex flex-col items-center text-center"
+                                >
+                                    <div className="w-16 h-16 bg-primary/20 text-primary rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                                        <Briefcase size={32} />
+                                    </div>
+                                    <h3 className="text-xl font-black uppercase tracking-tight mb-2">Completarlo Ahora</h3>
+                                    <p className="text-sm text-white/50 mb-6">Agrega tu foto, redes sociales y servicios. Toma unos 3 minutos y queda listo al instante.</p>
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest mt-auto">Continuar →</span>
+                                </div>
+
+                                {/* Option 2: Assisted - saves lead first then opens WhatsApp */}
+                                <div 
+                                    className="bg-primary/10 border border-primary/30 hover:border-primary p-8 rounded-[32px] cursor-pointer transition-all flex flex-col items-center text-center relative overflow-hidden"
+                                    onClick={async () => {
+                                        // Primero guardamos el lead en BD con datos básicos ya capturados
+                                        await handleFinalSubmit('pendiente');
+                                        // Luego abrimos WhatsApp con datos del cliente
+                                        const planName = PRODUCT_PLANS.find(p => p.id === formData.plan)?.name || formData.plan;
+                                        const clientName = formData.tipo_perfil === 'negocio' ? formData.nombre_negocio : `${formData.nombres} ${formData.apellidos}`;
+                                        const msg = encodeURIComponent(`Hola! Acabo de pagar mi Plan ${planName}. Mi nombre es ${clientName} y mi correo es ${formData.email}. Quiero que me ayuden a configurar mi perfil.`);
+                                        window.open(`https://wa.me/593963410409?text=${msg}`, '_blank');
+                                    }}
+                                >
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary-dark to-primary" />
+                                    <div className="w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30">
+                                        <MessageSquare size={32} />
+                                    </div>
+                                    <h3 className="text-xl font-black uppercase tracking-tight mb-2 text-primary">Hazlo por Mí</h3>
+                                    <p className="text-sm text-white/70 mb-6">Un experto de ActivaQR te contactará para pedirte fotos y datos, y armar tu perfil completo.</p>
+                                    
+                                    <span className="w-full bg-primary text-white font-black text-xs py-4 rounded-xl shadow-lg uppercase tracking-widest mt-auto flex items-center justify-center gap-2">
+                                        <MessageSquare size={14} /> Solicitar Asistencia
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mt-12 bg-white/5 border border-white/10 rounded-2xl p-6 flex items-start gap-4 text-left">
+                                <Zap className="text-yellow-500 shrink-0 mt-1" size={24} />
+                                <div>
+                                    <h4 className="font-bold text-white text-sm mb-1 uppercase tracking-widest">Tranquilidad Total</h4>
+                                    <p className="text-white/50 text-xs leading-relaxed">
+                                        No hay presión. Cualquier dato que agregues ahora (o si prefiste que lo hagamos nosotros) <strong>es 100% editable</strong> desde tu panel de control. Tu perfil siempre estará bajo tu control.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
                     {/* STEP 7: EN REVISIÓN (SUCCESS) */}
                     {step === 7 &&
                         <div className="max-w-2xl mx-auto text-center">
@@ -2797,16 +2955,35 @@ export default function RegisterWizard() {
 
                                 <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl shadow-navy/5 border border-navy/5 relative overflow-hidden">
                                     <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary via-primary-dark to-primary" />
-                                    <div className="flex flex-col md:flex-row items-center gap-6 justify-center">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
-                                                <Mail size={32} />
-                                            </div>
-                                            <div className="text-left w-full overflow-hidden">
-                                                <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
-                                                <p className="text-sm font-bold text-primary break-all">{formData.email}</p>
+                                    <div className="flex flex-col gap-6">
+                                        <div className="flex flex-col md:flex-row items-center gap-6 justify-center">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                                    <Mail size={32} />
+                                                </div>
+                                                <div className="text-left w-full overflow-hidden">
+                                                    <p className="font-black text-navy text-lg leading-tight uppercase italic mb-0.5">Revisa tu correo</p>
+                                                    <p className="text-sm font-bold text-primary break-all">{formData.email}</p>
+                                                </div>
                                             </div>
                                         </div>
+
+                                        {/* BOTÓN DE ASESORÍA: Disponible para todos los planes durante fase beta */}
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                className="mt-4 pt-6 border-t border-navy/5"
+                                            >
+                                                <p className="text-[10px] font-black text-navy/40 uppercase tracking-widest mb-4 italic">¿Necesitas ayuda con la configuración?</p>
+                                                <a
+                                                    href={`https://wa.me/593963410409?text=Hola!%20Acabo%20de%20pagar%20mi%20Plan%20${PRODUCT_PLANS.find(p => p.id === formData.plan)?.name}.%20Mi%20correo%20es%20${formData.email}.%20Necesito%20ayuda%20para%20configurar%20mi%20perfil.`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full bg-green-500 hover:bg-green-600 text-white font-black text-sm py-5 rounded-[2rem] flex items-center justify-center gap-3 shadow-xl shadow-green-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase tracking-widest"
+                                                >
+                                                    <MessageSquare size={20} fill="currentColor" /> SOLICITAR ASESORÍA
+                                                </a>
+                                            </motion.div>
                                     </div>
                                 </div>
 
@@ -2864,7 +3041,7 @@ export default function RegisterWizard() {
                                     onClick={handleBack}
                                     className={cn(
                                         "px-10 py-5 rounded-button font-black text-xs uppercase tracking-widest transition-all",
-                                        step >= 6 ? "text-white/40 hover:text-white" : "text-navy/60 hover:text-navy bg-navy/5 hover:bg-navy/10"
+                                        step >= 6 ? "text-white/40 hover:text-white" : "text-white/60 hover:text-white bg-white/5 hover:bg-white/10"
                                     )}
                                 >
                                     ← Atrás
@@ -2875,16 +3052,31 @@ export default function RegisterWizard() {
                                     disabled={isSubmitting}
                                     className={cn(
                                         "px-12 py-6 rounded-button font-black text-xl shadow-lg flex items-center gap-4 transition-all hover:scale-105 active:scale-95",
-                                        step >= 4 ? "bg-primary text-white shadow-primary" : "bg-navy text-white",
+                                        step >= 4 ? "bg-primary text-white shadow-primary" : "bg-white/10 text-white",
                                         isSubmitting && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
-                                    {step === 6 ? (isSubmitting ? 'Procesando...' : 'Finalizar Registro') : 'Siguiente'} <ArrowRight size={20} />
+                                    {isSubmitting ? 'Procesando...' : (
+                                        paymentFirst ? (
+                                            step === 6 ? 'He Pagado, Continuar' : 
+                                            (step === 2 && formData.plan !== 'digital') ? 'Finalizar y Recibir Asesoría' : 'Finalizar Registro'
+                                        ) : (
+                                            step === 6 ? 'Finalizar Registro' : 'Siguiente'
+                                        )
+                                    )} <ArrowRight size={20} />
+
                                 </button>
                             </div>
                         }
                 </motion.div>
             </AnimatePresence>
+
+            <TemplatePreviewModal 
+                isOpen={isPreviewModalOpen}
+                onClose={() => setIsPreviewModalOpen(false)}
+                templateId={previewTemplate.id}
+                templateName={previewTemplate.name}
+            />
 
             <VideoStepGuide
                 step={step}

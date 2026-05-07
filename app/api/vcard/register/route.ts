@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
             google_rating, google_reviews_count, youtube_video_url,
             hero_action, hero_button_text, hero_file_url, hero_external_link, hero_wifi_steps,
             hero_section_title, hero_step1_title, hero_step1_text, hero_step2_title, hero_step2_text, hero_step3_title, hero_step3_text,
-            hero_slides_json
+            hero_slides_json, template_id
         } = body;
 
         // SECURITY: Never accept 'pagado' status from client. 
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
                         google_rating=?, google_reviews_count=?, youtube_video_url=?,
                         hero_action=?, hero_button_text=?, hero_file_url=?, hero_external_link=?, hero_wifi_steps=?,
                         hero_section_title=?, hero_step1_title=?, hero_step1_text=?, hero_step2_title=?, hero_step2_text=?, hero_step3_title=?, hero_step3_text=?,
-                        hero_slides_json=?
+                        hero_slides_json=?, template_id=?
                     WHERE email=?
                 `;
 
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
                     google_rating || null, google_reviews_count || null, youtube_video_url || null,
                     hero_action || null, hero_button_text || null, hero_file_url || null, hero_external_link || null, heroWifiStepsStr,
                     hero_section_title || null, hero_step1_title || null, hero_step1_text || null, hero_step2_title || null, hero_step2_text || null, hero_step3_title || null, hero_step3_text || null,
-                    heroSlidesJsonStr,
+                    heroSlidesJsonStr, template_id || 'classic',
                     email
                 ]);
 
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
                         google_rating, google_reviews_count, youtube_video_url,
                         hero_action, hero_button_text, hero_file_url, hero_external_link, hero_wifi_steps,
                         hero_section_title, hero_step1_title, hero_step1_text, hero_step2_title, hero_step2_text, hero_step3_title, hero_step3_text,
-                        hero_slides_json
+                        hero_slides_json, template_id
                     ) VALUES (
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                         ?, ?, ?, ?, ?, ?, ?, ?, ?, 
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
                         ?, ?, ?,
                         ?, ?, ?,
                         ?, ?, ?, ?, ?,
-                        ?, ?, ?, ?, ?, ?, ?, ?
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?
                     )
                 `;
 
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
                     google_rating || null, google_reviews_count || null, youtube_video_url || null,
                     hero_action || null, hero_button_text || null, hero_file_url || null, hero_external_link || null, heroWifiStepsStr,
                     hero_section_title || null, hero_step1_title || null, hero_step1_text || null, hero_step2_title || null, hero_step2_text || null, hero_step3_title || null, hero_step3_text || null,
-                    heroSlidesJsonStr
+                    heroSlidesJsonStr, template_id || 'classic'
                 ];
 
                 await pool.execute(insertQuery, values);

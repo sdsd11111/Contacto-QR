@@ -17,9 +17,9 @@ import {
 
 export default function VentasClient() {
     return (
-        <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth font-sans text-navy">
+        <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth font-sans">
             {/* Hero Section */}
-            <section className="relative pt-32 pb-24 px-6 overflow-hidden">
+            <section className="relative pt-32 pb-24 px-6 overflow-hidden section-dark">
                 <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-navy/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
 
@@ -36,7 +36,7 @@ export default function VentasClient() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="text-4xl md:text-6xl font-black text-navy tracking-tighter uppercase mb-6 leading-tight"
+                        className="text-4xl md:text-6xl font-black text-[var(--section-heading)] tracking-tighter uppercase mb-6 leading-tight"
                     >
                         Gana Vendiendo <br />
                         <span className="text-primary italic">ActivaQR</span>
@@ -46,7 +46,7 @@ export default function VentasClient() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-navy/70 text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10 leading-relaxed"
+                        className="text-[var(--section-body)] text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10 leading-relaxed"
                     >
                         Conviértete en distribuidor autorizado de la herramienta digital que todo negocio, profesional y artesano necesita hoy en día. Sin horarios fijos y con las comisiones más altas del mercado.
                     </motion.p>
@@ -64,7 +64,7 @@ export default function VentasClient() {
             </section>
 
             {/* Video & CTA Section */}
-            <section id="empezar" className="py-24 bg-navy relative overflow-hidden">
+            <section id="empezar" className="py-24 bg-navy relative overflow-hidden section-dark">
                 <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
                 <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
 
@@ -78,11 +78,11 @@ export default function VentasClient() {
                             viewport={{ once: true }}
                             className="lg:col-span-7 w-full"
                         >
-                            <h2 className="text-3xl md:text-6xl font-black text-white tracking-tighter uppercase mb-6 leading-tight">
+                            <h2 className="text-3xl md:text-6xl font-black text-[var(--section-heading)] tracking-tighter uppercase mb-6 leading-tight">
                                 Empieza Hoy con <br />
                                 <span className="text-primary italic">ActivaQR</span>
                             </h2>
-                            <p className="text-white/70 text-lg mb-10 max-w-xl font-medium">
+                            <p className="text-[var(--section-body)] text-lg mb-10 max-w-xl font-medium">
                                 Mira el video para entender por qué ActivaQR es la herramienta más vendida y por qué deberías unirte a nuestro equipo.
                             </p>
 
@@ -98,7 +98,7 @@ export default function VentasClient() {
                             </div>
 
                             <div className="flex flex-wrap gap-8">
-                                <div className="flex items-center gap-4 text-white/80">
+                                <div className="flex items-center gap-4 text-[var(--section-body)]">
                                     <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-primary border border-white/10">
                                         <CheckCircle2 size={24} />
                                     </div>
@@ -107,7 +107,7 @@ export default function VentasClient() {
                                         <span className="font-bold">Capacitación</span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4 text-white/80">
+                                <div className="flex items-center gap-4 text-[var(--section-body)]">
                                     <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-primary border border-white/10">
                                         <TrendingUp size={24} />
                                     </div>
@@ -129,8 +129,8 @@ export default function VentasClient() {
                             <div className="bg-white/5 backdrop-blur-sm p-1 rounded-[3rem] border border-white/10 relative">
                                 <div className="p-8 md:p-10">
                                     <div className="mb-8">
-                                        <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Formulario de Registro</h3>
-                                        <p className="text-white/50 text-sm font-medium">Completa tus datos y un asesor te contactará en breve.</p>
+                                        <h3 className="text-2xl font-black text-[var(--section-heading)] uppercase tracking-tight mb-2">Formulario de Registro</h3>
+                                        <p className="text-[var(--section-muted)] text-sm font-medium">Completa tus datos y un asesor te contactará en breve.</p>
                                     </div>
                                     <SalesLeadForm />
                                 </div>

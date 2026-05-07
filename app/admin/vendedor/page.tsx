@@ -44,17 +44,21 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function SellerDashboard() {
-    // TODO: Restaurar autenticación mañana al integrar BD
-    const MOCK_SELLER = { id: 1, nombre: "Abel", email: "abel@activaqr.com", role: "seller", comision: 30, codigo: "001" };
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [activeTab, setActiveTab] = useState<"ventas" | "recorrido" | "generar" | "soporte">("recorrido");
-    const [seller, setSeller] = useState<any>(null); // Inicia como null para forzar login real
+    const [seller, setSeller] = useState<any>(null);
     const [registros, setRegistros] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [loginEmail, setLoginEmail] = useState("");
     const [loginPass, setLoginPass] = useState("");
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+
+    // Función helper: obtener headers con token
+    const authHeaders = () => {
+        const token = localStorage.getItem("vcard_seller_token");
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    };
 
     // Recuperar Contraseña
     const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -125,16 +129,15 @@ export default function SellerDashboard() {
         setGeneratingPdfId(null);
     };
 
+    // Restaurar sesión desde token almacenado
     useEffect(() => {
-        const savedSeller = localStorage.getItem("vcard_seller_data");
-        if (savedSeller) {
-            const data = JSON.parse(savedSeller);
-            // Verificar sesión en servidor y obtener datos frescos de la DB
-            fetch(`/api/seller/me?id=${data.id}`)
+        const savedToken = localStorage.getItem("vcard_seller_token");
+        if (savedToken) {
+            // Verificar token llamando al endpoint /api/seller/me
+            fetch("/api/seller/me", { headers: { Authorization: `Bearer ${savedToken}` } })
                 .then(res => res.json())
                 .then(serverData => {
                     if (serverData.success && serverData.seller) {
-                        // Actualizar localStorage con datos frescos (incluye terminos_aceptados_en actualizado)
                         const freshSeller = serverData.seller;
                         localStorage.setItem("vcard_seller_data", JSON.stringify(freshSeller));
                         setSeller(freshSeller);
@@ -142,21 +145,25 @@ export default function SellerDashboard() {
                         fetchSellerSales(freshSeller.id);
                         fetchTeam(freshSeller.id);
                     } else {
-                        // Sesión inválida: limpiar localStorage y mostrar login
+                        localStorage.removeItem("vcard_seller_token");
                         localStorage.removeItem("vcard_seller_data");
                         setIsAuthorized(false);
                         setSeller(null);
                     }
                 })
                 .catch(() => {
-                    // Si hay error de red, usar datos locales temporalmente
-                    setSeller(data);
-                    setIsAuthorized(true);
-                    fetchSellerSales(data.id);
-                    fetchTeam(data.id);
+                    // Error de red: usar datos locales como fallback
+                    const cached = localStorage.getItem("vcard_seller_data");
+                    if (cached) {
+                        const data = JSON.parse(cached);
+                        setSeller(data);
+                        setIsAuthorized(true);
+                        fetchSellerSales(data.id);
+                        fetchTeam(data.id);
+                    }
                 });
         }
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    }, []);
 
     const fetchTeam = async (parentId: number) => {
         try {
@@ -289,8 +296,9 @@ export default function SellerDashboard() {
             });
             const data = await res.json();
             if (res.ok && data.success) {
+                // Guardar token y datos en localStorage
+                localStorage.setItem("vcard_seller_token", data.token);
                 localStorage.setItem("vcard_seller_data", JSON.stringify(data.seller));
-                // Set attribution cookie/storage for the redirect to home
                 localStorage.setItem("vcard_attribution_id", data.seller.id);
                 setSeller(data.seller);
                 setIsAuthorized(true);
@@ -501,9 +509,8 @@ export default function SellerDashboard() {
     };
 
     const handleLogout = () => {
+        localStorage.removeItem("vcard_seller_token");
         localStorage.removeItem("vcard_seller_data");
-        // We keep attribution id even after logout if they want to keep tracking? 
-        // Or remove it? Usually SAS keep it.
         setIsAuthorized(false);
         setSeller(null);
     };

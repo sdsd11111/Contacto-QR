@@ -1,39 +1,87 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FCF9F5;
-  --foreground: #001549;
-  --primary: #f66739;
+  /* ── Midnight Obsidian — Dark Cinematic Core ── */
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+
+  /* Semantic Surface */
+  --surface: #ffffff;
+  --surface-soft: #f8f9fa;
+  --card: #111111;
+  --card-foreground: #ffffff;
+  --popover: #0a0a0a;
+  --popover-foreground: #ffffff;
+  --muted: #1a1a1a;
+  --muted-foreground: #a1a1aa;
+  --border: #262626;
+  --input: #262626;
+  --ring: #f66739;
+
+  /* ── ActivaQR Brand Colors ── */
+  --primary: #f66739;       /* Tomato */
   --primary-dark: #c13912;
+  --primary-foreground: #ffffff;
+  --secondary: #001549;     /* Navy */
+  --secondary-foreground: #ffffff;
   --navy: #001549;
-  --cream: #FCF9F5;
-  --glass: rgba(255, 255, 255, 0.4);
+  --cream: #111111;         /* Legacy mapped to dark */
+  --glass: rgba(255, 255, 255, 0.05);
   --cta: #f66739;
-  /* Revertido a tomate por ahora */
   --sky: #68d3fe;
   --royal: #05509c;
+  --success: #66bf19;
+
+  /* ── Radii & Shadows ── */
+  --radius: 0.5rem;
+  --radius-card: 24px;
+  --radius-button: 16px;
+  --radius-input: 12px;
+  --shadow-soft: 0px 20px 50px rgba(0, 0, 0, 0.4);
+  --shadow-primary: 0px 15px 40px rgba(246, 103, 57, 0.4);
+  --shadow-cta: 0px 15px 40px rgba(246, 103, 57, 0.4);
+  --shadow-inner: inset 0px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+/* ── Tailwind v4: Registro de tokens como utilidades ── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-navy: var(--navy);
   --color-cream: var(--cream);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
   --color-glass: var(--glass);
   --color-cta: var(--cta);
   --color-sky: var(--sky);
   --color-royal: var(--royal);
+  --color-success: var(--success);
 
   --radius-card: 24px;
   --radius-button: 16px;
   --radius-input: 12px;
 
-  --shadow-soft: 0px 20px 50px rgba(0, 0, 0, 0.08);
-  --shadow-primary: 0px 15px 40px rgba(246, 103, 57, 0.4);
-  --shadow-cta: 0px 15px 40px rgba(246, 103, 57, 0.4);
-  --shadow-inner: inset 0px 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-primary: var(--shadow-primary);
+  --shadow-cta: var(--shadow-cta);
+  --shadow-inner: var(--shadow-inner);
+}
+
+/* ── Base Reset ── */
+* {
+  border-color: var(--border);
 }
 
 body {
@@ -44,8 +92,26 @@ body {
   overflow-x: hidden;
 }
 
+/* ── Componentes Reutilizables ── */
 @layer components {
+  /* Glassmorphism — Dark Cinematic */
   .glass-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .glass-morphism {
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Legacy light glass (solo para uso en vCards si aplica) */
+  .glass-card-light {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.4);
@@ -61,21 +127,98 @@ body {
   }
 }
 
-/* Animaciones suaves */
+  /* ── Secciones Bitemáticas: Contexto Automático ── */
+  /*
+   * Uso: Agrega .section-dark o .section-light al <section>.
+   * Los textos hijos que usen las vars contextuales se adaptan solos.
+   * Regla: secciones bg-background/bg-card → .section-dark
+   *        secciones bg-surface/bg-surface-soft → .section-light
+   */
+  .section-dark {
+    --section-heading: #ffffff;
+    --section-body: rgba(255, 255, 255, 0.7);
+    --section-muted: rgba(255, 255, 255, 0.45);
+    --section-badge-bg: rgba(255, 255, 255, 0.07);
+    --section-badge-border: rgba(255, 255, 255, 0.12);
+    --section-divider: rgba(255, 255, 255, 0.08);
+    --section-card-bg: rgba(255, 255, 255, 0.05);
+    --section-card-border: rgba(255, 255, 255, 0.10);
+  }
+
+  .section-light {
+    --section-heading: #001549;
+    --section-body: rgba(0, 21, 73, 0.65);
+    --section-muted: rgba(0, 21, 73, 0.45);
+    --section-badge-bg: rgba(0, 21, 73, 0.06);
+    --section-badge-border: rgba(0, 21, 73, 0.12);
+    --section-divider: rgba(0, 21, 73, 0.08);
+    --section-card-bg: rgba(0, 21, 73, 0.04);
+    --section-card-border: rgba(0, 21, 73, 0.10);
+  }
+
+  /* Clases helper que consumen el contexto de la sección padre */
+  .section-heading {
+    color: var(--section-heading, #ffffff);
+  }
+
+  .section-body {
+    color: var(--section-body, rgba(255, 255, 255, 0.7));
+  }
+
+  .section-muted {
+    color: var(--section-muted, rgba(255, 255, 255, 0.45));
+  }
+
+  .section-badge {
+    background: var(--section-badge-bg);
+    border-color: var(--section-badge-border);
+  }
+
+  .section-card {
+    background: var(--section-card-bg);
+    border-color: var(--section-card-border);
+  }
+
+  /* ── Overrides Globales: Transformación de utilidades ── */
+  /* Asegura que el texto navy se adapte al contexto oscuro automáticamente */
+  .section-dark .text-navy {
+    color: var(--section-heading) !important;
+  }
+  .section-dark .text-navy\/70,
+  .section-dark .text-navy\/60 {
+    color: var(--section-body) !important;
+  }
+  .section-dark .text-navy\/40 {
+    color: var(--section-muted) !important;
+  }
+
+/* ── Premium Proportions ── */
+.rounded-premium {
+  border-radius: 3.5rem;
+}
+
+@media (max-width: 640px) {
+  .rounded-premium {
+    border-radius: 2rem;
+  }
+}
+
+/* ── Custom Animations ── */
 @keyframes float {
-  0% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
-
-  100% {
-    transform: translateY(0px);
-  }
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
 .animate-float {
   animation: float 5s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 0.6; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

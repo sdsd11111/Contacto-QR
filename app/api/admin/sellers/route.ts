@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { sendMail } from '@/lib/mailer';
+import { requireAdmin, hashPassword } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-    const adminKey = req.headers.get('x-admin-key');
-    if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = requireAdmin(req);
+    if (auth) return auth;
 
     const { searchParams } = new URL(req.url);
     const getNextCode = searchParams.get('nextCode') === 'true';
@@ -56,10 +55,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const adminKey = req.headers.get('x-admin-key');
-    if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+    const auth = requireAdmin(req);
+    if (auth) return auth;
 
     try {
         const { nombre, email, password, comision_porcentaje } = await req.json();
@@ -73,6 +70,9 @@ export async function POST(req: NextRequest) {
         const nextId = lastSeller.length > 0 ? lastSeller[0].id + 1 : 1;
         const codigo = nextId.toString().padStart(3, '0');
 
+        // Hashear contraseña antes de guardar
+        const hashedPassword = await hashPassword(password);
+
         const query = `
             INSERT INTO registraya_vcard_sellers (nombre, email, password, role, comision_porcentaje, code, activo)
             VALUES (?, ?, ?, 'seller', ?, ?, 1)
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
         const [result]: any = await pool.execute(query, [
             nombre,
             email,
-            password,
+            hashedPassword,
             comision_porcentaje || 30,
             codigo
         ]);
@@ -157,9 +157,9 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
     const adminKey = req.headers.get('x-admin-key');
     if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
-        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+        const auth = requireAdmin(req);
+        if (auth) return auth;
     }
-
     let connection;
     try {
         const { searchParams } = new URL(req.url);

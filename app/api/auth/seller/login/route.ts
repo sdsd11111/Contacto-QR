@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { verifyPassword, generateSellerToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,8 +13,8 @@ export async function POST(request: NextRequest) {
         const connection = await pool.getConnection();
         try {
             const [rows]: any = await connection.execute(
-                'SELECT id, nombre, email, role, comision_porcentaje, parent_id, codigo, terminos_aceptados_en FROM registraya_vcard_sellers WHERE email = ? AND password = ? AND activo = 1',
-                [email, password]
+                'SELECT id, nombre, email, password, role, comision_porcentaje, parent_id, codigo, terminos_aceptados_en FROM registraya_vcard_sellers WHERE email = ? AND activo = 1',
+                [email]
             );
 
             if (rows.length === 0) {
@@ -22,8 +23,26 @@ export async function POST(request: NextRequest) {
 
             const seller = rows[0];
 
+            // Verificar password hasheado (o plaintext legacy)
+            const isValid = seller.password.includes(':') 
+                ? await verifyPassword(password, seller.password)
+                : seller.password === password; // Compatibilidad con passwords viejos sin hashear
+
+            if (!isValid) {
+                return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
+            }
+
+            // Generar token de sesión
+            const token = generateSellerToken({
+                id: seller.id,
+                email: seller.email,
+                nombre: seller.nombre,
+                role: seller.role
+            });
+
             return NextResponse.json({
                 success: true,
+                token,
                 seller: {
                     id: seller.id,
                     nombre: seller.nombre,

@@ -13,31 +13,37 @@ export default function Navbar() {
     if (isAdmin || isVCard || isCatalog) return null;
 
     return (
-        <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl">
-            <div className="bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] rounded-[2.5rem] px-8 py-3 md:py-4 flex items-center justify-between">
-                <Link href="/" className="flex items-center group transition-transform hover:scale-105">
+        <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-6xl">
+            <div className="bg-[#0a0a0a]/60 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full px-8 py-3 flex items-center justify-between ring-1 ring-white/5">
+                <Link href="/" className="flex items-center group transition-transform hover:scale-105 shrink-0">
                     <Image
                         src="/images/logo_header.png"
                         alt="ActivaQR Logo"
-                        width={160}
-                        height={40}
+                        width={120}
+                        height={28}
                         priority
-                        className="h-8 md:h-10 w-auto object-contain"
+                        className="h-6 w-auto object-contain brightness-0 invert"
                     />
                 </Link>
 
-                <div className="hidden md:flex items-center gap-8">
-                    <Link href="/contacto-digital" className="text-[10px] font-black uppercase tracking-[0.2em] text-navy/60 hover:text-primary transition-colors">
-                        Contacto Digital
+                <div className="hidden md:flex items-center gap-6">
+                    <Link href="/contacto-digital-v2" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                        vCards
                     </Link>
-                    <a href="#precios" className="text-[10px] font-black uppercase tracking-[0.2em] text-navy/60 hover:text-primary transition-colors">
-                        Planes
-                    </a>
+                    <Link href="/contacto-business-catalogo-v2" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                        Catálogo
+                    </Link>
+                    <Link href="/sitio-web-completo-v2" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                        Sitio Web
+                    </Link>
+                    <Link href="/auditoria-operativa" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                        Auditoría
+                    </Link>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Link href="/registro" className="bg-navy text-white px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-navy/20 hover:bg-primary transition-all hover:translate-y-[-2px]">
-                        Crear mi ActivaQR
+                    <Link href="/registro" className="bg-[#FF6B2B] text-white px-6 py-2.5 rounded-full font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-[#FF6B2B]/20 hover:scale-105 transition-all">
+                        Activar Ahora
                     </Link>
                 </div>
             </div>

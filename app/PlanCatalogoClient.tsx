@@ -174,10 +174,10 @@ export default function PlanCatalogoClient() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
+        <main className="min-h-screen bg-background selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-white">
 
             {/* Hero Section: Premium Horizontal Split */}
-            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-cream">
+            <section className="section-dark relative min-h-screen w-full overflow-hidden flex items-center bg-background">
                 {/* Background Image Container - Right Aligned & Full Height */}
                 <div className="absolute inset-0 z-0">
                     <img
@@ -193,7 +193,7 @@ export default function PlanCatalogoClient() {
                     <motion.div 
                         initial={{ opacity: 0, x: -30 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="max-w-3xl bg-white/40 backdrop-blur-xl p-8 md:p-12 rounded-[3.5rem] border border-white/40 shadow-2xl shadow-navy/5"
+                        className="max-w-3xl bg-background/40 backdrop-blur-xl p-8 md:p-12 rounded-[3.5rem] border border-white/20 shadow-2xl"
                     >
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
@@ -208,7 +208,7 @@ export default function PlanCatalogoClient() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-3xl md:text-5xl lg:text-6xl font-black text-navy leading-[1.05] mb-6 tracking-tighter"
+                            className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.05] mb-6 tracking-tighter"
                         >
                           <span style={{
                             fontSize: '0.7rem',
@@ -227,7 +227,7 @@ export default function PlanCatalogoClient() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="text-base md:text-lg text-navy/70 mb-10 leading-relaxed font-medium max-w-xl"
+                            className="text-base md:text-lg text-white/70 mb-10 leading-relaxed font-medium max-w-xl"
                         >
                             Tus productos con foto, precio y descripción listos 24/7. Tu cliente elige, el pedido llega organizado a tu WhatsApp y tú solo confirmas y despachas.
                         </motion.p>
@@ -246,14 +246,14 @@ export default function PlanCatalogoClient() {
                             </a>
                             <a
                                 href="#demo-video"
-                                className="w-full sm:w-auto bg-navy/5 backdrop-blur-sm text-navy px-10 py-6 rounded-full font-bold text-xl border border-navy/10 hover:bg-white transition-all flex items-center justify-center gap-3"
+                                className="w-full sm:w-auto bg-white/5 backdrop-blur-sm text-white px-10 py-6 rounded-full font-bold text-xl border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-3"
                             >
                                 <Phone size={24} className="text-primary" /> Ver demo
                             </a>
                         </motion.div>
     
                         {/* Social Proof Text */}
-                        <div className="mt-12 flex items-center gap-4 text-navy/40 font-black uppercase tracking-tighter text-[10px]">
+                        <div className="mt-12 flex items-center gap-4 text-white/40 font-black uppercase tracking-tighter text-[10px]">
                             <div className="flex text-primary">
                                 <Star size={14} fill="currentColor" />
                                 <Star size={14} fill="currentColor" />
@@ -268,7 +268,7 @@ export default function PlanCatalogoClient() {
             </section>
             
             {/* Sección: Confianza y Profesionalismo */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="section-light py-24 bg-surface relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <motion.div
@@ -343,7 +343,7 @@ export default function PlanCatalogoClient() {
             </section>
 
             {/* Sección: El costo de que te olviden */}
-            <section className="py-24 bg-navy text-white relative overflow-hidden">
+            <section className="section-dark py-24 bg-background text-white relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-20">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <div className="relative">
@@ -381,9 +381,8 @@ export default function PlanCatalogoClient() {
 
 
             {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* Sección: Qué incluye tu Plan Catálogo (NUEVA)               */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <section className="py-24 bg-cream relative overflow-hidden" id="que-incluye">
+            {/* Sección: Qué incluye tu Plan Catálogo (NUEVA) */}
+            <section className="section-dark py-24 bg-background relative overflow-hidden" id="que-incluye">
                 {/* Background decorators */}
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30">
                     <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px]"></div>
@@ -407,9 +406,9 @@ export default function PlanCatalogoClient() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="text-4xl md:text-6xl font-black text-navy tracking-tighter leading-none mb-6"
+                            className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-6"
                         >
-                            <span className="text-navy/40 block text-2xl mb-2">Plan Business Incluido +</span>
+                            <span className="text-white/40 block text-2xl mb-2">Plan Business Incluido +</span>
                             Tu propio <span className="text-primary italic">Catálogo de Ventas.</span>
                         </motion.h2>
                         <motion.p
@@ -417,7 +416,7 @@ export default function PlanCatalogoClient() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.2 }}
-                            className="text-xl text-navy/60 font-medium max-w-2xl mx-auto leading-relaxed"
+                            className="text-xl text-white/60 font-medium max-w-2xl mx-auto leading-relaxed"
                         >
                             Transforma tus consultas de WhatsApp en pedidos organizados. El sistema que te ahorra horas de charla y maximiza tus cierres.
                         </motion.p>
@@ -589,17 +588,17 @@ export default function PlanCatalogoClient() {
                         className="mt-16 flex flex-col items-center gap-8"
                     >
                         <div className="flex flex-wrap justify-center gap-6">
-                            <div className="flex flex-col items-center bg-white/50 backdrop-blur-sm px-8 py-5 rounded-3xl border border-navy/5 shadow-sm">
+                            <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm px-8 py-5 rounded-3xl border border-white/10 shadow-sm">
                                 <span className="text-4xl font-black text-primary tracking-tighter">20</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-navy/40 mt-1">Productos Pro</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mt-1">Productos Pro</span>
                             </div>
-                            <div className="flex flex-col items-center bg-white/50 backdrop-blur-sm px-8 py-5 rounded-3xl border border-navy/5 shadow-sm">
-                                <span className="text-4xl font-black text-navy tracking-tighter">$200</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-navy/40 mt-1">Al año</span>
+                            <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm px-8 py-5 rounded-3xl border border-white/10 shadow-sm">
+                                <span className="text-4xl font-black text-white tracking-tighter">$200</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mt-1">Al año</span>
                             </div>
-                            <div className="flex flex-col items-center bg-white/50 backdrop-blur-sm px-8 py-5 rounded-3xl border border-navy/5 shadow-sm">
-                                <span className="text-4xl font-black text-navy tracking-tighter">0%</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-navy/40 mt-1">Comisiones</span>
+                            <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm px-8 py-5 rounded-3xl border border-white/10 shadow-sm">
+                                <span className="text-4xl font-black text-white tracking-tighter">0%</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mt-1">Comisiones</span>
                             </div>
                         </div>
 
@@ -610,7 +609,7 @@ export default function PlanCatalogoClient() {
                             Activar mi Catálogo por $200 <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
                         </a>
 
-                        <p className="text-navy/30 text-xs font-bold uppercase tracking-widest">Sistema eCommerce ligero • Sin mantenimiento técnico • Soporte VIP</p>
+                        <p className="text-white/30 text-xs font-bold uppercase tracking-widest">Sistema eCommerce ligero • Sin mantenimiento técnico • Soporte VIP</p>
                     </motion.div>
                 </div>
             </section>
@@ -633,7 +632,7 @@ export default function PlanCatalogoClient() {
 
 
             {/* Sección: Carrusel de Banners de Conversión Estratégica */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="section-light py-24 bg-surface relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="relative">
                         <AnimatePresence mode="wait">
@@ -843,21 +842,21 @@ export default function PlanCatalogoClient() {
 
 
             {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            <section className="section-dark py-24 bg-background relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="inline-flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-green-600 border border-green-500/20 mb-6"
+                            className="inline-flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-green-400 border border-green-500/20 mb-6"
                         >
                             <Star size={14} fill="currentColor" /> Resultados Reales
                         </motion.div>
-                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase mb-6">
+                        <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-6">
                             Profesionales que ya <span className="text-primary italic">están facturando más</span>
                         </h2>
-                        <p className="text-navy/60 max-w-2xl mx-auto text-lg font-medium">
+                        <p className="text-white/60 max-w-2xl mx-auto text-lg font-medium">
                             No es solo un enlace, es la seguridad de que tus clientes te tienen a un toque de distancia cuando más te necesitan.
                         </p>
                     </div>
@@ -879,7 +878,7 @@ export default function PlanCatalogoClient() {
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
-                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white/5 p-2 rounded-[2.5rem] shadow-xl border border-white/10 relative group hover:translate-y-[-5px] transition-transform duration-500"
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
                                     <img
@@ -901,7 +900,7 @@ export default function PlanCatalogoClient() {
                                         <Star size={16} fill="currentColor" />
                                         <Star size={16} fill="currentColor" />
                                     </div>
-                                    <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                    <p className="text-white/80 font-medium italic leading-relaxed mb-6">
                                         &quot;Muchos pacientes perdían mi número entre sus chats. Ahora, apenas los visito, escanean mi QR y aparezco primero en su agenda con mi foto. ¡Es impresionante la confianza que da!&quot;
                                     </p>
                                     <div className="flex items-center justify-between">
@@ -909,7 +908,7 @@ export default function PlanCatalogoClient() {
                                             <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
                                                 <CheckCircle2 size={16} />
                                             </div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Cliente Verificado</span>
                                         </div>
                                     </div>
                                 </div>
@@ -921,7 +920,7 @@ export default function PlanCatalogoClient() {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.1 }}
-                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white/5 p-2 rounded-[2.5rem] shadow-xl border border-white/10 relative group hover:translate-y-[-5px] transition-transform duration-500"
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
                                     <img
@@ -943,7 +942,7 @@ export default function PlanCatalogoClient() {
                                         <Star size={16} fill="currentColor" />
                                         <Star size={16} fill="currentColor" />
                                     </div>
-                                    <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                    <p className="text-white/80 font-medium italic leading-relaxed mb-6">
                                         &quot;Antes entregábamos volantes que terminaban en el suelo. Ahora, los clientes guardan nuestro contacto directo para pedidos a domicilio. La recurrencia de pedidos ha subido notablemente.&quot;
                                     </p>
                                     <div className="flex items-center justify-between">
@@ -951,7 +950,7 @@ export default function PlanCatalogoClient() {
                                             <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
                                                 <CheckCircle2 size={16} />
                                             </div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Cliente Verificado</span>
                                         </div>
                                     </div>
                                 </div>
@@ -963,7 +962,7 @@ export default function PlanCatalogoClient() {
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: 0.2 }}
-                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
+                                className="w-[85vw] md:w-auto shrink-0 snap-center bg-white/5 p-2 rounded-[2.5rem] shadow-xl border border-white/10 relative group hover:translate-y-[-5px] transition-transform duration-500"
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
                                     <img
@@ -985,7 +984,7 @@ export default function PlanCatalogoClient() {
                                         <Star size={16} fill="currentColor" />
                                         <Star size={16} fill="currentColor" />
                                     </div>
-                                    <p className="text-navy/80 font-medium italic leading-relaxed mb-6">
+                                    <p className="text-white/80 font-medium italic leading-relaxed mb-6">
                                         &quot;La facilidad para enviar mi contacto por WhatsApp con un solo clic es increíble. Mis clientes valoran la rapidez y la presentación profesional. Ha sido clave para nuestra imagen.&quot;
                                     </p>
                                     <div className="flex items-center justify-between">
@@ -993,7 +992,7 @@ export default function PlanCatalogoClient() {
                                             <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center text-green-500">
                                                 <CheckCircle2 size={16} />
                                             </div>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-navy/40">Cliente Verificado</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Cliente Verificado</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1002,17 +1001,17 @@ export default function PlanCatalogoClient() {
                     </div>
 
                     <div className="mt-16 text-center">
-                        <div className="inline-flex flex-col sm:flex-row items-center gap-6 p-6 bg-white/50 backdrop-blur-md rounded-3xl border border-navy/5 shadow-inner">
+                        <div className="inline-flex flex-col sm:flex-row items-center gap-6 p-6 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-inner">
                             <div className="flex -space-x-3">
                                 {[1, 2, 3, 4, 5].map((i) => (
-                                    <img key={i} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" src={`/images/user-${i < 4 ? i : 1}.jpg`} alt="Reviewer" />
+                                    <img key={i} className="w-10 h-10 rounded-full border-2 border-white/10 shadow-sm" src={`/images/user-${i < 4 ? i : 1}.jpg`} alt="Reviewer" />
                                 ))}
                             </div>
                             <div className="text-left">
-                                <p className="text-sm font-black text-navy uppercase tracking-tighter">Basado en opiniones reales en Google</p>
+                                <p className="text-sm font-black text-white uppercase tracking-tighter">Basado en opiniones reales en Google</p>
                                 <div className="flex items-center gap-2">
                                     <div className="flex text-yellow-500"><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /><Star size={12} fill="currentColor" /></div>
-                                    <p className="text-xs font-bold text-navy/50">4.9 / 5.0 Rating General</p>
+                                    <p className="text-xs font-bold text-white/50">4.9 / 5.0 Rating General</p>
                                 </div>
                             </div>
                         </div>
@@ -1027,7 +1026,7 @@ export default function PlanCatalogoClient() {
 
 
             {/* Sección: Logos de Clientes (Confianza Institucional) */}
-            <section className="py-20 bg-white overflow-hidden border-y border-navy/5">
+            <section className="section-light py-20 bg-surface overflow-hidden border-y border-white/5">
                 <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
                     <h3 className="text-xl md:text-2xl font-black text-navy uppercase tracking-tighter italic">
                         <span className="text-primary italic">Decenas de negocios y profesionales</span> ya usan ActivaQR
@@ -1115,8 +1114,8 @@ export default function PlanCatalogoClient() {
                     </div>
 
                     {/* Gradientes laterales para suavizar el scroll */}
-                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-surface to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-surface to-transparent z-10 pointer-events-none"></div>
                 </div>
             </section >
             
@@ -1127,24 +1126,24 @@ export default function PlanCatalogoClient() {
 
 
             {/* Sección: La comparación que duele (Movida cerca del Footer) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            <section className="section-dark py-24 bg-background relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-4xl md:text-5xl font-black text-navy leading-none mb-6 tracking-tighter">
+                        <h2 className="text-4xl md:text-5xl font-black text-white leading-none mb-6 tracking-tighter">
                             La comparación que <span className="text-primary italic">duele.</span>
                         </h2>
-                        <p className="text-xl text-navy/70 font-medium">
+                        <p className="text-xl text-white/60 font-medium">
                             Imprimir tarjetas es tirar dinero al tacho. Compara el pasado con el futuro de tu negocio.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Tarjetas Físicas */}
-                        <div className="bg-white/50 backdrop-blur-md p-10 rounded-[3rem] border border-navy/5 relative group">
-                            <div className="absolute top-6 right-8 text-navy/10 group-hover:text-red-500/20 transition-colors">
+                        <div className="bg-white/5 backdrop-blur-md p-10 rounded-[3rem] border border-white/10 relative group">
+                            <div className="absolute top-6 right-8 text-white/5 group-hover:text-red-500/10 transition-colors">
                                 <Trash2 size={80} />
                             </div>
-                            <h3 className="text-2xl font-black text-navy mb-6 uppercase tracking-tighter">Tarjetas de Papel</h3>
+                            <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-tighter">Tarjetas de Papel</h3>
                             <ul className="space-y-4">
                                 {[
                                     "Cuestan $30-$50 cada mil impresiones.",
@@ -1153,7 +1152,7 @@ export default function PlanCatalogoClient() {
                                     "Si no tienes una a la mano, pierdes la venta.",
                                     "Nadie las guarda; se pierden en cajones."
                                 ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-navy/60 font-bold">
+                                    <li key={i} className="flex items-center gap-3 text-white/60 font-bold">
                                         <XCircle className="text-red-500 shrink-0" size={20} />
                                         <span>{item}</span>
                                     </li>

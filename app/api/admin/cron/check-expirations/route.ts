@@ -1,24 +1,13 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { requireCron } from '@/lib/auth';
 
 // Ruta temporal para cron job en Vercel o llamada manual segura
 export async function GET(request: Request) {
+    const auth = requireCron(request);
+    if (auth) return auth;
+
     try {
-        const url = new URL(request.url);
-        const adminKeyParam = url.searchParams.get('key');
-        
-        // Autorización para cron jobs
-        const authHeader = request.headers.get('Authorization');
-        const cronSecret = process.env.CRON_SECRET || process.env.ADMIN_API_KEY;
-
-        const isCronAuthorized = 
-            (authHeader === `Bearer ${cronSecret}`) || 
-            (adminKeyParam === cronSecret);
-
-        if (!isCronAuthorized) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
         console.log('[CRON EXPIRATIONS] Invocado a las', new Date().toISOString());
 
         // Buscar registros expirados pero que aún no están cancelados

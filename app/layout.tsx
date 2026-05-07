@@ -5,6 +5,7 @@ import "./globals.css";
 import PWARegistration from "@/components/PWARegistration";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { HeaderWrapper, FooterWrapper } from "@/components/LayoutWrapper";
 
 export const viewport: Viewport = {
   themeColor: '#002B49',
@@ -76,9 +77,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className="scroll-smooth">
+    <html lang="es" className="scroll-smooth" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${montserrat.variable} font-sans antialiased bg-cream text-navy`}
+        className={`${inter.variable} ${montserrat.variable} font-sans antialiased bg-background text-foreground`}
       >
         <script
           type="application/ld+json"
@@ -118,9 +119,9 @@ export default function RootLayout({
           }}
         />
         <PWARegistration />
-        <Navbar />
+        <HeaderWrapper />
         {children}
-        <Footer />
+        <FooterWrapper />
       </body>
     </html>
   );

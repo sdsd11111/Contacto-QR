@@ -174,7 +174,7 @@ export default function PlanContactoDigitalClient() {
         <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
 
             {/* Hero Section: Premium Horizontal Split */}
-            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-cream">
+            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-surface section-light">
                 {/* Background Image Container - Right Aligned & Full Height */}
                 <div className="absolute inset-0 z-0">
                     <img
@@ -265,7 +265,7 @@ export default function PlanContactoDigitalClient() {
             </section>
             
             {/* Sección: Confianza y Profesionalismo */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="py-24 bg-white relative overflow-hidden section-light">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <motion.div
@@ -340,7 +340,7 @@ export default function PlanContactoDigitalClient() {
             </section>
 
             {/* Sección: El costo de que te olviden */}
-            <section className="py-24 bg-navy text-white relative overflow-hidden">
+            <section className="py-24 bg-navy text-white relative overflow-hidden section-dark">
                 <div className="max-w-7xl mx-auto px-6 relative z-20">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <div className="relative">
@@ -380,7 +380,7 @@ export default function PlanContactoDigitalClient() {
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* Sección: Qué incluye tu Contacto Digital (NUEVA)              */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <section className="py-24 bg-cream relative overflow-hidden" id="que-incluye">
+            <section className="py-24 bg-surface relative overflow-hidden section-light" id="que-incluye">
                 {/* Background decorators */}
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30">
                     <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px]"></div>
@@ -624,7 +624,7 @@ export default function PlanContactoDigitalClient() {
 
 
             {/* Sección: Carrusel de Banners de Conversión Estratégica */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="py-24 bg-white relative overflow-hidden section-light">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="relative">
                         <AnimatePresence mode="wait">
@@ -834,7 +834,7 @@ export default function PlanContactoDigitalClient() {
 
 
             {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            <section className="section-dark py-24 bg-background relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
                         <motion.div

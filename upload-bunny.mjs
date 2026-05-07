@@ -2,7 +2,11 @@ import fs from 'fs';
 import path from 'path';
 
 const ZONE = 'cesarweb';
-const API_KEY = '90197f22-eb2d-4e71-8d5b3893666a-3c2c-44b4';
+const API_KEY = process.env.BUNNY_API_KEY;
+if (!API_KEY) {
+  console.error('❌ BUNNY_API_KEY no está configurada en las variables de entorno');
+  process.exit(1);
+}
 const HOST = 'br.storage.bunnycdn.com';
 
 const digitalDir = path.join(process.cwd(), 'public', 'images', 'contacto-digital');

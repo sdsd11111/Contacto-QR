@@ -14,7 +14,19 @@ interface PricingSectionProps {
 
 export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionProps) {
     const [activeIndex, setActiveIndex] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Auto-play cada 3 segundos para mayor dinamismo
+    useEffect(() => {
+        if (isPaused) return;
+        
+        const interval = setInterval(() => {
+            setActiveIndex((current) => (current + 1) % PLANES_DATA.length);
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, [isPaused]);
 
     // Encontrar el índice del plan inicial si se provee
     useEffect(() => {
@@ -22,29 +34,18 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
             const index = PLANES_DATA.findIndex(p => p.id === initialPlanId);
             if (index !== -1) {
                 setActiveIndex(index);
-                // En móvil, centrar el scroll
-                if (window.innerWidth < 768 && scrollRef.current) {
-                    const cardWidth = window.innerWidth * 0.85; // Basado en el width de la card en móvil
-                    scrollRef.current.scrollTo({
-                        left: index * (cardWidth + 24), // 24 es el gap aproximado
-                        behavior: 'smooth'
-                    });
-                }
             }
         }
     }, [initialPlanId]);
 
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const scrollPosition = e.currentTarget.scrollLeft;
-        const cardWidth = e.currentTarget.offsetWidth * 0.85;
-        const newIndex = Math.round(scrollPosition / cardWidth);
-        if (newIndex !== activeIndex && newIndex >= 0 && newIndex < PLANES_DATA.length) {
-            setActiveIndex(newIndex);
-        }
-    };
-
     return (
-        <section className="py-24 bg-cream relative overflow-hidden" id="precios" style={{ position: 'relative', zIndex: 10 }}>
+        <section 
+            className="py-24 bg-cream section-dark relative overflow-hidden" 
+            id="precios" 
+            style={{ position: 'relative', zIndex: 10 }}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+        >
             {/* Background Decorators */}
             <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
                 <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[100px]"></div>
@@ -65,11 +66,11 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
                         </span>
                         Inversión Inteligente
                     </motion.div>
-                    <h2 className="text-4xl md:text-7xl font-black text-navy tracking-tighter uppercase mb-6 leading-none">
+                    <h2 className="text-4xl md:text-7xl font-black text-foreground tracking-tighter uppercase mb-6 leading-none">
                         El sistema que <span className="text-primary italic transition-all duration-700 hover:text-royal">se paga solo</span>
                     </h2>
                     <div className="flex flex-col items-center gap-10">
-                        <div className="flex flex-wrap justify-center gap-4 text-navy/40 text-[10px] font-black uppercase tracking-[0.2em]">
+                        <div className="flex flex-wrap justify-center gap-4 text-foreground/40 text-[10px] font-black uppercase tracking-[0.2em]">
                             <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-green-500" /> Sin Contratos</span>
                             <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-green-500" /> 7 Días de Garantía</span>
                             <span className="flex items-center gap-1"><CheckCircle2 size={12} className="text-green-500" /> Todas las tarjetas</span>
@@ -77,100 +78,205 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
                     </div>
                 </div>
 
-                {/* DESKTOP GRID / MOBILE CAROUSEL */}
-                <div 
-                    ref={scrollRef}
-                    onScroll={handleScroll}
-                    className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 items-stretch relative overflow-x-auto md:overflow-x-visible snap-x snap-mandatory scrollbar-hide pb-8 md:pb-0"
-                >
-                    {PLANES_DATA.map((plan, index) => (
-                        <motion.div
-                            key={plan.id}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: index * 0.1 }}
-                            className={`group relative min-w-[85vw] md:min-w-0 h-[650px] rounded-[4rem] overflow-hidden border border-white/40 shadow-2xl transition-all duration-700 hover:scale-[1.02] snap-center ${
-                                plan.isFeatured ? 'ring-4 ring-primary/30 z-10' : ''
-                            }`}
+                {/* CAROUSEL CONTAINER */}
+                <div className="relative h-[750px] flex items-center justify-center overflow-hidden">
+                    {/* Navigation Buttons */}
+                    <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-4 z-50 pointer-events-none">
+                        <button 
+                            onClick={() => {
+                                setActiveIndex(prev => Math.max(0, prev - 1));
+                                setIsPaused(true);
+                            }}
+                            className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white pointer-events-auto transition-all hover:bg-primary hover:border-primary disabled:opacity-0"
+                            disabled={activeIndex === 0}
                         >
-                            {/* Background Image */}
-                            <div className="absolute inset-0 z-0">
-                                <Image 
-                                    src={plan.image} 
-                                    alt={plan.name} 
-                                    fill
-                                    sizes="(max-width: 768px) 100vw, 25vw"
-                                    className="object-cover transition-transform duration-1000 group-hover:scale-110"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/40 to-transparent opacity-90 transition-opacity duration-500 group-hover:opacity-80"></div>
-                            </div>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        </button>
+                        <button 
+                            onClick={() => {
+                                setActiveIndex(prev => Math.min(PLANES_DATA.length - 1, prev + 1));
+                                setIsPaused(true);
+                            }}
+                            className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white pointer-events-auto transition-all hover:bg-primary hover:border-primary disabled:opacity-0"
+                            disabled={activeIndex === PLANES_DATA.length - 1}
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                    </div>
 
-                            {/* Content Overlay */}
-                            <div className="absolute bottom-0 left-0 w-full p-4 sm:p-6 z-10">
-                                <div className="bg-white/10 backdrop-blur-[30px] border border-white/20 p-6 sm:p-8 rounded-[3.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] transform transition-transform duration-500 group-hover:translate-y-[-10px]">
-                                    {plan.badge && (
-                                        <div className="bg-primary text-white text-[8px] font-black uppercase tracking-[0.25em] px-5 py-2 rounded-full shadow-2xl absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
-                                            {plan.badge}
-                                        </div>
-                                    )}
-                                    
-                                    <div className="mb-4">
-                                        <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-tight drop-shadow-lg">
-                                            {plan.name}
-                                        </h3>
-                                        <p className="text-primary font-black text-[9px] uppercase tracking-[0.25em] mt-1 italic drop-shadow-md">
-                                            {plan.subtitle}
-                                        </p>
-                                    </div>
+                    <div className="relative w-full max-w-5xl flex items-center justify-center h-full">
+                        <AnimatePresence mode="popLayout">
+                            {PLANES_DATA.map((plan, index) => {
+                                const position = index - activeIndex;
+                                const isActive = index === activeIndex;
+                                const isVisible = Math.abs(position) <= 2;
 
-                                    <p className="text-white/80 text-[10px] font-medium leading-relaxed mb-4 h-[45px] overflow-hidden">
-                                        {plan.description}
-                                    </p>
+                                if (!isVisible) return null;
 
-                                    <div className="flex items-start gap-1 mb-6">
-                                        <span className="text-xl font-black text-white mt-1">$</span>
-                                        <span className="text-5xl font-black text-white tracking-tighter leading-none">{plan.price}</span>
-                                        <span className="text-white/40 text-[10px] font-black uppercase tracking-widest self-end pb-1">{plan.period}</span>
-                                    </div>
+                                return (
+                                    <motion.div
+                                        key={plan.id}
+                                        initial={false}
+                                        animate={{
+                                            x: `calc(-50% + ${position * 340}px)`, // Centrado perfecto + offset
+                                            scale: isActive ? 1.05 : 0.85,
+                                            zIndex: 30 - Math.abs(position) * 10,
+                                            opacity: isActive ? 1 : 0.4,
+                                            filter: isActive ? 'blur(0px)' : 'blur(4px)',
+                                            left: '50%'
+                                        }}
+                                        transition={{
+                                            type: "spring",
+                                            stiffness: 260,
+                                            damping: 25
+                                        }}
+                                        onClick={() => {
+                                            setActiveIndex(index);
+                                            setIsPaused(true);
+                                        }}
+                                        className={`absolute cursor-pointer group w-[320px] h-[650px] rounded-[4rem] overflow-hidden border border-white/40 shadow-2xl transition-all duration-700 ${
+                                            isActive ? 'ring-4 ring-primary/30' : ''
+                                        }`}
+                                    >
+                                        {/* Background Image / Special Design for Auditoría */}
+                                        <div className="absolute inset-0 z-0">
+                                            {plan.id === 'auditoria' ? (
+                                                <div className="absolute inset-0 bg-[#0a0a0a]">
+                                                    {/* Dot Grid */}
+                                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#FF6B2B 0.5px, transparent 0.5px)', backgroundSize: '20px 20px' }} />
+                                                    
+                                                    {/* Top Section with Scanning Image */}
+                                                    <div className="absolute top-0 left-0 w-full h-1/2 overflow-hidden">
+                                                        <Image 
+                                                            src={plan.image} 
+                                                            alt={plan.name} 
+                                                            fill 
+                                                            className="object-cover opacity-40 grayscale" 
+                                                        />
+                                                        <motion.div 
+                                                            animate={{ top: ['0%', '100%'] }} 
+                                                            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                                            className="absolute left-0 w-full h-[2px] bg-[#FF6B2B] shadow-[0_0_15px_#FF6B2B] z-10" 
+                                                        />
+                                                    </div>
 
-                                    <div className="space-y-3 mb-8">
-                                        {plan.features.slice(0, 3).map((feature, i) => (
-                                            <div key={i} className="flex items-center gap-3">
-                                                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-lg shrink-0">
-                                                    <CheckCircle2 size={12} className="text-white" />
+                                                    {/* Bottom Section Gradient for text readability */}
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
                                                 </div>
-                                                <span className="text-white/90 font-bold text-[11px] leading-tight">{feature}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ) : (
+                                                <>
+                                                    <Image 
+                                                        src={plan.image} 
+                                                        alt={plan.name} 
+                                                        fill
+                                                        sizes="320px"
+                                                        className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                                                    />
+                                                    <div className={`absolute inset-0 bg-gradient-to-t ${
+                                                        plan.color === 'black' ? 'from-black via-black/60' : 
+                                                        plan.color === 'navy' ? 'from-navy via-navy/40' : 
+                                                        'from-primary via-primary/40'
+                                                    } to-transparent opacity-95 transition-opacity duration-500 group-hover:opacity-80`}></div>
+                                                </>
+                                            )}
+                                        </div>
 
-                                    {plan.link ? (
-                                        <Link href={plan.link} className="block w-full bg-white text-navy py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-center transition-all hover:bg-primary hover:text-white shadow-xl">
-                                            {plan.cta}
-                                        </Link>
-                                    ) : (
-                                        <button 
-                                            onClick={onQuoteClick}
-                                            className="block w-full bg-primary text-white py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-center transition-all hover:bg-white hover:text-navy shadow-xl shadow-primary/30"
-                                        >
-                                            {plan.cta}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))}
+                                        {/* Content Overlay */}
+                                        <div className="absolute bottom-0 left-0 w-full p-4 sm:p-6 z-10">
+                                            <div className={`${
+                                                plan.id === 'auditoria' 
+                                                ? 'bg-black/60 backdrop-blur-2xl border border-white/10' 
+                                                : 'bg-white/10 backdrop-blur-[30px] border border-white/20'
+                                            } p-6 sm:p-8 rounded-[3.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] transform transition-transform duration-500`}>
+                                                {plan.badge && (
+                                                    <div className="bg-primary text-white text-[8px] font-black uppercase tracking-[0.25em] px-5 py-2 rounded-full shadow-2xl absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap z-20">
+                                                        {plan.badge}
+                                                    </div>
+                                                )}
+                                                
+                                                <div className="mb-4">
+                                                    <h3 className={`font-black text-white uppercase tracking-tighter leading-[0.95] drop-shadow-lg ${
+                                                        plan.id === 'auditoria' ? 'text-3xl mb-4' : 'text-xl'
+                                                    }`}>
+                                                        {plan.name}
+                                                    </h3>
+                                                    <p className={`font-black uppercase tracking-[0.25em] italic drop-shadow-md ${
+                                                        plan.id === 'auditoria' ? 'text-sm text-[#FF6B2B]' : 'text-[9px] text-primary mt-1'
+                                                    }`}>
+                                                        {plan.subtitle}
+                                                    </p>
+                                                </div>
+
+                                                <p className={`text-white/80 font-medium leading-relaxed mb-6 overflow-hidden ${
+                                                    plan.id === 'auditoria' ? 'text-sm' : 'text-[10px] h-[45px]'
+                                                }`}>
+                                                    {plan.description}
+                                                </p>
+
+                                                {plan.price && (
+                                                    <div className="flex items-start gap-1 mb-6">
+                                                        <span className="text-xl font-black text-white mt-1">$</span>
+                                                        <span className="text-4xl font-black text-white tracking-tighter leading-none">{plan.price}</span>
+                                                        <span className="text-white/40 text-[10px] font-black uppercase tracking-widest self-end pb-1">{plan.period}</span>
+                                                    </div>
+                                                )}
+
+                                                {plan.features.length > 0 && (
+                                                    <div className="space-y-3 mb-8">
+                                                        {plan.features.slice(0, 4).map((feature, i) => (
+                                                            <div key={i} className="flex items-center gap-3">
+                                                                <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow-lg shrink-0 ${
+                                                                    plan.id === 'auditoria' ? 'bg-[#FF6B2B]' : 'bg-primary'
+                                                                }`}>
+                                                                    <CheckCircle2 size={12} className="text-white" />
+                                                                </div>
+                                                                <span className="text-white/90 font-bold text-[11px] leading-tight">{feature}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {plan.link ? (
+                                                    <Link href={plan.link} className={`block w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-center transition-all shadow-xl ${
+                                                        plan.id === 'auditoria' 
+                                                        ? 'bg-[#FF6B2B] text-white hover:bg-white hover:text-black' 
+                                                        : 'bg-white text-navy hover:bg-primary hover:text-white'
+                                                    }`}>
+                                                        {plan.cta}
+                                                    </Link>
+                                                ) : (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onQuoteClick?.();
+                                                        }}
+                                                        className="block w-full bg-primary text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-center transition-all hover:bg-white hover:text-navy shadow-xl shadow-primary/30"
+                                                    >
+                                                        {plan.cta}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
-                {/* Mobile Navigation Dots / Progress */}
-                <div className="flex md:hidden justify-center gap-2 mt-8">
+                {/* Navigation Dots */}
+                <div className="flex justify-center gap-3 mt-8">
                     {PLANES_DATA.map((_, i) => (
-                        <div 
+                        <button 
                             key={i} 
-                            className={`h-1.5 transition-all duration-300 rounded-full ${
-                                i === activeIndex ? 'w-8 bg-primary' : 'w-2 bg-navy/10'
+                            onClick={() => {
+                                setActiveIndex(i);
+                                setIsPaused(true);
+                            }}
+                            className={`h-2 transition-all duration-300 rounded-full ${
+                                i === activeIndex ? 'w-10 bg-primary shadow-[0_0_15px_rgba(255,107,0,0.5)]' : 'w-2 bg-white/20 hover:bg-white/40'
                             }`}
+                            aria-label={`Go to slide ${i + 1}`}
                         />
                     ))}
                 </div>

@@ -47,7 +47,7 @@ export default function VideoModal({ isOpen, onClose, videoId, sourceType = 'you
                         {/* Video Embed */}
                         {sourceType === 'bunny' ? (
                             <iframe
-                                src={`${STREAM_BASE_URL}/${videoId}?autoplay=1&loop=0&muted=0&preload=true&responsive=true`}
+                                src={`${STREAM_BASE_URL}/${videoId}?autoplay=false&loop=false&muted=false&preload=true&responsive=true`}
                                 loading="lazy"
                                 className="w-full h-full border-0"
                                 allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;"

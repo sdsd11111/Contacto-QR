@@ -1,29 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const dynamic = 'force-dynamic';
-
-// Max file size for audio is handled by the server environment
-export const maxDuration = 60; // Increase timeout if needed
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
     try {
-        const apiKey = process.env.OPENAI_API_KEY;
+        const apiKey = process.env.GOOGLE_AI_API_KEY;
 
         if (!apiKey) {
-            console.error('OPENAI_API_KEY not configured');
+            console.error('GOOGLE_AI_API_KEY not configured');
             return NextResponse.json(
-                { error: 'OpenAI API key not configured' },
+                { error: 'Google AI API key not configured' },
                 { status: 500 }
             );
         }
 
-        const openai = new OpenAI({ apiKey });
-        
-        const deepseek = new OpenAI({
-            baseURL: 'https://api.deepseek.com',
-            apiKey: process.env.DEEPSEEK_API_KEY || apiKey,
-        });
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         // Get the audio file from form data
         const formData = await req.formData();
@@ -36,85 +30,65 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        console.log('[Voice Interview] Processing audio file:', audioFile.name, audioFile.size, 'bytes');
+        console.log('[Voice Interview] Processing audio with Gemini 1.5 Flash:', audioFile.name, audioFile.size, 'bytes');
 
-        // Step 1: Transcribe audio using Whisper
-        console.log('[Voice Interview] Transcribing with Whisper...');
-        const transcription = await openai.audio.transcriptions.create({
-            file: audioFile,
-            model: 'whisper-1',
-            language: 'es',
-        });
+        // Convert audio file to base64
+        const buffer = Buffer.from(await audioFile.arrayBuffer());
+        const base64Audio = buffer.toString('base64');
 
-        const transcribedText = transcription.text;
-        console.log('[Voice Interview] Transcription:', transcribedText);
+        const prompt = `Actúa como un experto generador de vCards y entrevistador de negocios. 
+Tu tarea es escuchar el audio de la entrevista y extraer la información en formato JSON.
+La entrevista cubre la historia del negocio, productos y servicios.
 
-        // Step 2: Extract structured data using Deepseek
-        console.log('[Voice Interview] Extracting fields with Deepseek...');
-        const completion = await deepseek.chat.completions.create({
-            model: process.env.DEEPSEEK_MODEL || 'deepseek-chat',
-            messages: [
-                {
-                    role: 'system',
-                    content: `Expert vCard generator and business interviewer. Extract interview data into JSON.
-The interview covers the business history, story, products, and services.
 JSON format:
 {
-  "name": "Full name or Business name",
-  "profession": "Short activity (3-4 words)",
-  "bio": "Professional 'About Me' or 'Business Story'. Mention history and value proposition.",
-  "products": "Detailed list of products and services offered.",
-  "etiquetas": "Single paragraph, 30+ natural search keywords (variations, colloquial, SEO)"
+  "name": "Nombre completo o nombre del negocio",
+  "profession": "Actividad corta (3-4 palabras)",
+  "bio": "Bio profesional o historia del negocio. Menciona la propuesta de valor.",
+  "products": "Lista detallada de productos y servicios ofrecidos.",
+  "etiquetas": "Un solo párrafo con 30+ palabras clave naturales para SEO (variaciones, coloquialismos, etc.)"
 }
-Rules: Use ONLY provided info. Maintain a professional yet inviting tone.`
-                },
-                {
-                    role: 'user',
-                    content: `Interview transcription: "${transcribedText}"`
+
+Reglas: Usa SOLO la información proporcionada. Mantén un tono profesional pero acogedor.`;
+
+        const result = await model.generateContent([
+            prompt,
+            {
+                inlineData: {
+                    data: base64Audio,
+                    mimeType: audioFile.type || "audio/webm"
                 }
-            ],
-            temperature: 0.5,
-            response_format: { type: "json_object" }
-        });
+            }
+        ]);
 
-        const extractedData = JSON.parse(completion.choices[0].message.content || '{}');
-        console.log('[Voice Interview] Extracted data:', extractedData);
+        const response = await result.response;
+        const text = response.text();
+        
+        // Extract JSON from response (Gemini sometimes adds markdown blocks)
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        const extractedData = JSON.parse(jsonMatch ? jsonMatch[0] : '{}');
 
-        // Validate and clean the data
-        const result = {
+        console.log('[Voice Interview] Gemini Extracted data:', extractedData);
+
+        const cleanResult = {
             name: (extractedData.name || '').slice(0, 100).trim(),
             profession: (extractedData.profession || '').slice(0, 100).trim(),
             bio: (extractedData.bio || '').slice(0, 1000).trim(),
             products: (extractedData.products || '').slice(0, 1000).trim(),
             etiquetas: (extractedData.etiquetas || '').slice(0, 2000).trim(),
-            transcription: transcribedText,
+            transcription: "[Procesado directamente por Gemini]",
         };
 
         return NextResponse.json({
             success: true,
-            data: result
+            data: cleanResult
         });
 
     } catch (error: any) {
-        console.error('[Voice Interview] Error:', error);
-
-        // Provide more specific error messages
-        if (error.message?.includes('API key')) {
-            return NextResponse.json(
-                { error: 'Error de configuración de la API. Contacta al administrador.' },
-                { status: 500 }
-            );
-        }
-
-        if (error.message?.includes('audio')) {
-            return NextResponse.json(
-                { error: 'Error al procesar el audio. Intenta grabar de nuevo.' },
-                { status: 400 }
-            );
-        }
+        console.error('[Voice Interview] Gemini Error:', error);
 
         return NextResponse.json(
-            { error: 'Error al procesar la entrevista. Intenta de nuevo.' },
+            { error: 'Error al procesar la entrevista con IA. Intenta de nuevo.' },
             { status: 500 }
         );
     }

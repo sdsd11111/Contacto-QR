@@ -179,7 +179,7 @@ export default function PlanSitioWebClient() {
         <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
 
             {/* Hero Section: Premium Horizontal Split */}
-            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-cream">
+            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-cream section-light">
                 {/* Background Image Container - Right Aligned & Full Height */}
                 <div className="absolute inset-0 z-0">
                     <img
@@ -188,7 +188,7 @@ export default function PlanSitioWebClient() {
                         className="w-full h-full object-cover"
                     />
                     {/* Subtle Overlay to ensure overall branding consistency */}
-                    <div className="absolute inset-0 bg-cream/20 lg:bg-transparent"></div>
+                    <div className="absolute inset-0 bg-surface/20 lg:bg-transparent"></div>
                 </div>
 
                 <div className="container mx-auto relative z-20 px-6 md:px-12 py-20 lg:py-32">
@@ -270,7 +270,7 @@ export default function PlanSitioWebClient() {
             </section>
             
             {/* Sección: Confianza y Profesionalismo */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="py-24 bg-white relative overflow-hidden section-light">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <motion.div
@@ -345,7 +345,7 @@ export default function PlanSitioWebClient() {
             </section>
 
             {/* Sección: El costo de que te olviden */}
-            <section className="py-24 bg-navy text-white relative overflow-hidden">
+            <section className="py-24 bg-navy text-white relative overflow-hidden section-dark">
                 <div className="max-w-7xl mx-auto px-6 relative z-20">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <div className="relative">
@@ -385,7 +385,7 @@ export default function PlanSitioWebClient() {
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* Sección: Qué incluye tu Plan Sitio Web (NUEVA)              */}
             {/* ═══════════════════════════════════════════════════════════════ */}
-            <section className="py-24 bg-cream relative overflow-hidden" id="que-incluye">
+            <section className="py-24 bg-surface relative overflow-hidden section-light" id="que-incluye">
                 {/* Background decorators */}
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30">
                     <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px]"></div>
@@ -634,7 +634,7 @@ export default function PlanSitioWebClient() {
 
 
             {/* Sección: Carrusel de Banners de Conversión Estratégica */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="py-24 bg-white relative overflow-hidden section-light">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="relative">
                         <AnimatePresence mode="wait">
@@ -844,7 +844,7 @@ export default function PlanSitioWebClient() {
 
 
             {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            <section className="section-dark py-24 bg-background relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
                         <motion.div
@@ -1104,7 +1104,7 @@ export default function PlanSitioWebClient() {
                                 "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
                                 "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
                             ].map((logo, i) => (
-                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <img
                                         src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
                                         alt={`Cliente ActivaQR ${i}`}

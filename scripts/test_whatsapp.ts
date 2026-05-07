@@ -1,6 +1,10 @@
 
 const EVOLUTION_API_URL = 'http://129.153.116.213:8080';
-const EVOLUTION_API_KEY = '42a447c1-3d74-4b52-9571-042c174f7621';
+const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY;
+if (!EVOLUTION_API_KEY) {
+  console.error('❌ EVOLUTION_API_KEY no está configurada');
+  process.exit(1);
+}
 const EVOLUTION_INSTANCE = 'Automatizotunegocio';
 const targetNumber = '593967491847';
 

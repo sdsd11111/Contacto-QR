@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendMail, EMAIL_FROM } from '@/lib/mailer';
 import { isRateLimited, getClientIP } from '@/lib/rate-limit';
+import { requireAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-    try {
-        // Verificación de admin key
-        const adminKey = req.headers.get('x-admin-key');
-        if (!adminKey || adminKey !== process.env.ADMIN_API_KEY) {
-            return NextResponse.json(
-                { error: 'No autorizado' },
-                { status: 401 }
-            );
-        }
+    const auth = requireAdmin(req);
+    if (auth) return auth;
 
+    try {
         // Rate limiting: máximo 10 emails por minuto
         const clientIP = getClientIP(req);
         if (isRateLimited(`send-vcard:${clientIP}`, 10, 60000)) {

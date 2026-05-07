@@ -198,7 +198,7 @@ export default function DirectVCardRegistration({
                                 responseUrl: typeof window !== 'undefined' ? `${window.location.origin}/admin/vendedor` : "",
                                 cancellationUrl: typeof window !== 'undefined' ? `${window.location.origin}/admin/vendedor` : "",
                                 onComplete: async (model: any) => {
-                                    console.log("Pago completado, verificando...", model);
+                                    // Pago PayPhone completado — verificando...
                                     updateForm('status', 'pagado');
                                     alert("¡Pago con PayPhone confirmado correctamente!");
                                 },

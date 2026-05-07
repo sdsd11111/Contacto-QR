@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/audit/:path*',
+        destination: 'https://activaqr2.vercel.app/audit/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;
