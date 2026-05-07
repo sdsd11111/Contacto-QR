@@ -525,6 +525,32 @@ export default function VCardEditModal({
                                 </div>
 
                                 <div className="pt-4 border-t border-white/5">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 block ml-1">Plantilla Visual</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {[
+                                            { id: 'classic', name: 'Clásico' },
+                                            { id: 'luxury_minimal', name: 'Luxury' },
+                                            { id: 'hedkandi', name: 'Hedkandi' },
+                                            { id: 'industrial', name: 'Industrial' },
+                                            { id: 'carrocerias', name: 'Carrocerías' },
+                                        ].map(t => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => setEditingRegistro({ ...editingRegistro, template_id: t.id })}
+                                                className={cn(
+                                                    "py-2 rounded-xl font-black uppercase text-[9px] tracking-widest transition-all border",
+                                                    (editingRegistro.template_id || 'classic') === t.id
+                                                        ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
+                                                        : "bg-white/5 text-white/40 border-white/10 hover:border-white/20"
+                                                )}
+                                            >
+                                                {t.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-white/5">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-4 block ml-1">Tipo de Perfil</label>
                                     <div className="flex gap-4">
                                         <button

@@ -48,10 +48,11 @@ next-env.d.ts
 
 # local scripts & migration logs
 *.sql
-*.log
 
-# CDN Images (Served from Bunny.net, not checked into version control)
-/public/images/contacto-digital/
-/public/images/contacto-bussines/
-/public/images/contacto-bussines-catalogo/
-/public/images/sitio web/
+# temp files
+/tmp/
+/scratch/
+temp_skills/
+
+# agent skills generated
+temp_skills/

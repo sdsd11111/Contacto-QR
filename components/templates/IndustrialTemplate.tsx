@@ -1,0 +1,294 @@
+"use client";
+
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Share2, MapPin, Phone, Mail, Instagram, Facebook, Link as LinkIcon, Download, Zap, ChevronRight, Activity, Shield, Clock, Users, Building, Truck } from 'lucide-react';
+import { formatPhoneEcuador, cn } from '@/lib/utils';
+import CatalogProGallery from '../card/CatalogProGallery';
+
+export default function IndustrialTemplate({ data }: { data: any }) {
+    if (!data) return null;
+
+    // Default values if data is missing
+    const stats = [
+        { label: "Experiencia", value: "10+", icon: <Building /> },
+        { label: "Proyectos", value: "200+", icon: <Activity /> },
+        { label: "Efectividad", value: "99%", icon: <Shield /> },
+        { label: "Soporte", value: "24/7", icon: <Clock /> }
+    ];
+
+    // Map dynamic services or use defaults
+    const servicesList = data.productos_servicios 
+        ? data.productos_servicios.split('\n').filter(Boolean).map((s: string, i: number) => ({ id: i, title: s }))
+        : [
+            { id: 1, title: "Logística y Distribución" },
+            { id: 2, title: "Mantenimiento de Flotas" },
+            { id: 3, title: "Seguimiento Satelital" }
+        ];
+
+    const handleShare = async () => {
+        if (navigator.share) {
+            try {
+                await navigator.share({
+                    title: data.nombre_negocio,
+                    text: data.bio,
+                    url: window.location.href,
+                });
+            } catch (err) {
+                console.error("Error compartiendo", err);
+            }
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#F5F7FA] font-sans text-navy selection:bg-[#FF5C00] selection:text-white">
+            
+            {/* 0. MINI NAVBAR */}
+            <nav className="absolute top-0 left-0 w-full z-[100] px-4 md:px-8 py-6 flex justify-between items-center bg-gradient-to-b from-navy/50 to-transparent">
+                <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 bg-[#FF5C00] rounded-sm flex items-center justify-center text-white font-black text-xl italic">N</div>
+                    <span className="text-white font-black uppercase tracking-tighter text-xl">{data.nombre_negocio?.split(' ')[0] || 'NEXUS'}</span>
+                </div>
+                <div className="hidden md:flex gap-8 text-white/80 font-bold uppercase text-[10px] tracking-widest">
+                    <a href="#servicios" className="hover:text-[#FF5C00] transition-colors">Servicios</a>
+                    <a href="#nosotros" className="hover:text-[#FF5C00] transition-colors">Nosotros</a>
+                    <a href="#proyectos" className="hover:text-[#FF5C00] transition-colors">Flota</a>
+                </div>
+                {data.whatsapp && (
+                    <a 
+                        href={`https://wa.me/${formatPhoneEcuador(data.whatsapp)}`}
+                        className="bg-white text-navy px-5 py-2 font-black uppercase text-[10px] tracking-widest hover:bg-[#FF5C00] hover:text-white transition-all rounded-sm"
+                    >
+                        Contacto
+                    </a>
+                )}
+            </nav>
+            {/* 1. HERO SECTION */}
+            <section className="relative w-full min-h-[85vh] flex flex-col justify-center overflow-hidden">
+                {/* Background Image with Dark Overlay */}
+                <div className="absolute inset-0 z-0">
+                    {data.portada_desktop || data.foto_url ? (
+                        <img 
+                            src={data.portada_desktop || data.foto_url} 
+                            alt="Fondo Industrial" 
+                            className="w-full h-full object-cover object-center"
+                            style={{ opacity: 0.6 }}
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-navy" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#001B3D]/90 via-[#001B3D]/70 to-[#001B3D]/30" />
+                </div>
+
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 py-20 mt-16 md:mt-0">
+                    <div className="max-w-3xl">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.8 }}
+                        >
+                            <span className="inline-block py-1 px-3 border border-[#FF5C00]/50 bg-[#FF5C00]/10 text-[#FF5C00] font-black text-[10px] tracking-widest uppercase mb-6 rounded-sm">
+                                {data.profesion || "Servicios Industriales"}
+                            </span>
+                            
+                            <h1 className="text-5xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6">
+                                {data.nombre_negocio || "Nombre Empresa"}
+                            </h1>
+                            
+                            <p className="text-lg md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] pl-6">
+                                {data.bio || "Soluciones robustas para operaciones de alto rendimiento. Confianza y eficiencia en cada entrega."}
+                            </p>
+
+                            <div className="flex flex-wrap gap-4">
+                                {data.whatsapp && (
+                                    <a 
+                                        href={`https://wa.me/${formatPhoneEcuador(data.whatsapp)}?text=Hola,%20me%20interesan%20sus%20servicios%20industriales`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group bg-[#FF5C00] text-white px-8 py-4 font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-[#e65300] transition-colors relative overflow-hidden"
+                                    >
+                                        <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full skew-x-12 group-hover:animate-[shimmer_1.5s_infinite]" />
+                                        <span>Cotizar Ahora</span>
+                                        <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                    </a>
+                                )}
+                                <button 
+                                    onClick={handleShare}
+                                    className="bg-white/10 text-white border border-white/20 px-8 py-4 font-black uppercase text-sm tracking-widest hover:bg-white hover:text-navy transition-all"
+                                >
+                                    <Share2 size={18} />
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                </div>
+
+                {/* Info Bar Bottom */}
+                <div className="absolute bottom-0 left-0 w-full bg-[#001229]/90 backdrop-blur-md border-t border-white/10 z-20 hidden md:block">
+                    <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center text-white/70 text-xs font-bold uppercase tracking-widest">
+                        {data.email && <div className="flex items-center gap-2"><Mail size={14} className="text-[#FF5C00]" /> {data.email}</div>}
+                        {data.address && <div className="flex items-center gap-2"><MapPin size={14} className="text-[#FF5C00]" /> {data.address}</div>}
+                        {data.whatsapp && <div className="flex items-center gap-2"><Phone size={14} className="text-[#FF5C00]" /> {data.whatsapp}</div>}
+                    </div>
+                </div>
+            </section>
+
+            {/* 2. SERVICES SECTION (Orange Blocks) */}
+            <section id="servicios" className="py-24 px-4 bg-white relative">
+                <div className="max-w-7xl mx-auto">
+                    <div className="text-center mb-16">
+                        <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Qué Hacemos</h4>
+                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestros <span className="text-[#FF5C00]">Servicios</span></h2>
+                        <div className="w-20 h-1 bg-[#FF5C00] mx-auto mt-6" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {servicesList.map((service: any, index: number) => (
+                            <div key={index} className="group relative bg-[#F5F7FA] border border-gray-100 hover:shadow-2xl hover:shadow-navy/10 transition-all duration-300">
+                                {/* Orange Header Area */}
+                                <div className="h-32 bg-[#FF5C00] relative overflow-hidden flex items-center justify-center">
+                                    <div className="absolute -right-10 -bottom-10 opacity-10">
+                                        <Truck size={120} className="text-black" />
+                                    </div>
+                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-[#FF5C00] shadow-lg relative z-10 group-hover:scale-110 transition-transform">
+                                        {index % 3 === 0 ? <Truck size={28} /> : index % 3 === 1 ? <Activity size={28} /> : <Shield size={28} />}
+                                    </div>
+                                </div>
+                                {/* Content Area */}
+                                <div className="p-8 text-center bg-navy text-white relative">
+                                    <h3 className="font-black uppercase text-xl mb-3 tracking-tight">{service.title}</h3>
+                                    <div className="w-8 h-1 bg-[#FF5C00] mx-auto mb-4" />
+                                    <p className="text-white/60 text-sm font-medium">Servicio especializado diseñado para garantizar la máxima eficiencia operativa en este sector clave.</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* NEW: VIDEO SECTION */}
+            {data.video_url && (
+                <section className="py-24 px-4 bg-navy relative overflow-hidden">
+                    <div className="max-w-5xl mx-auto relative z-10">
+                        <div className="text-center mb-12">
+                            <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-xs mb-3">Operaciones en Vivo</h4>
+                            <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Nuestra <span className="text-[#FF5C00]">Infraestructura</span></h2>
+                        </div>
+                        <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5">
+                            <iframe 
+                                src={(() => {
+                                    const url = data.video_url || '';
+                                    // Soporta: watch?v=ID, youtu.be/ID, embed/ID
+                                    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]+)/);
+                                    const id = match ? match[1] : '';
+                                    return id ? `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1` : url;
+                                })()} 
+                                title="Video Corporativo"
+                                className="w-full h-full"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                            />
+                        </div>
+                    </div>
+                    {/* Background decorative elements */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF5C00]/10 blur-[100px]" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 blur-[100px]" />
+                </section>
+            )}
+
+            {/* 3. WHY CHOOSE US (Stats) */}
+            <section id="nosotros" className="py-24 px-4 bg-[#001B3D] text-white">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+                    <div className="w-full md:w-1/2">
+                        <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Garantía de Calidad</h4>
+                        <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-8">Por qué <span className="text-[#FF5C00]">elegirnos</span></h2>
+                        <p className="text-white/70 font-medium leading-relaxed mb-8">
+                            Nuestra infraestructura y equipo están preparados para los desafíos más exigentes. La eficiencia de su flota u operación es nuestra prioridad absoluta.
+                        </p>
+                        
+                        <div className="space-y-6">
+                            {/* Progress Bars */}
+                            <div>
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-widest mb-2">
+                                    <span>Capacidad Operativa</span>
+                                    <span className="text-[#FF5C00]">100%</span>
+                                </div>
+                                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="w-full h-full bg-[#FF5C00]" />
+                                </div>
+                            </div>
+                            <div>
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-widest mb-2">
+                                    <span>Cumplimiento de Tiempos</span>
+                                    <span className="text-[#FF5C00]">98%</span>
+                                </div>
+                                <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="w-[98%] h-full bg-[#FF5C00]" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="w-full md:w-1/2 grid grid-cols-2 gap-6">
+                        {stats.map((stat, i) => (
+                            <div key={i} className="bg-white/5 border border-white/10 p-6 flex flex-col items-center justify-center text-center group hover:bg-[#FF5C00] transition-colors">
+                                <div className="text-[#FF5C00] group-hover:text-white mb-4">
+                                    {React.cloneElement(stat.icon as any, { size: 36 })}
+                                </div>
+                                <span className="text-4xl font-black mb-1 text-white">{stat.value}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-white/50 group-hover:text-white/80">{stat.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* 4. CATALOG / PROJECTS GALLERY */}
+            {data.catalogo_json && data.catalogo_json.products && data.catalogo_json.products.length > 0 && (
+                <section id="proyectos" className="py-24 px-4 bg-[#F5F7FA]">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-16">
+                            <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Galería de Proyectos</h4>
+                            <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestra <span className="text-[#FF5C00]">Flota</span></h2>
+                            <div className="w-20 h-1 bg-[#FF5C00] mx-auto mt-6" />
+                        </div>
+                        
+                        <CatalogProGallery 
+                            data={data.catalogo_json} 
+                            whatsapp={data.whatsapp}
+                            themeColor="#FF5C00" 
+                        />
+                    </div>
+                </section>
+            )}
+
+            {/* 5. FOOTER / CONTACT */}
+            <footer className="bg-[#001229] pt-20 pb-10 px-4 text-white">
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-12 border-b border-white/10 pb-16">
+                    <div className="w-full md:w-1/3 text-center md:text-left">
+                        <h2 className="text-2xl font-black uppercase tracking-tight mb-4">{data.nombre_negocio}</h2>
+                        <p className="text-white/50 text-sm mb-6">Líderes en soluciones industriales y logísticas.</p>
+                        <div className="flex gap-4 justify-center md:justify-start">
+                            {data.instagram && <a href={data.instagram} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[#FF5C00] rounded-full flex items-center justify-center transition-colors"><Instagram size={18} /></a>}
+                            {data.facebook && <a href={data.facebook} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[#FF5C00] rounded-full flex items-center justify-center transition-colors"><Facebook size={18} /></a>}
+                        </div>
+                    </div>
+                    
+                    <div className="w-full md:w-2/3 flex flex-col md:flex-row justify-end gap-12 text-center md:text-right">
+                        <div>
+                            <h4 className="text-[#FF5C00] font-black uppercase tracking-widest text-xs mb-6">Contacto Directo</h4>
+                            <ul className="space-y-4 text-sm font-medium text-white/70">
+                                {data.whatsapp && <li>{data.whatsapp}</li>}
+                                {data.email && <li>{data.email}</li>}
+                                {data.address && <li>{data.address}</li>}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div className="text-center mt-10 text-[10px] uppercase tracking-widest text-white/30 font-bold">
+                    &copy; {new Date().getFullYear()} {data.nombre_negocio}. Powered by ActivaQR.
+                </div>
+            </footer>
+        </div>
+    );
+}

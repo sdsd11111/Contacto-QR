@@ -38,6 +38,9 @@
   ],
   "exclude": [
     "node_modules",
+    "tmp",
+    "scratch",
+    ".next",
     "scripts",
     "temp_skills"
   ]

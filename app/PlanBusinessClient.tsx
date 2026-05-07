@@ -173,19 +173,19 @@ export default function PlanBusinessClient() {
     }, []);
 
     return (
-        <main className="min-h-screen bg-cream selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans text-navy">
+        <main className="min-h-screen bg-background selection:bg-primary/30 scroll-smooth relative overflow-x-hidden font-sans">
 
             {/* Hero Section: Premium Horizontal Split */}
-            <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-cream">
+            <section className="section-dark relative min-h-screen w-full overflow-hidden flex items-center bg-background">
                 {/* Background Image Container - Right Aligned & Full Height */}
                 <div className="absolute inset-0 z-0">
                     <img
                         src="/images/Reingenierìa/v2_plan_business_indiferencia.webp"
                         alt="ActivaQR - Contacto Business"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover opacity-60"
                     />
                     {/* Subtle Overlay to ensure overall branding consistency */}
-                    <div className="absolute inset-0 bg-cream/20 lg:bg-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent"></div>
                 </div>
 
                 <div className="container mx-auto relative z-20 px-6 md:px-12 py-20 lg:py-32">
@@ -207,7 +207,7 @@ export default function PlanBusinessClient() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-3xl md:text-5xl lg:text-6xl font-black text-navy leading-[1.05] mb-6 tracking-tighter"
+                            className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.05] mb-6 tracking-tighter"
                         >
                           <span style={{
                             fontSize: '0.7rem',
@@ -226,7 +226,7 @@ export default function PlanBusinessClient() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.2 }}
-                            className="text-base md:text-lg text-navy/70 mb-10 leading-relaxed font-medium max-w-xl"
+                            className="text-base md:text-lg text-white/70 mb-10 leading-relaxed font-medium max-w-xl"
                         >
                             Sin hablar con el diseñador ni pagar pautas falsas. Subes una promoción desde tu teléfono y en 10 segundos tus clientes ya la ven cuando escanean el QR de tu local.
                         </motion.p>
@@ -243,16 +243,16 @@ export default function PlanBusinessClient() {
                             >
                                 Activar mi Negocio ahora <ArrowRight size={24} />
                             </a>
-                            <a
-                                href="#demo-video"
-                                className="w-full sm:w-auto bg-navy/5 backdrop-blur-sm text-navy px-10 py-6 rounded-full font-bold text-xl border border-navy/10 hover:bg-white transition-all flex items-center justify-center gap-3"
-                            >
-                                <Phone size={24} className="text-primary" /> Ver demo
-                            </a>
+                             <a
+                                 href="#demo-video"
+                                 className="w-full sm:w-auto bg-white/10 backdrop-blur-md text-white px-10 py-6 rounded-full font-bold text-xl border border-white/20 hover:bg-white/20 transition-all flex items-center justify-center gap-3"
+                             >
+                                 <Phone size={24} className="text-primary" /> Ver demo
+                             </a>
                         </motion.div>
     
                         {/* Social Proof Text */}
-                        <div className="mt-12 flex items-center gap-4 text-navy/40 font-black uppercase tracking-tighter text-[10px]">
+                        <div className="mt-12 flex items-center gap-4 text-white/40 font-black uppercase tracking-tighter text-[10px]">
                             <div className="flex text-primary">
                                 <Star size={14} fill="currentColor" />
                                 <Star size={14} fill="currentColor" />
@@ -267,7 +267,7 @@ export default function PlanBusinessClient() {
             </section>
             
             {/* Sección: Confianza y Profesionalismo */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="section-light py-24 bg-surface relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <motion.div
@@ -330,7 +330,7 @@ export default function PlanBusinessClient() {
                         </motion.div>
                     </div>
                 </div>
-            </section>
+                </section>
 
 
 
@@ -343,7 +343,8 @@ export default function PlanBusinessClient() {
             </section>
 
             {/* Sección: El costo de que te olviden */}
-            <section className="py-24 bg-navy text-white relative overflow-hidden">
+            <div className="section-dark">
+                <section className="py-24 bg-navy text-white relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-20">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                         <div className="relative">
@@ -377,13 +378,12 @@ export default function PlanBusinessClient() {
                 </div>
                 {/* Decoradores Sutiles */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
-            </section>
+                </section>
+            </div>
 
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* Sección: Qué incluye tu Contacto Business (NUEVA)            */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            <section className="py-24 bg-cream relative overflow-hidden" id="que-incluye">
+            {/* Sección: Qué incluye tu Contacto Business (NUEVA) */}
+            <section className="section-dark py-24 bg-background relative overflow-hidden" id="que-incluye">
                 {/* Background decorators */}
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30">
                     <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-primary/15 rounded-full blur-[120px]"></div>
@@ -407,7 +407,7 @@ export default function PlanBusinessClient() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.1 }}
-                            className="text-4xl md:text-6xl font-black text-navy tracking-tighter leading-none mb-6"
+                            className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none mb-6"
                         >
                             Lo que lleva tu <span className="text-primary italic">Contacto Business.</span>
                         </motion.h2>
@@ -416,7 +416,7 @@ export default function PlanBusinessClient() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: 0.2 }}
-                            className="text-xl text-navy/60 font-medium max-w-2xl mx-auto leading-relaxed"
+                            className="text-xl text-white/60 font-medium max-w-2xl mx-auto leading-relaxed"
                         >
                             Todo lo que un local comercial o marca personal necesita para ser visible, relevante y fácil de comprar.
                         </motion.p>
@@ -439,11 +439,11 @@ export default function PlanBusinessClient() {
                                     onClick={() => setActiveIncludedTab(tab.id)}
                                     className={`flex items-center gap-2.5 px-6 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wider transition-all duration-500 ${
                                         isActive
-                                            ? 'bg-navy text-white shadow-2xl shadow-navy/20 scale-105'
-                                            : 'bg-white/60 backdrop-blur-sm text-navy/50 border border-navy/10 hover:bg-white hover:text-navy hover:border-navy/20'
+                                            ? 'bg-primary text-white shadow-2xl shadow-primary/20 scale-105'
+                                            : 'bg-white/5 backdrop-blur-sm text-white/40 border border-white/10 hover:bg-white/10 hover:text-white hover:border-white/20'
                                     }`}
                                 >
-                                    <Icon size={18} className={isActive ? 'text-primary' : ''} />
+                                    <Icon size={18} className={isActive ? 'text-white' : ''} />
                                     <span className="hidden sm:inline">{tab.label}</span>
                                     <span className="sm:hidden">{tab.label.split(' ')[0]}</span>
                                 </button>
@@ -489,7 +489,7 @@ export default function PlanBusinessClient() {
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
-                                                            <div className="w-full h-full flex flex-col items-center justify-center bg-navy/5 text-navy/20 p-10 text-center">
+                                                            <div className="w-full h-full flex flex-col items-center justify-center bg-white/5 text-white/20 p-10 text-center">
                                                                 <tab.icon size={64} strokeWidth={1} className="mb-4 opacity-20" />
                                                                 <p className="font-bold text-sm uppercase tracking-widest">{tab.label}</p>
                                                             </div>
@@ -520,7 +520,7 @@ export default function PlanBusinessClient() {
                                                             className={`cursor-pointer group flex flex-col justify-center min-h-[140px] backdrop-blur-md p-5 rounded-[2rem] border transition-all duration-500 hover:-translate-y-1 ${
                                                                 isFeatureActive 
                                                                 ? 'bg-white shadow-xl shadow-primary/5 border-primary/40 scale-100 ring-2 ring-primary/10' 
-                                                                : 'bg-white/40 border-navy/5 hover:bg-white/80 hover:border-navy/10 scale-[0.98] opacity-70 hover:opacity-100'
+                                                                : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10 scale-[0.98] opacity-70 hover:opacity-100'
                                                             }`}
                                                         >
                                                             <div className="flex items-start gap-4">
@@ -531,11 +531,11 @@ export default function PlanBusinessClient() {
                                                                 </div>
                                                                 <div className="flex-1 min-w-0">
                                                                     <h4 className={`font-black uppercase tracking-tight mb-1.5 leading-tight text-[13px] ${
-                                                                        isFeatureActive ? 'text-primary' : 'text-navy'
+                                                                        isFeatureActive ? 'text-primary' : 'text-white'
                                                                     }`}>
                                                                         {feature.title}
                                                                     </h4>
-                                                                    <p className="text-navy/60 text-xs font-semibold leading-relaxed">
+                                                                    <p className={`text-xs font-semibold leading-relaxed ${isFeatureActive ? 'text-navy/60' : 'text-white/60'}`}>
                                                                         {feature.desc}
                                                                     </p>
                                                                 </div>
@@ -588,17 +588,17 @@ export default function PlanBusinessClient() {
                         className="mt-16 flex flex-col items-center gap-8"
                     >
                         <div className="flex flex-wrap justify-center gap-6">
-                            <div className="flex flex-col items-center bg-white/50 backdrop-blur-sm px-8 py-5 rounded-3xl border border-navy/5 shadow-sm">
+                            <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm px-8 py-5 rounded-3xl border border-white/10 shadow-sm">
                                 <span className="text-4xl font-black text-primary tracking-tighter">30+</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-navy/40 mt-1">Funciones avanzadas</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mt-1">Funciones avanzadas</span>
                             </div>
-                            <div className="flex flex-col items-center bg-white/50 backdrop-blur-sm px-8 py-5 rounded-3xl border border-navy/5 shadow-sm">
-                                <span className="text-4xl font-black text-navy tracking-tighter">$100</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-navy/40 mt-1">Al año</span>
+                            <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm px-8 py-5 rounded-3xl border border-white/10 shadow-sm">
+                                <span className="text-4xl font-black text-white tracking-tighter">$100</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mt-1">Al año</span>
                             </div>
-                            <div className="flex flex-col items-center bg-white/50 backdrop-blur-sm px-8 py-5 rounded-3xl border border-navy/5 shadow-sm">
-                                <span className="text-4xl font-black text-navy tracking-tighter">10s</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest text-navy/40 mt-1">Para actualizar</span>
+                            <div className="flex flex-col items-center bg-white/5 backdrop-blur-sm px-8 py-5 rounded-3xl border border-white/10 shadow-sm">
+                                <span className="text-4xl font-black text-white tracking-tighter">10s</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/40 mt-1">Para actualizar</span>
                             </div>
                         </div>
 
@@ -609,7 +609,7 @@ export default function PlanBusinessClient() {
                             Activar Contacto Business por $100 <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
                         </a>
 
-                        <p className="text-navy/30 text-xs font-bold uppercase tracking-widest">Pago anual • Sin comisiones de venta • Soporte prioritario</p>
+                         <p className="text-white/30 text-xs font-bold uppercase tracking-widest">Pago anual • Sin comisiones de venta • Soporte prioritario</p>
                     </motion.div>
                 </div>
             </section>
@@ -631,7 +631,7 @@ export default function PlanBusinessClient() {
 
 
             {/* Sección: Carrusel de Banners de Conversión Estratégica */}
-            <section className="py-24 bg-white relative overflow-hidden">
+            <section className="section-light py-24 bg-surface relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="relative">
                         <AnimatePresence mode="wait">
@@ -836,26 +836,26 @@ export default function PlanBusinessClient() {
                         </div>
                     </div>
                 </div>
-            </section>
+                </section>
 
 
 
             {/* Sección: Casos de Éxito (Social Proof Dinámico) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            <section className="section-dark py-24 bg-background relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            className="inline-flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-green-600 border border-green-500/20 mb-6"
+                            className="inline-flex items-center gap-2 bg-green-500/10 px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest text-green-400 border border-green-500/20 mb-6"
                         >
                             <Star size={14} fill="currentColor" /> Resultados Reales
                         </motion.div>
-                        <h2 className="text-3xl md:text-5xl font-black text-navy tracking-tighter uppercase mb-6">
+                        <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-6">
                             Profesionales que ya <span className="text-primary italic">están facturando más</span>
                         </h2>
-                        <p className="text-navy/60 max-w-2xl mx-auto text-lg font-medium">
+                        <p className="text-white/60 max-w-2xl mx-auto text-lg font-medium">
                             No es solo un enlace, es la seguridad de que tus clientes te tienen a un toque de distancia cuando más te necesitan.
                         </p>
                     </div>
@@ -1019,13 +1019,14 @@ export default function PlanBusinessClient() {
 
                 <div className="absolute top-1/2 left-0 w-full h-full pointer-events-none opacity-50">
                     <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[150px]"></div>
-                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-navy/5 rounded-full blur-[150px]"></div>
+                    <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-[150px]"></div>
                 </div>
-            </section>
+                </section>
 
 
             {/* Sección: Logos de Clientes (Confianza Institucional) */}
-            <section className="py-20 bg-white overflow-hidden border-y border-navy/5">
+            <div className="section-light">
+                <section className="py-20 bg-white overflow-hidden border-y border-navy/5">
                 <div className="max-w-7xl mx-auto px-6 mb-12 text-center">
                     <h3 className="text-xl md:text-2xl font-black text-navy uppercase tracking-tighter italic">
                         <span className="text-primary italic">Decenas de negocios y profesionales</span> ya usan ActivaQR
@@ -1048,7 +1049,7 @@ export default function PlanBusinessClient() {
                                 "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
                                 "Yessy 2026.jpg"
                             ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <img
                                         src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -1064,7 +1065,7 @@ export default function PlanBusinessClient() {
                                 "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
                                 "Yessy 2026.jpg"
                             ].map((logo, i) => (
-                                <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <img
                                         src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -1087,7 +1088,7 @@ export default function PlanBusinessClient() {
                                 "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
                                 "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
                             ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <img
                                         src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -1101,7 +1102,7 @@ export default function PlanBusinessClient() {
                                 "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
                                 "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
                             ].map((logo, i) => (
-                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-cream rounded-full p-1 border-2 border-navy/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/10 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
                                     <img
                                         src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
                                         alt={`Cliente ActivaQR ${i}`}
@@ -1113,36 +1114,35 @@ export default function PlanBusinessClient() {
                     </div>
 
                     {/* Gradientes laterales para suavizar el scroll */}
-                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
-                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none"></div>
+                    <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none"></div>
                 </div>
-            </section >
-            
-
+            </section>
+            </div>
 
 
 
 
 
             {/* Sección: La comparación que duele (Movida cerca del Footer) */}
-            <section className="py-24 bg-cream relative overflow-hidden">
+            <section className="section-dark py-24 bg-background relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center max-w-3xl mx-auto mb-16">
-                        <h2 className="text-4xl md:text-5xl font-black text-navy leading-none mb-6 tracking-tighter">
+                        <h2 className="text-4xl md:text-5xl font-black text-white leading-none mb-6 tracking-tighter">
                             La comparación que <span className="text-primary italic">duele.</span>
                         </h2>
-                        <p className="text-xl text-navy/70 font-medium">
+                        <p className="text-xl text-white/70 font-medium">
                             Imprimir tarjetas es tirar dinero al tacho. Compara el pasado con el futuro de tu negocio.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Tarjetas Físicas */}
-                        <div className="bg-white/50 backdrop-blur-md p-10 rounded-[3rem] border border-navy/5 relative group">
-                            <div className="absolute top-6 right-8 text-navy/10 group-hover:text-red-500/20 transition-colors">
+                        <div className="bg-white/5 backdrop-blur-md p-10 rounded-[3rem] border border-white/10 relative group">
+                            <div className="absolute top-6 right-8 text-white/10 group-hover:text-red-500/20 transition-colors">
                                 <Trash2 size={80} />
                             </div>
-                            <h3 className="text-2xl font-black text-navy mb-6 uppercase tracking-tighter">Tarjetas de Papel</h3>
+                            <h3 className="text-2xl font-black text-white mb-6 uppercase tracking-tighter">Tarjetas de Papel</h3>
                             <ul className="space-y-4">
                                 {[
                                     "Cuestan $30-$50 cada mil impresiones.",
@@ -1151,7 +1151,7 @@ export default function PlanBusinessClient() {
                                     "Si no tienes una a la mano, pierdes la venta.",
                                     "Nadie las guarda; se pierden en cajones."
                                 ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-navy/60 font-bold">
+                                    <li key={i} className="flex items-center gap-3 text-white/60 font-bold">
                                         <XCircle className="text-red-500 shrink-0" size={20} />
                                         <span>{item}</span>
                                     </li>
@@ -1185,7 +1185,9 @@ export default function PlanBusinessClient() {
                         </div>
                     </div>
                 </div>
-            </section>
+                </section>
+
+
 
             <FloatingSalesHeader />
 

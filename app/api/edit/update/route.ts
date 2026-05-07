@@ -98,6 +98,7 @@ export async function POST(req: NextRequest) {
                     youtube_video_url = ?,
                     google_rating = ?,
                     google_reviews_count = ?,
+                    template_id = ?,
                     last_edited_at = NOW()
             `;
 
@@ -146,7 +147,8 @@ export async function POST(req: NextRequest) {
                 data.hero_slides_json ? (typeof data.hero_slides_json === 'string' ? data.hero_slides_json : JSON.stringify(data.hero_slides_json)) : null,
                 data.youtube_video_url || null,
                 data.google_rating || null,
-                data.google_reviews_count || null
+                data.google_reviews_count || null,
+                data.template_id || 'classic'
             ];
 
             // If foto_url is provided (base64 from frontend), update it
