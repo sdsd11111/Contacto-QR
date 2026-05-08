@@ -667,7 +667,16 @@ export default function AdminDashboard() {
                     youtube_video_url: editingRegistro.youtube_video_url,
                     expires_reminder_7d_sent: editingRegistro.expires_reminder_7d_sent,
                     expires_reminder_0d_sent: editingRegistro.expires_reminder_0d_sent,
-                    json_override: editingRegistro.json_override || null,
+                    json_override: editingRegistro.json_override ? (
+                        typeof editingRegistro.json_override === 'string'
+                            ? editingRegistro.json_override
+                            : JSON.stringify(editingRegistro.json_override)
+                    ) : null,
+                    catalogo_json: editingRegistro.catalogo_json ? (
+                        typeof editingRegistro.catalogo_json === 'string' 
+                            ? editingRegistro.catalogo_json 
+                            : JSON.stringify(editingRegistro.catalogo_json)
+                    ) : null,
                     hero_slides_json: editingRegistro.hero_slides_json ? (
                         typeof editingRegistro.hero_slides_json === 'string' 
                             ? editingRegistro.hero_slides_json 
@@ -1505,7 +1514,7 @@ export default function AdminDashboard() {
                         <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform text-accent"><BarChart3 size={48} /></div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Total Ingresado</p>
                         <p className="text-4xl font-black italic tracking-tighter text-accent">
-                            ${registros.reduce((acc, r) => (r.status === 'pagado' || r.status === 'entregado') ? acc + (r.plan === 'pro' ? 20 : 10) : acc, 0).toFixed(2)}
+                            ${registros.reduce((acc, r) => (r.status === 'pagado' || r.status === 'entregado') ? acc + (r.plan === 'catalog' ? 200 : r.plan === 'business' ? 100 : 35) : acc, 0).toFixed(2)}
                         </p>
                     </div>
 
@@ -1517,12 +1526,12 @@ export default function AdminDashboard() {
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3">Utilidad Neta</p>
                         <p className="text-4xl font-black italic tracking-tighter text-white">
                             ${(() => {
-                                const totalIngreso = registros.reduce((acc, r) => (r.status === 'pagado' || r.status === 'entregado') ? acc + (r.plan === 'pro' ? 20 : 10) : acc, 0);
+                                const totalIngreso = registros.reduce((acc, r) => (r.status === 'pagado' || r.status === 'entregado') ? acc + (r.plan === 'catalog' ? 200 : r.plan === 'business' ? 100 : 35) : acc, 0);
                                 const totalComisiones = registros.reduce((acc, r) => {
                                     if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id) {
                                         const seller = sellers.find(s => s.id === r.seller_id);
                                         const percentage = seller ? parseFloat(seller.comision_porcentaje) : 0;
-                                        const price = r.plan === 'pro' ? 20 : 10;
+                                        const price = r.plan === 'catalog' ? 200 : r.plan === 'business' ? 100 : 35;
                                         return acc + (price * percentage / 100);
                                     }
                                     return acc;
@@ -1545,7 +1554,7 @@ export default function AdminDashboard() {
                             {registros.filter(r => r.status === 'pendiente').length}
                         </p>
                         <p className="text-[10px] font-bold text-primary/60 mt-2">
-                            Val. Pendiente: ${registros.reduce((acc, r) => r.status === 'pendiente' ? acc + (r.plan === 'pro' ? 20 : 10) : acc, 0).toFixed(2)}
+                            Val. Pendiente: ${registros.reduce((acc, r) => r.status === 'pendiente' ? acc + (r.plan === 'catalog' ? 200 : r.plan === 'business' ? 100 : 35) : acc, 0).toFixed(2)}
                         </p>
                     </div>
 
@@ -1563,7 +1572,7 @@ export default function AdminDashboard() {
                                 if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && (r.commission_status === 'pending' || !r.commission_status)) {
                                     const seller = sellers.find(s => s.id === r.seller_id);
                                     const percentage = seller ? parseFloat(seller.comision_porcentaje) : 0;
-                                    const price = r.plan === 'pro' ? 20 : 10;
+                                    const price = r.plan === 'catalog' ? 200 : r.plan === 'business' ? 100 : 35;
                                     return acc + (price * percentage / 100);
                                 }
                                 return acc;
@@ -1588,7 +1597,7 @@ export default function AdminDashboard() {
                                 if ((r.status === 'pagado' || r.status === 'entregado') && r.seller_id && (r.commission_status === 'paid_to_leader' || r.commission_status === 'completed')) {
                                     const seller = sellers.find(s => s.id === r.seller_id);
                                     const percentage = seller ? parseFloat(seller.comision_porcentaje) : 0;
-                                    const price = r.plan === 'pro' ? 20 : 10;
+                                    const price = r.plan === 'catalog' ? 200 : r.plan === 'business' ? 100 : 35;
                                     return acc + (price * percentage / 100);
                                 }
                                 return acc;
@@ -1700,11 +1709,11 @@ export default function AdminDashboard() {
                                                         (r.plan && r.plan !== 'basic') ? "text-primary border-primary/30" : "text-white/40"
                                                     )}
                                                 >
-                                                    <option value="digital" className="bg-navy">Digital ($20)</option>
-                                                    <option value="business" className="bg-navy">Business ($60)</option>
-                                                    <option value="catalog" className="bg-navy">Catálogo ($120)</option>
+                                                    <option value="digital" className="bg-navy">Digital ($35)</option>
+                                                    <option value="business" className="bg-navy">Business ($100)</option>
+                                                    <option value="catalog" className="bg-navy">Catálogo ($200)</option>
                                                 </select>
-                                                {r.menu_digital && (
+                                                {r.menu_digital && r.menu_digital.startsWith('http') && (
                                                     <a
                                                         href={r.menu_digital}
                                                         target="_blank"

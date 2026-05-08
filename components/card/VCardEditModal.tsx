@@ -14,6 +14,15 @@ interface VCardEditModalProps {
     isSetup?: boolean;
 }
 
+const safeParse = <T,>(str: string | null | undefined, fallback: T): T => {
+    if (!str) return fallback;
+    try {
+        return JSON.parse(str) as T;
+    } catch (e) {
+        return fallback;
+    }
+};
+
 const getYouTubeID = (url: string) => {
     if (!url) return null;
     // If it's already an 11-character ID, return it
@@ -40,7 +49,7 @@ export default function VCardEditModal({
     const [uploadingImage, setUploadingImage] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const [usesRemaining, setUsesRemaining] = useState(0);
-    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo' | 'code' | 'success' | null>(initialSection);
+    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'code' | 'success' | null>(initialSection);
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
 
@@ -97,7 +106,8 @@ export default function VCardEditModal({
         google_reviews_count: '',
         template_id: 'classic',
         hero_slides_json: [] as Array<{ id: string, portada_desktop: string, portada_movil: string, title: string, active: boolean, description?: string }>,
-        catalogo_json: { categories: [], products: [] } as { categories: string[], products: any[] }
+        catalogo_json: { categories: [], products: [] } as { categories: string[], products: any[] },
+        json_override: {} as any
     });
 
     const validateCode = async () => {
@@ -209,6 +219,17 @@ export default function VCardEditModal({
                         }
 
                         return { categories, products };
+                    })(),
+                    json_override: (() => {
+                        if (!data.data.json_override) return {};
+                        try {
+                            return typeof data.data.json_override === 'string' 
+                                ? JSON.parse(data.data.json_override) 
+                                : data.data.json_override;
+                        } catch (e) {
+                            console.error("Error parsing json_override:", e);
+                            return {};
+                        }
                     })()
                 });
                 setStep('edit');
@@ -223,23 +244,26 @@ export default function VCardEditModal({
     };
 
     const handleSave = async () => {
-        if (!confirm('¿Estás seguro de guardar los cambios?')) return;
-
-        const formattedData = {
-            ...formData,
-            whatsapp: formatPhoneEcuador(formData.whatsapp),
-            template_id: formData.template_id || 'classic'
-        };
-
+        // Removiendo confirm para evitar bloqueos del navegador en ciertos entornos
         setLoading(true);
         try {
+            const formattedData = {
+                ...formData,
+                whatsapp: formatPhoneEcuador(formData.whatsapp),
+                template_id: formData.template_id || 'classic',
+                // Asegurar que json_override sea string para la API
+                json_override: typeof formData.json_override === 'object' 
+                    ? JSON.stringify(formData.json_override) 
+                    : (formData.json_override || '{}')
+            };
+
             const res = await fetch('/api/edit/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     code: editCode,
                     data: formattedData,
-                    slug: initialSlug // Ensure we update the record for THIS slug
+                    slug: initialSlug
                 })
             });
             const result = await res.json();
@@ -247,10 +271,11 @@ export default function VCardEditModal({
             if (res.ok) {
                 setStep('success');
             } else {
-                alert(result.error);
+                alert(result.error || 'Error al guardar cambios');
             }
         } catch (err) {
-            alert('Error al guardar cambios');
+            console.error('Error in handleSave:', err);
+            alert('Error de conexión al intentar guardar');
         } finally {
             setLoading(false);
         }
@@ -390,6 +415,113 @@ export default function VCardEditModal({
             alert('Error al subir el archivo');
         } finally {
             setLoading(false);
+        }
+    };
+
+    // --- Helper Logic for Categories ---
+    const experienceCategories = (() => {
+        let title = "";
+        let subtitle = "";
+        let images: any[] = [];
+        try {
+            const raw = formData.json_override;
+            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            title = parsed.experienceTitle || (formData.nombre_negocio ? `THE ${formData.nombre_negocio} EXPERIENCE` : "THE NEW GUEST EXPERIENCE");
+            subtitle = parsed.experienceSubtitle || "Especialidad";
+            images = parsed.experienceImages || [];
+        } catch (e) {}
+        
+        const rawLines = formData?.productos_servicios
+            ?.split('\n')
+            .filter((l: string) => l.trim().length > 0)
+            .slice(0, 6) || [];
+            
+        const replacements = (() => {
+            const raw = formData.json_override;
+            if (!raw) return {};
+            try {
+                return typeof raw === 'string' ? JSON.parse(raw) : raw;
+            } catch (e) { return {}; }
+        })();
+            
+        return {
+            title,
+            subtitle,
+            categories: rawLines.map((cat: string, index: number) => {
+                const customImg = images.find((i: any) => i.index === index);
+                const displayTitle = replacements[cat] || cat;
+                
+                return {
+                    index,
+                    originalTitle: cat,
+                    title: displayTitle,
+                    img: customImg?.url || ''
+                }
+            })
+        };
+    })();
+
+    const updateExperienceCategories = (newTitle?: string, newImages?: any[], newSubtitle?: string) => {
+        setFormData(prev => {
+            const raw = prev.json_override;
+            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            
+            const nextObj = {
+                ...parsed,
+                experienceTitle: newTitle !== undefined ? newTitle : (parsed.experienceTitle),
+                experienceImages: newImages !== undefined ? newImages : (parsed.experienceImages),
+                experienceSubtitle: newSubtitle !== undefined ? newSubtitle : (parsed.experienceSubtitle)
+            };
+            
+            return { ...prev, json_override: nextObj };
+        });
+    };
+
+    const updateCategoryTitle = (originalTitle: string, newTitle: string) => {
+        setFormData(prev => {
+            const raw = prev.json_override;
+            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            
+            const nextParsed = { ...parsed };
+            if (newTitle && newTitle !== originalTitle) {
+                nextParsed[originalTitle] = newTitle;
+            } else {
+                delete nextParsed[originalTitle];
+            }
+            
+            return { ...prev, json_override: nextParsed };
+        });
+    };
+
+    const handleCategoryImage = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingImage(true);
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (res.ok) {
+                const { url } = await res.json();
+                setFormData(prev => {
+                    const raw = prev.json_override;
+                    const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+                    const currentImages = parsed.experienceImages || [];
+                    const nextImages = [...currentImages.filter((img: any) => img.index !== index), { index, url }];
+                    
+                    return {
+                        ...prev,
+                        json_override: {
+                            ...parsed,
+                            experienceImages: nextImages
+                        }
+                    };
+                });
+            }
+        } catch (err) {
+            console.error("Error uploading category image:", err);
+        } finally {
+            setUploadingImage(false);
         }
     };
 
@@ -676,7 +808,99 @@ export default function VCardEditModal({
                                         </AnimatePresence>
                                     </div>
 
+                                    {/* SECCIÓN 2.5: CATEGORÍAS E IMÁGENES (PROTOCOLO VIP) */}
+                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <button 
+                                            onClick={() => setActiveSection(activeSection === 'categorias' ? null : 'categorias')}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-pink-500/10 flex items-center justify-center text-pink-500">
+                                                    <Edit size={18} />
+                                                </div>
+                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Editar Categorías e Imágenes</span>
+                                            </div>
+                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'categorias' && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeSection === 'categorias' && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden bg-white border-t border-gray-100"
+                                                >
+                                                    <div className="p-6 space-y-6">
+                                                        {/* Global Section Titles */}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título de Sección (Experiencia)</label>
+                                                                <input 
+                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" 
+                                                                    value={experienceCategories.title} 
+                                                                    onChange={(e) => updateExperienceCategories(e.target.value)} 
+                                                                    placeholder="Ej. NUESTRAS CATEGORÍAS" 
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black text-primary uppercase tracking-widest">Especialidad / Subtítulo</label>
+                                                                <input 
+                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-primary/5 border-primary/20" 
+                                                                    value={experienceCategories.subtitle} 
+                                                                    onChange={(e) => updateExperienceCategories(undefined, undefined, e.target.value)} 
+                                                                    placeholder="Ej. Especialistas en Color y Corte" 
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Categories Grid */}
+                                                        <div className="space-y-4">
+                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Categorías Individuales (Máx 6)</label>
+                                                            <div className="grid grid-cols-1 gap-3">
+                                                                {experienceCategories.categories.map((cat, idx) => (
+                                                                    <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                                                        {/* Thumbnail / Upload */}
+                                                                        <div className="relative w-16 h-16 rounded-lg bg-gray-200 overflow-hidden shrink-0 group cursor-pointer border-2 border-dashed border-gray-300 hover:border-primary transition-all">
+                                                                            {cat.img ? (
+                                                                                <img src={cat.img} alt={cat.title} className="w-full h-full object-cover" />
+                                                                            ) : (
+                                                                                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                                                    <Download size={20} />
+                                                                                </div>
+                                                                            )}
+                                                                            <input 
+                                                                                type="file" 
+                                                                                className="absolute inset-0 opacity-0 cursor-pointer" 
+                                                                                onChange={(e) => handleCategoryImage(e, idx)}
+                                                                                accept="image/*"
+                                                                            />
+                                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                                                                <Edit size={16} className="text-white" />
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Title Editor */}
+                                                                        <div className="grow space-y-1">
+                                                                            <p className="text-[10px] font-black text-navy/40 uppercase tracking-tighter">Categoría {idx + 1}</p>
+                                                                            <input 
+                                                                                className="w-full bg-transparent border-b border-gray-200 focus:border-primary outline-none py-1 text-sm font-bold text-navy"
+                                                                                value={cat.title}
+                                                                                onChange={(e) => updateCategoryTitle(cat.originalTitle, e.target.value)}
+                                                                                placeholder={cat.originalTitle}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
                                     {/* SECCIÓN 3: OFERTA DEL HERO (BOTÓN PRINCIPAL) */}
+
                                      {(userData?.plan === 'business' || userData?.plan === 'catalog') && (
                                     <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                         <button 
@@ -1353,7 +1577,7 @@ export default function VCardEditModal({
                                  className="flex-1 max-w-[300px] bg-primary text-white font-black py-3 rounded-xl hover:scale-[1.02] active:scale-100 transition-all uppercase tracking-[0.1em] text-xs flex items-center justify-center gap-3 shadow-lg shadow-primary/20 disabled:opacity-50"
                              >
                                  {loading ? <Loader2 className="animate-spin" size={18} /> : (uploadingImage ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />)}
-                                 {loading ? 'Guardando...' : (uploadingImage ? 'Procesando...' : 'Guardar Perfil')}
+                                 {loading ? 'Guardando...' : (uploadingImage ? 'Procesando...' : 'Confirmar y Guardar')}
                              </button>
                         </div>
                     )}

@@ -132,19 +132,37 @@ export async function DELETE(req: NextRequest) {
 
     try {
         const { searchParams } = new URL(req.url);
-        const id = searchParams.get('id');
+        const rawId = searchParams.get('id');
 
-        if (!id) {
+        if (!rawId) {
             return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
         }
 
-        const query = `DELETE FROM registraya_vcard_registros WHERE id = ?`;
-        await pool.execute(query, [id]);
+        const id = parseInt(rawId, 10);
+        if (isNaN(id)) {
+            console.error('[ADMIN DELETE] ID inválido:', rawId);
+            return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+        }
 
-        return NextResponse.json({ message: 'Registro eliminado exitosamente' });
+        console.log('[ADMIN DELETE] Intentando eliminar registro ID:', id);
+
+        // Verificar que el registro existe antes de borrar
+        const [check]: any = await pool.execute(
+            'SELECT id, nombre FROM registraya_vcard_registros WHERE id = ?',
+            [id]
+        );
+        if (!check.length) {
+            console.error('[ADMIN DELETE] Registro no encontrado:', id);
+            return NextResponse.json({ error: 'Registro no encontrado' }, { status: 404 });
+        }
+
+        await pool.execute('DELETE FROM registraya_vcard_registros WHERE id = ?', [id]);
+
+        console.log(`[ADMIN DELETE] Registro ${id} (${check[0].nombre}) eliminado permanentemente.`);
+        return NextResponse.json({ message: `Registro '${check[0].nombre}' eliminado exitosamente` });
 
     } catch (err: any) {
-        console.error('Error deleting registro:', err);
+        console.error('[ADMIN DELETE] Error crítico:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

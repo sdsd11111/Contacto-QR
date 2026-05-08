@@ -62,9 +62,9 @@ export default function DemoBuilder({
     const templateProps = useMemo(() => ({
         data,
         slug: data.slug || 'demo',
-        extractedBg: '#1A1A1A',
-        themePrimary: '#1A1A1A',
-        themeTextOnPrimary: '#FFFFFF',
+        extractedBg: data.extracted_bg || '#1A1A1A',
+        themePrimary: data.theme_primary || '#1A1A1A',
+        themeTextOnPrimary: data.theme_text_on_primary || '#FFFFFF',
         setIsEditModalOpen: () => {},
         setIsLightboxOpen: () => {},
         handleHeroClick: () => {},

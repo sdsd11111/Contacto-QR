@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 import VCardEditModal from '@/components/card/VCardEditModal';
 import ClassicTemplate from "@/components/templates/ClassicTemplate";
@@ -57,12 +58,15 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const [setupSection, setSetupSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'catalogo'>('perfil');
     const [isSetupMode, setIsSetupMode] = useState(false);
 
+    const [isEditActive, setIsEditActive] = useState(false);
+
     // ─── Query Param detection ───────────────────────────────────────────────
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             if (params.get('edit') === 'true') {
                 setIsEditModalOpen(true);
+                setIsEditActive(true);
             }
         }
     }, []);
@@ -283,7 +287,45 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     };
 
     return (
-        <div className="relative">
+        <div className={cn("relative", isEditActive && "pt-16")}>
+            {isEditActive && (
+                <motion.div 
+                    initial={{ y: -100 }}
+                    animate={{ y: 0 }}
+                    className="fixed top-0 left-0 right-0 z-[10000] bg-orange-600 text-white p-3 shadow-2xl flex items-center justify-between border-b border-white/10"
+                >
+                    <div className="flex items-center gap-3 ml-2 md:ml-4">
+                        <div className="bg-white/20 p-2 rounded-lg hidden sm:block">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest leading-none opacity-80 mb-0.5">Modo Editor Activo</p>
+                            <h4 className="text-[11px] sm:text-sm font-black uppercase tracking-tight leading-none mb-0.5">Configuración de VCard</h4>
+                            <p className="text-[9px] opacity-90 hidden xs:block">Edita Hero, Ofertas y perfil directamente</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 mr-2 md:mr-4">
+                         <button 
+                            onClick={() => setIsEditModalOpen(true)}
+                            className="bg-white text-orange-600 px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-orange-50 transition-all shadow-lg active:scale-95 whitespace-nowrap"
+                        >
+                            EDITAR AHORA
+                        </button>
+                        <button 
+                            onClick={() => setIsEditActive(false)}
+                            className="p-2 text-white/50 hover:text-white transition-colors"
+                            title="Ocultar banner"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </motion.div>
+            )}
             {renderTemplate()}
 
             {/* Menú Digital directo: para templates que NO son Hedkandi */}

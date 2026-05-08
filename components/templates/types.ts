@@ -100,6 +100,8 @@ export interface HedkandiTemplateProps extends MinimalTemplateProps {
     experienceImages?: ExperienceImage[];
     /** Título de la sección de experiencia (default: "THE {nombre_negocio} EXPERIENCE") */
     experienceTitle?: string;
+    /** Subtítulo de los items de la grilla de experiencia (default: "Especialidad") */
+    experienceSubtitle?: string;
     /** Si es true, oculta completamente la grilla de experiencia */
     hideExperience?: boolean;
 }

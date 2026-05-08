@@ -137,10 +137,14 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                     ? rawLines.map((cat: string, i: number) => {
                         // Buscar imagen personalizada por índice
                         const customImg = props.experienceImages?.find(e => e.index === i);
+                        
+                        // Protocolo VIP: Aplicar reemplazo si existe en los props (spread de json_override)
+                        const displayTitle = (props as any)[cat] || cat;
+                        
                         return {
-                            title: cat.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').trim().toUpperCase(),
+                            title: displayTitle.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').trim().toUpperCase(),
                             num: `0${i + 1}`,
-                            subtitle: 'Especialidad',
+                            subtitle: props.experienceSubtitle || 'Especialidad',
                             img: customImg?.url || FALLBACK_EXPERIENCE_IMAGES[i % FALLBACK_EXPERIENCE_IMAGES.length],
                         };
                     })
@@ -207,7 +211,10 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         <div className="mb-8 max-w-md whitespace-pre-line text-white/80">
                             {props.data?.bio || "Expertos en crear experiencias únicas de belleza y bienestar."}
                         </div>
-                        <p className="max-w-md font-display-condensed text-2xl tracking-widest uppercase opacity-70 italic text-red-500">
+                        <p 
+                            className="max-w-md font-display-condensed text-2xl tracking-widest uppercase opacity-70 italic"
+                            style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
+                        >
                             {props.data?.profesion || "Premium Experience"}
                         </p>
                     </div>
@@ -249,23 +256,40 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             {/* 4. GOOGLE TRUST & SOCIAL SECTION */}
             <section className="bg-[#1A1A1A] py-24 px-4 md:px-12 relative overflow-hidden">
                 {/* Background ambient glow */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+                <div 
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none opacity-20"
+                    style={{ backgroundColor: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
+                ></div>
 
                 <div className="max-w-4xl mx-auto relative z-10">
                     <div className="border border-white/10 bg-white/5 backdrop-blur-xl rounded-[3rem] p-8 md:p-16 flex flex-col items-center text-center shadow-2xl">
                         {/* Title with lines */}
                         <div className="flex items-center gap-4 mb-10 w-full justify-center">
-                            <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent to-red-500/50"></div>
-                            <span className="font-sans-body text-[10px] md:text-xs tracking-[0.3em] uppercase text-red-500 font-bold">
+                            <div 
+                                className="h-[1px] flex-1 opacity-50"
+                                style={{ background: `linear-gradient(to right, transparent, ${props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626'})` }}
+                            ></div>
+                            <span 
+                                className="font-sans-body text-[10px] md:text-xs tracking-[0.3em] uppercase font-bold"
+                                style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
+                            >
                                 TESTIMONIO DE NUESTROS CLIENTES
                             </span>
-                            <div className="h-[1px] flex-1 bg-gradient-to-l from-transparent to-red-500/50"></div>
+                            <div 
+                                className="h-[1px] flex-1 opacity-50"
+                                style={{ background: `linear-gradient(to left, transparent, ${props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626'})` }}
+                            ></div>
                         </div>
 
                         {/* Stars */}
                         <div className="flex gap-2 mb-6">
                             {[...Array(5)].map((_, i) => (
-                                <svg key={i} className="w-6 h-6 md:w-8 md:h-8 text-red-500 fill-current" viewBox="0 0 20 20">
+                                <svg 
+                                    key={i} 
+                                    className="w-6 h-6 md:w-8 md:h-8 fill-current" 
+                                    viewBox="0 0 20 20"
+                                    style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
+                                >
                                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                 </svg>
                             ))}
@@ -276,7 +300,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                             {props.data?.rating || "5.0"}
                         </div>
                         <div className="font-sans-body text-xs md:text-sm tracking-widest uppercase text-white/60 mb-10">
-                            {props.data?.reviews || "10+"} RESEÑAS EN <span className="text-red-500 font-bold">GOOGLE BUSINESS</span>
+                            {props.data?.reviews || "10+"} RESEÑAS EN <span className="font-bold" style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}>GOOGLE BUSINESS</span>
                         </div>
 
                         {/* Quote */}
@@ -289,9 +313,15 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                             href={props.data?.google_maps_url || props.data?.link_google_maps || "#"}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group relative flex items-center gap-4 bg-white/5 border border-white/10 hover:bg-red-500/20 hover:border-red-500/50 px-8 md:px-12 py-5 rounded-2xl transition-all duration-500"
+                            className="group relative flex items-center gap-4 bg-white/5 border border-white/10 hover:bg-white/10 px-8 md:px-12 py-5 rounded-2xl transition-all duration-500"
                         >
-                            <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center text-red-500 group-hover:bg-red-500 group-hover:text-white transition-all">
+                            <div 
+                                className="w-10 h-10 rounded-lg flex items-center justify-center transition-all"
+                                style={{ 
+                                    backgroundColor: `${props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626'}33`,
+                                    color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626'
+                                }}
+                            >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
