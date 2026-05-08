@@ -41,7 +41,8 @@ import {
     Library,
     Plus,
     Bell,
-    CalendarCheck
+    CalendarCheck,
+    Copy
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -637,6 +638,7 @@ export default function AdminDashboard() {
                     google_business: editingRegistro.google_business,
                     youtube: editingRegistro.youtube,
                     x: editingRegistro.x,
+                    template_id: editingRegistro.template_id || 'classic',
                     menu_digital: editingRegistro.menu_digital,
                     tipo_perfil: editingRegistro.tipo_perfil,
                     nombres: editingRegistro.nombres,
@@ -1191,7 +1193,7 @@ export default function AdminDashboard() {
                             autoComplete="current-password"
                             value={accessKey}
                             onChange={(e) => setAccessKey(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/40 text-center font-bold"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 outline-none focus:border-primary/40 text-center font-bold text-white"
                         />
                         <button type="submit" className="w-full bg-primary py-4 rounded-2xl font-black uppercase tracking-widest shadow-orange">
                             Entrar
@@ -1615,7 +1617,7 @@ export default function AdminDashboard() {
                                 placeholder="Buscar por nombre o email..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-16 py-4 outline-none focus:border-primary/40 transition-all font-bold"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-16 py-4 outline-none focus:border-primary/40 transition-all font-bold text-white"
                             />
                         </div>
                     </div>
@@ -1647,12 +1649,30 @@ export default function AdminDashboard() {
                                                 <div>
                                                     <p className="font-bold text-sm">{r.nombre}</p>
                                                     <p className="text-[10px] text-white/40">{r.email}</p>
+                                                    {r.edit_code && (
+                                                        <div className="mt-2 flex items-center gap-2">
+                                                            <span className="text-[9px] font-mono font-black text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20 tracking-widest">
+                                                                CODE: {r.edit_code}
+                                                            </span>
+                                                            <button 
+                                                                onClick={(e) => { 
+                                                                    e.stopPropagation();
+                                                                    navigator.clipboard.writeText(r.edit_code); 
+                                                                    alert('Código copiado: ' + r.edit_code); 
+                                                                }} 
+                                                                className="text-white/40 hover:text-primary transition-colors p-1 bg-white/5 rounded-md border border-white/10 hover:border-primary/30" 
+                                                                title="Copiar código de edición"
+                                                            >
+                                                                <Copy size={12} />
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                     {r.status === 'entregado' || r.auto_email_sent ? (
-                                                        <p className="text-[8px] text-green-500 font-black uppercase mt-1 flex items-center gap-1">
+                                                        <p className="text-[8px] text-green-500 font-black uppercase mt-2 flex items-center gap-1">
                                                             <CheckCircle size={8} /> Enviado Digitalmente
                                                         </p>
                                                     ) : r.paid_at ? (
-                                                        <p className="text-[8px] text-accent font-bold uppercase mt-1">💳 Pago: {new Date(r.paid_at).toLocaleString()}</p>
+                                                        <p className="text-[8px] text-accent font-bold uppercase mt-2">💳 Pago: {new Date(r.paid_at).toLocaleString()}</p>
                                                     ) : null}
                                                     {r.expires_at && (
                                                         <p className={cn(

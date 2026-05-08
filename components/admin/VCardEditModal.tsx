@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Youtube, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Youtube, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon, AlertCircle, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VCardEditModalProps {
@@ -266,6 +266,25 @@ export default function VCardEditModal({
                         <div>
                             <h3 className="text-3xl font-black uppercase italic tracking-tighter">Editar Registro</h3>
                             <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-2">ID: {editingRegistro.id} • Slug: /{editingRegistro.slug}</p>
+                            {editingRegistro.edit_code && (
+                                <div className="mt-3 flex items-center gap-2">
+                                    <span className="text-[11px] font-mono font-black text-green-400 bg-green-400/10 px-3 py-1 rounded-md border border-green-400/20 tracking-widest flex items-center gap-2">
+                                        CÓDIGO DE EDICIÓN: {editingRegistro.edit_code}
+                                    </span>
+                                    <button 
+                                        onClick={(e) => { 
+                                            e.stopPropagation();
+                                            navigator.clipboard.writeText(editingRegistro.edit_code); 
+                                            alert('Código copiado: ' + editingRegistro.edit_code); 
+                                        }} 
+                                        className="text-green-400/50 hover:text-green-400 transition-colors p-1.5 bg-white/5 rounded-md border border-white/10 hover:border-green-400/30 flex items-center gap-1" 
+                                        title="Copiar código de edición"
+                                    >
+                                        <Copy size={12} />
+                                        <span className="text-[9px] font-bold uppercase tracking-wider">Copiar</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                         <div className="flex gap-4">
                             <span className={cn(
@@ -579,7 +598,7 @@ export default function VCardEditModal({
                                         <div>
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombres</label>
                                             <input
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all text-xs"
                                                 value={editingRegistro.nombres || ''}
                                                 onChange={e => setEditingRegistro({ ...editingRegistro, nombres: e.target.value })}
                                             />
@@ -587,7 +606,7 @@ export default function VCardEditModal({
                                         <div>
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Apellidos</label>
                                             <input
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all text-xs"
                                                 value={editingRegistro.apellidos || ''}
                                                 onChange={e => setEditingRegistro({ ...editingRegistro, apellidos: e.target.value })}
                                             />
@@ -598,7 +617,7 @@ export default function VCardEditModal({
                                         <div>
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Nombre del Negocio</label>
                                             <input
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all text-xs"
                                                 value={editingRegistro.nombre_negocio || ''}
                                                 onChange={e => setEditingRegistro({ ...editingRegistro, nombre_negocio: e.target.value })}
                                             />
@@ -607,7 +626,7 @@ export default function VCardEditModal({
                                             <div>
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2 block ml-1">Nombre Contacto (Opcional)</label>
                                                 <input
-                                                    className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
+                                                    className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all text-xs"
                                                     value={editingRegistro.contacto_nombre || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, contacto_nombre: e.target.value })}
                                                     placeholder="Ej. Juan"
@@ -616,7 +635,7 @@ export default function VCardEditModal({
                                             <div>
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-primary/60 mb-2 block ml-1">Apellido Contacto (Opcional)</label>
                                                 <input
-                                                    className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all text-xs"
+                                                    className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all text-xs"
                                                     value={editingRegistro.contacto_apellido || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, contacto_apellido: e.target.value })}
                                                     placeholder="Ej. Paz"
@@ -699,7 +718,7 @@ export default function VCardEditModal({
                                     <div>
                                         <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Biografía / Sobre Mí</label>
                                         <textarea
-                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all resize-none min-h-[120px]"
+                                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all resize-none min-h-[120px]"
                                             value={editingRegistro.bio || ''}
                                             onChange={e => setEditingRegistro({ ...editingRegistro, bio: e.target.value })}
                                         />
@@ -810,7 +829,7 @@ export default function VCardEditModal({
                                         <div>
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Estado</label>
                                             <select
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all appearance-none"
                                                 value={editingRegistro.status}
                                                 onChange={e => setEditingRegistro({ ...editingRegistro, status: e.target.value })}
                                             >
@@ -822,7 +841,7 @@ export default function VCardEditModal({
                                         <div>
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2 block ml-1">Plan</label>
                                                 <select
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold outline-none focus:border-primary/40 transition-all appearance-none"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/40 transition-all appearance-none"
                                                 value={editingRegistro.plan === 'pro' || editingRegistro.plan === 'basic' ? 'digital' : (editingRegistro.plan || 'digital')}
                                                 onChange={e => setEditingRegistro({ ...editingRegistro, plan: e.target.value })}
                                             >

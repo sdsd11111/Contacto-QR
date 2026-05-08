@@ -95,6 +95,7 @@ export default function VCardEditModal({
         hero_step3_text: '',
         google_rating: '',
         google_reviews_count: '',
+        template_id: 'classic',
         hero_slides_json: [] as Array<{ id: string, portada_desktop: string, portada_movil: string, title: string, active: boolean, description?: string }>,
         catalogo_json: { categories: [], products: [] } as { categories: string[], products: any[] }
     });
@@ -161,6 +162,7 @@ export default function VCardEditModal({
 
                     google_rating: data.data.google_rating || '',
                     google_reviews_count: data.data.google_reviews_count || '',
+                    template_id: data.data.template_id || 'classic',
                     hero_slides_json: (() => {
                         const raw = data.data.hero_slides_json ? (typeof data.data.hero_slides_json === 'string' ? JSON.parse(data.data.hero_slides_json) : data.data.hero_slides_json) : null;
                         if (!raw || !Array.isArray(raw) || raw.length === 0) {
@@ -225,7 +227,8 @@ export default function VCardEditModal({
 
         const formattedData = {
             ...formData,
-            whatsapp: formatPhoneEcuador(formData.whatsapp)
+            whatsapp: formatPhoneEcuador(formData.whatsapp),
+            template_id: formData.template_id || 'classic'
         };
 
         setLoading(true);
@@ -436,7 +439,7 @@ export default function VCardEditModal({
                                         value={editCode}
                                         onChange={(e) => setEditCode(e.target.value.toUpperCase())}
                                         placeholder="Ingresa tu código"
-                                        className="w-full border-2 border-gray-100 rounded-2xl p-4 text-center text-xl font-black tracking-[0.2em] focus:border-primary outline-none transition-all uppercase"
+                                        className="w-full border-2 border-gray-100 rounded-2xl p-4 text-center text-xl font-black text-gray-900 tracking-[0.2em] focus:border-primary outline-none transition-all uppercase"
                                     />
                                     {error && <p className="text-red-500 text-xs font-bold mt-2 flex items-center justify-center gap-1 uppercase tracking-tighter italic"> <AlertCircle size={14}/> {error}</p>}
                                 </div>
@@ -526,11 +529,11 @@ export default function VCardEditModal({
                                                                 </div>
                                                                 {formData.tipo_perfil === 'persona' ? (
                                                                     <div className="grid grid-cols-2 gap-2">
-                                                                        <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.nombres} onChange={(e) => setFormData({ ...formData, nombres: e.target.value })} placeholder="Nombres" />
-                                                                        <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.apellidos} onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })} placeholder="Apellidos" />
+                                                                        <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.nombres} onChange={(e) => setFormData({ ...formData, nombres: e.target.value })} placeholder="Nombres" />
+                                                                        <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.apellidos} onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })} placeholder="Apellidos" />
                                                                     </div>
                                                                 ) : (
-                                                                    <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.nombre_negocio} onChange={(e) => setFormData({ ...formData, nombre_negocio: e.target.value })} placeholder="Nombre del Negocio" />
+                                                                    <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.nombre_negocio} onChange={(e) => setFormData({ ...formData, nombre_negocio: e.target.value })} placeholder="Nombre del Negocio" />
                                                                 )}
                                                             </div>
                                                         </div>
@@ -538,22 +541,22 @@ export default function VCardEditModal({
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <div className="space-y-1">
                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Profesión / Rubro</label>
-                                                                <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.profession} onChange={(e) => setFormData({ ...formData, profession: e.target.value })} placeholder="Ej. Arquitecto" />
+                                                                <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.profession} onChange={(e) => setFormData({ ...formData, profession: e.target.value })} placeholder="Ej. Arquitecto" />
                                                             </div>
                                                             <div className="space-y-1">
                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Empresa (Opcional)</label>
-                                                                <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Tu empresa" />
+                                                                <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Tu empresa" />
                                                             </div>
                                                             <div className="col-span-full space-y-1">
                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sobre Mí / Bio</label>
-                                                                <textarea className="w-full border rounded-lg p-3 text-sm font-medium bg-gray-50" rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Cuéntales qué haces..." />
+                                                                <textarea className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Cuéntales qué haces..." />
                                                             </div>
                                                             {/* Soluciones Destacadas - Visible for professional plans except Catalog (as it has its own catalog) */}
                                                              {(userData?.plan === 'business' || userData?.plan === 'pro' || userData?.plan === 'digital' || (!userData?.plan && userData?.tipo_perfil === 'negocio')) && userData?.plan !== 'catalog' && (
                                                                  <div className="col-span-full space-y-1">
                                                                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Soluciones Destacadas</label>
                                                                      <textarea 
-                                                                         className="w-full border rounded-lg p-3 text-sm font-medium bg-gray-50" 
+                                                                         className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" 
                                                                          rows={3} 
                                                                          value={formData.productos_servicios} 
                                                                          onChange={(e) => setFormData({ ...formData, productos_servicios: e.target.value })} 
@@ -565,17 +568,17 @@ export default function VCardEditModal({
                                                                  <div className="col-span-full grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
                                                                      <div className="space-y-1">
                                                                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nombres Responsable</label>
-                                                                         <input className="w-full border rounded-lg p-3 text-sm font-bold bg-white" value={formData.contacto_nombre} onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })} placeholder="Ej. Juan" />
+                                                                         <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" value={formData.contacto_nombre} onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })} placeholder="Ej. Juan" />
                                                                      </div>
                                                                      <div className="space-y-1">
                                                                          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Apellidos Responsable</label>
-                                                                         <input className="w-full border rounded-lg p-3 text-sm font-bold bg-white" value={formData.contacto_apellido} onChange={(e) => setFormData({ ...formData, contacto_apellido: e.target.value })} placeholder="Ej. Perez" />
+                                                                         <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" value={formData.contacto_apellido} onChange={(e) => setFormData({ ...formData, contacto_apellido: e.target.value })} placeholder="Ej. Perez" />
                                                                      </div>
                                                                  </div>
                                                              )}
                                                              <div className="col-span-full space-y-1">
                                                                  <label className="text-[10px] font-black text-primary uppercase tracking-widest">Etiquetas / Tags (Separados por coma)</label>
-                                                                 <input className="w-full border rounded-lg p-3 text-sm font-bold bg-primary/5 border-primary/20" value={formData.etiquetas} onChange={(e) => setFormData({ ...formData, etiquetas: e.target.value })} placeholder="Ej. Parrillada, Eventos, Gourmet" />
+                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-primary/5 border-primary/20" value={formData.etiquetas} onChange={(e) => setFormData({ ...formData, etiquetas: e.target.value })} placeholder="Ej. Parrillada, Eventos, Gourmet" />
                                                              </div>
                                                          </div>
                                                     </div>
@@ -609,61 +612,61 @@ export default function VCardEditModal({
                                                     <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-[#25D366] uppercase tracking-widest">WhatsApp</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="+593..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="+593..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Email</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@ejemplo.com" />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@ejemplo.com" />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Instagram (Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} placeholder="https://..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} placeholder="https://..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-[#0077B5] uppercase tracking-widest">LinkedIn (Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.linkedin} onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })} placeholder="https://..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.linkedin} onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })} placeholder="https://..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-black uppercase tracking-widest">TikTok (Social)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.tiktok} onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })} placeholder="Link a perfil TikTok..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.tiktok} onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })} placeholder="Link a perfil TikTok..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-[#FF0000] uppercase tracking-widest">YouTube (Social)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.youtube} onChange={(e) => setFormData({ ...formData, youtube: e.target.value })} placeholder="Link a canal YouTube..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.youtube} onChange={(e) => setFormData({ ...formData, youtube: e.target.value })} placeholder="Link a canal YouTube..." />
                                                         </div>
                                                         <div className="col-span-full space-y-1">
                                                             <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest text-[#1DA1F2]">X (Twitter - Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50 border-blue-100" value={formData.x} onChange={(e) => setFormData({ ...formData, x: e.target.value })} placeholder="https://x.com/tuperfil" />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-blue-100" value={formData.x} onChange={(e) => setFormData({ ...formData, x: e.target.value })} placeholder="https://x.com/tuperfil" />
                                                         </div>
                                                         <div className="col-span-full space-y-1">
                                                             <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest decoration-primary decoration-2 underline-offset-4">Video Promocional (YouTube Embed)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50 border-indigo-200" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="Pega aquí el link de YouTube (para el embed)..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-indigo-200" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="Pega aquí el link de YouTube (para el embed)..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Menú Digital (Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.menu_digital} onChange={(e) => setFormData({ ...formData, menu_digital: e.target.value })} placeholder="https://..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.menu_digital} onChange={(e) => setFormData({ ...formData, menu_digital: e.target.value })} placeholder="https://..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-primary uppercase tracking-widest">Sitio Web</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.web} onChange={(e) => setFormData({ ...formData, web: e.target.value })} placeholder="https://..." />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.web} onChange={(e) => setFormData({ ...formData, web: e.target.value })} placeholder="https://..." />
                                                         </div>
                                                         <div className="col-span-full space-y-1">
                                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dirección Física</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Ej. Calle Principal #123" />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Ej. Calle Principal #123" />
                                                         </div>
                                                         <div className="col-span-full space-y-1">
                                                             <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Google Business / Maps</label>
-                                                            <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" value={formData.google_business} onChange={(e) => setFormData({ ...formData, google_business: e.target.value })} placeholder="Link a Maps" />
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.google_business} onChange={(e) => setFormData({ ...formData, google_business: e.target.value })} placeholder="Link a Maps" />
                                                         </div>
                                                         {(userData?.plan === 'business' || userData?.plan === 'catalog') && (
                                                          <div className="grid grid-cols-2 gap-4 col-span-full">
                                                              <div className="space-y-1">
                                                                  <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Puntaje Google (Estrellas)</label>
-                                                                 <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50 border-yellow-100" type="number" step="0.1" min="1" max="5" value={formData.google_rating} onChange={(e) => setFormData({ ...formData, google_rating: e.target.value })} placeholder="Ej. 4.9" />
+                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" step="0.1" min="1" max="5" value={formData.google_rating} onChange={(e) => setFormData({ ...formData, google_rating: e.target.value })} placeholder="Ej. 4.9" />
                                                              </div>
                                                              <div className="space-y-1">
                                                                  <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Número de Reseñas</label>
-                                                                 <input className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50 border-yellow-100" type="number" value={formData.google_reviews_count} onChange={(e) => setFormData({ ...formData, google_reviews_count: e.target.value })} placeholder="Ej. 128" />
+                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" value={formData.google_reviews_count} onChange={(e) => setFormData({ ...formData, google_reviews_count: e.target.value })} placeholder="Ej. 128" />
                                                              </div>
                                                          </div>
                                                          )}
@@ -700,7 +703,7 @@ export default function VCardEditModal({
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título del Botón (Texto que verá el usuario)</label>
                                                             <input 
-                                                                className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" 
+                                                                className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" 
                                                                 value={formData.hero_button_text} 
                                                                 onChange={(e) => setFormData({ ...formData, hero_button_text: e.target.value })} 
                                                                 placeholder="Ej. DIA DE LA MUJER, ACCEDER WIFI, etc." 
@@ -736,7 +739,7 @@ export default function VCardEditModal({
                                                             <div className="space-y-1">
                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título de la Sección de Pasos</label>
                                                                 <input 
-                                                                    className="w-full border rounded-lg p-3 text-sm font-bold bg-gray-50" 
+                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" 
                                                                     value={formData.hero_section_title} 
                                                                     onChange={(e) => setFormData({ ...formData, hero_section_title: e.target.value })} 
                                                                     placeholder="Ej. Configuración WiFi, Oferta Especial, etc." 
@@ -749,8 +752,8 @@ export default function VCardEditModal({
                                                                 <div className="space-y-4 pb-4 border-b border-gray-200">
                                                                     <h5 className="text-[10px] font-black text-navy uppercase tracking-widest">Datos de la Oferta / Promoción</h5>
                                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                                        <input className="w-full border rounded-lg p-2 text-sm font-bold" value={formData.wifi_ssid} onChange={(e) => setFormData({ ...formData, wifi_ssid: e.target.value })} placeholder="Título de la Oferta" />
-                                                                        <input className="w-full border rounded-lg p-2 text-sm font-bold" value={formData.wifi_password} onChange={(e) => setFormData({ ...formData, wifi_password: e.target.value })} placeholder="Subtítulo / Descripción" />
+                                                                        <input className="w-full border rounded-lg p-2 text-gray-900 text-sm font-bold" value={formData.wifi_ssid} onChange={(e) => setFormData({ ...formData, wifi_ssid: e.target.value })} placeholder="Título de la Oferta" />
+                                                                        <input className="w-full border rounded-lg p-2 text-gray-900 text-sm font-bold" value={formData.wifi_password} onChange={(e) => setFormData({ ...formData, wifi_password: e.target.value })} placeholder="Subtítulo / Descripción" />
                                                                     </div>
                                                                 </div>
 
@@ -774,7 +777,7 @@ export default function VCardEditModal({
                                                                             <span className="text-[11px] font-black text-navy uppercase">Mostrar Paso 1</span>
                                                                         </label>
                                                                         <input 
-                                                                            className="w-full border rounded-lg p-2 text-xs font-bold bg-gray-50" 
+                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-bold bg-gray-50" 
                                                                             value={formData.hero_step1_title} 
                                                                             onChange={(e) => setFormData({ ...formData, hero_step1_title: e.target.value })} 
                                                                             placeholder="Título Paso 1" 
@@ -798,13 +801,13 @@ export default function VCardEditModal({
                                                                             <span className="text-[11px] font-black text-navy uppercase">Mostrar Paso 2</span>
                                                                         </label>
                                                                         <input 
-                                                                            className="w-full border rounded-lg p-2 text-xs font-bold bg-gray-50" 
+                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-bold bg-gray-50" 
                                                                             value={formData.hero_step2_title} 
                                                                             onChange={(e) => setFormData({ ...formData, hero_step2_title: e.target.value })} 
                                                                             placeholder="Título Paso 2" 
                                                                         />
                                                                         <textarea 
-                                                                            className="w-full border rounded-lg p-2 text-xs font-medium bg-gray-50" 
+                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-medium bg-gray-50" 
                                                                             rows={2}
                                                                             value={formData.hero_step2_text} 
                                                                             onChange={(e) => setFormData({ ...formData, hero_step2_text: e.target.value })} 
@@ -829,13 +832,13 @@ export default function VCardEditModal({
                                                                             <span className="text-[11px] font-black text-navy uppercase">Mostrar Paso 3</span>
                                                                         </label>
                                                                         <input 
-                                                                            className="w-full border rounded-lg p-2 text-xs font-bold bg-gray-50" 
+                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-bold bg-gray-50" 
                                                                             value={formData.hero_step3_title} 
                                                                             onChange={(e) => setFormData({ ...formData, hero_step3_title: e.target.value })} 
                                                                             placeholder="Título Paso 3" 
                                                                         />
                                                                         <textarea 
-                                                                            className="w-full border rounded-lg p-2 text-xs font-medium bg-gray-50" 
+                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-medium bg-gray-50" 
                                                                             rows={2}
                                                                             value={formData.hero_step3_text} 
                                                                             onChange={(e) => setFormData({ ...formData, hero_step3_text: e.target.value })} 
@@ -881,7 +884,7 @@ export default function VCardEditModal({
                                                                     <Zap size={14} /> Enlace Externo
                                                                 </label>
                                                                 <input 
-                                                                    className="w-full border rounded-lg p-3 text-sm font-bold bg-white" 
+                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" 
                                                                     value={formData.hero_external_link} 
                                                                     onChange={(e) => setFormData({ ...formData, hero_external_link: e.target.value })} 
                                                                     placeholder="https://tupagina.com/oferta" 

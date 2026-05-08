@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
             SELECT 
                 r.id, r.slug, r.nombre, r.nombre_negocio, r.empresa, r.email, r.whatsapp, 
                 r.status, r.plan, r.created_at, r.foto_url, r.comprobante_url, r.commission_status, r.seller_id, 
-                r.tipo_perfil, r.profesion, r.bio, r.direccion, r.web, r.instagram, r.linkedin, 
+                r.tipo_perfil, r.profesion, r.bio, r.direccion, r.web, r.instagram, r.linkedin, r.template_id,
                 r.facebook, r.tiktok, r.productos_servicios, r.etiquetas, r.youtube, r.x, 
                 r.menu_digital, r.nombres, r.apellidos, r.contacto_nombre, r.contacto_apellido, 
                 r.portada_desktop, r.portada_movil, r.wifi_ssid, r.wifi_password, 
