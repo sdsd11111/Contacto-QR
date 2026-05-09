@@ -218,8 +218,10 @@ export default function VCardEditModal({
             subtitle,
             categories: rawLines.map((cat: string, index: number) => {
                 const customImg = images.find((i: any) => i.index === index);
-                // Aplicar reemplazo VIP si existe para esta línea exacta
-                const displayTitle = replacements[cat] || cat;
+                const customTitleObj = (parsed.experienceTitles || []).find((t: any) => t.index === index);
+                
+                // Prioridad: 1. Título por índice, 2. Reemplazo global, 3. Texto original
+                const displayTitle = customTitleObj?.title || replacements[cat] || cat;
                 
                 return {
                     index,
@@ -231,17 +233,20 @@ export default function VCardEditModal({
         };
     })();
 
-    const updateCategoryTitle = (originalTitle: string, newTitle: string) => {
+    const updateCategoryTitle = (index: number, newTitle: string) => {
         let parsed: any = {};
         try {
             const raw = editingRegistro.json_override;
             parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
         } catch (e) {}
         
-        if (newTitle && newTitle !== originalTitle) {
-            parsed[originalTitle] = newTitle;
+        if (!parsed.experienceTitles) parsed.experienceTitles = [];
+        
+        const existingIdx = parsed.experienceTitles.findIndex((t: any) => t.index === index);
+        if (existingIdx >= 0) {
+            parsed.experienceTitles[existingIdx].title = newTitle;
         } else {
-            delete parsed[originalTitle];
+            parsed.experienceTitles.push({ index, title: newTitle });
         }
         
         setEditingRegistro({ ...editingRegistro, json_override: parsed });
@@ -281,20 +286,23 @@ export default function VCardEditModal({
             const res = await fetch('/api/upload', { method: 'POST', body: fd });
             if (res.ok) {
                 const { url } = await res.json();
-                let currentImages: any[] = [];
+                let parsed: any = {};
                 try {
                     const raw = editingRegistro.json_override;
-                    const parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
-                    currentImages = parsed.experienceImages || [];
+                    parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
                 } catch (err) {}
                 
+                const currentImages = [...(parsed.experienceImages || [])];
                 const existingIndex = currentImages.findIndex((i: any) => i.index === index);
+                
                 if (existingIndex >= 0) {
-                    currentImages[existingIndex].url = url;
+                    currentImages[existingIndex] = { ...currentImages[existingIndex], url };
                 } else {
                     currentImages.push({ index, url });
                 }
-                updateExperienceCategories(experienceCategories.title, currentImages);
+                
+                parsed.experienceImages = currentImages;
+                setEditingRegistro({ ...editingRegistro, json_override: parsed });
             } else {
                 alert('Error al subir la imagen.');
             }
@@ -1337,7 +1345,7 @@ export default function VCardEditModal({
                                                             <input 
                                                                 type="text"
                                                                 value={cat.title}
-                                                                onChange={(e) => updateCategoryTitle(cat.originalTitle, e.target.value)}
+                                                                onChange={(e) => updateCategoryTitle(cat.index, e.target.value)}
                                                                 placeholder="Nombre de categoría"
                                                                 className="bg-transparent border-none p-0 text-xs font-bold text-white uppercase focus:ring-0 w-full outline-none hover:text-primary transition-colors"
                                                             />
