@@ -868,15 +868,16 @@ export default function VCardEditModal({
                                                                                     <Download size={20} />
                                                                                 </div>
                                                                             )}
-                                                                            <input 
-                                                                                type="file" 
-                                                                                className="absolute inset-0 opacity-0 cursor-pointer" 
-                                                                                onChange={(e) => handleCategoryImage(e, idx)}
-                                                                                accept="image/*"
-                                                                            />
-                                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                                                                <Edit size={16} className="text-white" />
-                                                                            </div>
+                                                                            <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity cursor-pointer">
+                                                                                {uploadingImage ? <Loader2 size={16} className="text-white animate-spin" /> : <Edit size={16} className="text-white" />}
+                                                                                <input 
+                                                                                    type="file" 
+                                                                                    className="hidden" 
+                                                                                    onChange={(e) => handleCategoryImage(e, idx)}
+                                                                                    accept="image/*"
+                                                                                    disabled={uploadingImage}
+                                                                                />
+                                                                            </label>
                                                                         </div>
 
                                                                         {/* Title Editor */}
