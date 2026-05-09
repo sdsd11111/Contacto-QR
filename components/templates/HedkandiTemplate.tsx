@@ -138,8 +138,11 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         // Buscar imagen personalizada por índice
                         const customImg = props.experienceImages?.find(e => e.index === i);
                         
-                        // Protocolo VIP: Aplicar reemplazo si existe en los props (spread de json_override)
-                        const displayTitle = (props as any)[cat] || cat;
+                        // Buscar título personalizado por índice
+                        const customTitleObj = props.experienceTitles?.find(t => t.index === i);
+                        
+                        // Protocolo VIP: Aplicar reemplazo si existe (prioridad: índice > nombre string > original)
+                        const displayTitle = customTitleObj?.title || (props as any)[cat] || cat;
                         
                         return {
                             title: displayTitle.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ]/g, '').trim().toUpperCase(),

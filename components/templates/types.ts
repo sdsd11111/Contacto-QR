@@ -98,6 +98,8 @@ export interface HedkandiTemplateProps extends MinimalTemplateProps {
     // ── Personalización de grilla de experiencia ──
     /** Imágenes personalizadas para la grilla de 3 columnas (mapea índices de productos_servicios) */
     experienceImages?: ExperienceImage[];
+    /** Títulos personalizados para la grilla de 3 columnas (mapea índices de productos_servicios) */
+    experienceTitles?: Array<{index: number, title: string}>;
     /** Título de la sección de experiencia (default: "THE {nombre_negocio} EXPERIENCE") */
     experienceTitle?: string;
     /** Subtítulo de los items de la grilla de experiencia (default: "Especialidad") */
