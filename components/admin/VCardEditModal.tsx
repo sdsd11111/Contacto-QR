@@ -191,9 +191,10 @@ export default function VCardEditModal({
         let title = "";
         let subtitle = "";
         let images: any[] = [];
+        let parsed: any = {};
         try {
             const raw = editingRegistro.json_override;
-            const parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+            parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
             title = parsed.experienceTitle || "";
             subtitle = parsed.experienceSubtitle || "";
             images = parsed.experienceImages || [];
