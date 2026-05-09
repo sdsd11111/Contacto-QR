@@ -202,7 +202,7 @@ export default function VCardEditModal({
         const rawLines = editingRegistro?.productos_servicios
             ?.split('\n')
             .filter((l: string) => l.trim().length > 0)
-            .slice(0, 6) || [];
+            .slice(0, 10) || [];
             
         // Preparar reemplazos VIP para mostrar el texto "final"
         const replacements = (() => {
@@ -1266,9 +1266,22 @@ export default function VCardEditModal({
                         {activeTab === 'categorias' && (
                             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20 space-y-8">
-                                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                                        <Layers size={16} /> IMÁGENES DE EXPERIENCIA (HERO CARDS)
-                                    </h4>
+                                    <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                            <Layers size={16} /> IMÁGENES DE EXPERIENCIA (HERO CARDS)
+                                        </h4>
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const current = (editingRegistro.productos_servicios || '').trim();
+                                                const separator = '\n';
+                                                setEditingRegistro({ ...editingRegistro, productos_servicios: current + (current ? separator : '') + 'Nueva Categoría' });
+                                            }}
+                                            className="bg-primary/20 hover:bg-primary/40 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                                        >
+                                            <Plus size={14} /> Añadir Categoría
+                                        </button>
+                                    </div>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-4">
