@@ -87,7 +87,8 @@ export default function MenuTabs({
     const accentCSS = accentColor.startsWith('#') ? accentColor : `#${accentColor}`;
 
     return (
-        <section className="bg-white py-24 md:py-32 px-4 md:px-12 max-w-6xl mx-auto">
+        <section className="bg-white py-24 md:py-32 w-full relative z-10">
+            <div className="max-w-6xl mx-auto px-4 md:px-12">
             {/* Título */}
             <div className="text-center mb-14 md:mb-20">
                 <h2 className="font-display-condensed text-4xl md:text-7xl mb-4 tracking-tighter text-black uppercase">
@@ -196,6 +197,7 @@ export default function MenuTabs({
                     </button>
                 </div>
             )}
+            </div>
         </section>
     );
 }

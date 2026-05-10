@@ -248,9 +248,9 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const menuNode = hasMenu ? (
         <MenuTabs
             categories={menuCategories!}
-            accentColor="#dc2626"
-            title="NUESTRA CARTA"
-            ctaText="ORDENAR POR WHATSAPP"
+            accentColor={themePrimary}
+            title="Nuestra carta"
+            ctaText="Ordenar por WhatsApp"
             onCtaClick={() => window.open(
                 data.whatsapp ? `https://wa.me/${data.whatsapp.replace(/\D/g, '')}` : '#',
                 '_blank'
@@ -300,13 +300,15 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             case 'carrocerias':
                 return <CarroceriasTemplate {...baseProps} {...overrides} />;
             // Templates externos (auditoría / sites existentes)
-            case 'nexus-logistics':
-            case 'grand-horizon':
-            case 'elite-taxi':
-                return <ClassicTemplate {...classicProps} {...overrides} />;
             case 'classic':
             default:
-                return <ClassicTemplate {...classicProps} {...overrides} />;
+                return (
+                    <ClassicTemplate 
+                        {...classicProps} 
+                        {...overrides} 
+                        afterExperienceSlot={menuNode}
+                    />
+                );
         }
     };
 
@@ -352,8 +354,11 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             )}
             {renderTemplate()}
 
-            {/* Menú Digital directo: para templates que NO son Hedkandi */}
-            {data?.template_id !== 'hedkandi' && data?.template_id !== 'showcase' && menuNode}
+            {/* Menú Digital directo: solo para templates que NO lo soportan internamente */}
+            {data?.template_id !== 'hedkandi' && 
+             data?.template_id !== 'showcase' && 
+             data?.template_id !== 'classic' && 
+             menuNode}
 
             {/* Botón flotante de edición sutil */}
             <motion.button

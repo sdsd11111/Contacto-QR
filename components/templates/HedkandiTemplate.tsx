@@ -3,6 +3,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { HedkandiTemplateProps } from './types';
+import { getYouTubeID, getTikTokID } from '@/lib/videoUtils';
 
 /** Imágenes de fallback organizadas por categoría visual para la grilla de experiencia */
 const FALLBACK_EXPERIENCE_IMAGES = [
@@ -22,7 +23,10 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             return () => clearInterval(interval);
         }
     }, [props.activeSlides, props.currentSlideIndex, props.setCurrentSlideIndex]);
-
+ 
+    // State for the Experience Slider
+    const [activeExpIndex, setActiveExpIndex] = React.useState(0);
+ 
     return (
         <div className="w-full min-h-screen bg-white text-[#1A1A1A] overflow-x-hidden selection:bg-[#7292ab] selection:text-white">
             
@@ -70,78 +74,109 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                     )}
                 </div>
 
-                {/* Main Hero Content */}
-                <div className="relative z-10 text-center px-4 max-w-5xl">
+                {/* Main Hero Content - Split Layout if Video exists */}
+                <div className="relative z-10 w-full px-4 md:px-12 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 mt-12 md:mt-0">
+                    {/* Text Content */}
                     <motion.div
-                        initial={{ y: 30, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
+                        initial={{ x: -30, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 1 }}
-                        className="flex flex-col items-center"
+                        className="w-full md:w-3/5 text-center md:text-left flex flex-col items-center md:items-start"
                     >
-                        <h1 className="text-white text-6xl md:text-[9rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4">
+                        <h1 className="text-white text-5xl md:text-[8rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4">
                             {props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title 
                                 ? props.activeSlides[props.currentSlideIndex || 0].title 
                                 : (props.data?.nombre_negocio || "FOR THOSE WHO KNOW")}
                         </h1>
                         
                         {(props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio) && (
-                            <p className="text-white/80 font-sans-body text-xs md:text-sm uppercase tracking-[0.3em] mb-12 max-w-2xl mx-auto leading-relaxed">
+                            <p className="text-white/80 font-sans-body text-xs md:text-sm uppercase tracking-[0.3em] mb-12 max-w-2xl leading-relaxed">
                                 {props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio || "PREMIUM EXPERIENCE"}
                             </p>
                         )}
 
-                        {/* CTA BUTTON */}
-                        <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={props.downloadVCF}
-                            className="bg-white text-black px-12 py-4 font-display-condensed text-xl tracking-widest uppercase hover:bg-black hover:text-white transition-colors duration-300"
-                        >
-                            SAVE CONTACT
-                        </motion.button>
+                        <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={props.downloadVCF}
+                                className="bg-white text-black px-12 py-4 font-display-condensed text-xl tracking-widest uppercase hover:bg-black hover:text-white border border-white transition-colors duration-300"
+                            >
+                                SAVE CONTACT
+                            </motion.button>
+                            
+                            {props.data?.whatsapp && (
+                                <motion.a
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    href={`https://wa.me/${props.data.whatsapp.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-transparent text-white px-12 py-4 font-display-condensed text-xl tracking-widest uppercase border border-white hover:bg-white hover:text-black transition-colors duration-300"
+                                >
+                                    WHATSAPP
+                                </motion.a>
+                            )}
+                        </div>
+                    </motion.div>
+
+                    {/* Video/Image Content */}
+                    <motion.div
+                        initial={{ x: 30, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.8, duration: 1 }}
+                        className="w-full md:w-2/5 flex justify-center md:justify-end"
+                    >
+                        {(props.data?.video_url || props.data?.youtube_url || props.data?.youtube_video_url) ? (
+                            <div className="w-full max-w-[320px] rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 bg-black/20 group relative shadow-black/50">
+                                <div className="aspect-[9/16] video-container-tiktok bg-black/40">
+                                    <iframe 
+                                        width="100%" 
+                                        height="100%" 
+                                        src={(() => {
+                                            const url = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
+                                            if (!url) return '';
+                                            
+                                            const youtubeId = getYouTubeID(url);
+                                            if (youtubeId) return `https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0`;
+
+                                            const tiktokId = getTikTokID(url) || url.split('/').pop()?.split('?')[0];
+                                            if (url.includes('tiktok')) return `https://www.tiktok.com/embed/v2/${tiktokId}`;
+
+                                            return url;
+                                        })()} 
+                                        title="Video player" 
+                                        frameBorder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowFullScreen 
+                                        className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                                    ></iframe>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="w-full max-w-[400px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
+                                <img 
+                                    src={props.data?.foto_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"} 
+                                    alt={props.data?.nombre_negocio}
+                                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
+                                />
+                            </div>
+                        )}
                     </motion.div>
                 </div>
-
-                {/* Slide Indicators (Dots) */}
-                {props.activeSlides && props.activeSlides.length > 1 && (
-                    <div className="absolute bottom-16 z-20 flex gap-3">
-                        {props.activeSlides.map((_, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => props.setCurrentSlideIndex?.(idx)}
-                                className={`h-[2px] transition-all duration-500 ${
-                                    props.currentSlideIndex === idx ? 'w-12 bg-white' : 'w-6 bg-white/30'
-                                }`}
-                            />
-                        ))}
-                    </div>
-                )}
-                
-                {/* Scroll Indicator */}
-                <motion.div 
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20"
-                >
-                    <div className="w-[1px] h-12 bg-gradient-to-b from-white/0 via-white to-white/0"></div>
-                </motion.div>
             </section>
-            {/* 2. THE EXPERIENCE GRID (3 COLUMNS) — Data-driven con imágenes configurables */}
+
+            {/* 2. THE EXPERIENCE SLIDER — Carrusel de banners contenidos y redondeados */}
             {!props.hideExperience && (() => {
                 const rawLines = props.data?.productos_servicios
                     ?.split('\n')
                     .filter((l: string) => l.trim().length > 0)
                     .slice(0, 6) || [];
 
-                const columns = rawLines.length >= 1
+                const banners = rawLines.length >= 1
                     ? rawLines.map((cat: string, i: number) => {
-                        // Buscar imagen personalizada por índice
                         const customImg = props.experienceImages?.find(e => e.index === i);
-                        
-                        // Buscar título personalizado por índice
                         const customTitleObj = props.experienceTitles?.find(t => t.index === i);
-                        
-                        // Protocolo VIP: Aplicar reemplazo si existe (prioridad: índice > nombre string > original)
                         const displayTitle = customTitleObj?.title || (props as any)[cat] || cat;
                         
                         return {
@@ -157,102 +192,139 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         { title: 'BEAUTY', num: '03', subtitle: 'Full Spa', img: FALLBACK_EXPERIENCE_IMAGES[2] },
                     ];
 
-                return (
-                    <section className="py-24 px-4 md:px-12 max-w-7xl mx-auto">
-                        <h2 className="text-center font-display-condensed text-4xl md:text-5xl mb-16 tracking-widest text-black uppercase">
-                            {props.experienceTitle || (props.data?.nombre_negocio ? `THE ${props.data.nombre_negocio} EXPERIENCE` : "THE NEW GUEST EXPERIENCE")}
-                        </h2>
+                const whatsappNumber = props.data?.whatsapp?.replace(/\D/g, '') || '';
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-4 lg:gap-8">
-                            {columns.map((col: any, idx: number) => (
-                                <div key={idx} className="relative group cursor-pointer">
-                                    <div className="aspect-[4/5] md:aspect-square overflow-hidden relative">
-                                        <img
-                                            src={col.img}
-                                            alt={col.title}
-                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                                        />
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="bg-white/80 backdrop-blur-sm px-8 py-3 text-sm font-sans-body tracking-widest uppercase transition-colors group-hover:bg-white text-center">
-                                                {col.title}
-                                            </div>
+                return (
+                    <section className="w-full bg-white py-24 overflow-hidden">
+                        <div className="px-4 md:px-12 mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6 max-w-7xl mx-auto">
+                            <div>
+                                <h2 className="font-display-condensed text-4xl md:text-6xl tracking-tight text-black uppercase leading-none">
+                                    {props.experienceTitle || "NUESTROS SERVICIOS"}
+                                </h2>
+                                <p className="font-sans-body text-xs md:text-sm uppercase tracking-[0.3em] text-black/40 mt-4">
+                                    Explora nuestra selección exclusiva
+                                </p>
+                            </div>
+                            
+                            {/* Slider Controls */}
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={() => setActiveExpIndex(prev => (prev > 0 ? prev - 1 : banners.length - 1))}
+                                    className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+                                <button 
+                                    onClick={() => setActiveExpIndex(prev => (prev < banners.length - 1 ? prev + 1 : 0))}
+                                    className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center hover:bg-black hover:text-white transition-all"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="relative w-full max-w-7xl mx-auto px-4 md:px-12">
+                            <div className="relative h-[50vh] md:h-[60vh] w-full overflow-hidden rounded-[2rem] md:rounded-[3rem] shadow-2xl">
+                                {banners.map((col: any, idx: number) => (
+                                    <motion.div 
+                                        key={idx}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ 
+                                            opacity: activeExpIndex === idx ? 1 : 0,
+                                            scale: activeExpIndex === idx ? 1 : 1.1,
+                                            x: activeExpIndex === idx ? 0 : (idx < activeExpIndex ? -100 : 100)
+                                        }}
+                                        transition={{ duration: 0.8, ease: "circOut" }}
+                                        className="absolute inset-0 w-full h-full"
+                                        style={{ display: activeExpIndex === idx ? 'block' : 'none' }}
+                                    >
+                                        {/* Background Image */}
+                                        <div 
+                                            className="absolute inset-0 bg-cover bg-center"
+                                            style={{ backgroundImage: `url(${col.img})` }}
+                                        ></div>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+                                        
+                                        {/* Content Overlay */}
+                                        <div className="relative z-10 h-full w-full p-8 md:p-20 flex flex-col justify-center items-start">
+                                            <motion.div
+                                                initial={{ y: 20, opacity: 0 }}
+                                                animate={{ y: activeExpIndex === idx ? 0 : 20, opacity: activeExpIndex === idx ? 1 : 0 }}
+                                                transition={{ delay: 0.3, duration: 0.6 }}
+                                            >
+                                                <span className="font-display-condensed text-white/40 text-xl tracking-[0.4em] uppercase block mb-4">
+                                                    Categoría {col.num}
+                                                </span>
+                                                <h3 className="font-display-condensed text-5xl md:text-8xl text-white uppercase tracking-tight mb-4 drop-shadow-xl">
+                                                    {col.title}
+                                                </h3>
+                                                <p 
+                                                    className="font-sans-body tracking-[0.5em] uppercase text-xs md:text-sm font-bold mb-10" 
+                                                    style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
+                                                >
+                                                    {col.subtitle}
+                                                </p>
+                                                
+                                                <motion.a
+                                                    whileHover={{ scale: 1.05 }}
+                                                    whileTap={{ scale: 0.95 }}
+                                                    href={`https://wa.me/${whatsappNumber}?text=Hola, deseo información sobre ${col.title}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-white text-black px-10 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:bg-black hover:text-white inline-block shadow-xl"
+                                                >
+                                                    CONSULTAR AHORA
+                                                </motion.a>
+                                            </motion.div>
                                         </div>
-                                    </div>
-                                    <div className="flex items-end mt-2">
-                                        <span className="font-display-condensed text-7xl md:text-8xl leading-none text-black -ml-2">
-                                            {col.num}
-                                        </span>
-                                        <span className="font-sans-body text-xs md:text-sm uppercase tracking-widest pb-2 ml-4">
-                                            {col.subtitle}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
+                                    </motion.div>
+                                ))}
+                            </div>
+                            
+                            {/* Pagination Dots */}
+                            <div className="flex justify-center gap-2 mt-10">
+                                {banners.map((_: any, idx: number) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setActiveExpIndex(idx)}
+                                        className={`h-2 transition-all duration-500 rounded-full ${
+                                            activeExpIndex === idx ? 'w-12 bg-black' : 'w-4 bg-black/10'
+                                        }`}
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </section>
                 );
             })()}
 
-            {/* ─── SLOT 1: Después de Experience Grid (menú, galería, servicios) ─── */}
+            {/* ─── SLOT 1: Después de Experience (menú, galería, servicios) ─── */}
             {props.afterExperienceSlot}
 
-            {/* 3. BIOGRAPHY SECTION WITH MASK */}
-            <section className="bg-[#1A1A1A] text-white py-32 px-4 md:px-12">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-16">
-                    <div className="w-full md:w-1/2 font-sans-body text-sm md:text-base leading-relaxed tracking-wide font-light">
-                        {/* Logo del cliente */}
-                        {props.data?.foto_url && (
-                            <div className="mb-10">
-                                <img 
-                                    src={props.data.foto_url} 
-                                    alt={props.data.nombre_negocio}
-                                    className="w-20 h-20 md:w-24 md:h-24 object-contain grayscale hover:grayscale-0 transition-all duration-700"
-                                />
-                            </div>
-                        )}
-                        
-                        <div className="mb-8 max-w-md whitespace-pre-line text-white/80">
-                            {props.data?.bio || "Expertos en crear experiencias únicas de belleza y bienestar."}
+            {/* 3. BIOGRAPHY SECTION */}
+            <section className="bg-[#1A1A1A] text-white py-24 px-4 md:px-12">
+                <div className="max-w-4xl mx-auto text-center">
+                    {/* Logo del cliente */}
+                    {props.data?.foto_url && (
+                        <div className="mb-10 flex justify-center">
+                            <img 
+                                src={props.data.foto_url} 
+                                alt={props.data.nombre_negocio}
+                                className="w-24 h-24 md:w-32 md:h-32 rounded-full border-2 border-white/10 object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                            />
                         </div>
-                        <p 
-                            className="max-w-md font-display-condensed text-2xl tracking-widest uppercase opacity-70 italic"
-                            style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
-                        >
-                            {props.data?.profesion || "Premium Experience"}
-                        </p>
+                    )}
+                    
+                    <div className="mb-8 whitespace-pre-line text-white/80 font-sans-body text-sm md:text-lg leading-relaxed max-w-2xl mx-auto">
+                        {props.data?.bio || "Expertos en crear experiencias únicas de belleza y bienestar."}
                     </div>
-                    <div className="w-full md:w-1/2 flex justify-center">
-                        {(props.data?.video_url || props.data?.youtube_url || props.data?.youtube_video_url) ? (
-                            <div className="w-full max-w-[320px] rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 bg-black/20 group relative shadow-black/50">
-                                <div className="aspect-[9/16] video-container-tiktok bg-black/40">
-                                    <iframe 
-                                        width="100%" 
-                                        height="100%" 
-                                        src={(() => {
-                                            const url = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
-                                            if (url?.includes('tiktok')) {
-                                                return `https://www.tiktok.com/embed/v2/${url.split('/').pop()?.split('?')[0]}`;
-                                            }
-                                            return url;
-                                        })()} 
-                                        title="Video player" 
-                                        frameBorder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowFullScreen 
-                                        className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity duration-500"
-                                    ></iframe>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="relative aspect-square overflow-hidden grayscale hover:grayscale-0 transition-all duration-1000 w-full">
-                                <img 
-                                    src={props.data?.foto_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"} 
-                                    alt="Studio"
-                                    className="w-full h-full object-cover"
-                                />
-                            </div>
-                        )}
-                    </div>
+                    
+                    <p 
+                        className="font-display-condensed text-3xl md:text-4xl tracking-widest uppercase italic"
+                        style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
+                    >
+                        {props.data?.profesion || "Premium Experience"}
+                    </p>
                 </div>
             </section>
 
@@ -388,7 +460,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-10 text-center px-4">
                     <h4 className="font-display-condensed text-3xl md:text-4xl tracking-widest mb-8 text-black">
-                        ¿LISTO PARA TU TRANSFORMACIÓN?
+                        ORDENA POR WHATSAPP
                     </h4>
                     <button 
                         onClick={props.downloadVCF}
@@ -399,8 +471,59 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                 </div>
             </section>
 
-            {/* ─── SLOT 3: Después de todo (footer, ubicación, delivery) ─── */}
             {props.afterMarqueeSlot}
+
+            {/* Ubicación / Mapa */}
+            {(props.data?.google_business || props.data?.address || props.data?.direccion) && (() => {
+                const isGoogleLink = props.data.google_business?.startsWith('http');
+                const businessName = props.data.nombre_negocio || props.data.nombre || '';
+                const addressText = props.data.direccion || props.data.address || '';
+                const coordMatch = props.data.google_business?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                const hasCoords = coordMatch && coordMatch.length >= 3;
+                const mapQuery = hasCoords 
+                    ? `${coordMatch[1]},${coordMatch[2]}` 
+                    : isGoogleLink 
+                        ? `${businessName} ${addressText}`.trim() 
+                        : (props.data.google_business || addressText || businessName);
+                
+                return (
+                    <section className="w-full bg-white pt-24 pb-0 overflow-hidden">
+                        <div className="max-w-7xl mx-auto px-4 md:px-12 mb-12 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+                            <div className="flex-1">
+                                <h4 className="font-display-condensed text-3xl md:text-4xl tracking-widest text-black mb-4">
+                                    UBICACIÓN ESTRATÉGICA
+                                </h4>
+                                <p className="font-sans-body uppercase tracking-[0.3em] text-xs md:text-sm text-black/40 leading-relaxed max-w-xl">
+                                    {addressText || "Visítanos en nuestra ubicación oficial"}
+                                </p>
+                            </div>
+                            <a 
+                                href={isGoogleLink ? props.data.google_business : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName)}`}
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="border border-black px-10 py-4 font-display-condensed text-lg tracking-widest uppercase hover:bg-black hover:text-white transition-all duration-300 whitespace-nowrap"
+                            >
+                                VER EN GOOGLE MAPS
+                            </a>
+                        </div>
+                        
+                        <div className="w-full h-[450px] md:h-[650px] relative">
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                style={{ border: 0 }}
+                                src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
+                                    ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
+                                    : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
+                                }
+                                allowFullScreen
+                                className="grayscale hover:grayscale-0 transition-all duration-1000"
+                            ></iframe>
+                        </div>
+                    </section>
+                );
+            })()}
         </div>
     );
 }

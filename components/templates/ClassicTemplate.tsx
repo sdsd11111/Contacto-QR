@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-    Download, User, Smartphone, Zap, CheckCircle, 
+    Download, User, Smartphone, Zap, CheckCircle, Phone, MessageSquare, UserPlus,
     Mail, Briefcase, Settings, ChevronDown, ChevronLeft, ChevronRight, Utensils 
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
@@ -61,7 +61,21 @@ export default function ClassicTemplate({
     getYouTubeID,
     getTikTokID,
     showCatalog = false,
-}: ClassicTemplateProps) {
+    afterExperienceSlot,
+    beforeMarqueeSlot,
+    afterMarqueeSlot
+}: ClassicTemplateProps & { 
+    afterExperienceSlot?: React.ReactNode, 
+    beforeMarqueeSlot?: React.ReactNode,
+    afterMarqueeSlot?: React.ReactNode 
+}) {
+    console.log("ACTIVAQR_DEBUG: ClassicTemplate Loaded for slug:", slug);
+
+    const handleWhatsapp = () => {
+        if (data.whatsapp) {
+            window.open(`https://wa.me/${data.whatsapp.replace(/\D/g, '')}`, '_blank');
+        }
+    };
 
     const socialLinks = [
         {
@@ -189,8 +203,12 @@ export default function ClassicTemplate({
     const nextAfterStep2 = showStep3 ? 3 : 2;
 
     const renderSocialSidebar = () => (
-        <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-10 shadow-2xl w-full">
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--theme-primary)] mb-8">CANALES</h4>
+        <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-10 shadow-2xl w-full relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--theme-primary)]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+            <h4 className="text-[10px] md:text-xs font-display-condensed uppercase tracking-[0.3em] text-[var(--theme-primary)] mb-8 flex items-center gap-2">
+                <span className="w-4 h-[1px] bg-[var(--theme-primary)]/30"></span>
+                Canales digitales
+            </h4>
 
             <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-1 gap-4">
                 {socialLinks.map((social) => (
@@ -227,8 +245,8 @@ export default function ClassicTemplate({
                                 <Smartphone size={18} />
                             </div>
                             <div className="text-left min-w-0">
-                                <p className="text-[8px] font-black text-white/30 uppercase tracking-widest">Ubicación</p>
-                                <p className="font-bold text-[10px] md:text-xs text-white/70 break-words line-clamp-3">{data.direccion}</p>
+                                <p className="text-[10px] font-display-condensed text-white/30 uppercase tracking-widest mb-1">Ubicación</p>
+                                <p className="font-medium text-xs text-white/70 break-words line-clamp-3 leading-relaxed">{data.direccion}</p>
                             </div>
                         </div>
                         {(data.google_business || data.address || data.direccion) && (
@@ -238,7 +256,7 @@ export default function ClassicTemplate({
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-[var(--theme-primary)]/20 hover:bg-[var(--theme-primary)]/30 rounded-xl text-[9px] font-black uppercase tracking-widest text-[var(--theme-primary)] hover:text-white transition-all"
                             >
-                                <Zap size={12} /> CÓMO LLEGAR
+                                <Zap size={12} /> Cómo llegar
                             </a>
                         )}
                     </div>
@@ -249,7 +267,7 @@ export default function ClassicTemplate({
                 <a href={data.web} target="_blank" rel="noopener noreferrer" className="mt-6 flex items-center justify-between p-5 md:p-6 bg-gradient-to-r from-[#05509c] to-[var(--theme-bg)] rounded-[24px] border border-white/10 group">
                     <div className="flex items-center gap-4">
                         <div className="text-xl">🌐</div>
-                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Web Oficial</span>
+                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest">Web oficial</span>
                     </div>
                     <Zap size={16} className="text-[var(--theme-primary)] group-hover:scale-125 transition-transform" />
                 </a>
@@ -339,8 +357,7 @@ export default function ClassicTemplate({
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -20 }}
                                     transition={{ duration: 0.5, delay: 0.3 }}
-                                    style={{ backgroundColor: 'var(--theme-primary)', color: 'var(--theme-text-on-primary)' }}
-                                    className="mt-4 text-sm md:text-xl font-black uppercase tracking-widest px-6 py-2 rounded-full shadow-lg border border-white/20"
+                                    className="mt-6 text-sm md:text-xl font-display-condensed uppercase tracking-[0.4em] px-8 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-2xl bg-white/10 text-white"
                                 >
                                     {activeSlides[currentSlideIndex].title}
                                 </motion.h2>
@@ -355,7 +372,7 @@ export default function ClassicTemplate({
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -20 }}
                                     transition={{ duration: 0.8, delay: 0.2 }}
-                                    className="mt-4 md:mt-6 text-lg sm:text-xl md:text-3xl font-bold uppercase tracking-[0.2em] text-white/90 drop-shadow-lg break-words w-full max-w-[85vw] md:max-w-3xl leading-snug"
+                                    className="mt-6 text-xl sm:text-2xl md:text-4xl font-display-condensed italic text-white/90 drop-shadow-2xl break-words w-full max-w-[85vw] md:max-w-4xl leading-tight tracking-[0.1em]"
                                 >
                                     {activeSlides[currentSlideIndex].description || data.profesion}
                                 </motion.p>
@@ -398,13 +415,15 @@ export default function ClassicTemplate({
                             className="group flex flex-col items-center gap-2 md:gap-4 focus:outline-none w-[75vw] max-w-xs md:w-auto md:max-w-none"
                         >
                             <span 
-                                className="w-full justify-center text-[10px] sm:text-xs md:text-lg font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] md:tracking-[0.3em] px-4 py-4 md:px-12 md:py-6 rounded-3xl md:rounded-full md:border-2 md:border-white/20 group-hover:scale-105 transition-all flex items-center gap-2 md:gap-4 text-center leading-snug"
+                                className="w-full justify-center text-xs sm:text-sm md:text-xl font-display-condensed tracking-[0.3em] px-10 py-5 md:px-16 md:py-7 rounded-2xl md:rounded-full group-hover:scale-105 transition-all flex items-center gap-4 text-center shadow-2xl relative overflow-hidden group"
                                 style={{
-                                    background: 'linear-gradient(135deg, var(--theme-primary), color-mix(in srgb, var(--theme-primary) 70%, black))',
-                                    boxShadow: '0 10px 40px -8px color-mix(in srgb, var(--theme-primary) 60%, transparent)',
-                                    color: 'var(--theme-text-on-primary)'
+                                    background: 'white',
+                                    color: 'black'
                                 }}
                             >
+                                <motion.div 
+                                    className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 transition-opacity"
+                                />
                                 {getHeroButtonIcon()}
                                 {getHeroButtonText()}
                             </span>
@@ -431,15 +450,23 @@ export default function ClassicTemplate({
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="lg:col-span-12 xl:col-span-9 flex flex-col w-full min-w-0 order-2 xl:order-1"
+                                className="lg:col-span-12 flex flex-col w-full min-w-0 order-1"
                             >
-                                <div className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[32px] md:rounded-[40px] p-6 md:p-10 lg:p-14 shadow-2xl relative overflow-hidden group min-w-0 w-full">
+                                <div className="flex-1 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[3.5rem] p-10 lg:p-16 shadow-2xl shadow-navy/5 relative overflow-hidden group min-w-0 w-full">
                                     <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-[var(--theme-primary)] to-transparent opacity-10 rounded-bl-full shrink-0" />
 
-                                    <div className="flex flex-col md:flex-row gap-8 md:gap-14 items-center md:items-start relative z-10 w-full">
+                                    <div className="flex flex-col items-center gap-8 md:gap-12 relative z-10 w-full">
                                         <div className="relative shrink-0">
-                                            <div className="w-32 h-32 md:w-36 lg:w-48 rounded-3xl bg-gradient-to-br from-[var(--theme-primary)] to-[#05509c] p-1 shadow-2xl">
-                                                <div className="w-full h-full aspect-square rounded-[20px] bg-[var(--theme-bg)] overflow-hidden flex items-center justify-center">
+                                            {/* Authority Badge */}
+                                            <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 whitespace-nowrap">
+                                                <div className="inline-flex items-center gap-2 bg-navy text-white px-4 py-2 rounded-full shadow-lg border border-white/10">
+                                                    <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Identidad Digital • vCard 3.0</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="w-32 h-32 md:w-36 lg:w-48 rounded-[2.5rem] bg-gradient-to-br from-[var(--theme-primary)] to-[#05509c] p-1 shadow-2xl">
+                                                <div className="w-full h-full aspect-square rounded-[2.2rem] bg-[var(--theme-bg)] overflow-hidden flex items-center justify-center">
                                                     {data.foto_url ? (
                                                         <img src={data.foto_url} className="w-full h-full object-cover" alt={data.nombre} />
                                                     ) : (
@@ -452,31 +479,29 @@ export default function ClassicTemplate({
                                             </div>
                                         </div>
 
-                                        <div className="text-center md:text-left flex-1 min-w-0 w-full">
-                                            {!showHero && (
-                                                <div className="flex flex-col items-center w-full">
-                                                    <h1 className="text-2xl md:text-3xl lg:text-5xl xl:text-5xl font-black tracking-tighter leading-[1.05] mb-4 uppercase italic text-white break-words drop-shadow-md text-center">
-                                                        {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
-                                                    </h1>
-                                                    <p className="text-sm md:text-lg lg:text-xl font-black text-[var(--theme-primary)] uppercase tracking-[0.2em] mb-4 drop-shadow-sm break-words opacity-90 text-center">
-                                                        {data.profesion || "Profesional Estratégico"}
-                                                    </p>
-                                                    
-                                                    {data.tipo_perfil === 'negocio' && (data.contacto_nombre || data.contacto_apellido) && (
-                                                        <div className="mb-6 flex flex-col items-center">
-                                                            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)]">
-                                                                    <User size={16} />
-                                                                </div>
-                                                                <div className="text-left">
-                                                                    <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Atención Directa</p>
-                                                                    <p className="text-sm font-bold text-white mb-0 leading-none">{data.contacto_nombre} {data.contacto_apellido}</p>
-                                                                </div>
+                                        <div className="text-center flex-1 min-w-0 w-full">
+                                            <div className="flex flex-col items-center w-full">
+                                                <h1 className="text-3xl md:text-4xl lg:text-6xl font-black tracking-tighter leading-[1.05] mb-2 capitalize italic text-white break-words drop-shadow-md">
+                                                    {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
+                                                </h1>
+                                                <p className="text-base md:text-xl font-bold text-[var(--theme-primary)] uppercase tracking-[0.2em] mb-6 drop-shadow-sm break-words opacity-90">
+                                                    {data.profesion || "Profesional Estratégico"}
+                                                </p>
+                                                
+                                                {data.tipo_perfil === 'negocio' && (data.contacto_nombre || data.contacto_apellido) && (
+                                                    <div className="mb-8">
+                                                        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-3">
+                                                            <div className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)]">
+                                                                <User size={16} />
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Atención Directa</p>
+                                                                <p className="text-sm font-bold text-white mb-0 leading-none">{data.contacto_nombre} {data.contacto_apellido}</p>
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            )}
+                                                    </div>
+                                                )}
+                                            </div>
 
                                             {data.empresa && (
                                                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-8 max-w-full">
@@ -484,199 +509,37 @@ export default function ClassicTemplate({
                                                     <span className="text-[10px] md:text-xs lg:text-sm font-bold uppercase tracking-wider text-white/50 truncate text-ellipsis">{data.empresa}</span>
                                                 </div>
                                             )}
-
-                                            {(() => {
-                                                const youtubeId = getYouTubeID(data.youtube_video_url) || getYouTubeID(data.youtube);
-                                                const tiktokId = getTikTokID(data.tiktok) || getTikTokID(data.youtube_video_url);
-
-                                                if (youtubeId) {
-                                                    return (
-                                                        <div className="w-full max-w-sm mx-auto mb-10 rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black/20 group relative shadow-orange/20">
-                                                            <div className="aspect-video sm:aspect-video video-container">
-                                                                <iframe
-                                                                    width="100%"
-                                                                    height="100%"
-                                                                    src={`https://www.youtube.com/embed/${youtubeId}`}
-                                                                    title="YouTube video player"
-                                                                    frameBorder="0"
-                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                    allowFullScreen
-                                                                    className="w-full h-full"
-                                                                ></iframe>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-
-                                                if (tiktokId) {
-                                                    return (
-                                                        <div className="w-full max-w-sm mx-auto mb-10 rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-black/20 group relative shadow-blue/20">
-                                                            <div className="aspect-[9/16] video-container-tiktok">
-                                                                <iframe
-                                                                    width="100%"
-                                                                    height="100%"
-                                                                    src={`https://www.tiktok.com/embed/v2/${tiktokId}`}
-                                                                    title="TikTok video player"
-                                                                    frameBorder="0"
-                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                    allowFullScreen
-                                                                    className="w-full h-full"
-                                                                ></iframe>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            })()}
-
-                                            <div className="w-full flex justify-center">
-                                                <div className="w-full md:w-auto max-w-sm relative z-20">
+                                            <div className="w-full mt-12">
+                                                <div className="grid grid-cols-3 gap-4 md:gap-6">
                                                     <button
-                                                        onClick={() => {
-                                                            if (data.hero_action === 'wifi' || (!data.hero_action && data.wifi_ssid)) {
-                                                                const newState = !isAccordionOpen;
-                                                                setIsAccordionOpen(newState);
-                                                                if (!newState) setWifiStep(1);
-                                                            } else {
-                                                                handleHeroClick();
-                                                            }
-                                                        }}
-                                                        className="w-full px-8 md:px-10 py-4 md:py-5 rounded-2xl font-black text-base md:text-lg flex items-center justify-center gap-4 hover:scale-105 transition-all active:scale-95 group"
-                                                        style={{
-                                                            background: 'linear-gradient(135deg, var(--theme-primary), color-mix(in srgb, var(--theme-primary) 70%, black))',
-                                                            boxShadow: '0 15px 50px -10px color-mix(in srgb, var(--theme-primary) 50%, transparent)',
-                                                            color: 'var(--theme-text-on-primary)'
-                                                        }}
+                                                        onClick={() => window.location.href = `tel:${data.celular}`}
+                                                        className="flex flex-col items-center justify-center gap-3 py-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--theme-primary)] transition-all group shadow-xl"
                                                     >
-                                                        {getHeroButtonIcon()}
-                                                        <span>{getHeroButtonText()}</span>
-                                                        {(data.hero_action === 'wifi' || (!data.hero_action && data.wifi_ssid)) && (
-                                                            <motion.div
-                                                                animate={{ rotate: isAccordionOpen ? 180 : 0 }}
-                                                                transition={{ duration: 0.3 }}
-                                                            >
-                                                                <ChevronDown size={20} />
-                                                            </motion.div>
-                                                        )}
+                                                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)] group-hover:scale-110 transition-transform">
+                                                            <Phone size={24} />
+                                                        </div>
+                                                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/70">Llamar</span>
                                                     </button>
 
-                                                    <AnimatePresence>
-                                                        {isAccordionOpen && (data.hero_action === 'wifi' || (!data.hero_action && data.wifi_ssid)) && (
-                                                            <motion.div
-                                                                initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                                                                animate={{ height: "auto", opacity: 1, marginTop: 16 }}
-                                                                exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                                                                className="overflow-hidden bg-[var(--theme-bg)] text-white rounded-3xl border border-[var(--theme-primary)]/30 shadow-2xl shadow-[var(--theme-primary)]/20 relative"
-                                                            >
-                                                                <div className="p-5 md:p-6 flex flex-col gap-6 text-left bg-gradient-to-b from-[var(--theme-primary)]/10 to-transparent">
-                                                                    {showStep1 && (
-                                                                        <motion.div 
-                                                                            initial={false}
-                                                                            animate={{ opacity: 1, scale: 1 }}
-                                                                            className={cn("flex flex-col gap-2 transition-all duration-500", wifiStep > 1 && "opacity-50 grayscale-[0.5]")}
-                                                                        >
-                                                                            <div className="flex items-center justify-between">
-                                                                                <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[var(--theme-primary)] flex items-center gap-2">
-                                                                                    <span className="bg-[var(--theme-primary)] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">1</span> 
-                                                                                    {data.hero_step1_title || "Descarga Nuestro Contacto"}
-                                                                                </h3>
-                                                                                {wifiStep > 1 && <CheckCircle size={16} className="text-[#25D366]" />}
-                                                                            </div>
-                                                                            {data.hero_step1_text && (
-                                                                                <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
-                                                                                    {data.hero_step1_text}
-                                                                                </p>
-                                                                            )}
-                                                                            <button 
-                                                                                onClick={async () => {
-                                                                                    await downloadVCF();
-                                                                                    setWifiStep(nextAfterStep1);
-                                                                                }}
-                                                                                className={cn(
-                                                                                    "w-full px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-1",
-                                                                                    wifiStep === 1 ? "bg-[var(--theme-primary)] text-white shadow-lg shadow-[var(--theme-primary)]/30 scale-[1.02]" : "bg-white/5 text-white/40 border border-white/10"
-                                                                                )}
-                                                                                disabled={wifiStep > 1}
-                                                                            >
-                                                                                <Download size={18} />
-                                                                                <span id="btn-download-text">Descargar .vcf</span>
-                                                                            </button>
-                                                                        </motion.div>
-                                                                    )}
-                                                                    
-                                                                    {showStep2 && (
-                                                                        <AnimatePresence>
-                                                                            {(wifiStep >= 2 || !showStep1) && (
-                                                                                <motion.div 
-                                                                                    initial={{ height: 0, opacity: 0 }}
-                                                                                    animate={{ height: "auto", opacity: 1 }}
-                                                                                    className={cn("flex flex-col gap-2 transition-all duration-500", wifiStep > 2 && "opacity-50 grayscale-[0.5]")}
-                                                                                >
-                                                                                    <div className="flex items-center justify-between">
-                                                                                        <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[var(--theme-primary)] flex items-center gap-2">
-                                                                                            <span className="bg-[var(--theme-primary)] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{showStep1 ? 2 : 1}</span> 
-                                                                                            {data.hero_step2_title || "Asegurate de importar el contacto"}
-                                                                                        </h3>
-                                                                                        {wifiStep > 2 && <CheckCircle size={16} className="text-[#25D366]" />}
-                                                                                    </div>
-                                                                                    <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
-                                                                                        {data.hero_step2_text || "Abre el archivo descargado y guárdanos en tu agenda para activar la conexión."}
-                                                                                    </p>
-                                                                                    {wifiStep === 2 && (
-                                                                                        <button 
-                                                                                            onClick={() => setWifiStep(nextAfterStep2)}
-                                                                                            className="w-full bg-[var(--theme-primary)] text-white px-4 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all mt-2 animate-bounce-subtle"
-                                                                                        >
-                                                                                            Ya guardé el contacto
-                                                                                        </button>
-                                                                                    )}
-                                                                                </motion.div>
-                                                                            )}
-                                                                        </AnimatePresence>
-                                                                    )}
+                                                    <button
+                                                        onClick={handleWhatsapp}
+                                                        className="flex flex-col items-center justify-center gap-3 py-8 rounded-[2rem] bg-[var(--theme-primary)] border border-[var(--theme-primary)]/20 hover:scale-105 transition-all shadow-[0_20px_40px_-10px_rgba(246,103,57,0.5)] group"
+                                                    >
+                                                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-white/20 flex items-center justify-center text-white group-hover:scale-110 transition-transform">
+                                                            <MessageSquare size={24} />
+                                                        </div>
+                                                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white">Mensaje</span>
+                                                    </button>
 
-                                                                    {showStep3 && (
-                                                                        <AnimatePresence>
-                                                                            {(wifiStep >= 3 || (!showStep1 && !showStep2)) && (
-                                                                                <motion.div 
-                                                                                    initial={{ height: 0, opacity: 0 }}
-                                                                                    animate={{ height: "auto", opacity: 1 }}
-                                                                                    className="flex flex-col gap-2"
-                                                                                >
-                                                                                    <h3 className="text-xs md:text-sm font-black uppercase tracking-wider text-[var(--theme-primary)] flex items-center gap-2">
-                                                                                        <span className="bg-[var(--theme-primary)] text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px]">{ (showStep1 && showStep2) ? 3 : ((showStep1 || showStep2) ? 2 : 1) }</span> 
-                                                                                        {data.hero_step3_title || "Obtén tu Promoción"}
-                                                                                    </h3>
-                                                                                    {data.hero_step3_text && (
-                                                                                        <p className="text-xs md:text-sm font-medium text-white/80 bg-white/5 p-3 rounded-xl border border-white/5 leading-relaxed mt-1">
-                                                                                            {data.hero_step3_text}
-                                                                                        </p>
-                                                                                    )}
-                                                                                    <div className="bg-[var(--theme-bg)]/50 p-4 rounded-xl border border-[var(--theme-primary)]/30 space-y-3 mt-1 relative overflow-hidden shadow-[0_0_20px_rgba(246,103,57,0.1)]">
-                                                                                        <div className="absolute top-0 right-0 text-[var(--theme-primary)]/10 -mt-2 -mr-2">
-                                                                                            <Zap size={60} />
-                                                                                        </div>
-                                                                                        <div className="relative z-10">
-                                                                                            <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Título de la Oferta</p>
-                                                                                            <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-white selection:bg-[var(--theme-primary)]">{data.wifi_ssid}</p>
-                                                                                        </div>
-                                                                                        {data.wifi_password && (
-                                                                                            <div className="relative z-10">
-                                                                                                <p className="text-[10px] uppercase font-bold text-white/40 mb-1">Detalle / Código</p>
-                                                                                                <div className="flex items-center gap-2">
-                                                                                                    <p className="font-bold text-sm md:text-base break-all bg-white/5 py-1 px-2 rounded-md inline-block text-[var(--theme-primary)] selection:bg-white">{data.wifi_password}</p>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        )}
-                                                                                    </div>
-                                                                                </motion.div>
-                                                                            )}
-                                                                        </AnimatePresence>
-                                                                    )}
-                                                                </div>
-                                                            </motion.div>
-                                                        )}
-                                                    </AnimatePresence>
+                                                    <button
+                                                        onClick={downloadVCF}
+                                                        className="flex flex-col items-center justify-center gap-3 py-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--theme-primary)] transition-all group shadow-xl"
+                                                    >
+                                                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)] group-hover:scale-110 transition-transform">
+                                                            <UserPlus size={24} />
+                                                        </div>
+                                                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-white/70">Guardar</span>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -693,11 +556,11 @@ export default function ClassicTemplate({
                                                 <div className="bg-gradient-to-br from-white/[0.05] to-transparent p-6 md:p-8 rounded-[32px] border border-white/10 relative overflow-hidden group">
                                                     <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--theme-primary)]/10 rounded-full blur-[80px] -mr-32 -mt-32 transition-opacity group-hover:opacity-100 opacity-50 pointer-events-none" />
                                                     
-                                                    <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-[var(--theme-primary)] mb-5 flex items-center gap-3 relative z-10">
+                                                    <h4 className="text-[10px] sm:text-xs font-display-condensed uppercase tracking-[0.3em] text-[var(--theme-primary)] mb-5 flex items-center gap-3 relative z-10">
                                                         <span className="w-6 h-6 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
                                                             <User size={12} className="text-[var(--theme-primary)]" />
                                                         </span>
-                                                        PERFIL PROFESIONAL
+                                                        Perfil profesional
                                                     </h4>
                                                     
                                                     <div className="relative z-10">
@@ -710,89 +573,137 @@ export default function ClassicTemplate({
                                                 </div>
                                             )}
 
+                                            {(() => {
+                                                const youtubeId = getYouTubeID(data.youtube_video_url) || getYouTubeID(data.youtube);
+                                                const tiktokId = getTikTokID(data.tiktok) || getTikTokID(data.youtube_video_url);
+
+                                                if (youtubeId || tiktokId) {
+                                                    return (
+                                                        <div className="mt-12 md:mt-20">
+                                                            <div className="flex items-center justify-between mb-8">
+                                                                <h4 className="text-[10px] sm:text-xs font-display-condensed uppercase tracking-[0.3em] text-[var(--theme-primary)] flex items-center gap-3">
+                                                                    <span className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
+                                                                        <Zap size={14} className="text-[var(--theme-primary)]" />
+                                                                    </span>
+                                                                    Spotlight cinemático
+                                                                </h4>
+                                                                <span className="px-4 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-black tracking-widest text-white/30 uppercase">
+                                                                    Foto films exclusive
+                                                                </span>
+                                                            </div>
+                                                            <div className={cn(
+                                                                "w-full rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] border border-white/10 bg-black/60 relative group",
+                                                                youtubeId ? "aspect-video" : "max-w-md mx-auto aspect-[9/16]"
+                                                            )}>
+                                                                <iframe
+                                                                    width="100%"
+                                                                    height="100%"
+                                                                    src={youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : `https://www.tiktok.com/embed/v2/${tiktokId}`}
+                                                                    title="Video player"
+                                                                    frameBorder="0"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                    allowFullScreen
+                                                                    className="w-full h-full scale-[1.01]"
+                                                                ></iframe>
+                                                                <div className="absolute inset-0 pointer-events-none border-[1px] border-white/5 rounded-[inherit]" />
+                                                                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/20 to-transparent" />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+
                                             {data.productos_servicios && (!showCatalog || !data.catalogo_json) && (
-                                                <div className="mt-4">
-                                                    <div className="flex items-center justify-between mb-6">
-                                                        <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] text-[var(--theme-primary)] flex items-center gap-3">
-                                                            <span className="w-6 h-6 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
-                                                                <Briefcase size={12} className="text-[var(--theme-primary)]" />
+                                                <div className="mt-12">
+                                                    <div className="flex items-center justify-between mb-10">
+                                                        <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-[var(--theme-primary)] flex items-center gap-3">
+                                                            <span className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
+                                                                <Briefcase size={14} className="text-[var(--theme-primary)]" />
                                                             </span>
-                                                            SOLUCIONES DESTACADAS
+                                                            Soluciones destacadas
                                                         </h4>
-                                                        <span className="hidden md:inline-flex px-3 py-1 bg-white/5 rounded-full text-[9px] font-black uppercase tracking-widest text-white/40 border border-white/5">
-                                                            Especialidad
+                                                        <span className="hidden md:inline-flex px-4 py-1.5 bg-white/5 rounded-full text-[9px] font-black uppercase tracking-widest text-white/40 border border-white/5">
+                                                            Nuestras especialidades
                                                         </span>
                                                     </div>
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm md:text-base font-medium leading-relaxed text-white/80 max-w-4xl">
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                                         {(() => {
                                                             const allProducts = data.productos_servicios
                                                                 .split(data.productos_servicios.includes('\n') ? '\n' : ',')
                                                                 .map((item: string) => item.trim())
                                                                 .filter((item: string) => item !== '');
                                                             
-                                                            const visibleProducts = isProductsExpanded ? allProducts : allProducts.slice(0, 8);
+                                                            const visibleProducts = isProductsExpanded ? allProducts : allProducts.slice(0, 4);
                                                             
+                                                            // Curated visual images for Foto Films context
+                                                            const catImages = [
+                                                                "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2070&auto=format&fit=crop", // Camera
+                                                                "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop", // Laptop/Design
+                                                                "https://images.unsplash.com/photo-1492724441997-5dc865305da7?q=80&w=2070&auto=format&fit=crop", // Printing
+                                                                "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?q=80&w=2070&auto=format&fit=crop", // Video
+                                                                "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=2070&auto=format&fit=crop"  // Studio
+                                                            ];
+
                                                             return (
                                                                 <>
                                                                     {visibleProducts.map((line: string, index: number) => {
-                                                                        const lowerLine = line.toLowerCase();
-                                                                        let emoji = '🔹';
-                                                                        const keywordEmojis: Record<string, string> = {
-                                                                            'costilla': '🍖', 'costillas': '🍖', 'parrilla': '🔥', 'parrillada': '🔥', 'asado': '🥩', 'asados': '🥩', 'cerdo': '🐖', 'res': '🥩',
-                                                                            'chuleta': '🥩', 'chuletón': '🥩', 'lomo': '🥩', 'pechuga': '🍗', 'pollo': '🍗',
-                                                                            'chorizo': '🌭', 'ternera': '🥩', 'alita': '🍗', 'alitas': '🍗', 'ubre': '🐄', 'carne': '🥩', 'carnes': '🥩',
-                                                                            'comida': '🍔', 'bebida': '🍹', 'bebidas': '🍹', 'cerveza': '🍺', 'cervezas': '🍺', 'vino': '🍷', 'postre': '🍰', 
-                                                                            'helado': '🍦', 'cafe': '☕', 'café': '☕', 'desayuno': '🍳', 'almuerzo': '🍲',
-                                                                            'tecnologia': '💻', 'software': '💻', 'app': '📱', 'web': '🌐', 'marketing': '📈',
-                                                                            'venta': '💰', 'ventas': '💰', 'asesoria': '🤝', 'consultoria': '🤝', 'diseño': '🎨', 'foto': '📸',
-                                                                            'video': '🎥', 'musica': '🎵', 'evento': '🎉', 'eventos': '🎉', 'salud': '⚕️', 'medico': '🩺',
-                                                                            'dental': '🦷', 'spa': '💆‍♀️', 'belleza': '💅', 'cabello': '💇‍♀️', 'ropa': '👗',
-                                                                            'zapato': '👞', 'zapatos': '👞', 'deporte': '⚽', 'gym': '🏋️‍♂️', 'fitness': '💪', 'curso': '📚', 'cursos': '📚',
-                                                                            'abogado': '⚖️', 'auto': '🚗', 'autos': '🚗', 'mecanica': '🔧', 'limpieza': '🧹', 'piscina': '🏊‍♂️',
-                                                                            'casa': '🏠', 'inmueble': '🏢', 'viaje': '✈️', 'viajes': '✈️', 'hotel': '🏨', 'mascota': '🐾', 'mascotas': '🐾',
-                                                                            'perro': '🐕', 'gato': '🐈', 'veterinaria': '🏥', 'delivery': '🛵', 'envio': '📦', 'tarjeta': '🪪', 'digital': '📱', 'qr': '🔳'
-                                                                        };
-
-                                                                        const words = lowerLine.split(/[\s\W]+/);
-                                                                        for (const [key, emj] of Object.entries(keywordEmojis)) {
-                                                                            if (words.includes(key)) {
-                                                                                emoji = emj;
-                                                                                break;
-                                                                            }
-                                                                        }
-
-                                                                        const emojiExtractRegex = /^[\s\-•*]*((?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff]|[\u0023-\u0039]\ufe0f?\u20e3|\u3299|\u3297|\u303d|\u3030|\u24c2|\ud83c[\udd70-\udd71]|\ud83c[\udd7e-\udd7f]|\ud83c\udd8e|\ud83c[\udd91-\udd9a]|\ud83c[\udde6-\uddff]|\ud83c[\ude01-\ude02]|\ud83c\ude1a|\ud83c\ude2f|\ud83c[\ude32-\ude3a]|\ud83c[\ude50-\ude51]|\u203c|\u2049|[\u25aa-\u25ab]|\u25b6|\u25c0|[\u25fb-\u25fe]|\u00a9|\u00ae|\u2122|\u2139|\ud83c\udc04|[\u2600-\u26FF]|\u2b05|\u2b06|\u2b07|\u2b1b|\u2b1c|\u2b50|\u2b55|\u231a|\u231b|\u2328|\u23cf|[\u23e9-\u23f3]|[\u23f8-\u23fa]|\ud83c\udccf|\u2934|\u2935|[\u2190-\u21ff]|\u200d|\ufe0f)+)\s*/;
-                                                                        const emojiMatch = line.match(emojiExtractRegex);
-                                                                        const finalEmoji = emojiMatch ? emojiMatch[1] : emoji;
-                                                                        const cleanText = emojiMatch 
-                                                                            ? line.replace(emojiExtractRegex, '') 
-                                                                            : line.replace(/^[-•*]\s*/, '');
-                                                                        
+                                                                        const cleanText = line.replace(/^[-•*]\s*/, '');
                                                                         return (
-                                                                            <div key={index} className="group relative flex flex-col gap-3 bg-gradient-to-br from-white/[0.08] to-white/[0.02] p-4 md:p-5 rounded-[24px] border border-white/10 hover:border-[var(--theme-primary)]/50 transition-all duration-300 hover:shadow-[0_10px_30px_-10px_var(--theme-primary)] hover:-translate-y-1 overflow-hidden">
-                                                                                <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out pointer-events-none" />
-                                                                                <div className="flex items-center gap-4 z-10 w-full">
-                                                                                    <span className="shrink-0 text-xl md:text-2xl w-10 h-10 md:w-12 md:h-12 rounded-[16px] bg-gradient-to-br from-[var(--theme-primary)]/20 to-white/5 border border-[var(--theme-primary)]/20 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform duration-300 text-[var(--theme-primary)]">
-                                                                                        {finalEmoji}
-                                                                                    </span>
-                                                                                    <div className="flex flex-col flex-1 justify-center">
-                                                                                        <span className="capitalize font-bold text-[11px] md:text-base text-white/90 group-hover:text-white transition-colors leading-tight">
-                                                                                            {cleanText}
+                                                                            <motion.div 
+                                                                                key={index} 
+                                                                                initial={{ opacity: 0, y: 20 }}
+                                                                                whileInView={{ opacity: 1, y: 0 }}
+                                                                                viewport={{ once: true }}
+                                                                                transition={{ delay: index * 0.1 }}
+                                                                                whileHover={{ y: -10 }}
+                                                                                className="group relative h-[300px] md:h-[400px] rounded-[32px] overflow-hidden border border-white/10 bg-black/40 shadow-2xl"
+                                                                            >
+                                                                                <img 
+                                                                                    src={catImages[index % catImages.length]} 
+                                                                                    alt={cleanText}
+                                                                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-700"
+                                                                                />
+                                                                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                                                                                
+                                                                                <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                                                                                    <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                                                                        <span className="px-3 py-1 bg-[var(--theme-primary)] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-4 inline-block shadow-lg shadow-[var(--theme-primary)]/40">
+                                                                                            Categoría
                                                                                         </span>
+                                                                                        <h3 className="text-2xl md:text-3xl lg:text-4xl font-display-condensed font-black text-white uppercase italic leading-none mb-4 break-words">
+                                                                                            {cleanText}
+                                                                                        </h3>
+                                                                                        <div className="h-0.5 w-12 bg-[var(--theme-primary)] group-hover:w-full transition-all duration-700 mb-6" />
+                                                                                        
+                                                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                                                                            <button 
+                                                                                                onClick={handleWhatsapp}
+                                                                                                className="w-full py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+                                                                                            >
+                                                                                                Consultar ahora
+                                                                                            </button>
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
-                                                                            </div>
+
+                                                                                {/* Decorative Icon */}
+                                                                                <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                                                                    <Zap size={20} className="text-[var(--theme-primary)]" />
+                                                                                </div>
+                                                                            </motion.div>
                                                                         );
                                                                     })}
                                                                     
-                                                                    {allProducts.length > 8 && (
-                                                                        <div className="col-span-full mt-2 flex justify-center">
+                                                                    {allProducts.length > 4 && (
+                                                                        <div className="col-span-full mt-12 flex justify-center">
                                                                             <button 
                                                                                 onClick={() => setIsProductsExpanded(!isProductsExpanded)}
-                                                                                className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-bold tracking-widest uppercase transition-all"
+                                                                                className="flex items-center gap-3 px-10 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black tracking-[0.4em] uppercase transition-all hover:scale-105 active:scale-95"
                                                                             >
-                                                                                {isProductsExpanded ? 'Mostrar menos' : `Ver más (${allProducts.length - 8})`}
-                                                                                <ChevronDown size={16} className={cn("transition-transform duration-300", isProductsExpanded && "rotate-180")} />
+                                                                                {isProductsExpanded ? 'Cerrar galería' : `Ver todo el portafolio (${allProducts.length - 4})`}
+                                                                                <ChevronDown size={20} className={cn("transition-transform duration-500", isProductsExpanded && "rotate-180")} />
                                                                             </button>
                                                                         </div>
                                                                     )}
@@ -807,13 +718,14 @@ export default function ClassicTemplate({
                                 </div>
                             </motion.div>
 
-                            <div className="hidden xl:flex xl:col-span-3 flex-col gap-6 w-full order-2 xl:sticky xl:top-24 xl:self-start h-fit">
-                                {renderSocialSidebar()}
-                            </div>
+
                         </div>
 
-                        {(showCatalog || data?.plan === 'catalog') && data.catalogo_json && (
-                            <div className="lg:col-span-12 order-2 xl:order-3 mt-6 md:mt-24">
+                        {/* Slot placeholder — el contenido real se renderiza fuera del grid */}
+
+                        {/* Catálogo de Productos/Servicios (Si no viene por Slot) */}
+                        {!afterExperienceSlot && (showCatalog || data?.plan === 'catalog') && data.catalogo_json && (
+                            <div className="lg:col-span-12 order-2 xl:order-4 mt-6 md:mt-24">
                                 <CatalogGallery 
                                     data={safeParse(data.catalogo_json, { products: [], categories: [] })} 
                                     whatsapp={data.whatsapp}
@@ -823,7 +735,7 @@ export default function ClassicTemplate({
                         )}
 
                         {(data.plan === 'business' || data.plan === 'catalog') && data.google_rating && (
-                            <div className="lg:col-span-12 order-2 xl:order-4 mt-8 md:mt-16">
+                            <div className="lg:col-span-12 order-3 xl:order-4 mt-8 md:mt-16 w-full">
                                 <motion.div 
                                     initial={{ opacity: 0, y: 40, scale: 0.95 }}
                                     whileInView={{ opacity: 1, y: 0, scale: 1 }}
@@ -849,7 +761,7 @@ export default function ClassicTemplate({
                                         style={{ color: 'var(--theme-primary)' }}
                                     >
                                         <span className="w-8 h-[1px]" style={{ background: 'color-mix(in srgb, var(--theme-primary) 30%, transparent)' }}></span>
-                                        TESTIMONIO DE NUESTROS CLIENTES
+                                        Testimonio de nuestros clientes
                                         <span className="w-8 h-[1px]" style={{ background: 'color-mix(in srgb, var(--theme-primary) 30%, transparent)' }}></span>
                                     </motion.h4>
 
@@ -948,18 +860,13 @@ export default function ClassicTemplate({
                                             >
                                                 <Smartphone size={14} />
                                             </div>
-                                            VER TODAS LAS RESEÑAS Y CÓMO LLEGAR
+                                            Ver todas las reseñas y cómo llegar
                                         </motion.a>
                                     )}
                                 </motion.div>
                             </div>
                         )}
 
-                        <div className="lg:col-span-12 xl:hidden order-3 w-full">
-                            {renderSocialSidebar()}
-                        </div>
-                    </div>
-                </div>
 
                 {(data.google_business || data.address || data.direccion) && (() => {
                     const isGoogleLink = data.google_business?.startsWith('http');
@@ -974,61 +881,75 @@ export default function ClassicTemplate({
                             : (data.google_business || addressText || businessName);
                     
                     return (
-                        <div className="mt-16 md:mt-32 w-full">
-                            <div className="max-w-6xl mx-auto px-4 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div className="lg:col-span-12 order-4 xl:order-5 mt-16 md:mt-32 w-full">
+                            <div className="max-w-6xl mx-auto px-6 mb-10 flex flex-col items-center text-center gap-8">
                                 <div>
-                                    <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] flex items-center gap-2 mb-2">
-                                        <Zap size={14} /> UBICACIÓN ESTRATÉGICA
+                                    <div className="inline-flex items-center gap-2 bg-[var(--theme-primary)] text-white px-4 py-1.5 rounded-full shadow-lg mb-4">
+                                        <span className="flex h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                                        <span className="text-[9px] font-black uppercase tracking-[0.2em]">Encuéntranos</span>
+                                    </div>
+                                    <h4 className="text-3xl md:text-5xl font-black tracking-tighter text-white italic leading-none mb-4">
+                                        Ubicación estratégica
                                     </h4>
-                                    <p className="text-white/50 text-[10px] md:text-sm font-bold uppercase tracking-wider max-w-xl">
-                                        {data.direccion || data.address || "Visítanos en nuestra ubicación oficial"}
+                                    <p className="text-white/50 text-sm md:text-base font-medium max-w-xl leading-relaxed">
+                                        {data.direccion || data.address || "Visítanos en nuestra ubicación oficial para una experiencia personalizada."}
                                     </p>
                                 </div>
                                 <a 
                                     href={isGoogleLink ? data.google_business : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName)}`}
                                     target="_blank" 
                                     rel="noopener noreferrer"
-                                    className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-6 py-3 rounded-2xl text-[10px] md:text-xs font-black uppercase tracking-widest flex items-center gap-3 transition-all hover:scale-105 group whitespace-nowrap self-start md:self-center"
+                                    className="bg-white text-navy px-10 py-6 rounded-full text-sm font-black uppercase tracking-widest flex items-center gap-4 transition-all hover:scale-105 shadow-2xl hover:bg-[var(--theme-primary)] hover:text-white group"
                                 >
-                                    <div className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)] group-hover:scale-110 transition-transform">
-                                        <Smartphone size={14} />
-                                    </div>
-                                    VER EN GOOGLE MAPS
+                                    <Smartphone size={18} />
+                                    Trazar ruta
                                 </a>
                             </div>
                             
-                            <div className="w-full h-[400px] md:h-[600px] relative">
-                                <iframe
-                                    width="100%"
-                                    height="100%"
-                                    frameBorder="0"
-                                    style={{ border: 0, filter: 'grayscale(1) invert(0.9) contrast(1.2) brightness(0.8)' }}
-                                    src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`}
-                                    allowFullScreen
-                                ></iframe>
-                                <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-[var(--theme-bg)] via-transparent to-[var(--theme-bg)]" />
-                                <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-[var(--theme-bg)] via-transparent to-[var(--theme-bg)] opacity-50" />
+                            <div className="max-w-7xl mx-auto px-4">
+                                <div className="w-full h-[450px] md:h-[650px] relative rounded-[3.5rem] overflow-hidden border border-white/20 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] bg-navy/40 backdrop-blur-md">
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        frameBorder="0"
+                                        style={{ border: 0, filter: 'grayscale(0.6) contrast(1.1) brightness(0.8)' }}
+                                        src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
+                                            ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
+                                            : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
+                                        }
+                                        allowFullScreen
+                                        title="Ubicación en Google Maps"
+                                    ></iframe>
+                                    <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/10 rounded-[inherit]" />
+                                    <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-navy/20 via-transparent to-navy/40" />
+                                </div>
                             </div>
                         </div>
                     );
                 })()}
 
-                {/* Catálogo de Productos/Servicios */}
-                {data.catalogo_json && (
-                    <div id="catalogo" className="mt-16 md:mt-32 max-w-7xl mx-auto px-4">
-                        <div className="mb-12">
-                            <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] flex items-center gap-2 mb-2">
-                                <Utensils size={14} /> CATÁLOGO EXCLUSIVO
-                            </h4>
-                            <p className="text-white/50 text-[10px] md:text-sm font-bold uppercase tracking-wider">
-                                Explora nuestra selección premium de productos y servicios
-                            </p>
+                        <div className="lg:col-span-12 order-3 w-full mt-16 md:mt-32">
+                            {renderSocialSidebar()}
                         </div>
-                        <CatalogGallery 
-                            data={safeParse(data.catalogo_json, { products: [], categories: [] })} 
-                            whatsapp={data.whatsapp}
-                            onLightboxToggle={setIsLightboxOpen}
-                        />
+                    </div>
+                </div>
+
+                {/* ─── Slot Full-Width: rompe el patrón Navy con blanco ─── */}
+                {afterExperienceSlot && (
+                    <div className="w-full mt-12 md:mt-20">
+                        {afterExperienceSlot}
+                    </div>
+                )}
+
+                {beforeMarqueeSlot && (
+                    <div className="w-full max-w-7xl mx-auto px-4 mt-16 md:mt-32">
+                        {beforeMarqueeSlot}
+                    </div>
+                )}
+
+                {afterMarqueeSlot && (
+                    <div className="w-full mt-16 md:mt-32">
+                        {afterMarqueeSlot}
                     </div>
                 )}
 
