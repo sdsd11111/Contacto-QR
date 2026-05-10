@@ -12,6 +12,7 @@ import HedkandiTemplate from "@/components/templates/HedkandiTemplate";
 import IndustrialTemplate from "@/components/templates/IndustrialTemplate";
 import CarroceriasTemplate from "@/components/templates/CarroceriasTemplate";
 import { MenuTabs } from "@/components/kits";
+import CatalogGallery from "@/components/card/CatalogGallery";
 import { safeParse } from "@/lib/jsonUtils";
 import { getYouTubeID, getTikTokID } from "@/lib/videoUtils";
 import type { ClassicTemplateProps, MinimalTemplateProps, HedkandiTemplateProps } from "@/components/templates/types";
@@ -257,6 +258,18 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         />
     ) : null;
 
+    // ─── Catálogo: parsear una sola vez ───────────────────────────────────────────
+    const hasCatalog = (showCatalog || data?.plan === 'catalog' || data?.plan === 'business') && data?.catalogo_json;
+    const catalogNode = hasCatalog ? (
+        <div id="catalogo" className="w-full bg-[var(--theme-bg)] max-w-7xl mx-auto px-4 py-8">
+            <CatalogGallery 
+                data={safeParse(data.catalogo_json, { products: [], categories: [] })} 
+                whatsapp={data.whatsapp}
+                onLightboxToggle={setIsLightboxOpen}
+            />
+        </div>
+    ) : null;
+
     // ─── Selección de plantilla ───────────────────────────────────────────────
     const renderTemplate = () => {
         // Extraer overrides (VIP Protocol)
@@ -266,7 +279,18 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             case 'showcase':
             case 'hedkandi':
                 // overrides BEFORE slot so the menu slot always wins
-                return <HedkandiTemplate {...baseProps} {...overrides} afterExperienceSlot={menuNode} />;
+                return (
+                    <HedkandiTemplate 
+                        {...baseProps} 
+                        {...overrides} 
+                        afterExperienceSlot={
+                            <>
+                                {menuNode}
+                                {catalogNode}
+                            </>
+                        } 
+                    />
+                );
             case 'luxury':
             case 'luxury_minimal':
             case 'minimal':
