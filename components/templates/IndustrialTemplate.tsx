@@ -6,7 +6,7 @@ import { Share2, MapPin, Phone, Mail, Instagram, Facebook, Link as LinkIcon, Dow
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 import CatalogProGallery from '../card/CatalogProGallery';
 
-export default function IndustrialTemplate({ data }: { data: any }) {
+export default function IndustrialTemplate({ data, afterExperienceSlot }: { data: any, afterExperienceSlot?: React.ReactNode }) {
     if (!data) return null;
 
     // Default values if data is missing
@@ -261,6 +261,69 @@ export default function IndustrialTemplate({ data }: { data: any }) {
                     </div>
                 </section>
             )}
+
+            {/* ─── Slot Full-Width: rompe el patrón con blanco ─── */}
+            {afterExperienceSlot && (
+                <div className="w-full bg-white relative z-20">
+                    {afterExperienceSlot}
+                </div>
+            )}
+
+            {/* 5. LOCATION / MAP */}
+            {(data.google_business || data.address || data.direccion) && (() => {
+                const isGoogleLink = data.google_business?.startsWith('http');
+                const businessName = data.nombre_negocio || data.nombre || '';
+                const addressText = data.direccion || data.address || '';
+                const coordMatch = data.google_business?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                const hasCoords = coordMatch && coordMatch.length >= 3;
+                const mapQuery = hasCoords 
+                    ? `${coordMatch[1]},${coordMatch[2]}` 
+                    : isGoogleLink 
+                        ? `${businessName} ${addressText}`.trim() 
+                        : (data.google_business || addressText || businessName);
+                
+                return (
+                    <section id="ubicacion" className="py-24 px-4 bg-white relative">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex flex-col md:flex-row items-center gap-12">
+                                <div className="w-full md:w-1/2">
+                                    <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Centro de Operaciones</h4>
+                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight mb-6">Nuestra <span className="text-[#FF5C00]">Ubicación</span></h2>
+                                    <p className="text-navy/60 font-medium leading-relaxed max-w-lg mb-8">
+                                        {data.direccion || data.address || "Visítanos en nuestra ubicación oficial para una atención directa y especializada."}
+                                    </p>
+                                    <a 
+                                        href={isGoogleLink ? data.google_business : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName)}`}
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-3 bg-navy text-white px-8 py-4 font-black uppercase text-sm tracking-widest hover:bg-[#FF5C00] transition-colors"
+                                    >
+                                        <MapPin size={18} />
+                                        Trazar Ruta
+                                    </a>
+                                </div>
+                                <div className="w-full md:w-1/2">
+                                    <div className="w-full h-[400px] md:h-[500px] relative border-4 border-navy/5 shadow-2xl overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-16 h-16 bg-[#FF5C00] z-10 flex items-center justify-center transform translate-x-8 -translate-y-8 rotate-45 group-hover:scale-110 transition-transform" />
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            style={{ border: 0, filter: 'grayscale(1) contrast(1.2)' }}
+                                            src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
+                                                ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
+                                                : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
+                                            }
+                                            allowFullScreen
+                                            title="Ubicación en Google Maps"
+                                        ></iframe>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                );
+            })()}
 
             {/* 5. FOOTER / CONTACT */}
             <footer className="bg-[#001229] pt-20 pb-10 px-4 text-white">

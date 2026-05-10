@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 
 import VCardEditModal from '@/components/card/VCardEditModal';
 import ClassicTemplate from "@/components/templates/ClassicTemplate";
-import MinimalTemplate from "@/components/templates/MinimalTemplate";
 import HedkandiTemplate from "@/components/templates/HedkandiTemplate";
 import IndustrialTemplate from "@/components/templates/IndustrialTemplate";
 import CarroceriasTemplate from "@/components/templates/CarroceriasTemplate";
@@ -15,7 +14,7 @@ import { MenuTabs } from "@/components/kits";
 import CatalogGallery from "@/components/card/CatalogGallery";
 import { safeParse } from "@/lib/jsonUtils";
 import { getYouTubeID, getTikTokID } from "@/lib/videoUtils";
-import type { ClassicTemplateProps, MinimalTemplateProps, HedkandiTemplateProps } from "@/components/templates/types";
+import type { ClassicTemplateProps, HedkandiTemplateProps } from "@/components/templates/types";
 import type { MenuCategory } from "@/components/kits/types";
 
 // ─── Utilidades de módulo ────────────────────────────────────────────────────
@@ -207,7 +206,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     const activeSlides = rawSlides.filter((s: any) => s.active);
 
     // Props base compartidos por TODOS los templates
-    const baseProps: MinimalTemplateProps = {
+    const baseProps: any = {
         data,
         slug: slug as string,
         extractedBg,
@@ -294,9 +293,14 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             case 'luxury':
             case 'luxury_minimal':
             case 'minimal':
-                return <MinimalTemplate {...baseProps} {...overrides} />;
             case 'industrial':
-                return <IndustrialTemplate {...baseProps} {...overrides} />;
+                return (
+                    <IndustrialTemplate 
+                        {...baseProps} 
+                        {...overrides} 
+                        afterExperienceSlot={menuNode}
+                    />
+                );
             case 'carrocerias':
                 return <CarroceriasTemplate {...baseProps} {...overrides} />;
             // Templates externos (auditoría / sites existentes)

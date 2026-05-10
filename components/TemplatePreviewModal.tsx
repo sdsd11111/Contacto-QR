@@ -11,7 +11,6 @@ interface TemplatePreviewModalProps {
 
 export const TEMPLATE_DEMOS: Record<string, string> = {
     'classic': '/demo/hedkandi',
-    'luxury_minimal': '/demo/hedkandi',
     'hedkandi': '/demo/hedkandi-hype',
     'showcase': '/demo/chifa-tianjin',
     'industrial': '/demo/industrial',

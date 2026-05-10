@@ -906,8 +906,8 @@ export default function ClassicTemplate({
                                 </a>
                             </div>
                             
-                            <div className="max-w-7xl mx-auto px-4">
-                                <div className="w-full h-[450px] md:h-[650px] relative rounded-[3.5rem] overflow-hidden border border-white/20 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] bg-navy/40 backdrop-blur-md">
+                            <div className="max-w-5xl mx-auto px-4 w-full">
+                                <div className="w-full h-[400px] md:h-[500px] relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] bg-navy/40 backdrop-blur-md">
                                     <iframe
                                         width="100%"
                                         height="100%"

@@ -122,7 +122,7 @@ export default function MenuTabs({
                 {/* Contenedor de tabs con scroll horizontal nativo */}
                 <div
                     ref={tabsRef}
-                    className="flex gap-3 md:gap-4 overflow-x-auto px-2 md:px-10 scrollbar-hide snap-x snap-mandatory"
+                    className="flex md:justify-center gap-3 md:gap-4 overflow-x-auto px-2 md:px-10 scrollbar-hide snap-x snap-mandatory"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {categories.map((cat, idx) => (
