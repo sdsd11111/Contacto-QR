@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Smartphone, Zap, CheckCircle2, Star, ShieldCheck, Phone, FileText, Edit, Mic, Trash2, ArrowRight, XCircle, TrendingDown, Users, QrCode, Download, Globe, Share2, Palette, RefreshCw, MapPin, Mail, Tag, MessageSquare } from 'lucide-react';
+import { Smartphone, Zap, CheckCircle2, Star, Phone, FileText, Edit, Mic, Trash2, ArrowRight, XCircle, Users, QrCode, Download, Globe, Share2, RefreshCw, MapPin, Mail, Tag, MessageSquare, ShieldCheck, TrendingDown } from 'lucide-react';
 import { PricingSection } from "@/components/PricingSection/PricingSection";
 import { AdvancedFAQ, FAQItem } from "@/components/AdvancedFAQ/AdvancedFAQ";
 import Link from "next/link";
@@ -72,7 +72,33 @@ const INCLUDED_TABS = [
         ]
     },
 ];
-
+const CONTACTO_DIGITAL_FAQS: FAQItem[] = [
+    {
+        id: "faq-diff-digital",
+        tag: "DIFERENCIA",
+        q: "¿En qué se diferencia de un QR gratuito de internet?",
+        bullets: [
+            "El QR gratis es un link anónimo; ActivaQR es Identidad vCard 3.0.",
+            "Inyecta tu foto, nombre y redes en la agenda en 20 segundos.",
+            "No es un enlace muerto, es tu presencia profesional instalada."
+        ],
+        videoSourceType: "bunny",
+        videoUrl: "b473d784-04bc-47f4-bcae-c2bd51752b31",
+        ctaText: "Quiero mi Identidad Digital"
+    },
+    {
+        id: "faq-changes-digital",
+        tag: "MEJORAS",
+        q: "¿Qué pasa si cambio de teléfono o de redes?",
+        bullets: [
+            "Tu QR físico es eterno, nunca tienes que volver a imprimir.",
+            "Actualizas tus datos desde el panel y se refleja al instante.",
+            "Tus clientes siempre tienen tu información vigente sin esfuerzo."
+        ],
+        videoSourceType: "bunny",
+        videoUrl: "9278c314-648f-4220-b1d4-b2c94535ffa8"
+    }
+];
 
 
 export default function PlanContactoDigitalClient() {
@@ -92,33 +118,7 @@ export default function PlanContactoDigitalClient() {
     const [isFloatingVisible, setIsFloatingVisible] = useState(true);
     const [activeIncludedTab, setActiveIncludedTab] = useState('contacto');
 
-    const CONTACTO_DIGITAL_FAQS: FAQItem[] = [
-        {
-            id: "faq-diff-digital",
-            tag: "DIFERENCIA",
-            q: "¿En qué se diferencia de un QR gratuito de internet?",
-            bullets: [
-                "El QR gratis es un link anónimo; ActivaQR es Identidad vCard 3.0.",
-                "Inyecta tu foto, nombre y redes en la agenda en 20 segundos.",
-                "No es un enlace muerto, es tu presencia profesional instalada."
-            ],
-            videoSourceType: "bunny",
-            videoUrl: "b473d784-04bc-47f4-bcae-c2bd51752b31",
-            ctaText: "Quiero mi Identidad Digital"
-        },
-        {
-            id: "faq-changes-digital",
-            tag: "MEJORAS",
-            q: "¿Qué pasa si cambio de teléfono o de redes?",
-            bullets: [
-                "Tu QR físico es eterno, nunca tienes que volver a imprimir.",
-                "Actualizas tus datos desde el panel y se refleja al instante.",
-                "Tus clientes siempre tienen tu información vigente sin esfuerzo."
-            ],
-            videoSourceType: "bunny",
-            videoUrl: "9278c314-648f-4220-b1d4-b2c94535ffa8"
-        }
-    ];
+
     const [currentSlide, setCurrentSlide] = useState(0);
     const [activeFeatureIndex, setActiveFeatureIndex] = useState(0);
     

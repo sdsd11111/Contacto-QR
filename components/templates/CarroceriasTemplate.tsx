@@ -7,6 +7,7 @@ import {
     CheckCircle, Star, Wrench, Truck, Shield, Clock, Users, Award,
     Instagram, Facebook, ChevronDown
 } from 'lucide-react';
+import { safeParse as safeJsonParse } from '@/lib/jsonUtils';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -469,6 +470,103 @@ function ServicesSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
     );
 }
 
+/** Authority Module Section */
+function AuthoritySection({ data }: { data: any }) {
+    const authorityModule = (() => {
+        const raw = data.json_override;
+        const parsed = safeJsonParse(raw, {});
+        return parsed.authorityModule || { enabled: false };
+    })();
+
+    if (!authorityModule.enabled) return null;
+
+    return (
+        <section className="py-24 px-6 relative overflow-hidden" style={{ background: DARK3 }}>
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-red-600/10 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-60 h-60 bg-yellow-500/5 rounded-full blur-[80px] -ml-30 -mb-30 pointer-events-none" />
+
+            <div className="max-w-5xl mx-auto relative z-10 flex flex-col items-center text-center">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="inline-flex items-center gap-3 bg-red-600 text-white px-4 py-1.5 rounded-sm mb-8"
+                >
+                    <Shield size={14} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{authorityModule.badge || "Garantía de Calidad"}</span>
+                </motion.div>
+
+                <motion.h3 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="text-4xl md:text-6xl font-black tracking-tight text-white uppercase italic leading-[0.95] mb-8"
+                >
+                    {authorityModule.title || "Liderazgo y Capacidad"}
+                </motion.h3>
+
+                {authorityModule.description && (
+                    <motion.p 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.3 }}
+                        className="text-lg md:text-xl text-white/60 font-medium max-w-3xl mb-16 leading-relaxed"
+                    >
+                        {authorityModule.description}
+                    </motion.p>
+                )}
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full mb-20 border-y border-white/5 py-12">
+                    {authorityModule.stats?.map((stat: any, i: number) => (
+                        <motion.div 
+                            key={i}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.4 + (i * 0.1) }}
+                            className="flex flex-col items-center"
+                        >
+                            <span className="text-3xl md:text-5xl font-black italic tracking-tighter mb-2" style={{ color: YELLOW }}>{stat.value}</span>
+                            <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em]">{stat.label}</span>
+                        </motion.div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-20 w-full text-left">
+                    {authorityModule.metrics?.map((metric: any, i: number) => (
+                        <motion.div 
+                            key={i}
+                            initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
+                            whileInView={{ opacity: 1, x: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ delay: 0.6 + (i * 0.1) }}
+                            className="space-y-4"
+                        >
+                            <div className="flex justify-between items-end">
+                                <span className="text-sm font-black text-white uppercase tracking-widest">{metric.label}</span>
+                                <span className="text-2xl font-black italic" style={{ color: RED }}>{metric.value}%</span>
+                            </div>
+                            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                <motion.div 
+                                    initial={{ width: 0 }}
+                                    whileInView={{ width: `${metric.value}%` }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 1.5, delay: 1, ease: "easeOut" }}
+                                    className="h-full"
+                                    style={{ background: RED }}
+                                />
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+}
+
 /** Footer */
 function FooterSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
     const waLink = data.whatsapp
@@ -575,6 +673,7 @@ export default function CarroceriasTemplate({ data }: CarroceriasTemplateProps) 
             <AboutSection data={data} />
             {products.length > 0 && <ProductsSection data={data} />}
             <ServicesSection data={data} />
+            <AuthoritySection data={data} />
             <FooterSection data={data} />
         </div>
     );

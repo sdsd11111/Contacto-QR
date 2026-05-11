@@ -4,6 +4,8 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import type { HedkandiTemplateProps } from './types';
 import { getYouTubeID, getTikTokID } from '@/lib/videoUtils';
+import { safeParse } from '@/lib/jsonUtils';
+import { Shield } from 'lucide-react';
 
 /** Imágenes de fallback organizadas por categoría visual para la grilla de experiencia */
 const FALLBACK_EXPERIENCE_IMAGES = [
@@ -74,14 +76,14 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                     )}
                 </div>
 
-                {/* Main Hero Content - Split Layout if Video exists */}
-                <div className="relative z-10 w-full px-4 md:px-12 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-12 mt-12 md:mt-0">
+                {/* Main Hero Content - Centered */}
+                <div className="relative z-10 w-full px-4 md:px-12 max-w-7xl mx-auto flex flex-col items-center justify-center text-center gap-12">
                     {/* Text Content */}
                     <motion.div
-                        initial={{ x: -30, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 1 }}
-                        className="w-full md:w-3/5 text-center md:text-left flex flex-col items-center md:items-start"
+                        className="w-full max-w-4xl flex flex-col items-center"
                     >
                         <h1 className="text-white text-5xl md:text-[8rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4">
                             {props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title 
@@ -95,7 +97,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                             </p>
                         )}
 
-                        <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                        <div className="flex flex-wrap gap-4 justify-center">
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -118,50 +120,6 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 </motion.a>
                             )}
                         </div>
-                    </motion.div>
-
-                    {/* Video/Image Content */}
-                    <motion.div
-                        initial={{ x: 30, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.8, duration: 1 }}
-                        className="w-full md:w-2/5 flex justify-center md:justify-end"
-                    >
-                        {(props.data?.video_url || props.data?.youtube_url || props.data?.youtube_video_url) ? (
-                            <div className="w-full max-w-[320px] rounded-[2rem] overflow-hidden shadow-2xl border border-white/10 bg-black/20 group relative shadow-black/50">
-                                <div className="aspect-[9/16] video-container-tiktok bg-black/40">
-                                    <iframe 
-                                        width="100%" 
-                                        height="100%" 
-                                        src={(() => {
-                                            const url = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
-                                            if (!url) return '';
-                                            
-                                            const youtubeId = getYouTubeID(url);
-                                            if (youtubeId) return `https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0`;
-
-                                            const tiktokId = getTikTokID(url) || url.split('/').pop()?.split('?')[0];
-                                            if (url.includes('tiktok')) return `https://www.tiktok.com/embed/v2/${tiktokId}`;
-
-                                            return url;
-                                        })()} 
-                                        title="Video player" 
-                                        frameBorder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowFullScreen 
-                                        className="w-full h-full opacity-90 group-hover:opacity-100 transition-opacity duration-500"
-                                    ></iframe>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="w-full max-w-[400px] aspect-[4/5] rounded-xl overflow-hidden border border-white/10 shadow-2xl">
-                                <img 
-                                    src={props.data?.foto_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"} 
-                                    alt={props.data?.nombre_negocio}
-                                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000"
-                                />
-                            </div>
-                        )}
                     </motion.div>
                 </div>
             </section>
@@ -298,6 +256,55 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                 );
             })()}
 
+            {/* ─── VIDEO/DESTACADO SECTION ─── */}
+            <section className="bg-white py-12 px-4">
+                <div className="max-w-7xl mx-auto flex justify-center">
+                    <motion.div
+                        initial={{ y: 40, opacity: 0 }}
+                        whileInView={{ y: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1 }}
+                        className="w-full max-w-[450px] md:max-w-[600px] flex justify-center"
+                    >
+                        {(props.data?.video_url || props.data?.youtube_url || props.data?.youtube_video_url) ? (
+                            <div className="w-full rounded-[3rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] border border-black/5 bg-black/5 p-3 md:p-6">
+                                <div className="aspect-[9/16] rounded-[2rem] overflow-hidden bg-black">
+                                    <iframe 
+                                        width="100%" 
+                                        height="100%" 
+                                        src={(() => {
+                                            const url = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
+                                            if (!url) return '';
+                                            
+                                            const youtubeId = getYouTubeID(url);
+                                            if (youtubeId) return `https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0`;
+
+                                            const tiktokId = getTikTokID(url) || url.split('/').pop()?.split('?')[0];
+                                            if (url.includes('tiktok')) return `https://www.tiktok.com/embed/v2/${tiktokId}`;
+
+                                            return url;
+                                        })()} 
+                                        title="Video player" 
+                                        frameBorder="0" 
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                        allowFullScreen 
+                                        className="w-full h-full"
+                                    ></iframe>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="w-full max-w-[400px] aspect-[4/5] rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl">
+                                <img 
+                                    src={props.data?.foto_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"} 
+                                    alt={props.data?.nombre_negocio}
+                                    className="w-full h-full object-cover transition-all duration-1000"
+                                />
+                            </div>
+                        )}
+                    </motion.div>
+                </div>
+            </section>
+
             {/* ─── SLOT 1: Después de Experience (menú, galería, servicios) ─── */}
             {props.afterExperienceSlot}
 
@@ -327,6 +334,95 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                     </p>
                 </div>
             </section>
+
+            {/* AUTHORITY MODULE SECTION */}
+            {(() => {
+                const authorityModule = safeParse(props.data?.json_override, {}).authorityModule || { enabled: false };
+                if (!authorityModule.enabled) return null;
+
+                return (
+                    <section className="bg-white py-24 md:py-32 px-4 md:px-12 relative overflow-hidden">
+                        <div className="max-w-7xl mx-auto border-y border-black/10 py-20 relative">
+                            <div className="flex flex-col items-center text-center">
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    className="flex items-center gap-3 border border-black px-6 py-2 rounded-full mb-10"
+                                >
+                                    <Shield size={16} />
+                                    <span className="font-sans-body text-[10px] md:text-xs font-black uppercase tracking-[0.4em]">{authorityModule.badge || "ESTÁNDAR DE EXCELENCIA"}</span>
+                                </motion.div>
+
+                                <motion.h3 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 0.2 }}
+                                    className="font-display-condensed text-5xl md:text-[8rem] text-black uppercase leading-[0.9] mb-10 tracking-tighter"
+                                >
+                                    {authorityModule.title || "LEGADO Y CONFIANZA"}
+                                </motion.h3>
+
+                                {authorityModule.description && (
+                                    <motion.p 
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.3 }}
+                                        className="font-serif-elegant italic text-2xl md:text-4xl text-black/60 max-w-4xl mb-20 leading-snug"
+                                    >
+                                        {authorityModule.description}
+                                    </motion.p>
+                                )}
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-20 w-full mb-24">
+                                    {authorityModule.stats?.map((stat: any, i: number) => (
+                                        <motion.div 
+                                            key={i}
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            whileInView={{ opacity: 1, scale: 1 }}
+                                            viewport={{ once: true }}
+                                            transition={{ delay: 0.4 + (i * 0.1) }}
+                                            className="flex flex-col items-center"
+                                        >
+                                            <span className="font-display-condensed text-6xl md:text-8xl text-black italic leading-none mb-4">{stat.value}</span>
+                                            <span className="font-sans-body text-[10px] md:text-xs font-black text-black/30 uppercase tracking-[0.3em]">{stat.label}</span>
+                                        </motion.div>
+                                    ))}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24 w-full text-left">
+                                    {authorityModule.metrics?.map((metric: any, i: number) => (
+                                        <motion.div 
+                                            key={i}
+                                            initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
+                                            whileInView={{ opacity: 1, x: 0 }}
+                                            viewport={{ once: true }}
+                                            transition={{ delay: 0.6 + (i * 0.1) }}
+                                            className="space-y-6"
+                                        >
+                                            <div className="flex justify-between items-end border-b border-black/5 pb-4">
+                                                <span className="font-sans-body text-xs md:text-sm font-black text-black uppercase tracking-[0.3em]">{metric.label}</span>
+                                                <span className="font-display-condensed text-3xl md:text-4xl italic text-black">{metric.value}%</span>
+                                            </div>
+                                            <div className="h-[2px] w-full bg-black/5 rounded-full overflow-hidden">
+                                                <motion.div 
+                                                    initial={{ width: 0 }}
+                                                    whileInView={{ width: `${metric.value}%` }}
+                                                    viewport={{ once: true }}
+                                                    transition={{ duration: 2, delay: 1, ease: [0.16, 1, 0.3, 1] }}
+                                                    className="h-full bg-black"
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                );
+            })()}
 
             {/* 4. GOOGLE TRUST & SOCIAL SECTION */}
             <section className="bg-[#1A1A1A] py-24 px-4 md:px-12 relative overflow-hidden">

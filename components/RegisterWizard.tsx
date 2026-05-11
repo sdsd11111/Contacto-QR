@@ -2044,11 +2044,7 @@ export default function RegisterWizard({
                                                 name: 'Activa Clásico', 
                                                 desc: 'Funcional y Directo'
                                             },
-                                            { 
-                                                id: 'luxury_minimal', 
-                                                name: 'Luxury Minimal', 
-                                                desc: 'Elegante y Moderno'
-                                            },
+
                                             { 
                                                 id: 'hedkandi', 
                                                 name: 'Hedkandi', 

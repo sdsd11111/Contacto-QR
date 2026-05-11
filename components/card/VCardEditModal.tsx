@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 
 interface VCardEditModalProps {
@@ -49,7 +49,7 @@ export default function VCardEditModal({
     const [uploadingImage, setUploadingImage] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const [usesRemaining, setUsesRemaining] = useState(0);
-    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'code' | 'success' | null>(initialSection);
+    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'autoridad' | 'industrial' | 'code' | 'success' | null>(initialSection);
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
 
@@ -440,7 +440,17 @@ export default function VCardEditModal({
             const raw = formData.json_override;
             if (!raw) return {};
             try {
-                return typeof raw === 'string' ? JSON.parse(raw) : raw;
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                return parsed || {};
+            } catch (e) { return {}; }
+        })();
+
+        const descriptions = (() => {
+            const raw = formData.json_override;
+            if (!raw) return {};
+            try {
+                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+                return parsed.experienceDescriptions || {};
             } catch (e) { return {}; }
         })();
             
@@ -450,16 +460,40 @@ export default function VCardEditModal({
             categories: rawLines.map((cat: string, index: number) => {
                 const customImg = images.find((i: any) => i.index === index);
                 const displayTitle = replacements[cat] || cat;
+                const description = descriptions[cat] || "";
                 
                 return {
                     index,
                     originalTitle: cat,
                     title: displayTitle,
+                    description: description,
                     img: customImg?.url || ''
                 }
             })
         };
     })();
+
+    const updateCategoryDescription = (originalTitle: string, newDesc: string) => {
+        setFormData(prev => {
+            const raw = prev.json_override;
+            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            
+            const nextDescriptions = { ...(parsed.experienceDescriptions || {}) };
+            if (newDesc) {
+                nextDescriptions[originalTitle] = newDesc;
+            } else {
+                delete nextDescriptions[originalTitle];
+            }
+            
+            return { 
+                ...prev, 
+                json_override: {
+                    ...parsed,
+                    experienceDescriptions: nextDescriptions
+                } 
+            };
+        });
+    };
 
     const updateExperienceCategories = (newTitle?: string, newImages?: any[], newSubtitle?: string) => {
         setFormData(prev => {
@@ -525,17 +559,98 @@ export default function VCardEditModal({
         }
     };
 
-    if (!isOpen) return null;
+    // --- Industrial Template Config ---
+    const industrialConfig = (() => {
+        const raw = formData.json_override;
+        const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+        const config = parsed.industrialConfig || {};
+        
+        return {
+            badge: config.badge || "Garantía de Calidad",
+            title: config.title || "Por qué elegirnos",
+            description: config.description || "Nuestra infraestructura y equipo están preparados para los desafíos más exigentes. La eficiencia de su flota u operación es nuestra prioridad absoluta.",
+            metrics: config.metrics || [
+                { label: "Capacidad Operativa", value: "100" },
+                { label: "Cumplimiento de Tiempos", value: "98" }
+            ],
+            stats: config.stats || [
+                { label: "Experiencia", value: "10+" },
+                { label: "Proyectos", value: "200+" },
+                { label: "Efectividad", value: "99%" },
+                { label: "Soporte", value: "24/7" }
+            ]
+        };
+    })();
+
+    const authorityModule = (() => {
+        const raw = formData.json_override;
+        const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+        return parsed.authorityModule || {
+            enabled: false,
+            badge: 'Garantía de Calidad',
+            title: 'Por qué Elegirnos',
+            description: '',
+            stats: [
+                { label: 'Experiencia', value: '10+' },
+                { label: 'Proyectos', value: '200+' },
+                { label: 'Efectividad', value: '99%' },
+                { label: 'Soporte', value: '24/7' }
+            ],
+            metrics: [
+                { label: 'Capacidad Operativa', value: '100' },
+                { label: 'Cumplimiento de Tiempos', value: '98' }
+            ]
+        };
+    })();
+
+    const updateIndustrialConfig = (updates: any) => {
+        setFormData(prev => {
+            const raw = prev.json_override;
+            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            const currentConfig = parsed.industrialConfig || industrialConfig;
+            
+            return {
+                ...prev,
+                json_override: {
+                    ...parsed,
+                    industrialConfig: {
+                        ...currentConfig,
+                        ...updates
+                    }
+                }
+            };
+        });
+    };
+
+    const updateAuthorityModule = (updates: any) => {
+        setFormData(prev => {
+            const raw = prev.json_override;
+            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            const currentModule = parsed.authorityModule || {};
+            return {
+                ...prev,
+                json_override: {
+                    ...parsed,
+                    authorityModule: {
+                        ...currentModule,
+                        ...updates
+                    }
+                }
+            };
+        });
+    };
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
-                >
+            {isOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onClose()}>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                     {/* Header */}
                     <div className="bg-primary p-6 flex justify-between items-center text-white shrink-0">
                         <div>
@@ -584,6 +699,14 @@ export default function VCardEditModal({
                                     {loading ? <Loader2 className="animate-spin" /> : <CheckCircle size={20} />}
                                     Validar Acceso
                                 </button>
+
+                                <button 
+                                    onClick={onClose}
+                                    className="mt-6 text-gray-400 font-bold uppercase tracking-widest text-[10px] hover:text-primary transition-colors flex items-center gap-2"
+                                >
+                                    <X size={12} /> Cerrar y Volver
+                                </button>
+
                                 {error && error.includes('RYA-') && (
                                     <p className="mt-4 text-[10px] text-gray-400 font-bold uppercase italic border-t pt-4 w-full max-w-xs">
                                         Tip: Revisa tu correo de bienvenida para el código de edición.
@@ -880,15 +1003,27 @@ export default function VCardEditModal({
                                                                             </label>
                                                                         </div>
 
-                                                                        {/* Title Editor */}
-                                                                        <div className="grow space-y-1">
-                                                                            <p className="text-[10px] font-black text-navy/40 uppercase tracking-tighter">Categoría {idx + 1}</p>
-                                                                            <input 
-                                                                                className="w-full bg-transparent border-b border-gray-200 focus:border-primary outline-none py-1 text-sm font-bold text-navy"
-                                                                                value={cat.title}
-                                                                                onChange={(e) => updateCategoryTitle(cat.originalTitle, e.target.value)}
-                                                                                placeholder={cat.originalTitle}
-                                                                            />
+                                                                        {/* Title and Description Editor */}
+                                                                        <div className="grow space-y-2">
+                                                                            <div className="space-y-1">
+                                                                                <p className="text-[10px] font-black text-navy/40 uppercase tracking-tighter">Título Categoría {idx + 1}</p>
+                                                                                <input 
+                                                                                    className="w-full bg-transparent border-b border-gray-200 focus:border-primary outline-none py-1 text-sm font-bold text-navy"
+                                                                                    value={cat.title}
+                                                                                    onChange={(e) => updateCategoryTitle(cat.originalTitle, e.target.value)}
+                                                                                    placeholder={cat.originalTitle}
+                                                                                />
+                                                                            </div>
+                                                                            <div className="space-y-1">
+                                                                                <p className="text-[10px] font-black text-navy/40 uppercase tracking-tighter">Descripción (Opcional)</p>
+                                                                                <textarea 
+                                                                                    className="w-full bg-gray-100/50 rounded-lg p-2 text-[10px] font-medium text-navy/70 border border-transparent focus:border-primary/30 outline-none resize-none"
+                                                                                    rows={2}
+                                                                                    value={cat.description}
+                                                                                    onChange={(e) => updateCategoryDescription(cat.originalTitle, e.target.value)}
+                                                                                    placeholder="Breve descripción del servicio..."
+                                                                                />
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 ))}
@@ -899,6 +1034,113 @@ export default function VCardEditModal({
                                             )}
                                         </AnimatePresence>
                                     </div>
+
+                                    {/* SECCIÓN 2.7: MÓDULO INDUSTRIAL (Sólo si template es industrial) */}
+                                    {formData.template_id === 'industrial' && (
+                                        <div className="border-2 border-[#FF5C00]/20 rounded-2xl overflow-hidden shadow-sm">
+                                            <button 
+                                                onClick={() => setActiveSection(activeSection === 'industrial' ? null : 'industrial')} 
+                                                className="w-full flex items-center justify-between p-4 bg-[#FF5C00]/5 hover:bg-[#FF5C00]/10 transition-colors"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-[#FF5C00] flex items-center justify-center text-white">
+                                                        <Activity size={18} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="font-black text-navy uppercase text-sm tracking-tighter block">Módulo Industrial / Confianza</span>
+                                                        <span className="text-[10px] font-bold text-[#FF5C00] uppercase tracking-widest">Personaliza métricas y estadísticas</span>
+                                                    </div>
+                                                </div>
+                                                <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'industrial' && "rotate-180")} />
+                                            </button>
+                                            <AnimatePresence>
+                                                {activeSection === 'industrial' && (
+                                                    <motion.div 
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: "auto", opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        className="overflow-hidden bg-white border-t border-[#FF5C00]/10"
+                                                    >
+                                                        <div className="p-6 space-y-6">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Etiqueta Superior</label>
+                                                                    <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={industrialConfig.badge} onChange={(e) => updateIndustrialConfig({ badge: e.target.value })} placeholder="Garantía de Calidad" />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título Principal</label>
+                                                                    <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={industrialConfig.title} onChange={(e) => updateIndustrialConfig({ title: e.target.value })} placeholder="Por qué elegirnos" />
+                                                                </div>
+                                                                <div className="col-span-full space-y-1">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Descripción de Confianza</label>
+                                                                    <textarea className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" rows={2} value={industrialConfig.description} onChange={(e) => updateIndustrialConfig({ description: e.target.value })} placeholder="Nuestra infraestructura..." />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="space-y-4">
+                                                                <label className="text-[10px] font-black text-[#FF5C00] uppercase tracking-widest block border-b pb-2">Barras de Progreso (Métricas %)</label>
+                                                                <div className="grid grid-cols-1 gap-3">
+                                                                    {industrialConfig.metrics.map((m: any, i: number) => (
+                                                                        <div key={i} className="flex gap-2">
+                                                                            <input 
+                                                                                className="flex-1 border rounded-lg p-2 text-xs font-bold" 
+                                                                                value={m.label} 
+                                                                                onChange={(e) => {
+                                                                                    const next = [...industrialConfig.metrics];
+                                                                                    next[i].label = e.target.value;
+                                                                                    updateIndustrialConfig({ metrics: next });
+                                                                                }}
+                                                                            />
+                                                                            <input 
+                                                                                className="w-20 border rounded-lg p-2 text-xs font-bold text-center text-[#FF5C00]" 
+                                                                                type="number"
+                                                                                value={m.value} 
+                                                                                onChange={(e) => {
+                                                                                    const next = [...industrialConfig.metrics];
+                                                                                    next[i].value = e.target.value;
+                                                                                    updateIndustrialConfig({ metrics: next });
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="space-y-4">
+                                                                <label className="text-[10px] font-black text-[#FF5C00] uppercase tracking-widest block border-b pb-2">Cuadros de Estadísticas (Kpis)</label>
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    {industrialConfig.stats.map((s: any, i: number) => (
+                                                                        <div key={i} className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+                                                                            <input 
+                                                                                className="w-full bg-transparent font-black text-navy text-lg outline-none" 
+                                                                                value={s.value} 
+                                                                                placeholder="Valor (ej: 10+)"
+                                                                                onChange={(e) => {
+                                                                                    const next = [...industrialConfig.stats];
+                                                                                    next[i].value = e.target.value;
+                                                                                    updateIndustrialConfig({ stats: next });
+                                                                                }}
+                                                                            />
+                                                                            <input 
+                                                                                className="w-full bg-transparent font-bold text-gray-400 text-[10px] uppercase tracking-widest outline-none" 
+                                                                                value={s.label} 
+                                                                                placeholder="Etiqueta (ej: EXPERIENCIA)"
+                                                                                onChange={(e) => {
+                                                                                    const next = [...industrialConfig.stats];
+                                                                                    next[i].label = e.target.value;
+                                                                                    updateIndustrialConfig({ stats: next });
+                                                                                }}
+                                                                            />
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    )}
 
                                     {/* SECCIÓN 3: OFERTA DEL HERO (BOTÓN PRINCIPAL) */}
 
@@ -1533,7 +1775,187 @@ export default function VCardEditModal({
                                         </AnimatePresence>
                                     </div>
                                 )}
-                            </div>
+                                    {/* SECCIÓN: MÓDULO DE AUTORIDAD */}
+                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <button
+                                            onClick={() => setActiveSection(activeSection === 'autoridad' ? null : 'autoridad')}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-[#FF5C00]/10 flex items-center justify-center text-[#FF5C00] font-black italic uppercase text-xs">
+                                                    AU
+                                                </div>
+                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Módulo de Autoridad</span>
+                                            </div>
+                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'autoridad' && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeSection === 'autoridad' && (
+                                                <motion.div
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden bg-white border-t border-gray-100"
+                                                >
+                                                    <div className="p-6 space-y-6">
+                                                        {/* Toggle Activar/Desactivar */}
+                                                        <div className="flex items-center justify-between p-4 bg-[#FF5C00]/5 rounded-xl border border-[#FF5C00]/20">
+                                                            <div>
+                                                                <p className="font-black text-navy text-sm uppercase tracking-tight">Activar Módulo</p>
+                                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                                                                    Muestra la sección "Por qué elegirnos" en tu perfil
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => updateAuthorityModule({ enabled: !authorityModule.enabled })}
+                                                                className={cn(
+                                                                    "w-12 h-6 rounded-full transition-colors relative",
+                                                                    authorityModule.enabled ? "bg-[#FF5C00]" : "bg-gray-200"
+                                                                )}
+                                                            >
+                                                                <div className={cn(
+                                                                    "absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform",
+                                                                    authorityModule.enabled ? "translate-x-7" : "translate-x-1"
+                                                                )} />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Campos de texto principales */}
+                                                        <div className="space-y-4">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Badge / Etiqueta superior</label>
+                                                                <input
+                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50"
+                                                                    value={authorityModule.badge}
+                                                                    onChange={(e) => updateAuthorityModule({ badge: e.target.value })}
+                                                                    placeholder="Ej. Garantía de Calidad"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título principal</label>
+                                                                <input
+                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50"
+                                                                    value={authorityModule.title}
+                                                                    onChange={(e) => updateAuthorityModule({ title: e.target.value })}
+                                                                    placeholder="Ej. Por qué Elegirnos"
+                                                                />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Descripción</label>
+                                                                <textarea
+                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50"
+                                                                    rows={3}
+                                                                    value={authorityModule.description}
+                                                                    onChange={(e) => updateAuthorityModule({ description: e.target.value })}
+                                                                    placeholder="Describe por qué tus clientes deben elegirte..."
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Hitos / Stats máximo 4 */}
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Hitos / Estadísticas (máx. 4)</label>
+                                                                {authorityModule.stats.length < 4 && (
+                                                                    <button
+                                                                        onClick={() => updateAuthorityModule({
+                                                                            stats: [...authorityModule.stats, { label: 'Nuevo Hito', value: '0+' }]
+                                                                        })}
+                                                                        className="text-[10px] font-black text-[#FF5C00] uppercase tracking-widest flex items-center gap-1 hover:opacity-70"
+                                                                    >
+                                                                        <Plus size={12} /> Agregar
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            {authorityModule.stats.map((stat: any, i: number) => (
+                                                                <div key={i} className="flex gap-2 items-center">
+                                                                    <input
+                                                                        className="flex-1 border rounded-lg p-2 text-gray-900 text-sm font-black bg-gray-50"
+                                                                        value={stat.value}
+                                                                        onChange={(e) => {
+                                                                            const newStats = [...authorityModule.stats];
+                                                                            newStats[i] = { ...newStats[i], value: e.target.value };
+                                                                            updateAuthorityModule({ stats: newStats });
+                                                                        }}
+                                                                        placeholder="Ej. 10+"
+                                                                    />
+                                                                    <input
+                                                                        className="flex-[2] border rounded-lg p-2 text-gray-900 text-sm font-medium bg-gray-50"
+                                                                        value={stat.label}
+                                                                        onChange={(e) => {
+                                                                            const newStats = [...authorityModule.stats];
+                                                                            newStats[i] = { ...newStats[i], label: e.target.value };
+                                                                            updateAuthorityModule({ stats: newStats });
+                                                                        }}
+                                                                        placeholder="Ej. Experiencia"
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => updateAuthorityModule({
+                                                                            stats: authorityModule.stats.filter((_: any, idx: number) => idx !== i)
+                                                                        })}
+                                                                        className="text-red-400 hover:text-red-600 p-2"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Métricas / Barras máximo 4 */}
+                                                        <div className="space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Métricas / Barras % (máx. 4)</label>
+                                                                {authorityModule.metrics.length < 4 && (
+                                                                    <button
+                                                                        onClick={() => updateAuthorityModule({
+                                                                            metrics: [...authorityModule.metrics, { label: 'Nueva Métrica', value: '90' }]
+                                                                        })}
+                                                                        className="text-[10px] font-black text-[#FF5C00] uppercase tracking-widest flex items-center gap-1 hover:opacity-70"
+                                                                    >
+                                                                        <Plus size={12} /> Agregar
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            {authorityModule.metrics.map((metric: any, i: number) => (
+                                                                <div key={i} className="flex gap-2 items-center">
+                                                                    <input
+                                                                        className="w-16 border rounded-lg p-2 text-gray-900 text-sm font-black bg-gray-50 text-center"
+                                                                        value={metric.value}
+                                                                        onChange={(e) => {
+                                                                            const newMetrics = [...authorityModule.metrics];
+                                                                            newMetrics[i] = { ...newMetrics[i], value: e.target.value };
+                                                                            updateAuthorityModule({ metrics: newMetrics });
+                                                                        }}
+                                                                        placeholder="90"
+                                                                    />
+                                                                    <span className="text-[10px] font-black text-gray-400">%</span>
+                                                                    <input
+                                                                        className="flex-1 border rounded-lg p-2 text-gray-900 text-sm font-medium bg-gray-50"
+                                                                        value={metric.label}
+                                                                        onChange={(e) => {
+                                                                            const newMetrics = [...authorityModule.metrics];
+                                                                            newMetrics[i] = { ...newMetrics[i], label: e.target.value };
+                                                                            updateAuthorityModule({ metrics: newMetrics });
+                                                                        }}
+                                                                        placeholder="Ej. Capacidad Operativa"
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => updateAuthorityModule({
+                                                                            metrics: authorityModule.metrics.filter((_: any, idx: number) => idx !== i)
+                                                                        })}
+                                                                        className="text-red-400 hover:text-red-600 p-2"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                </div>
                         </div>
                         )}
 
@@ -1584,6 +2006,7 @@ export default function VCardEditModal({
                     )}
                 </motion.div>
             </div>
+            )}
         </AnimatePresence>
     );
 }

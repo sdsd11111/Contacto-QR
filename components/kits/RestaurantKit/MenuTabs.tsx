@@ -6,34 +6,50 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { MenuTabsProps, MenuItem } from '../types';
 
 // ─── Item individual del menú ───
-function MenuItemRow({ name, price, size, desc, accentColor = '#dc2626' }: MenuItem & { accentColor?: string }) {
+function MenuItemRow(props: any) {
+    const name = props.name || props.titulo;
+    const price = props.price || props.precio;
+    const size = props.size || props.tamaño;
+    const desc = props.desc || props.descripcion;
+    const image = props.image || props.foto || props.imagen;
+    const accentColor = props.accentColor || '#dc2626';
+
     const accentBorder = { borderColor: 'transparent' };
     const accentHover = { '--accent': accentColor } as React.CSSProperties;
     return (
         <div
-            className="flex justify-between items-start border-b border-gray-100 pb-4 group transition-colors"
+            className="flex justify-between items-start border-b border-gray-100 pb-4 group transition-colors gap-4"
             style={{ ...accentHover, ['--hover-border' as string]: accentColor }}
             onMouseEnter={e => (e.currentTarget.style.borderColor = accentColor)}
             onMouseLeave={e => (e.currentTarget.style.borderColor = '')}
         >
-            <div className="pr-4 flex-1">
-                <h4
-                    className="font-sans-body font-bold text-lg text-black uppercase tracking-tight transition-colors"
-                    onMouseEnter={e => (e.currentTarget.style.color = accentColor)}
-                    onMouseLeave={e => (e.currentTarget.style.color = '')}
-                >
-                    {name}
-                    {size && (
-                        <span className="text-[10px] font-normal text-gray-400 ml-1">({size})</span>
-                    )}
-                </h4>
-                {desc && (
-                    <p className="text-xs text-gray-500 font-sans-body mt-1 leading-relaxed">{desc}</p>
+            <div className="flex-1 flex gap-4">
+                {image && (
+                    <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-gray-100">
+                        <img src={image} alt={name || 'Item'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    </div>
                 )}
+                <div className="pr-4 flex-1">
+                    <h4
+                        className="font-sans-body font-bold text-lg text-black uppercase tracking-tight transition-colors"
+                        onMouseEnter={e => (e.currentTarget.style.color = accentColor)}
+                        onMouseLeave={e => (e.currentTarget.style.color = '')}
+                    >
+                        {name || 'Sin Título'}
+                        {size && (
+                            <span className="text-[10px] font-normal text-gray-400 ml-1">({size})</span>
+                        )}
+                    </h4>
+                    {desc && (
+                        <p className="text-xs text-gray-500 font-sans-body mt-1 leading-relaxed">{desc}</p>
+                    )}
+                </div>
             </div>
-            <div className="text-right shrink-0">
-                <span className="font-display-condensed text-2xl text-black">{price}</span>
-            </div>
+            {price && (
+                <div className="text-right shrink-0">
+                    <span className="font-display-condensed text-xl md:text-2xl text-black">{price}</span>
+                </div>
+            )}
         </div>
     );
 }

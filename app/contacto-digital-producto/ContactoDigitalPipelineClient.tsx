@@ -562,7 +562,75 @@ export default function ContactoDigitalPipelineClient() {
         </div>
       </section>
 
-      {/* 5. ADVANCED FAQ - (DARK THEME OVERRIDE INCORPORATED) */}
+      {/* 5. TABLA COMPARATIVA ROI (NUEVO) */}
+      <section className="py-24 relative overflow-hidden bg-[#0a0a0a]">
+        <div className="max-w-5xl mx-auto px-6 relative z-10">
+          <FadeInUp className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-6">
+              ¿Cuánto te cuesta <span className="text-[#FF6B2B] italic">no ser recordado?</span>
+            </h2>
+            <p className="text-white/60 max-w-2xl mx-auto text-lg font-medium">
+              Hagamos números. El costo de perder un solo cliente potencial por no estar en su agenda es infinitamente mayor que nuestra inversión anual.
+            </p>
+          </FadeInUp>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* El Riesgo */}
+            <FadeInUp delay={0.1} className="bg-[#111111] p-8 rounded-[2.5rem] border border-red-500/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-6 text-red-500/10">
+                <Users size={80} />
+              </div>
+              <h3 className="text-2xl font-black text-red-500 uppercase mb-6">Escenario A: Sin ActivaQR</h3>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-start gap-3 text-white/70">
+                  <span className="text-red-500 font-bold">✕</span>
+                  <span>Te guardan como "Jorge Plomero" (y luego no te encuentran).</span>
+                </li>
+                <li className="flex items-start gap-3 text-white/70">
+                  <span className="text-red-500 font-bold">✕</span>
+                  <span>Sin foto: Tu contacto es uno más en una lista de 500 personas.</span>
+                </li>
+                <li className="flex items-start gap-3 text-white/70">
+                  <span className="text-red-500 font-bold">✕</span>
+                  <span>Pérdida de 1 cliente promedio: <strong className="text-white">-$150.00+</strong></span>
+                </li>
+              </ul>
+              <div className="pt-6 border-t border-white/5">
+                <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Costo total de invisibilidad</p>
+                <p className="text-4xl font-black text-white mt-1">Sumergido</p>
+              </div>
+            </FadeInUp>
+
+            {/* La Solución */}
+            <FadeInUp delay={0.2} className="bg-[#1a1a1a] p-8 rounded-[2.5rem] border border-[#FF6B2B]/40 relative overflow-hidden shadow-2xl shadow-[#FF6B2B]/10 scale-105">
+              <div className="absolute top-0 right-0 p-6 text-[#FF6B2B]/10">
+                <Star size={80} />
+              </div>
+              <h3 className="text-2xl font-black text-[#FF6B2B] uppercase mb-6">Escenario B: Con ActivaQR</h3>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-start gap-3 text-white/90">
+                  <CheckCircle2 className="text-green-500 shrink-0" size={20} />
+                  <span>Foto y cargo profesional inyectados en su agenda.</span>
+                </li>
+                <li className="flex items-start gap-3 text-white/90">
+                  <CheckCircle2 className="text-green-500 shrink-0" size={20} />
+                  <span>Apareces primero por orden alfabético o reconocimiento visual.</span>
+                </li>
+                <li className="flex items-start gap-3 text-white/90">
+                  <CheckCircle2 className="text-green-500 shrink-0" size={20} />
+                  <span>Conversión de 1 cliente recuperado: <strong className="text-green-500">+$150.00+</strong></span>
+                </li>
+              </ul>
+              <div className="pt-6 border-t border-white/10">
+                <p className="text-[#FF6B2B] text-sm font-bold uppercase tracking-widest">Tu Inversión Anual</p>
+                <p className="text-5xl font-black text-white mt-1">$35.00 <span className="text-xs text-white/40">USD</span></p>
+              </div>
+            </FadeInUp>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. ADVANCED FAQ - (DARK THEME OVERRIDE INCORPORATED) */}
       <section className="py-24 relative overflow-hidden" id="preguntas-frecuentes">
         <RadarPing />
         <ScatteredPings />
@@ -576,7 +644,6 @@ export default function ContactoDigitalPipelineClient() {
                 <p className="text-white/60 font-medium md:text-lg">Respuestas directas. Toca cualquier interrogante y destruiremos tus dudas cara a cara.</p>
             </FadeInUp>
             
-            {/* The FAQ component from the original page - Now seamlessly matching the dark layout */}
             <div className="flex flex-col gap-4">
                 <AdvancedFAQ 
                     items={CONTACTO_DIGITAL_FAQS}
@@ -586,10 +653,31 @@ export default function ContactoDigitalPipelineClient() {
                     variant="dark"
                 />
             </div>
+
+            {/* Reseñas en Esteroides (Social Proof Badge inside FAQ) */}
+            <FadeInUp delay={0.3} className="mt-12 p-6 bg-[#FF6B2B]/5 rounded-3xl border border-[#FF6B2B]/20 flex flex-col md:flex-row items-center gap-6">
+                <div className="flex -space-x-3">
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="w-12 h-12 rounded-full border-2 border-[#0a0a0a] overflow-hidden bg-[#111111]">
+                            <img src={`https://i.pravatar.cc/150?u=${i+10}`} alt="User" />
+                        </div>
+                    ))}
+                </div>
+                <div className="text-center md:text-left">
+                    <p className="text-white font-bold text-lg leading-tight">Más de 500 profesionales ya están usando ActivaQR.</p>
+                    <p className="text-white/40 text-sm">Únete a la élite que no depende de la memoria del cliente.</p>
+                </div>
+                <div className="md:ml-auto">
+                    <div className="flex gap-1 text-[#FF6B2B]">
+                        {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mt-1">Calificación 4.9/5</p>
+                </div>
+            </FadeInUp>
         </div>
       </section>
 
-      {/* 6. CHECKOUT DIRECTO (PIPELINE CLEAN) */}
+      {/* 7. CHECKOUT DIRECTO (PIPELINE CLEAN) */}
       <section className="py-32 px-6 relative">
         <ScatteredPings />
         <div className="absolute inset-0 bg-[#050505] -z-10" />
@@ -597,8 +685,8 @@ export default function ContactoDigitalPipelineClient() {
             <FadeInUp>
                 <div className="bg-[#111111] rounded-[3rem] p-10 md:p-16 border border-white/10 shadow-2xl shadow-black text-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#FF6B2B]/20 blur-[100px] rounded-full pointer-events-none"></div>
-                    <h2 className="text-3xl md:text-4xl font-black mb-4 relative z-10">Tu Identidad Digital Hoy</h2>
-                    <p className="text-lg text-white/60 font-medium mb-10 relative z-10">Sin costos ocultos. Sin depender de terceros.</p>
+                    <h2 className="text-3xl md:text-4xl font-black mb-4 relative z-10 uppercase tracking-tighter">Tu Identidad Digital <span className="text-[#FF6B2B] italic">Empieza Aquí</span></h2>
+                    <p className="text-lg text-white/60 font-medium mb-10 relative z-10">Sin costos ocultos. Tu marca profesional vive en el teléfono de tu cliente para siempre.</p>
                     
                     <div className="flex justify-center items-end gap-2 mb-10 relative z-10">
                         <span className="text-6xl md:text-8xl font-black tracking-tighter text-[#FF6B2B]">$35</span>

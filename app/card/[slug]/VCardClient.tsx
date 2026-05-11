@@ -362,6 +362,11 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             {data?.template_id !== 'hedkandi' && 
              data?.template_id !== 'showcase' && 
              data?.template_id !== 'classic' && 
+             data?.template_id !== 'industrial' &&
+             data?.template_id !== 'luxury' &&
+             data?.template_id !== 'luxury_minimal' &&
+             data?.template_id !== 'minimal' &&
+             data?.template_id !== 'carrocerias' &&
              menuNode}
 
             {/* Botón flotante de edición sutil */}

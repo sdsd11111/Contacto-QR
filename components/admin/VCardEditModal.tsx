@@ -30,6 +30,41 @@ export default function VCardEditModal({
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
     const [heroSectionOpen, setHeroSectionOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'identidad' | 'contacto' | 'contenido' | 'hero' | 'catalogo' | 'qr' | 'vip' | 'categorias'>('identidad');
+    const [isStructuring, setIsStructuring] = useState(false);
+
+    const handleAutoStructure = async () => {
+        const text = editingRegistro.menu_digital;
+        if (!text || text.length < 10) {
+            alert('Por favor escribe algo de texto primero para poder estructurarlo.');
+            return;
+        }
+
+        if (text.trim().startsWith('[')) {
+            alert('Parece que ya tienes un formato JSON. Si quieres re-estructurar, borra los corchetes y deja solo el texto.');
+            return;
+        }
+
+        setIsStructuring(true);
+        try {
+            const res = await fetch('/api/structure-menu', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            
+            const data = await res.json();
+            if (data.json) {
+                setEditingRegistro({ ...editingRegistro, menu_digital: data.json });
+            } else {
+                alert(data.error || 'Error al estructurar el menú.');
+            }
+        } catch (err) {
+            console.error('Error structuring menu:', err);
+            alert('Error de conexión con la IA.');
+        } finally {
+            setIsStructuring(false);
+        }
+    };
 
     // ── Hero Slides Management ──
     const heroSlides = (() => {
@@ -647,7 +682,6 @@ export default function VCardEditModal({
                                                 <div className="grid grid-cols-3 gap-2">
                                                     {[
                                                         { id: 'classic', name: 'Clásico' },
-                                                        { id: 'luxury_minimal', name: 'Luxury' },
                                                         { id: 'hedkandi', name: 'Hedkandi' },
                                                         { id: 'industrial', name: 'Industrial' },
                                                         { id: 'carrocerias', name: 'Carrocerías' },
@@ -951,14 +985,34 @@ export default function VCardEditModal({
                                                 />
                                             </div>
                                             {(editingRegistro.plan === 'business' || editingRegistro.plan === 'catalog' || editingRegistro.plan === 'digital') && (
-                                                <div className="animate-in slide-in-from-top-2">
-                                                    <label className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block ml-1">Carta / Menú Digital (URL)</label>
-                                                    <input
-                                                        className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all"
+                                                <div className="animate-in slide-in-from-top-2 group">
+                                                    <div className="flex justify-between items-center mb-2 ml-1">
+                                                        <label className="text-[10px] font-black uppercase tracking-widest text-primary">Carta / Menú Digital o Catálogo de Servicios</label>
+                                                        <button 
+                                                            onClick={handleAutoStructure}
+                                                            disabled={isStructuring}
+                                                            className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                                                        >
+                                                            {isStructuring ? (
+                                                                <Loader2 size={12} className="animate-spin" />
+                                                            ) : (
+                                                                <Zap size={12} />
+                                                            )}
+                                                            {isStructuring ? 'Procesando...' : 'Estructurar con IA'}
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex justify-between items-center mb-2 ml-1">
+                                                        <span className="text-[8px] font-bold text-white/40 uppercase group-hover:text-primary/60 transition-colors">Soporta URL o JSON Estructurado</span>
+                                                    </div>
+                                                    <textarea
+                                                        className="w-full bg-primary/5 border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all min-h-[120px] text-sm font-mono scrollbar-hide"
                                                         value={editingRegistro.menu_digital || ''}
                                                         onChange={e => setEditingRegistro({ ...editingRegistro, menu_digital: e.target.value })}
-                                                        placeholder="https://menu.com/..."
+                                                        placeholder='Pega una URL o el JSON de servicios: [{"name": "Corte", "items": [{"name": "Varón", "price": "$10"}]}]'
                                                     />
+                                                    <p className="text-[9px] text-white/30 mt-2 ml-1 leading-relaxed italic">
+                                                        * El formato JSON permite activar el modo "Gabinete" premium automáticamente para servicios de estética, barbería, fotografía, etc.
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>

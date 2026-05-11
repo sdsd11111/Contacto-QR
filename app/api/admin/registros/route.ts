@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
             params.push(...allIds);
         }
 
-        query += ' ORDER BY r.created_at DESC';
+        query += ' ORDER BY r.created_at DESC LIMIT 100';
 
         const [rows]: any = await pool.execute(query, params);
         return NextResponse.json({ data: rows });

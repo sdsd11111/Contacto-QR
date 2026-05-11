@@ -126,7 +126,6 @@ const FEATURE_CAROUSEL_DATA = [
 
 const TEMPLATES_LIST = [
     { id: 'classic', name: 'Activa Clásico', desc: 'Funcional y Directo' },
-    { id: 'luxury_minimal', name: 'Luxury Minimal', desc: 'Elegante y Moderno' },
     { id: 'hedkandi', name: 'Hedkandi', desc: 'Premium & Visual' },
     { id: 'nexus-logistics', name: 'Logística', desc: 'Flotas y Transporte' },
     { id: 'grand-horizon', name: 'Hotel', desc: 'Hospitalidad y Reservas' },

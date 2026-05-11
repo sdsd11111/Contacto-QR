@@ -3,11 +3,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     Download, User, Smartphone, Zap, CheckCircle, Phone, MessageSquare, UserPlus,
-    Mail, Briefcase, Settings, ChevronDown, ChevronLeft, ChevronRight, Utensils 
+    Mail, Briefcase, Settings, ChevronDown, ChevronLeft, ChevronRight, Utensils, Shield
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import CatalogGallery from '@/components/card/CatalogGallery';
+import CabinetMenu from '@/components/CabinetMenu';
 import { safeParse } from '@/lib/jsonUtils';
 import type { ClassicTemplateProps } from '@/components/templates/types';
 
@@ -76,6 +77,12 @@ export default function ClassicTemplate({
             window.open(`https://wa.me/${data.whatsapp.replace(/\D/g, '')}`, '_blank');
         }
     };
+
+    const authorityModule = (() => {
+        const raw = data.json_override;
+        const parsed = safeParse(raw, {});
+        return parsed.authorityModule || { enabled: false };
+    })();
 
     const socialLinks = [
         {
@@ -724,15 +731,43 @@ export default function ClassicTemplate({
                         {/* Slot placeholder — el contenido real se renderiza fuera del grid */}
 
                         {/* Catálogo de Productos/Servicios (Si no viene por Slot) */}
-                        {!afterExperienceSlot && (showCatalog || data?.plan === 'catalog') && data.catalogo_json && (
-                            <div className="lg:col-span-12 order-2 xl:order-4 mt-6 md:mt-24">
-                                <CatalogGallery 
-                                    data={safeParse(data.catalogo_json, { products: [], categories: [] })} 
-                                    whatsapp={data.whatsapp}
-                                    onLightboxToggle={setIsLightboxOpen}
-                                />
-                            </div>
-                        )}
+                        {/* Catálogo de Productos/Servicios (Si no viene por Slot) */}
+                        {!afterExperienceSlot && (showCatalog || data?.plan === 'catalog' || data?.plan === 'digital') && (() => {
+                            // Intentar obtener el JSON del catálogo: prioritario catalogo_json, pero permitimos menu_digital si es JSON
+                            let catalogSource = data.catalogo_json;
+                            
+                            // Si menu_digital parece un JSON (comienza con [), lo usamos como fuente si no hay catalogo_json
+                            if (!catalogSource && data.menu_digital?.trim().startsWith('[')) {
+                                catalogSource = data.menu_digital;
+                            }
+
+                            if (!catalogSource) return null;
+
+                            const parsedCatalog = safeParse(catalogSource, { products: [], categories: [] });
+                            
+                            // Detect if it's the "Cabinet/Service Menu" format: [{"name": "...", "items": [...]}]
+                            const isServiceMenu = Array.isArray(parsedCatalog) && 
+                                                 parsedCatalog.length > 0 && 
+                                                 'items' in parsedCatalog[0];
+
+                            return (
+                                <div className="lg:col-span-12 order-2 xl:order-4 mt-6 md:mt-24">
+                                    {isServiceMenu ? (
+                                        <CabinetMenu 
+                                            data={parsedCatalog} 
+                                            businessName={data.nombre_negocio || data.nombre} 
+                                            whatsapp={data.whatsapp}
+                                        />
+                                    ) : (
+                                        <CatalogGallery 
+                                            data={parsedCatalog} 
+                                            whatsapp={data.whatsapp}
+                                            onLightboxToggle={setIsLightboxOpen}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })()}
 
                         {(data.plan === 'business' || data.plan === 'catalog') && data.google_rating && (
                             <div className="lg:col-span-12 order-3 xl:order-4 mt-8 md:mt-16 w-full">
@@ -951,6 +986,93 @@ export default function ClassicTemplate({
                     <div className="w-full mt-16 md:mt-32">
                         {afterMarqueeSlot}
                     </div>
+                )}
+
+                {authorityModule.enabled && (
+                    <section className="mt-20 md:mt-40 max-w-5xl mx-auto px-6 w-full">
+                        <div className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[3rem] md:rounded-[4.5rem] p-8 md:p-20 relative overflow-hidden group shadow-2xl">
+                            {/* Decorative elements */}
+                            <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--theme-primary)]/10 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none" />
+                            <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] -ml-32 -mb-32 pointer-events-none" />
+                            
+                            <div className="relative z-10 flex flex-col items-center text-center">
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    className="inline-flex items-center gap-3 bg-[var(--theme-primary)]/20 text-[var(--theme-primary)] px-5 py-2 rounded-full border border-[var(--theme-primary)]/30 mb-8"
+                                >
+                                    <Shield size={14} />
+                                    <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.3em]">{authorityModule.badge || "Garantía de Calidad"}</span>
+                                </motion.div>
+
+                                <motion.h3 
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: 0.2 }}
+                                    className="text-4xl md:text-7xl font-black tracking-tighter text-white italic uppercase leading-[0.9] mb-8"
+                                >
+                                    {authorityModule.title || "Por qué Elegirnos"}
+                                </motion.h3>
+
+                                {authorityModule.description && (
+                                    <motion.p 
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.3 }}
+                                        className="text-lg md:text-2xl text-white/60 font-medium max-w-3xl mb-16 leading-relaxed"
+                                    >
+                                        {authorityModule.description}
+                                    </motion.p>
+                                )}
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 w-full mb-20">
+                                    {authorityModule.stats?.map((stat: any, i: number) => (
+                                        <motion.div 
+                                            key={i}
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            whileInView={{ opacity: 1, scale: 1 }}
+                                            viewport={{ once: true }}
+                                            transition={{ delay: 0.4 + (i * 0.1) }}
+                                            className="flex flex-col items-center"
+                                        >
+                                            <span className="text-4xl md:text-6xl font-black text-white italic tracking-tighter mb-2">{stat.value}</span>
+                                            <span className="text-[10px] md:text-xs font-black text-white/40 uppercase tracking-[0.2em]">{stat.label}</span>
+                                        </motion.div>
+                                    ))}
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 w-full text-left">
+                                    {authorityModule.metrics?.map((metric: any, i: number) => (
+                                        <motion.div 
+                                            key={i}
+                                            initial={{ opacity: 0, x: i % 2 === 0 ? -30 : 30 }}
+                                            whileInView={{ opacity: 1, x: 0 }}
+                                            viewport={{ once: true }}
+                                            transition={{ delay: 0.6 + (i * 0.1) }}
+                                            className="space-y-4"
+                                        >
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-sm md:text-base font-black text-white uppercase tracking-widest">{metric.label}</span>
+                                                <span className="text-2xl md:text-3xl font-black text-[var(--theme-primary)] italic">{metric.value}%</span>
+                                            </div>
+                                            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                                <motion.div 
+                                                    initial={{ width: 0 }}
+                                                    whileInView={{ width: `${metric.value}%` }}
+                                                    viewport={{ once: true }}
+                                                    transition={{ duration: 1.5, delay: 1, ease: "easeOut" }}
+                                                    className="h-full bg-gradient-to-r from-[var(--theme-primary)] to-[#05509c]"
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 )}
 
                 <style jsx>{`
