@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Youtube, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon, AlertCircle, Copy, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,11 @@ export default function VCardEditModal({
 }: VCardEditModalProps) {
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
+    const categoryFilterRef = useRef(productCategoryFilter);
+
+    useEffect(() => {
+        categoryFilterRef.current = productCategoryFilter;
+    }, [productCategoryFilter]);
     const [heroSectionOpen, setHeroSectionOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'identidad' | 'contacto' | 'contenido' | 'hero' | 'catalogo' | 'qr' | 'vip' | 'categorias'>('identidad');
     const [isStructuring, setIsStructuring] = useState(false);
@@ -1599,33 +1604,60 @@ export default function VCardEditModal({
                                                     <option value="Todas" className="bg-navy">Todas las Categorías</option>
                                                     {catalogoJson.categories.map((c: any) => <option key={c} value={c} className="bg-navy">{c}</option>)}
                                                 </select>
-                                                <button type="button" onClick={() => {
-                                                    if (catalogoJson.products.length >= 20) {
-                                                        alert("Máximo 20 productos permitidos en total.");
-                                                        return;
-                                                    }
-                                                    const p = { 
-                                                        id: `prod_${Date.now()}`, 
-                                                        nombre: 'Nuevo Producto', 
-                                                        name: 'Nuevo Producto', 
-                                                        precio: '0.00', 
-                                                        price: '0.00', 
-                                                        categoria: catalogoJson.categories[0] || 'Todas', 
-                                                        category: catalogoJson.categories[0] || 'Todas', 
-                                                        image: '', 
-                                                        descripcion: '', 
-                                                        description: '' 
-                                                    };
-                                                    updateCatalogo({ ...catalogoJson, products: [p, ...catalogoJson.products] });
-                                                }} className="bg-primary text-navy p-3 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all"><Plus size={20} /></button>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => {
+                                                        if (catalogoJson.products.length >= 20) {
+                                                            alert("Máximo 20 productos permitidos en total.");
+                                                            return;
+                                                        }
+                                                        
+                                                        // Determinamos la categoría objetivo basada en el filtro actual
+                                                        let targetCategory = categoryFilterRef.current;
+                                                        
+                                                        // Si el filtro es 'Todas', intentamos usar la primera categoría real o 'Todas'
+                                                        if (targetCategory === 'Todas') {
+                                                            targetCategory = catalogoJson.categories[0] || 'Todas';
+                                                        } else {
+                                                            // Buscamos coincidencia exacta normalizada en la lista de categorías
+                                                            const normalizedFilter = targetCategory.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                            const foundCategory = catalogoJson.categories.find((c: string) => 
+                                                                c.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === normalizedFilter
+                                                            );
+                                                            if (foundCategory) {
+                                                                targetCategory = foundCategory;
+                                                            }
+                                                        }
+
+                                                        const p = { 
+                                                            id: `prod_${Date.now()}`, 
+                                                            nombre: 'Nuevo Producto', 
+                                                            name: 'Nuevo Producto', 
+                                                            precio: '0.00', 
+                                                            price: '0.00', 
+                                                            categoria: targetCategory, 
+                                                            category: targetCategory, 
+                                                            image: '', 
+                                                            descripcion: '', 
+                                                            description: '' 
+                                                        };
+                                                        updateCatalogo({ ...catalogoJson, products: [p, ...catalogoJson.products] });
+                                                    }} 
+                                                    className="bg-primary text-navy px-6 py-3 rounded-2xl shadow-[0_10px_20px_rgba(255,107,0,0.2)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3 group"
+                                                >
+                                                    <Plus size={20} className="transition-transform group-hover:rotate-90" />
+                                                    <span className="font-black uppercase text-[10px] tracking-widest">
+                                                        Añadir a {productCategoryFilter === 'Todas' ? (catalogoJson.categories[0] || 'Todas') : productCategoryFilter}
+                                                    </span>
+                                                </button>
                                             </div>
                                             
                                             <div className="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
                                                 {catalogoJson.products.filter((p: any) => productCategoryFilter === 'Todas' || (p.categoria || p.category) === productCategoryFilter).map((prod: any, idx: number) => (
-                                                    <div key={prod.id || idx} className="bg-white/5 border border-white/10 p-6 rounded-3xl flex gap-6 relative group">
-                                                        <button type="button" onClick={() => updateCatalogo({ ...catalogoJson, products: catalogoJson.products.filter((p: any) => p.id !== prod.id) })} className="absolute top-4 right-4 text-white/20 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                                        <div className="w-24 h-24 bg-white/10 rounded-2xl overflow-hidden relative border border-white/5 group-hover:border-primary/30 transition-all">
-                                                            {prod.image ? <img src={prod.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/10 uppercase font-black text-[10px]">Sin Imagen</div>}
+                                                    <div key={prod.id || idx} className="bg-white/[0.07] border border-white/20 p-6 rounded-3xl flex gap-6 relative group hover:bg-white/[0.1] transition-all">
+                                                        <button type="button" onClick={() => updateCatalogo({ ...catalogoJson, products: catalogoJson.products.filter((p: any) => p.id !== prod.id) })} className="absolute top-4 right-4 text-white/40 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                                                        <div className="w-24 h-24 bg-white/10 rounded-2xl overflow-hidden relative border border-white/10 group-hover:border-primary/30 transition-all">
+                                                            {prod.image ? <img src={prod.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/20 uppercase font-black text-[10px]">Sin Imagen</div>}
                                                             <label className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-all backdrop-blur-sm">
                                                                 <Upload size={16} className="text-white" />
                                                                 <input type="file" className="hidden" accept="image/*" onChange={async e => {
@@ -1648,7 +1680,7 @@ export default function VCardEditModal({
                                                             <div className="grid grid-cols-2 gap-4">
                                                                 <div>
                                                                     <label className="text-[9px] font-black uppercase text-white/20 mb-1 block">Nombre Producto</label>
-                                                                    <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:border-primary/40" value={prod.nombre || prod.name || ''} onChange={e => {
+                                                                    <input className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-primary/60 transition-all" value={prod.nombre || prod.name || ''} onChange={e => {
                                                                         const prods = [...catalogoJson.products];
                                                                         const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
                                                                         prods[pIdx] = { ...prod, nombre: e.target.value, name: e.target.value };
@@ -1657,7 +1689,7 @@ export default function VCardEditModal({
                                                                 </div>
                                                                 <div>
                                                                     <label className="text-[9px] font-black uppercase text-white/20 mb-1 block">Precio</label>
-                                                                    <input className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:border-primary/40" value={prod.precio || prod.price || ''} onChange={e => {
+                                                                    <input className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-primary/60 transition-all" value={prod.precio || prod.price || ''} onChange={e => {
                                                                         const prods = [...catalogoJson.products];
                                                                         const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
                                                                         prods[pIdx] = { ...prod, precio: e.target.value, price: e.target.value };
@@ -1667,7 +1699,7 @@ export default function VCardEditModal({
                                                             </div>
                                                             <div>
                                                                 <label className="text-[9px] font-black uppercase text-white/20 mb-1 block">Descripción breve</label>
-                                                                <textarea className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-medium min-h-[60px] resize-none outline-none focus:border-primary/40" value={prod.descripcion || prod.description || ''} onChange={e => {
+                                                                <textarea className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-medium text-white/80 min-h-[60px] resize-none outline-none focus:border-primary/60 transition-all" value={prod.descripcion || prod.description || ''} onChange={e => {
                                                                     const prods = [...catalogoJson.products];
                                                                     const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
                                                                     prods[pIdx] = { ...prod, descripcion: e.target.value, description: e.target.value };

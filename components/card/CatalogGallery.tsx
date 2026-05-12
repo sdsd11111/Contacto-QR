@@ -86,11 +86,17 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
                             key={cat}
                             onClick={() => setActiveCategory(cat)}
                             className={cn(
-                                "px-5 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all duration-300",
+                                "px-5 py-2 rounded-full text-xs font-black tracking-wider uppercase transition-all duration-300 border-2",
                                 activeCategory === cat
-                                    ? "bg-[var(--theme-primary)] text-white shadow-lg shadow-[var(--theme-primary)]/30"
-                                    : "bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
+                                    ? "shadow-lg scale-105"
+                                    : "bg-gray-100/80 dark:bg-white/10 text-navy dark:text-white border-gray-300 dark:border-white/20 hover:border-primary/50 hover:bg-white"
                             )}
+                                style={activeCategory === cat ? { 
+                                    backgroundColor: 'var(--theme-primary, #FF6B00)',
+                                    borderColor: 'var(--theme-primary, #FF6B00)',
+                                    color: 'white',
+                                    zIndex: 1
+                                } : {}}
                         >
                             {cat}
                         </button>
@@ -156,7 +162,7 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
                                     {item.name || item.titulo}
                                 </h3>
                                 {(item.price || item.precio) && (
-                                    <p className="inline-block w-fit px-3 py-1 bg-[var(--theme-primary)]/20 border border-[var(--theme-primary)]/50 rounded-lg text-[var(--theme-primary)] font-black text-xs md:text-sm mt-1 backdrop-blur-sm shadow-inner">
+                                    <p className="inline-block w-fit px-3 py-1.5 bg-black/70 border border-white/20 rounded-xl text-white font-black text-xs md:text-sm mt-2 backdrop-blur-md shadow-xl">
                                         {item.price || item.precio}
                                     </p>
                                 )}

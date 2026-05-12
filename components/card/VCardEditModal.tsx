@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
@@ -52,6 +52,7 @@ export default function VCardEditModal({
     const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'autoridad' | 'industrial' | 'code' | 'success' | null>(initialSection);
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
+    const productCategoryFilterRef = useRef('Todas');
 
     // Load code from localStorage on mount
     useEffect(() => {
@@ -1614,8 +1615,8 @@ export default function VCardEditModal({
                                                                     <div className="flex justify-between items-center sticky top-0 bg-white py-2 z-10 border-b mb-4">
                                                                         <select 
                                                                             value={productCategoryFilter}
-                                                                            onChange={(e) => setProductCategoryFilter(e.target.value)}
-                                                                            className="bg-gray-100 border-0 rounded-lg text-[10px] font-black uppercase py-2 px-3 outline-none"
+                                                                            onChange={(e) => { setProductCategoryFilter(e.target.value); productCategoryFilterRef.current = e.target.value; }}
+                                                                            className="bg-gray-200 border border-gray-300 rounded-lg text-[10px] font-black uppercase py-2 px-3 outline-none text-navy focus:border-primary/60"
                                                                         >
                                                                             <option value="Todas">Todas las Categorías</option>
                                                                             {formData.catalogo_json.categories.map(c => (
@@ -1624,14 +1625,31 @@ export default function VCardEditModal({
                                                                         </select>
                                                                         <button 
                                                                             onClick={() => {
+                                                                                const currentFilter = productCategoryFilterRef.current;
+                                                                                const categories = formData.catalogo_json.categories;
+                                                                                
+                                                                                // Find the exact category string that matches the normalized filter
+                                                                                const normalize = (s: string) => s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                                                const targetNorm = normalize(currentFilter);
+                                                                                
+                                                                                let assignedCategory = '';
+                                                                                if (currentFilter !== 'Todas') {
+                                                                                    // Try to find the exact string from the list that matches the normalized filter
+                                                                                    const exactMatch = categories.find(c => normalize(c) === targetNorm);
+                                                                                    assignedCategory = exactMatch || currentFilter;
+                                                                                } else {
+                                                                                    assignedCategory = categories[0] || 'Sin Categoría';
+                                                                                }
+
                                                                                 const newProduct = {
                                                                                     id: `prod_${Date.now()}`,
                                                                                     name: 'Nuevo Producto',
                                                                                     description: 'Descripción aquí',
                                                                                     price: '0.00',
-                                                                                    category: productCategoryFilter !== 'Todas' ? productCategoryFilter : (formData.catalogo_json.categories[0] || 'Sin Categoría'),
+                                                                                    category: assignedCategory,
                                                                                     image: ''
                                                                                 };
+
                                                                                 setFormData({
                                                                                     ...formData,
                                                                                     catalogo_json: {
@@ -1640,10 +1658,13 @@ export default function VCardEditModal({
                                                                                     }
                                                                                 });
                                                                             }}
-                                                                            className="bg-primary text-white p-2 rounded-xl shadow-lg hover:scale-110 active:scale-95 transition-all"
-                                                                            title="Agregar Producto"
+                                                                            className="bg-primary text-white py-2 px-4 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
+                                                                            title={`Agregar a ${productCategoryFilter !== 'Todas' ? productCategoryFilter : 'la primera categoría'}`}
                                                                         >
-                                                                            <Plus size={20} />
+                                                                            <Plus size={18} className="group-hover:rotate-90 transition-transform" />
+                                                                            <span className="text-[10px] font-black uppercase">
+                                                                                {productCategoryFilter !== 'Todas' ? `Añadir a ${productCategoryFilter}` : 'Añadir Producto'}
+                                                                            </span>
                                                                         </button>
                                                                     </div>
 
@@ -1653,8 +1674,9 @@ export default function VCardEditModal({
                                                                             .filter(p => !p.isHidden)
                                                                             .filter(p => {
                                                                                 if (productCategoryFilter === 'Todas') return true;
-                                                                                const pCat = (p.category || '').trim().toLowerCase();
-                                                                                const filterCat = (productCategoryFilter || '').trim().toLowerCase();
+                                                                                const normalize = (s: string) => s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                                                const pCat = normalize(p.category || '');
+                                                                                const filterCat = normalize(productCategoryFilter || '');
                                                                                 return pCat === filterCat;
                                                                             })
                                                                             .map((prod, pIdx) => (
@@ -1704,7 +1726,7 @@ export default function VCardEditModal({
                                                                                         </div>
                                                                                         <div className="space-y-2">
                                                                                             <input 
-                                                                                                className="w-full bg-transparent border-0 border-b border-navy/10 p-1 text-sm font-black uppercase text-navy outline-none italic placeholder:text-navy/20" 
+                                                                                                className="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm font-black uppercase text-navy outline-none italic placeholder:text-navy/30 focus:border-primary/60 transition-all shadow-sm" 
                                                                                                 value={prod.name} 
                                                                                                 onChange={(e) => {
                                                                                                     const updatedProducts = formData.catalogo_json.products.map(p => p.id === prod.id ? { ...p, name: e.target.value } : p);
@@ -1715,9 +1737,9 @@ export default function VCardEditModal({
                                                                                             
                                                                                             <div className="flex gap-2">
                                                                                                 <div className="flex-1">
-                                                                                                    <p className="text-[8px] font-black uppercase opacity-40 mb-1">Precio</p>
+                                                                                                    <p className="text-[8px] font-black uppercase opacity-60 mb-1">Precio</p>
                                                                                                     <input 
-                                                                                                        className="w-full bg-white border border-gray-200 rounded-lg p-1.5 text-xs font-black text-navy" 
+                                                                                                        className="w-full bg-white border border-gray-300 rounded-lg p-2 text-xs font-black text-navy outline-none focus:border-primary/60 transition-all shadow-sm" 
                                                                                                         value={prod.price} 
                                                                                                         onChange={(e) => {
                                                                                                             const updatedProducts = formData.catalogo_json.products.map(p => p.id === prod.id ? { ...p, price: e.target.value } : p);
@@ -1727,9 +1749,9 @@ export default function VCardEditModal({
                                                                                                     />
                                                                                                 </div>
                                                                                                 <div className="flex-[1.5]">
-                                                                                                    <p className="text-[8px] font-black uppercase opacity-40 mb-1">Categoría</p>
+                                                                                                    <p className="text-[8px] font-black uppercase opacity-60 mb-1">Categoría</p>
                                                                                                     <select 
-                                                                                                        className="w-full bg-white border border-gray-200 rounded-lg p-1.5 text-[9px] font-black uppercase"
+                                                                                                        className="w-full bg-white border border-gray-300 rounded-lg p-2 text-[10px] font-black uppercase text-navy outline-none focus:border-primary/60 transition-all shadow-sm"
                                                                                                         value={prod.category}
                                                                                                         onChange={(e) => {
                                                                                                             const updatedProducts = formData.catalogo_json.products.map(p => p.id === prod.id ? { ...p, category: e.target.value } : p);
@@ -1745,7 +1767,7 @@ export default function VCardEditModal({
                                                                                             </div>
 
                                                                                             <textarea 
-                                                                                                className="w-full bg-white border border-gray-200 rounded-lg p-2 text-[10px] font-medium min-h-[50px] resize-none" 
+                                                                                                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-[10px] font-medium text-navy min-h-[60px] resize-none outline-none focus:border-primary/60 transition-all shadow-sm" 
                                                                                                 value={prod.description} 
                                                                                                 onChange={(e) => {
                                                                                                     const updatedProducts = formData.catalogo_json.products.map(p => p.id === prod.id ? { ...p, description: e.target.value } : p);
@@ -1759,7 +1781,8 @@ export default function VCardEditModal({
                                                                             ))}
                                                                             {formData.catalogo_json.products.filter(p => {
                                                                                 if (productCategoryFilter === 'Todas') return true;
-                                                                                return (p.category || '').trim().toLowerCase() === (productCategoryFilter || '').trim().toLowerCase();
+                                                                                const norm = (s: string) => s.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                                                                                return norm(p.category || '') === norm(productCategoryFilter || '');
                                                                             }).length === 0 && (
                                                                                 <div className="text-center py-10 opacity-30 italic font-medium text-navy">
                                                                                     No hay productos en esta categoría
