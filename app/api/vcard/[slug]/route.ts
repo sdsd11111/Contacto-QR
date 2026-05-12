@@ -273,7 +273,32 @@ export async function GET(
         }
         // --- FIN INJERTO VIP ---
 
-        // 3. Retornar con headers estándar
+        // 3. Track download on the server
+        try {
+            const ip_address = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+            const user_agent = request.headers.get('user-agent') || 'unknown';
+            const method = 'api_direct';
+            const actualSlug = user.slug || slug;
+
+            // Optional anti-spam
+            const [recent]: any = await pool.execute(
+                `SELECT id FROM vcard_downloads_log 
+                 WHERE slug = ? AND ip_address = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 10 SECOND)`,
+                [actualSlug, ip_address]
+            );
+
+            if (recent.length === 0) {
+                await pool.execute(
+                    `INSERT INTO vcard_downloads_log (slug, method, ip_address, user_agent, created_at)
+                     VALUES (?, ?, ?, ?, NOW())`,
+                    [actualSlug, method, ip_address, user_agent]
+                );
+            }
+        } catch (trackErr) {
+            console.error("Silent Fail: Falló el tracking de descarga en el API directo", trackErr);
+        }
+
+        // 4. Retornar con headers estándar
         return new NextResponse(vcard, {
             status: 200,
             headers: {

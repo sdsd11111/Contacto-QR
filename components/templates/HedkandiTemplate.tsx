@@ -521,7 +521,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 return (
                                     <a 
                                         key={social}
-                                        href={url}
+                                    href={social === 'whatsapp' ? (url.startsWith('http') ? url : `https://wa.me/${url.replace(/\D/g, '')}`) : url}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-white/40 hover:text-red-500 transition-colors duration-300"

@@ -38,7 +38,8 @@ export async function GET(req: NextRequest) {
                 s.codigo as sold_by_code,
                 s.parent_id,
                 p.nombre as parent_name,
-                p.codigo as parent_code
+                p.codigo as parent_code,
+                (SELECT COUNT(*) FROM vcard_downloads_log WHERE slug = r.slug) as downloads_count
             FROM registraya_vcard_registros r
             LEFT JOIN registraya_vcard_sellers s ON r.seller_id = s.id
             LEFT JOIN registraya_vcard_sellers p ON s.parent_id = p.id
@@ -163,6 +164,64 @@ export async function DELETE(req: NextRequest) {
 
     } catch (err: any) {
         console.error('[ADMIN DELETE] Error crítico:', err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+/**
+ * POST: Crear un nuevo registro (requiere admin key)
+ */
+export async function POST(req: NextRequest) {
+    const auth = requireAdmin(req);
+    if (auth) return auth;
+
+    try {
+        const body = await req.json();
+        const { nombre, email, whatsapp, plan, slug, status } = body;
+
+        if (!nombre || !slug || !plan) {
+            return NextResponse.json({ error: 'Nombre, slug y plan son requeridos' }, { status: 400 });
+        }
+
+        // Validate uniqueness of slug
+        const [existing]: any = await pool.execute('SELECT id FROM registraya_vcard_registros WHERE slug = ?', [slug]);
+        if (existing.length > 0) {
+            return NextResponse.json({ error: 'El slug ya está en uso. Por favor cambia el nombre o el slug.' }, { status: 400 });
+        }
+
+        // Determine correct plan based on requested plan string if needed
+        // Insert into DB
+        const { v4: uuidv4 } = require('uuid');
+        const newId = uuidv4();
+        const editCode = 'RYA-2026-ADM-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        const query = `
+            INSERT INTO registraya_vcard_registros (
+                id, nombre, slug, email, whatsapp, plan, status, tipo_perfil, edit_code, edit_uses_remaining, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        `;
+        const values = [
+            newId,
+            nombre,
+            slug,
+            email || null,
+            whatsapp || null,
+            plan,
+            status || 'entregado', // default active
+            'persona', // default
+            editCode,
+            2 // default uses
+        ];
+
+        const [result]: any = await pool.execute(query, values);
+
+        return NextResponse.json({
+            message: 'Registro creado exitosamente',
+            data: { id: result.insertId, slug }
+        });
+
+    } catch (err: any) {
+        console.error('[ADMIN POST] Error creando registro:', err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }

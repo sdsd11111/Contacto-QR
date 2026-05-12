@@ -42,7 +42,8 @@ import {
     Plus,
     Bell,
     CalendarCheck,
-    Copy
+    Copy,
+    BarChart2
 } from "lucide-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -116,6 +117,54 @@ export default function AdminDashboard() {
     const [newCatalogItem, setNewCatalogItem] = useState({ categoria: 'General', titulo: '', descripcion: '', precio: '' });
     const [catalogImageFile, setCatalogImageFile] = useState<File | null>(null);
     const [isSavingCatalog, setIsSavingCatalog] = useState(false);
+
+    // Estados para Nuevo Cliente
+    const [isCreateClientModalOpen, setIsCreateClientModalOpen] = useState(false);
+    const [newClientData, setNewClientData] = useState({
+        nombre: '',
+        email: '',
+        whatsapp: '',
+        plan: 'basic',
+        slug: ''
+    });
+    const [isCreatingClient, setIsCreatingClient] = useState(false);
+
+    // Estado para modal de descargas
+    const [isDownloadsModalOpen, setIsDownloadsModalOpen] = useState(false);
+    const [downloadsModalSlug, setDownloadsModalSlug] = useState<string | null>(null);
+    const [downloadsModalName, setDownloadsModalName] = useState<string>('');
+    const [downloadsData, setDownloadsData] = useState<any[]>([]);
+    const [loadingDownloads, setLoadingDownloads] = useState(false);
+
+    const openDownloadsModal = async (slug: string, nombre: string, adminKey: string) => {
+        setDownloadsModalSlug(slug);
+        setDownloadsModalName(nombre);
+        setIsDownloadsModalOpen(true);
+        setLoadingDownloads(true);
+        try {
+            const res = await fetch(`/api/admin/descargas?slug=${encodeURIComponent(slug)}`, {
+                headers: { 'x-admin-key': adminKey }
+            });
+            const data = await res.json();
+            setDownloadsData(data.data || []);
+        } catch (err) {
+            console.error('Error cargando descargas:', err);
+        } finally {
+            setLoadingDownloads(false);
+        }
+    };
+
+    const exportDownloadsJSON = () => {
+        const blob = new Blob([JSON.stringify(downloadsData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `descargas_${downloadsModalSlug}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     const fetchNextCode = async () => {
         const adminKey = localStorage.getItem('admin_access_key') || '';
@@ -696,6 +745,45 @@ export default function AdminDashboard() {
             alert("Error al guardar cambios: " + err.message);
         }
         setIsSaving(false);
+    };
+
+    const generateClientSlug = (name: string) => {
+        return name.toLowerCase().trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/[\s-]+/g, '-')
+            + '-' + Math.random().toString(36).substring(2, 6);
+    };
+
+    const handleCreateClient = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreatingClient(true);
+        const adminKey = localStorage.getItem('admin_access_key') || '';
+        try {
+            const payload = {
+                ...newClientData,
+                status: 'entregado',
+            };
+            const res = await fetch('/api/admin/registros', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            if (res.ok) {
+                alert(`✅ Cliente creado con éxito. Slug: ${result.data.slug}`);
+                setIsCreateClientModalOpen(false);
+                setNewClientData({ nombre: '', email: '', whatsapp: '', plan: 'basic', slug: '' });
+                fetchRegistros(); // Refrescar lista
+            } else {
+                alert("❌ Error: " + (result.error || 'Error desconocido'));
+            }
+        } catch (err: any) {
+            alert("❌ Error: " + err.message);
+        }
+        setIsCreatingClient(false);
     };
 
     const handleCreateSeller = async (e: React.FormEvent) => {
@@ -1299,6 +1387,12 @@ export default function AdminDashboard() {
                             <h2 className="text-2xl font-black uppercase italic tracking-tighter">Socios & Vendedores</h2>
                         </div>
                         <button
+                            onClick={() => setIsCreateClientModalOpen(true)}
+                            className="flex items-center gap-2 bg-green-500/10 text-green-500 border border-green-500/20 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-green-500 hover:text-white transition-all shadow-lg shadow-green-500/5"
+                        >
+                            <Plus size={16} /> Crear Nuevo Cliente
+                        </button>
+                        <button
                             onClick={() => setIsCreateSellerModalOpen(true)}
                             className="flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-navy transition-all shadow-lg shadow-primary/5"
                         >
@@ -1658,6 +1752,19 @@ export default function AdminDashboard() {
                                                 <div>
                                                     <p className="font-bold text-sm">{r.nombre}</p>
                                                     <p className="text-[10px] text-white/40">{r.email}</p>
+                                                    {/* Badge descargas */}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const key = localStorage.getItem('admin_access_key') || '';
+                                                            openDownloadsModal(r.slug || r.id, r.nombre, key);
+                                                        }}
+                                                        className="mt-1.5 flex items-center gap-1 bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2 py-0.5 rounded-lg hover:bg-cyan-500/20 transition-all text-[9px] font-black uppercase tracking-widest"
+                                                        title="Ver historial de descargas"
+                                                    >
+                                                        <Download size={9} />
+                                                        {r.downloads_count ?? 0} descargas
+                                                    </button>
                                                     {r.edit_code && (
                                                         <div className="mt-2 flex items-center gap-2">
                                                             <span className="text-[9px] font-mono font-black text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20 tracking-widest">
@@ -1918,6 +2025,18 @@ export default function AdminDashboard() {
                                                     title="Ver Catálogo / Productos"
                                                 >
                                                     <Store size={18} />
+                                                </button>
+
+                                                {/* Botón Analíticas de Descargas */}
+                                                <button
+                                                    onClick={() => {
+                                                        const key = localStorage.getItem('admin_access_key') || '';
+                                                        openDownloadsModal(r.slug || r.id, r.nombre, key);
+                                                    }}
+                                                    className="p-2 bg-cyan-500/10 text-cyan-400 rounded-xl hover:bg-cyan-500 hover:text-white transition-all shadow-lg shadow-cyan-500/10"
+                                                    title={`Ver descargas (${r.downloads_count ?? 0})`}
+                                                >
+                                                    <BarChart2 size={18} />
                                                 </button>
 
                                             </div>
@@ -2519,10 +2638,210 @@ export default function AdminDashboard() {
                 )}
             </AnimatePresence>
 
+            {/* Modal para Crear Cliente (Básico) */}
+            <AnimatePresence>
+                {isCreateClientModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-navy border border-green-500/20 rounded-[40px] p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                                <Plus size={80} className="text-green-500" />
+                            </div>
+
+                            <div className="flex justify-between items-start mb-8 relative z-10">
+                                <div>
+                                    <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Nuevo Cliente</h3>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-green-500 mt-1">Generación Rápida</p>
+                                </div>
+                                <button onClick={() => setIsCreateClientModalOpen(false)} className="text-white/40 hover:text-white p-2">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleCreateClient} className="space-y-6 relative z-10">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">Nombre o Empresa</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-green-500/50 outline-none"
+                                        value={newClientData.nombre}
+                                        onChange={(e) => {
+                                            const nombre = e.target.value;
+                                            setNewClientData({ ...newClientData, nombre, slug: generateClientSlug(nombre) });
+                                        }}
+                                        placeholder="Ej. Juan Pérez"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">Slug (Automático)</label>
+                                    <input
+                                        type="text"
+                                        required
+                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-4 text-white font-bold outline-none text-green-500/80"
+                                        value={newClientData.slug}
+                                        onChange={(e) => setNewClientData({ ...newClientData, slug: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">WhatsApp</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-green-500/50 outline-none"
+                                        value={newClientData.whatsapp}
+                                        onChange={(e) => setNewClientData({ ...newClientData, whatsapp: e.target.value })}
+                                        placeholder="Ej. +593991234567"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">Plan Base</label>
+                                    <select
+                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-green-500/50 outline-none appearance-none"
+                                        value={newClientData.plan}
+                                        onChange={(e) => setNewClientData({ ...newClientData, plan: e.target.value })}
+                                    >
+                                        <option value="basic">Plan Basic ($35)</option>
+                                        <option value="business">Plan Business ($100)</option>
+                                        <option value="catalog">Plan Catalog/Store ($200)</option>
+                                    </select>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isCreatingClient || !newClientData.nombre || !newClientData.slug}
+                                    className="w-full bg-green-500 text-navy py-4 rounded-[24px] font-black uppercase tracking-widest shadow-lg shadow-green-500/20 hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
+                                >
+                                    {isCreatingClient ? <Loader2 size={20} className="animate-spin" /> : <CheckCircle size={20} />}
+                                    {isCreatingClient ? 'Creando...' : 'Crear y Continuar'}
+                                </button>
+                                <p className="text-center text-[10px] font-bold text-white/30 uppercase">
+                                    Se guardará como "Entregado". Usa "Editar" para configurar el diseño.
+                                </p>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <StatsModal
                 isOpen={isStatsModalOpen}
                 onClose={() => setIsStatsModalOpen(false)}
             />
+
+            {/* ── Modal: Historial de Descargas ─────────────────────────── */}
+            <AnimatePresence>
+                {isDownloadsModalOpen && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="bg-[#0A1229] border border-white/10 rounded-[32px] w-full max-w-2xl max-h-[80vh] flex flex-col overflow-hidden shadow-2xl"
+                        >
+                            {/* Header */}
+                            <div className="flex items-center justify-between px-8 py-6 border-b border-white/5 shrink-0">
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-400 mb-1">Analíticas de Descargas</p>
+                                    <h2 className="text-xl font-black text-white italic tracking-tight">{downloadsModalName}</h2>
+                                    <p className="text-[11px] text-white/30 mt-0.5">Últimas 50 descargas registradas</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {downloadsData.length > 0 && (
+                                        <button
+                                            onClick={exportDownloadsJSON}
+                                            className="flex items-center gap-2 px-4 py-2 bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-cyan-500 hover:text-white transition-all"
+                                        >
+                                            <Download size={14} />
+                                            Exportar JSON
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => setIsDownloadsModalOpen(false)}
+                                        className="p-2 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Body */}
+                            <div className="overflow-y-auto grow p-6">
+                                {loadingDownloads ? (
+                                    <div className="flex items-center justify-center py-16 gap-3 text-white/40">
+                                        <Loader2 size={24} className="animate-spin text-cyan-400" />
+                                        <span className="text-sm font-bold uppercase tracking-widest">Cargando datos...</span>
+                                    </div>
+                                ) : downloadsData.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                                        <BarChart2 size={48} className="text-white/10 mb-4" />
+                                        <p className="text-white/30 font-black uppercase tracking-widest text-sm">Sin descargas aún</p>
+                                        <p className="text-white/20 text-xs mt-1">Las descargas aparecerán aquí en tiempo real</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {/* Summary badge */}
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-4 py-2 rounded-xl">
+                                                <Download size={16} />
+                                                <span className="font-black text-lg">{downloadsData.length}</span>
+                                                <span className="text-[10px] uppercase tracking-widest font-bold opacity-70">registros</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Table */}
+                                        <div className="rounded-2xl overflow-hidden border border-white/5">
+                                            <table className="w-full text-left text-sm">
+                                                <thead>
+                                                    <tr className="bg-white/[0.03] border-b border-white/5">
+                                                        <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-white/30">#</th>
+                                                        <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-white/30">Fecha & Hora</th>
+                                                        <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-white/30">Método</th>
+                                                        <th className="px-4 py-3 text-[9px] font-black uppercase tracking-widest text-white/30 hidden md:table-cell">IP</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-white/5">
+                                                    {downloadsData.map((d, i) => (
+                                                        <tr key={d.id} className="hover:bg-white/[0.02] transition-all">
+                                                            <td className="px-4 py-3 text-[10px] text-white/20 font-mono">{i + 1}</td>
+                                                            <td className="px-4 py-3">
+                                                                <p className="text-xs font-bold text-white">
+                                                                    {new Date(d.created_at).toLocaleDateString('es-EC', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                </p>
+                                                                <p className="text-[10px] text-white/40">
+                                                                    {new Date(d.created_at).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
+                                                                </p>
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                                                                    d.method === 'profile_button' ? 'bg-primary/20 text-primary' :
+                                                                    d.method === 'api_direct' ? 'bg-cyan-500/20 text-cyan-400' :
+                                                                    'bg-white/10 text-white/40'
+                                                                }`}>
+                                                                    {d.method === 'profile_button' ? 'Botón Perfil' :
+                                                                     d.method === 'api_direct' ? 'QR / Directo' :
+                                                                     d.method === 'edit_portal' ? 'Portal Edición' :
+                                                                     d.method}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 hidden md:table-cell">
+                                                                <span className="text-[10px] font-mono text-white/20">{d.ip_address}</span>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

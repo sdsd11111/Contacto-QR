@@ -140,6 +140,14 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     // ─── Acciones ─────────────────────────────────────────────────────────────
     const downloadVCF = useCallback(() => {
         if (!data) return;
+
+        // Track download asynchronously
+        fetch('/api/vcard/track-download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: data.slug, method: 'profile_button' })
+        }).catch(err => console.error("Error tracking download:", err));
+
         const vcfContent = [
             'BEGIN:VCARD',
             'VERSION:3.0',
@@ -240,15 +248,18 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         getTikTokID,
     };
 
+    // Extraer overrides (VIP Protocol)
+    const overrides = safeParse<any>(data?.json_override, {});
+
     // ─── Menú Digital: parsear una sola vez ───────────────────────────────────────────
-    const menuCategories = safeParse<any[] | null>(data.menu_digital, null);
+    const menuCategories = safeParse<any[] | null>(data?.menu_digital, null);
     const hasMenu = Array.isArray(menuCategories) && menuCategories.length > 0;
 
     const menuNode = hasMenu ? (
         <MenuTabs
             categories={menuCategories!}
             accentColor={themePrimary}
-            title="Nuestra carta"
+            title={overrides.menuTitle || "Nuestra carta"}
             ctaText="Ordenar por WhatsApp"
             onCtaClick={() => window.open(
                 data.whatsapp ? `https://wa.me/${data.whatsapp.replace(/\D/g, '')}` : '#',

@@ -198,6 +198,13 @@ export default function EditPortalModal({ isOpen, onClose }: EditPortalModalProp
         setLoading(true);
 
         try {
+            // Track download asynchronously
+            fetch('/api/vcard/track-download', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slug: userData.slug, method: 'edit_portal' })
+            }).catch(err => console.error("Error tracking download:", err));
+
             // Usar la misma API que /admin usa — genera el VCF completo
             // con foto JPEG, tags de WhatsApp, redes sociales, etc.
             const response = await fetch(`/api/vcard/${userData.slug}`);
