@@ -1447,7 +1447,7 @@ export default function RegisterWizard({
     const handleBack = () => {
         if (isPaymentFirst) {
             if (step === 2) {
-                window.location.href = '/';
+                setStep(1);
                 return;
             }
             if (step === 6) {
@@ -1476,7 +1476,6 @@ export default function RegisterWizard({
         }
 
         if (step === 1) {
-            window.location.href = '/';
             return;
         }
         if (step === 6) {
@@ -3043,15 +3042,20 @@ return (
                                 )}
                                 
                                 <div className="flex justify-between items-center w-full gap-4">
-                                <button
-                                    onClick={handleBack}
-                                    className={cn(
-                                        "px-6 md:px-10 py-4 md:py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
-                                        "text-navy hover:text-primary bg-white hover:bg-gray-50 border border-black/20 shadow-sm"
-                                    )}
-                                >
-                                    ← Atrás
-                                </button>
+                                {step > 1 ? (
+                                    <button
+                                        onClick={handleBack}
+                                        className={cn(
+                                            "px-6 md:px-10 py-4 md:py-5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                                            "text-navy hover:text-primary bg-white hover:bg-gray-50 border border-black/20 shadow-sm"
+                                        )}
+                                    >
+                                        ← Atrás
+                                    </button>
+                                ) : (
+                                    <div />
+                                )}
+
                                 
                                 <button
                                     onClick={handleNext}
