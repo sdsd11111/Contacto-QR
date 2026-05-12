@@ -1,0 +1,90 @@
+import { NextResponse } from 'next/server';
+import { saveMessage } from '@/lib/openai-bot';
+import pool from '@/lib/db';
+
+/**
+ * WEBHOOK PRINCIPAL (RECEPTOR)
+ * Misión: Capturar mensajes y encolarlos para evitar respuestas fragmentadas.
+ */
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+
+        // Solo procesar mensajes entrantes (MESSAGES_UPSERT)
+        if (body.event !== 'messages.upsert' && body.event !== 'MESSAGES_UPSERT') {
+            return NextResponse.json({ message: "Event ignored" });
+        }
+
+        const data = body.data;
+        if (!data || !data.message) return NextResponse.json({ message: "No message data" });
+
+        const remoteJid = data.key?.remoteJid;
+        const fromMe = data.key?.fromMe;
+
+        if (!remoteJid) return NextResponse.json({ message: "No remoteJid" });
+
+        // --- Lógica de Interacción Humana (Silencio de 24h) ---
+        if (fromMe) {
+            const humanMessage = data.message.conversation || data.message.extendedTextMessage?.text || "";
+            
+            // Si el mensaje es un recordatorio automático de Alejandra, NO silenciamos el bot
+            if (humanMessage && (humanMessage.includes("soy Alejandra de ActivaQR") || humanMessage.includes("Alejandra de ActivaQR"))) {
+                console.log(`🤖 Mensaje automático de Alejandra detectado. No se silencia el bot.`);
+                return NextResponse.json({ message: "System message ignored from muting" });
+            }
+
+            const mutedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            await pool.execute(
+                `INSERT INTO registraya_whatsapp_sessions (jid, last_human_interaction, bot_muted_until) 
+                 VALUES (?, NOW(), ?) 
+                 ON DUPLICATE KEY UPDATE last_human_interaction = NOW(), bot_muted_until = ?`,
+                [remoteJid, mutedUntil, mutedUntil]
+            );
+
+            if (humanMessage) {
+                await saveMessage(remoteJid, 'assistant', `[HUMANO]: ${humanMessage}`);
+            }
+            return NextResponse.json({ message: "Bot muted" });
+        }
+
+        // --- Verificar Silencio ---
+        const [sessionRows] = await pool.execute(
+            'SELECT bot_muted_until FROM registraya_whatsapp_sessions WHERE jid = ?',
+            [remoteJid]
+        );
+        const sessions = sessionRows as any[];
+        if (sessions.length > 0 && new Date(sessions[0].bot_muted_until) > new Date()) {
+            return NextResponse.json({ message: "Bot is muted" });
+        }
+
+        // --- Extraer Mensaje Usuario ---
+        const pushName = data.pushName || "";
+        let content = data.message.conversation || data.message.extendedTextMessage?.text || data.message.imageMessage?.caption || "";
+
+        // Extraer mensaje citado (quotedMessage) para dar contexto, fundamental para Administrador respondiendo a notificaciones
+        const quotedText = data.message.extendedTextMessage?.contextInfo?.quotedMessage?.conversation || data.message.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text || "";
+        if (quotedText) {
+            content += `\n[Respondiendo a mensaje anterior: "${quotedText}"]`;
+        }
+
+        if (!content) return NextResponse.json({ message: "No text" });
+
+        console.log(`📥 Recibido de ${remoteJid} (${pushName}): ${content}`);
+
+        // --- ENCOLADO / DEBOUNCE (25 SEGUNDOS) ---
+        // Guardamos en la cola para acumular mensajes fragmentados
+        // Cada mensaje nuevo es una fila nueva, el Worker se encarga de unirlos y borrarlos atómicamente
+
+        await pool.execute(
+            `INSERT INTO registraya_whatsapp_message_queue (jid, push_name, combined_content, processed)
+             VALUES (?, ?, ?, 0)`,
+            [remoteJid, pushName, content.trim()]
+        );
+
+        return NextResponse.json({ success: true, message: "Message queued for accumulation" });
+
+    } catch (error: any) {
+        console.error("Webhook Receiver Error:", error);
+        return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    }
+}

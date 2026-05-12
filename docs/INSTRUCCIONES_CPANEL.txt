@@ -1,0 +1,51 @@
+GUÍA DE DESPLIEGUE PARA CPANEL (NEXT.JS STATIC EXPORT)
+
+¡Su aplicación ha sido compilada exitosamente!
+
+OPCIÓN A: SUBDOMINIO (RECOMENDADO)
+Si desea que su app viva en "vcard.sudominio.com":
+
+1.  **Crear el Subdominio:**
+    *   Entre a su cPanel.
+    *   Busque la sección "Dominios" o "Subdominios".
+    *   Cree uno nuevo (ej: `vcard`).
+    *   **Importante:** Note la carpeta que cPanel le asigna (usualmente `/public_html/vcard` o 
+    `/vcard.su-dominio.com`). A ESA carpeta es donde debe subir los archivos.
+
+2.  **Subir Archivos:**
+    *   Vaya al "Administrador de Archivos" de cPanel.
+    *   Navegue a la carpeta del subdominio que acaba de crear.
+    *   Suba todo el contenido de la carpeta `vcard-app/out` (no suba la carpeta `out` en sí, sino lo que hay *dentro*).
+
+OPCIÓN B: DOMINIO PRINCIPAL
+Si va a usar su dominio principal, suba los archivos directamente a `public_html`.
+
+---
+
+CONFIGURACIÓN CRÍTICA (.htaccess) - APLICA PARA AMBOS CASOS
+Debe crear un archivo llamado `.htaccess` dentro de la carpeta donde subió los archivos (junto a `index.html`).
+
+Contenido del archivo `.htaccess`:
+
+```apache
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # 1. Si el archivo o carpeta existe, servirlo directamente
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # 2. IMPORTANTE: Redirigir visitas a tarjetas dinámicas (ej: /card/juan)
+  # Redirige internamente a la plantilla generada "example.html"
+  RewriteRule ^card/.*$ card/example.html [L]
+
+  # 3. Para otras rutas no encontradas, mostrar la página 404
+  RewriteRule . 404.html [L]
+</IfModule>
+```
+
+VERIFICACIÓN FINAL:
+1.  Entre a `vcard.sudominio.com/card/example` -> Debería cargar la tarjeta de ejemplo.
+2.  Entre a `vcard.sudominio.com/card/CualquierNombre` -> Debería cargar la estructura (y luego mostrar error 404 visual si el usuario no existe en base de datos, lo cual es correcto).

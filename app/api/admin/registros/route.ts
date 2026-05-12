@@ -1,0 +1,168 @@
+import { NextRequest, NextResponse } from 'next/server';
+import pool from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
+
+/**
+ * GET: Lista todos los registros (requiere admin key o seller_id)
+ */
+export async function GET(req: NextRequest) {
+    const auth = requireAdmin(req);
+    const { searchParams } = new URL(req.url);
+    const sellerId = searchParams.get('seller_id');
+
+    // Admin key required unless seller_id is provided (legacy compat)
+    if (auth && !sellerId) {
+        return auth;
+    }
+
+    try {
+        let query = `
+            SELECT 
+                r.id, r.slug, r.nombre, r.nombre_negocio, r.empresa, r.email, r.whatsapp, 
+                r.status, r.plan, r.created_at, r.foto_url, r.comprobante_url, r.commission_status, r.seller_id, 
+                r.tipo_perfil, r.profesion, r.bio, r.direccion, r.web, r.instagram, r.linkedin, r.template_id,
+                r.facebook, r.tiktok, r.productos_servicios, r.etiquetas, r.youtube, r.x, 
+                r.menu_digital, r.nombres, r.apellidos, r.contacto_nombre, r.contacto_apellido, 
+                r.portada_desktop, r.portada_movil, r.wifi_ssid, r.wifi_password, 
+                r.hero_button_text, r.leader_paid_at, r.payment_method,
+                r.google_business, r.reminder_count, r.last_reminder_at,
+                r.activated_at, r.expires_at, r.activation_type,
+                r.expires_reminder_30d_sent, r.expires_reminder_7d_sent, r.expires_reminder_0d_sent,
+                r.hero_action, r.hero_file_url, r.hero_external_link, r.hero_wifi_steps,
+                r.hero_section_title, r.hero_step1_title, r.hero_step1_text, r.hero_step2_title, r.hero_step2_text, r.hero_step3_title, r.hero_step3_text,
+                r.google_rating, r.google_reviews_count, r.youtube_video_url, r.hero_slides_json,
+                -- Explicitly omitting: catalogo_json, galeria_urls to save massive bandwidth
+                s.nombre as sold_by_name, 
+                s.codigo as sold_by_code,
+                s.parent_id,
+                p.nombre as parent_name,
+                p.codigo as parent_code
+            FROM registraya_vcard_registros r
+            LEFT JOIN registraya_vcard_sellers s ON r.seller_id = s.id
+            LEFT JOIN registraya_vcard_sellers p ON s.parent_id = p.id
+        `;
+        const params: any[] = [];
+
+        if (sellerId) {
+            // Find children IDs
+            const [children]: any = await pool.execute('SELECT id FROM registraya_vcard_sellers WHERE parent_id = ?', [sellerId]);
+            const childrenIds = (children as any[]).map(c => c.id);
+            const allIds = [Number(sellerId), ...childrenIds];
+
+            const placeholders = allIds.map(() => '?').join(', ');
+            query += ` WHERE r.seller_id IN (${placeholders})`;
+            params.push(...allIds);
+        }
+
+        query += ' ORDER BY r.created_at DESC LIMIT 100';
+
+        const [rows]: any = await pool.execute(query, params);
+        return NextResponse.json({ data: rows });
+    } catch (err: any) {
+        console.error('Error fetching registros:', err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+/**
+ * PATCH: Actualizar un registro (requiere admin key)
+ */
+export async function PATCH(req: NextRequest) {
+    const adminKey = req.headers.get('x-admin-key');
+    const sellerIdHeader = req.headers.get('x-seller-id');
+    const isAdmin = adminKey === process.env.ADMIN_API_KEY;
+
+    if (!isAdmin && !sellerIdHeader) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    try {
+        const body = await req.json();
+        const { id, ...updateFields } = body;
+
+        if (!id) {
+            return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
+        }
+
+        // Verify seller ownership if not admin
+        if (!isAdmin && sellerIdHeader) {
+            const [checkRows]: any = await pool.execute('SELECT seller_id FROM registraya_vcard_registros WHERE id = ?', [id]);
+            if (!checkRows.length || String(checkRows[0].seller_id) !== String(sellerIdHeader)) {
+                return NextResponse.json({ error: 'No autorizado para este registro' }, { status: 403 });
+            }
+        }
+
+        const keys = Object.keys(updateFields);
+        if (keys.length === 0) {
+            return NextResponse.json({ error: 'Nada que actualizar' }, { status: 400 });
+        }
+
+        // Stringify any arrays or objects for MySQL compatibility
+        for (const key of keys) {
+            if (updateFields[key] !== null && typeof updateFields[key] === 'object') {
+                updateFields[key] = JSON.stringify(updateFields[key]);
+            }
+        }
+
+        // Construct dynamic UPDATE query
+        const setClause = keys.map(key => `${key} = ?`).join(', ');
+        const values = keys.map(key => updateFields[key]);
+        const query = `UPDATE registraya_vcard_registros SET ${setClause} WHERE id = ?`;
+
+        await pool.execute(query, [...values, id]);
+
+        // Fetch updated record
+        const [rows] = await pool.execute('SELECT * FROM registraya_vcard_registros WHERE id = ?', [id]);
+        return NextResponse.json({ data: rows });
+
+    } catch (err: any) {
+        console.error('Error updating registro:', err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
+
+/**
+ * DELETE: Eliminar un registro permanentemente (requiere admin key)
+ */
+export async function DELETE(req: NextRequest) {
+    const auth = requireAdmin(req);
+    if (auth) return auth;
+
+    try {
+        const { searchParams } = new URL(req.url);
+        const rawId = searchParams.get('id');
+
+        if (!rawId) {
+            return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
+        }
+
+        const id = parseInt(rawId, 10);
+        if (isNaN(id)) {
+            console.error('[ADMIN DELETE] ID inválido:', rawId);
+            return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+        }
+
+        console.log('[ADMIN DELETE] Intentando eliminar registro ID:', id);
+
+        // Verificar que el registro existe antes de borrar
+        const [check]: any = await pool.execute(
+            'SELECT id, nombre FROM registraya_vcard_registros WHERE id = ?',
+            [id]
+        );
+        if (!check.length) {
+            console.error('[ADMIN DELETE] Registro no encontrado:', id);
+            return NextResponse.json({ error: 'Registro no encontrado' }, { status: 404 });
+        }
+
+        await pool.execute('DELETE FROM registraya_vcard_registros WHERE id = ?', [id]);
+
+        console.log(`[ADMIN DELETE] Registro ${id} (${check[0].nombre}) eliminado permanentemente.`);
+        return NextResponse.json({ message: `Registro '${check[0].nombre}' eliminado exitosamente` });
+
+    } catch (err: any) {
+        console.error('[ADMIN DELETE] Error crítico:', err);
+        return NextResponse.json({ error: err.message }, { status: 500 });
+    }
+}
