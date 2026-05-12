@@ -68,7 +68,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                     className="absolute inset-0 bg-cover bg-center hidden md:block"
                                     style={{ backgroundImage: `url(${slide.portada_desktop || slide.portada_movil || props.data?.portada_desktop || props.data?.portada_movil})` }}
                                 />
-                                <div className="absolute inset-0 bg-black/50"></div>
+
                             </motion.div>
                         ))
                     ) : (
@@ -81,7 +81,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 className="absolute inset-0 bg-cover bg-center hidden md:block"
                                 style={{ backgroundImage: `url(${props.data?.portada_desktop || props.data?.portada_movil})` }}
                             />
-                            <div className="absolute inset-0 bg-black/50"></div>
+
                         </div>
                     )}
                 </div>

@@ -202,6 +202,7 @@ export default function RegisterWizard({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showVideoGuide, setShowVideoGuide] = useState(true);
     const [emailError, setEmailError] = useState('');
+    const [formError, setFormError] = useState('');
 
     const [catalogItems, setCatalogItems] = useState<any[]>([]);
 
@@ -1337,14 +1338,20 @@ export default function RegisterWizard({
             if (step === 2) {
                 // Validamos datos básicos y luego vamos al Pago
                 const hasName = formData.tipo_perfil === 'negocio'
-                    ? !!formData.nombre_negocio
-                    : (!!formData.nombres && !!formData.apellidos);
+                    ? !!formData.nombre_negocio?.trim()
+                    : (!!formData.nombres?.trim() && !!formData.apellidos?.trim());
 
-                if (!hasName || !formData.whatsapp || !validateEmail(formData.email)) {
-                    if (!validateEmail(formData.email)) setEmailError('Ingresa un correo válido');
+                const emailTrimmed = formData.email?.trim() || '';
+                const whatsappTrimmed = formData.whatsapp?.trim() || '';
+
+                if (!hasName || !whatsappTrimmed || !validateEmail(emailTrimmed)) {
+                    if (!hasName) setFormError('Por favor completa tu nombre');
+                    else if (!whatsappTrimmed) setFormError('Ingresa tu número de WhatsApp');
+                    else if (!validateEmail(emailTrimmed)) setEmailError('Ingresa un correo válido');
                     return;
                 }
                 setEmailError('');
+                setFormError('');
                 setStep(6);
                 return;
             }
@@ -1382,14 +1389,20 @@ export default function RegisterWizard({
         }
         if (step === 2) {
             const hasName = formData.tipo_perfil === 'negocio'
-                ? !!formData.nombre_negocio
-                : (!!formData.nombres && !!formData.apellidos);
+                ? !!formData.nombre_negocio?.trim()
+                : (!!formData.nombres?.trim() && !!formData.apellidos?.trim());
 
-            if (!hasName || !formData.whatsapp || !validateEmail(formData.email)) {
-                if (!validateEmail(formData.email)) setEmailError('Ingresa un correo válido');
+            const emailTrimmed = formData.email?.trim() || '';
+            const whatsappTrimmed = formData.whatsapp?.trim() || '';
+
+            if (!hasName || !whatsappTrimmed || !validateEmail(emailTrimmed)) {
+                if (!hasName) setFormError('Por favor completa tu nombre');
+                else if (!whatsappTrimmed) setFormError('Ingresa tu número de WhatsApp');
+                else if (!validateEmail(emailTrimmed)) setEmailError('Ingresa un correo válido');
                 return;
             }
             setEmailError('');
+            setFormError('');
 
             // RAMIFICACIÓN AUDITORÍA: Del paso 2 salta al 4 (Visual)
             if (formData.plan === 'auditoria') {
@@ -1398,7 +1411,11 @@ export default function RegisterWizard({
             }
         }
         if (step === 3) {
-            if (!formData.profession) return;
+            if (!formData.profession?.trim()) {
+                setFormError('Por favor ingresa tu profesión o cargo');
+                return;
+            }
+            setFormError('');
         }
         // Logic for catalog jump
         if (step === 4) {
@@ -3014,7 +3031,18 @@ return (
 
                     {/* Navigation */}
                     {step < 7 &&
-                        <div className="mt-8 md:mt-12 flex justify-between items-center max-w-xl mx-auto gap-4">
+                        <div className="mt-8 md:mt-12 flex flex-col items-center max-w-xl mx-auto gap-4 w-full">
+                                {formError && (
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="w-full bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest text-center flex items-center justify-center gap-3 shadow-sm"
+                                    >
+                                        <Zap size={16} className="animate-pulse" /> {formError}
+                                    </motion.div>
+                                )}
+                                
+                                <div className="flex justify-between items-center w-full gap-4">
                                 <button
                                     onClick={handleBack}
                                     className={cn(
@@ -3045,7 +3073,8 @@ return (
                                     )} <ArrowRight size={20} />
                                 </button>
                             </div>
-                        }
+                        </div>
+                    }
                 </motion.div>
             </AnimatePresence>
 
