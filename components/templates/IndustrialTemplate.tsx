@@ -150,11 +150,11 @@ export default function IndustrialTemplate({ data, afterExperienceSlot }: { data
                                 {data.profesion || "Servicios Industriales"}
                             </span>
                             
-                            <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words">
+                            <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
                                 {data.nombre_negocio || "Nombre Empresa"}
                             </h1>
                             
-                            <p className="text-lg md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] pl-6">
+                            <p className="text-lg md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] pl-6 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                                 {data.bio || "Soluciones robustas para operaciones de alto rendimiento. Confianza y eficiencia en cada entrega."}
                             </p>
 

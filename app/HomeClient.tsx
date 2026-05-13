@@ -196,10 +196,10 @@ export default function HomeClient() {
                         <motion.div
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
-                            className="inline-flex items-center gap-2 bg-navy text-white px-4 py-2 rounded-full shadow-lg mb-8"
+                            className="inline-flex items-center gap-2 bg-[#050505] text-white px-4 py-2 rounded-full shadow-lg mb-8"
                         >
                             <span className="flex h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Identidad Digital • vCard 3.0</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Identidad Digital</span>
                         </motion.div>
     
                         <motion.h1

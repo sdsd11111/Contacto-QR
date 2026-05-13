@@ -351,7 +351,7 @@ export default function ClassicTemplate({
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: 'easeOut' }}
-                            className="text-4xl sm:text-5xl md:text-7xl lg:text-[80px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words"
+                            className="text-4xl sm:text-5xl md:text-7xl lg:text-[80px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]"
                         >
                             {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
                         </motion.h1>
@@ -379,7 +379,7 @@ export default function ClassicTemplate({
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -20 }}
                                     transition={{ duration: 0.8, delay: 0.2 }}
-                                    className="mt-6 text-xl sm:text-2xl md:text-4xl font-display-condensed italic text-white/90 drop-shadow-2xl break-words w-full max-w-[85vw] md:max-w-4xl leading-tight tracking-[0.1em]"
+                                    className="mt-6 text-xl sm:text-2xl md:text-4xl font-display-condensed italic text-white/90 drop-shadow-2xl break-words w-full max-w-[85vw] md:max-w-4xl leading-tight tracking-[0.1em] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]"
                                 >
                                     {activeSlides[currentSlideIndex].description || data.profesion}
                                 </motion.p>

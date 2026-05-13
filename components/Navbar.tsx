@@ -27,22 +27,22 @@ export default function Navbar() {
                 </Link>
 
                 <div className="hidden md:flex items-center gap-6">
-                    <Link href="/contacto-digital-v2" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                    <Link href="/contacto-digital-v2" className="text-[13px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
                         vCards
                     </Link>
-                    <Link href="/contacto-business-catalogo-v2" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                    <Link href="/contacto-business-catalogo-v2" className="text-[13px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
                         Catálogo
                     </Link>
-                    <Link href="/sitio-web-completo-v2" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                    <Link href="/sitio-web-completo-v2" className="text-[13px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
                         Sitio Web
                     </Link>
-                    <Link href="/auditoria-operativa" className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
+                    <Link href="/auditoria-operativa" className="text-[13px] font-bold uppercase tracking-[0.15em] text-white/50 hover:text-white transition-all">
                         Auditoría
                     </Link>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <Link href="/registro" className="bg-[#FF6B2B] text-white px-6 py-2.5 rounded-full font-black text-[11px] uppercase tracking-[0.15em] shadow-lg shadow-[#FF6B2B]/20 hover:scale-105 transition-all">
+                    <Link href="/registro" className="bg-[#FF6B2B] text-white px-6 py-2.5 rounded-full font-black text-[13px] uppercase tracking-[0.15em] shadow-lg shadow-[#FF6B2B]/20 hover:scale-105 transition-all">
                         Activar Ahora
                     </Link>
                 </div>

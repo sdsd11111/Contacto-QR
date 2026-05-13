@@ -136,11 +136,11 @@ function HeroSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
                         {data.profesion || 'Especialistas Automotrices'}
                     </span>
 
-                    <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words">
+                    <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
                         {data.nombre_negocio || 'Tu Empresa'}
                     </h1>
 
-                    <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed mb-10 border-l-4 pl-5"
+                    <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed mb-10 border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]"
                        style={{ borderColor: YELLOW }}>
                         {data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
                     </p>

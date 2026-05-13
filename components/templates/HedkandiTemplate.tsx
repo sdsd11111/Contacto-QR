@@ -95,14 +95,14 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         transition={{ delay: 0.5, duration: 1 }}
                         className="w-full max-w-4xl flex flex-col items-center"
                     >
-                        <h1 className="text-white text-4xl sm:text-5xl md:text-7xl lg:text-[7rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4 break-words">
+                        <h1 className="text-white text-4xl sm:text-5xl md:text-7xl lg:text-[7rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
                             {props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title 
                                 ? props.activeSlides[props.currentSlideIndex || 0].title 
                                 : (props.data?.nombre_negocio || "FOR THOSE WHO KNOW")}
                         </h1>
                         
                         {(props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio) && (
-                            <p className="text-white/80 font-sans-body text-xs md:text-sm uppercase tracking-[0.3em] mb-12 max-w-2xl leading-relaxed">
+                            <p className="text-white/80 font-sans-body text-xs md:text-sm uppercase tracking-[0.3em] mb-12 max-w-2xl leading-relaxed [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                                 {props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio || "PREMIUM EXPERIENCE"}
                             </p>
                         )}
@@ -114,7 +114,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 onClick={props.downloadVCF}
                                 className="bg-white text-black px-12 py-4 font-display-condensed text-xl tracking-widest uppercase hover:bg-black hover:text-white border border-white transition-colors duration-300"
                             >
-                                SAVE CONTACT
+                                GUARDAR CONTACTO
                             </motion.button>
                             
                             {props.data?.whatsapp && (
