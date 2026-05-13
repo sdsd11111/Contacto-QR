@@ -133,7 +133,7 @@ export default function RegisterWizard({
     const searchParams = useSearchParams();
     const planParam = searchParams.get('plan') as any;
     
-    const isHighValuePlan = (plan: string) => ['business', 'catalogo', 'auditoria', 'completo'].includes(plan);
+    const isHighValuePlan = (plan: string) => ['digital', 'business', 'catalogo', 'auditoria', 'completo'].includes(plan);
 
     const [formData, setFormData] = useState({
         tipo_perfil: 'persona' as 'persona' | 'negocio',
@@ -2945,7 +2945,7 @@ return (
                                     Tu perfil estará listo muy pronto
                                 </p>
                                 <p className="text-navy font-bold uppercase tracking-widest text-xs mb-12 text-center">
-                                    Te enviaremos tu Contacto Digital (.vcf) y Código QR a tu correo y WhatsApp.
+                                    Te enviaremos tu Contacto Digital (.vcf) y Código QR a tu correo y WhatsApp en un <span className="text-primary">máximo de 24 horas</span>.
                                 </p>
 
                                 <div className="bg-gray-50 rounded-[2.5rem] p-8 shadow-sm border border-black/5 relative overflow-hidden">
