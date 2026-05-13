@@ -275,8 +275,12 @@ export async function GET(
 
         // 3. Track download on the server
         try {
-            const ip_address = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-            const user_agent = request.headers.get('user-agent') || 'unknown';
+            let ip_address = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+            // Truncate if multiple IPs are present or if it's too long for the DB (varchar 45)
+            if (ip_address.includes(',')) ip_address = ip_address.split(',')[0].trim();
+            if (ip_address.length > 45) ip_address = ip_address.substring(0, 45);
+
+            const user_agent = (request.headers.get('user-agent') || 'unknown').substring(0, 255);
             const method = 'api_direct';
             const actualSlug = user.slug || slug;
 
