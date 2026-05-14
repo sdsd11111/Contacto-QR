@@ -267,7 +267,7 @@ export default function HomeClient() {
 
             {/* Sección Separadora con Imagen Fija (Fixed Background) */}
             <section
-                className="relative h-screen md:h-[500px] w-full bg-fixed bg-left md:bg-center bg-cover bg-no-repeat"
+                className="relative h-screen md:h-[500px] w-full bg-fixed bg-center md:bg-center bg-cover bg-no-repeat"
                 style={{ backgroundImage: 'url("/images/Reingenierìa/secuencia_urbana_1_valla.webp")' }}
             >
             </section>

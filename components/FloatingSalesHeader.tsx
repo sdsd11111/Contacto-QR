@@ -31,7 +31,7 @@ export default function FloatingSalesHeader() {
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -100, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 260, damping: 20 }}
-                    className="fixed top-0 left-0 right-0 z-[60] bg-navy/95 backdrop-blur-md border-b border-white/10 shadow-xl"
+                    className="fixed top-0 left-0 right-0 z-[60] bg-[#050505]/95 backdrop-blur-md border-b border-white/10 shadow-xl"
                 >
                     {/* Desktop View */}
                     <div className="hidden sm:flex max-w-6xl mx-auto px-6 h-16 md:h-[72px] items-center justify-between">
