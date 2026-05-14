@@ -141,7 +141,7 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                 </div>
 
                 <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 py-10">
-                    <div className="max-w-3xl bg-[#001B3D]/40 backdrop-blur-lg border border-white/10 p-8 md:p-12 rounded-[2.5rem]">
+                    <div className="max-w-3xl">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -151,11 +151,11 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                                 {data.profesion || "Servicios Industriales"}
                             </span>
                             
-                            <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
+                            <h1 className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-[2rem] text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
                                 {data.nombre_negocio || "Nombre Empresa"}
                             </h1>
                             
-                            <p className="text-lg md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] pl-6 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
+                            <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-lg md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                                 {data.bio || "Soluciones robustas para operaciones de alto rendimiento. Confianza y eficiencia en cada entrega."}
                             </p>
 

@@ -132,21 +132,19 @@ function HeroSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
 
             <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
                 <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-                    <div className="bg-black/40 backdrop-blur-md border border-white/10 p-8 md:p-12 rounded-[2.5rem] mb-10 inline-block w-full">
-                        <span className="inline-block text-[11px] font-black uppercase tracking-[0.3em] mb-4 px-3 py-1 rounded-sm"
-                              style={{ background: RED, color: '#fff' }}>
-                            {data.profesion || 'Especialistas Automotrices'}
-                        </span>
+                    <span className="inline-block text-[11px] font-black uppercase tracking-[0.3em] mb-4 px-3 py-1 rounded-sm"
+                          style={{ background: RED, color: '#fff' }}>
+                        {data.profesion || 'Especialistas Automotrices'}
+                    </span>
 
-                        <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
-                            {data.nombre_negocio || 'Tu Empresa'}
-                        </h1>
+                    <h1 className="w-fit bg-black/40 backdrop-blur-md px-8 py-4 rounded-[2.5rem] text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
+                        {data.nombre_negocio || 'Tu Empresa'}
+                    </h1>
 
-                        <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]"
-                           style={{ borderColor: YELLOW }}>
-                            {data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
-                        </p>
-                    </div>
+                    <p className="w-fit bg-black/40 backdrop-blur-md px-6 py-4 rounded-2xl text-white/70 text-base md:text-lg max-w-xl leading-relaxed border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] mb-10 border border-white/10"
+                       style={{ borderColor: YELLOW }}>
+                        {data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
+                    </p>
 
                     <div className="flex flex-wrap gap-4">
                         <a href={waLink} target="_blank" rel="noopener noreferrer"

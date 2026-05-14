@@ -92,16 +92,16 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 1 }}
-                        className="w-full max-w-4xl flex flex-col items-center bg-black/40 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-[3rem]"
+                        className="w-full max-w-4xl flex flex-col items-center"
                     >
-                        <h1 className="text-white text-4xl sm:text-5xl md:text-7xl lg:text-[7rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
+                        <h1 className="w-fit mx-auto bg-black/40 backdrop-blur-md px-8 py-4 rounded-[2rem] text-white text-4xl sm:text-5xl md:text-7xl lg:text-[7rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-8 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
                             {props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title 
                                 ? props.activeSlides[props.currentSlideIndex || 0].title 
                                 : (props.data?.nombre_negocio || "FOR THOSE WHO KNOW")}
                         </h1>
                         
                         {(props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio) && (
-                            <p className="text-white/80 font-sans-body text-xs md:text-sm uppercase tracking-[0.3em] mb-12 max-w-2xl leading-relaxed [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
+                            <p className="w-fit mx-auto bg-black/40 backdrop-blur-md px-6 py-3 rounded-xl text-white/80 font-sans-body text-xs md:text-sm uppercase tracking-[0.3em] mb-12 max-w-2xl leading-relaxed [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] border border-white/10">
                                 {props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio || "PREMIUM EXPERIENCE"}
                             </p>
                         )}
