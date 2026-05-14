@@ -13,7 +13,7 @@ import CarroceriasTemplate from "@/components/templates/CarroceriasTemplate";
 import { MenuTabs } from "@/components/kits";
 import CatalogGallery from "@/components/card/CatalogGallery";
 import { safeParse } from "@/lib/jsonUtils";
-import { getYouTubeID, getTikTokID } from "@/lib/videoUtils";
+import { getVideoEmbedUrl } from "@/lib/videoUtils";
 import type { ClassicTemplateProps, HedkandiTemplateProps } from "@/components/templates/types";
 import type { MenuCategory } from "@/components/kits/types";
 
@@ -225,6 +225,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         handleHeroClick,
         downloadVCF,
         isPlaceholderUrl,
+        getVideoEmbedUrl,
         activeSlides,
         currentSlideIndex,
         setCurrentSlideIndex,
@@ -244,8 +245,6 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         setIsProductsExpanded,
         setIsFooterVisible,
         showCatalog,
-        getYouTubeID,
-        getTikTokID,
     };
 
     // Extraer overrides (VIP Protocol)

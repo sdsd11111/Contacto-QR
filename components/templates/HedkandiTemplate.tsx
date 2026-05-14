@@ -2,8 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import type { HedkandiTemplateProps } from './types';
-import { getYouTubeID, getTikTokID } from '@/lib/videoUtils';
+import { HedkandiTemplateProps } from './types';
 import { safeParse } from '@/lib/jsonUtils';
 import { Shield } from 'lucide-react';
 
@@ -45,7 +44,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             `}} />
 
             {/* 1. HERO SECTION */}
-            <section className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-center bg-[#1A1A1A]">
+            <section className="relative w-full h-screen overflow-hidden flex flex-col items-center justify-end pb-12 md:pb-24 bg-[#1A1A1A]">
                 {/* Dynamic Banner Slider */}
                 <div className="absolute inset-0 z-0">
                     {props.activeSlides && props.activeSlides.length > 0 ? (
@@ -87,13 +86,13 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                 </div>
 
                 {/* Main Hero Content - Centered */}
-                <div className="relative z-10 w-full px-4 md:px-12 max-w-7xl mx-auto flex flex-col items-center justify-center text-center gap-12">
+                <div className="relative z-10 w-full px-4 md:px-12 max-w-7xl mx-auto flex flex-col items-center text-center gap-12">
                     {/* Text Content */}
                     <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.5, duration: 1 }}
-                        className="w-full max-w-4xl flex flex-col items-center"
+                        className="w-full max-w-4xl flex flex-col items-center bg-black/40 backdrop-blur-xl border border-white/10 p-8 md:p-12 rounded-[3rem]"
                     >
                         <h1 className="text-white text-4xl sm:text-5xl md:text-7xl lg:text-[7rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
                             {props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title 
@@ -284,15 +283,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                         height="100%" 
                                         src={(() => {
                                             const url = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
-                                            if (!url) return '';
-                                            
-                                            const youtubeId = getYouTubeID(url);
-                                            if (youtubeId) return `https://www.youtube.com/embed/${youtubeId}?autoplay=0&rel=0`;
-
-                                            const tiktokId = getTikTokID(url) || url.split('/').pop()?.split('?')[0];
-                                            if (url.includes('tiktok')) return `https://www.tiktok.com/embed/v2/${tiktokId}`;
-
-                                            return url;
+                                            return props.getVideoEmbedUrl(url) || '';
                                         })()} 
                                         title="Video player" 
                                         frameBorder="0" 

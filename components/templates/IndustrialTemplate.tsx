@@ -6,8 +6,9 @@ import { Share2, MapPin, Phone, Mail, Instagram, Facebook, Link as LinkIcon, Dow
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 import { safeParse } from '@/lib/jsonUtils';
 import CatalogProGallery from '../card/CatalogProGallery';
+import { BaseTemplateProps } from './types';
 
-export default function IndustrialTemplate({ data, afterExperienceSlot }: { data: any, afterExperienceSlot?: React.ReactNode }) {
+export default function IndustrialTemplate({ data, afterExperienceSlot, getVideoEmbedUrl }: BaseTemplateProps) {
     if (!data) return null;
 
     // Default values if data is missing
@@ -116,7 +117,7 @@ export default function IndustrialTemplate({ data, afterExperienceSlot }: { data
                 )}
             </nav>
             {/* 1. HERO SECTION */}
-            <section className="relative w-full min-h-[85vh] flex flex-col justify-center overflow-hidden">
+            <section className="relative w-full min-h-[85vh] flex flex-col justify-end pb-12 md:pb-24 overflow-hidden">
                 {/* Background Image with Dark Overlay */}
                 <div className="absolute inset-0 z-0">
                     <div
@@ -139,8 +140,8 @@ export default function IndustrialTemplate({ data, afterExperienceSlot }: { data
                     <div className="absolute inset-0 bg-gradient-to-r from-[#001B3D]/90 via-[#001B3D]/70 to-[#001B3D]/30" />
                 </div>
 
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 py-20 mt-16 md:mt-0">
-                    <div className="max-w-3xl">
+                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 md:px-8 py-10">
+                    <div className="max-w-3xl bg-[#001B3D]/40 backdrop-blur-lg border border-white/10 p-8 md:p-12 rounded-[2.5rem]">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -239,34 +240,41 @@ export default function IndustrialTemplate({ data, afterExperienceSlot }: { data
             </section>
 
             {/* NEW: VIDEO SECTION */}
-            {data.video_url && (
-                <section className="py-24 px-4 bg-navy relative overflow-hidden">
-                    <div className="max-w-5xl mx-auto relative z-10">
-                        <div className="text-center mb-12">
-                            <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-xs mb-3">Operaciones en Vivo</h4>
-                            <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Nuestra <span className="text-[#FF5C00]">Infraestructura</span></h2>
+            {(() => {
+                const videoUrl = data.video_url || data.youtube_video_url || data.youtube || data.tiktok;
+                const embedUrl = getVideoEmbedUrl?.(videoUrl);
+                if (!embedUrl) return null;
+
+                const isVertical = embedUrl.includes('tiktok.com/embed') || 
+                                 embedUrl.includes('instagram.com') || 
+                                 embedUrl.includes('facebook.com/plugins/video');
+
+                return (
+                    <section className="py-24 px-4 bg-navy relative overflow-hidden">
+                        <div className="max-w-5xl mx-auto relative z-10">
+                            <div className="text-center mb-12">
+                                <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-xs mb-3">Operaciones en Vivo</h4>
+                                <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Nuestra <span className="text-[#FF5C00]">Infraestructura</span></h2>
+                            </div>
+                            <div className={cn(
+                                "relative w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5 mx-auto",
+                                isVertical ? "max-w-[400px] aspect-[9/16]" : "aspect-video"
+                            )}>
+                                <iframe 
+                                    src={embedUrl} 
+                                    title="Video Corporativo"
+                                    className="w-full h-full"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                    allowFullScreen
+                                />
+                            </div>
                         </div>
-                        <div className="relative aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5">
-                            <iframe 
-                                src={(() => {
-                                    const url = data.video_url || '';
-                                    // Soporta: watch?v=ID, youtu.be/ID, embed/ID
-                                    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]+)/);
-                                    const id = match ? match[1] : '';
-                                    return id ? `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1` : url;
-                                })()} 
-                                title="Video Corporativo"
-                                className="w-full h-full"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowFullScreen
-                            />
-                        </div>
-                    </div>
-                    {/* Background decorative elements */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF5C00]/10 blur-[100px]" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 blur-[100px]" />
-                </section>
-            )}
+                        {/* Background decorative elements */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF5C00]/10 blur-[100px]" />
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 blur-[100px]" />
+                    </section>
+                );
+            })()}
 
             {/* 3. WHY CHOOSE US (Stats) */}
             <section id="nosotros" className="py-24 px-4 bg-[#001B3D] text-white">

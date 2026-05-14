@@ -59,8 +59,7 @@ export default function ClassicTemplate({
     handleHeroClick,
     downloadVCF,
     isPlaceholderUrl,
-    getYouTubeID,
-    getTikTokID,
+    getVideoEmbedUrl,
     showCatalog = false,
     afterExperienceSlot,
     beforeMarqueeSlot,
@@ -304,7 +303,7 @@ export default function ClassicTemplate({
 
             {/* =================== FULLSCREEN HERO =================== */}
             {showHero && activeSlides.length > 0 && (
-                <section className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+                <section className="relative min-h-screen w-full flex flex-col items-center justify-end pb-12 md:pb-24 overflow-hidden">
                     <AnimatePresence mode="popLayout">
                         <motion.div
                             key={activeSlides[currentSlideIndex].id}
@@ -346,45 +345,47 @@ export default function ClassicTemplate({
                         </>
                     )}
 
-                    <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6 md:px-24 text-center w-full max-w-5xl pt-20">
-                        <motion.h1
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8, ease: 'easeOut' }}
-                            className="text-4xl sm:text-5xl md:text-7xl lg:text-[80px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]"
-                        >
-                            {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
-                        </motion.h1>
+                    <div className="relative z-10 flex flex-col items-center px-6 md:px-24 text-center w-full max-w-5xl pt-20">
+                        <div className="bg-black/20 backdrop-blur-md border border-white/10 p-6 md:p-10 rounded-[2.5rem] mb-8">
+                            <motion.h1
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.8, ease: 'easeOut' }}
+                                className="text-4xl sm:text-5xl md:text-7xl lg:text-[80px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]"
+                            >
+                                {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
+                            </motion.h1>
 
-                        <AnimatePresence mode="wait">
-                            {activeSlides[currentSlideIndex].title && (
-                                <motion.h2
-                                    key={activeSlides[currentSlideIndex].id + "_title"}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                    transition={{ duration: 0.5, delay: 0.3 }}
-                                    className="mt-6 text-sm md:text-xl font-display-condensed uppercase tracking-[0.4em] px-8 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-2xl bg-white/10 text-white"
-                                >
-                                    {activeSlides[currentSlideIndex].title}
-                                </motion.h2>
-                            )}
-                        </AnimatePresence>
+                            <AnimatePresence mode="wait">
+                                {activeSlides[currentSlideIndex].title && (
+                                    <motion.h2
+                                        key={activeSlides[currentSlideIndex].id + "_title"}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        transition={{ duration: 0.5, delay: 0.3 }}
+                                        className="mt-6 text-sm md:text-xl font-display-condensed uppercase tracking-[0.4em] px-8 py-2 rounded-full border border-white/20 backdrop-blur-md shadow-2xl bg-white/10 text-white mx-auto w-fit"
+                                    >
+                                        {activeSlides[currentSlideIndex].title}
+                                    </motion.h2>
+                                )}
+                            </AnimatePresence>
 
-                        <AnimatePresence mode="wait">
-                            {(activeSlides[currentSlideIndex].description || data.profesion) && (
-                                <motion.p
-                                    key={activeSlides[currentSlideIndex].id + "_desc"}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -20 }}
-                                    transition={{ duration: 0.8, delay: 0.2 }}
-                                    className="mt-6 text-xl sm:text-2xl md:text-4xl font-display-condensed italic text-white/90 drop-shadow-2xl break-words w-full max-w-[85vw] md:max-w-4xl leading-tight tracking-[0.1em] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]"
-                                >
-                                    {activeSlides[currentSlideIndex].description || data.profesion}
-                                </motion.p>
-                            )}
-                        </AnimatePresence>
+                            <AnimatePresence mode="wait">
+                                {(activeSlides[currentSlideIndex].description || data.profesion) && (
+                                    <motion.p
+                                        key={activeSlides[currentSlideIndex].id + "_desc"}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        transition={{ duration: 0.8, delay: 0.2 }}
+                                        className="mt-6 text-xl sm:text-2xl md:text-4xl font-display-condensed italic text-white/90 drop-shadow-2xl break-words w-full max-w-[85vw] md:max-w-4xl leading-tight tracking-[0.1em] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]"
+                                    >
+                                        {activeSlides[currentSlideIndex].description || data.profesion}
+                                    </motion.p>
+                                )}
+                            </AnimatePresence>
+                        </div>
 
                         {(data.plan === 'business' || data.plan === 'catalog') && (
                             <motion.div
@@ -581,10 +582,15 @@ export default function ClassicTemplate({
                                             )}
 
                                             {(() => {
-                                                const youtubeId = getYouTubeID(data.youtube_video_url) || getYouTubeID(data.youtube);
-                                                const tiktokId = getTikTokID(data.tiktok) || getTikTokID(data.youtube_video_url);
-
-                                                if (youtubeId || tiktokId) {
+                                                const embedUrl = getVideoEmbedUrl(data.youtube_video_url) || 
+                                                               getVideoEmbedUrl(data.youtube) || 
+                                                               getVideoEmbedUrl(data.tiktok);
+                                                
+                                                if (embedUrl) {
+                                                    const isVertical = embedUrl.includes('tiktok.com/embed') || 
+                                                                     embedUrl.includes('instagram.com') || 
+                                                                     embedUrl.includes('facebook.com/plugins/video');
+                                                    
                                                     return (
                                                         <div className="mt-12 md:mt-20">
                                                             <div className="flex items-center justify-between mb-8">
@@ -600,12 +606,12 @@ export default function ClassicTemplate({
                                                             </div>
                                                             <div className={cn(
                                                                 "w-full rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] border border-white/10 bg-black/60 relative group",
-                                                                youtubeId ? "aspect-video" : "max-w-md mx-auto aspect-[9/16]"
+                                                                isVertical ? "max-w-md mx-auto aspect-[9/16]" : "aspect-video"
                                                             )}>
                                                                 <iframe
                                                                     width="100%"
                                                                     height="100%"
-                                                                    src={youtubeId ? `https://www.youtube.com/embed/${youtubeId}` : `https://www.tiktok.com/embed/v2/${tiktokId}`}
+                                                                    src={embedUrl}
                                                                     title="Video player"
                                                                     frameBorder="0"
                                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

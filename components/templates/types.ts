@@ -29,6 +29,11 @@ export interface BaseTemplateProps {
     downloadVCF: () => void;
     // Utilidades (siempre requeridas)
     isPlaceholderUrl: (url: string | null | undefined) => boolean;
+    getVideoEmbedUrl: (url: string | null | undefined) => string | null;
+    // Slots opcionales (para inyección de contenido)
+    afterExperienceSlot?: React.ReactNode;
+    beforeMarqueeSlot?: React.ReactNode;
+    afterMarqueeSlot?: React.ReactNode;
 }
 
 // Props adicionales para templates que soportan hero carousel
@@ -65,8 +70,6 @@ export interface ClassicTemplateProps extends BaseTemplateProps {
     setIsProductsExpanded: (expanded: boolean) => void;
     setIsFooterVisible: (visible: boolean) => void;
     showCatalog?: boolean;
-    getYouTubeID: (url: string) => string | null;
-    getTikTokID: (url: string) => string | null;
 }
 
 // Interfaz mínima para la plantilla Minimal/Luxury (solo lo que realmente usa)

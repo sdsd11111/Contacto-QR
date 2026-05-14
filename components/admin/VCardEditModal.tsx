@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Youtube, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon, AlertCircle, Copy, Layers } from 'lucide-react';
+import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Video, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon, AlertCircle, Copy, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface VCardEditModalProps {
@@ -1314,15 +1314,15 @@ export default function VCardEditModal({
 
                                         <div className="p-8 bg-red-500/5 rounded-[2.5rem] border border-red-500/20 space-y-6">
                                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-red-500 flex items-center gap-3">
-                                                <Youtube size={18} /> VIDEO PROMOCIONAL
+                                                <Video size={18} /> VIDEO PROMOCIONAL
                                             </h3>
                                             <div>
-                                                <label className="text-[9px] font-black uppercase text-red-500/40 mb-2 block">Enlace Embed YouTube</label>
+                                                <label className="text-[9px] font-black uppercase text-red-500/40 mb-2 block">Enlace de Video (YouTube, TikTok, IG, FB)</label>
                                                 <input
                                                     className="w-full bg-[#050B1C] border border-red-500/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-red-500 transition-all font-sans text-xs"
                                                     value={editingRegistro.youtube_video_url || ''}
                                                     onChange={e => setEditingRegistro({ ...editingRegistro, youtube_video_url: e.target.value })}
-                                                    placeholder="https://www.youtube.com/embed/..."
+                                                    placeholder="Pega el link de YouTube, TikTok, Reel de IG o Video de Facebook"
                                                 />
                                             </div>
                                         </div>

@@ -8,6 +8,7 @@ import IndustrialTemplate from '@/components/templates/IndustrialTemplate';
 import { MenuTabs } from '@/components/kits';
 import type { HedkandiTemplateProps, ExperienceImage } from '@/components/templates/types';
 import type { MenuCategory } from '@/components/kits/types';
+import { getVideoEmbedUrl } from '@/lib/videoUtils';
 
 // ─── Tipos del Builder ───
 
@@ -78,6 +79,7 @@ export default function DemoBuilder({
             }
         }),
         isPlaceholderUrl: (url: string | null | undefined) => !url || url.includes('placeholder'),
+        getVideoEmbedUrl,
         activeSlides,
         currentSlideIndex,
         setCurrentSlideIndex,
@@ -106,11 +108,11 @@ export default function DemoBuilder({
 
     // ── Renderizar template según tipo ──
     if (template === 'carrocerias') {
-        return <CarroceriasTemplate data={data} />;
+        return <CarroceriasTemplate {...(templateProps as any)} />;
     }
 
     if (template === 'industrial') {
-        return <IndustrialTemplate data={data} />;
+        return <IndustrialTemplate {...(templateProps as any)} />;
     }
 
     if (template === 'classic') {
@@ -118,8 +120,6 @@ export default function DemoBuilder({
             <ClassicTemplate 
                 {...(templateProps as any)} 
                 {...(slots as any)} 
-                getYouTubeID={() => ""} 
-                getTikTokID={() => ""} 
                 showCatalog={true}
             />
         );

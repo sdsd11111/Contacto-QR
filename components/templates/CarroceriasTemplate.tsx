@@ -8,6 +8,7 @@ import {
     Instagram, Facebook, ChevronDown
 } from 'lucide-react';
 import { safeParse as safeJsonParse } from '@/lib/jsonUtils';
+import { BaseTemplateProps } from './types';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -109,7 +110,7 @@ function HeroSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
         : '#';
 
     return (
-        <section className="relative w-full min-h-[70vh] flex items-center" style={{ background: DARK }}>
+        <section className="relative w-full min-h-[75vh] flex items-end pb-12 md:pb-24" style={{ background: DARK }}>
             {/* Bg image */}
             <div className="absolute inset-0 overflow-hidden">
                 <div
@@ -129,21 +130,23 @@ function HeroSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
                 <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${DARK}cc 35%, ${DARK}44 100%)` }} />
             </div>
 
-            <div className="relative z-10 max-w-6xl mx-auto px-6 py-24">
+            <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
                 <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-                    <span className="inline-block text-[11px] font-black uppercase tracking-[0.3em] mb-4 px-3 py-1 rounded-sm"
-                          style={{ background: RED, color: '#fff' }}>
-                        {data.profesion || 'Especialistas Automotrices'}
-                    </span>
+                    <div className="bg-black/40 backdrop-blur-md border border-white/10 p-8 md:p-12 rounded-[2.5rem] mb-10 inline-block w-full">
+                        <span className="inline-block text-[11px] font-black uppercase tracking-[0.3em] mb-4 px-3 py-1 rounded-sm"
+                              style={{ background: RED, color: '#fff' }}>
+                            {data.profesion || 'Especialistas Automotrices'}
+                        </span>
 
-                    <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
-                        {data.nombre_negocio || 'Tu Empresa'}
-                    </h1>
+                        <h1 className="text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000]">
+                            {data.nombre_negocio || 'Tu Empresa'}
+                        </h1>
 
-                    <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed mb-10 border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]"
-                       style={{ borderColor: YELLOW }}>
-                        {data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
-                    </p>
+                        <p className="text-white/70 text-base md:text-lg max-w-xl leading-relaxed border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]"
+                           style={{ borderColor: YELLOW }}>
+                            {data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
+                        </p>
+                    </div>
 
                     <div className="flex flex-wrap gap-4">
                         <a href={waLink} target="_blank" rel="noopener noreferrer"
@@ -648,7 +651,7 @@ function FooterSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
 // ─────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────
-export default function CarroceriasTemplate({ data }: CarroceriasTemplateProps) {
+export default function CarroceriasTemplate({ data }: BaseTemplateProps) {
     if (!data) return null;
 
     const cats     = data.catalogo_json?.categories || [];

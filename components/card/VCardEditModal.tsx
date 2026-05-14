@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity } from 'lucide-react';
+import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity, Video } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 
 interface VCardEditModalProps {
@@ -915,8 +915,10 @@ export default function VCardEditModal({
                                                             <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-blue-100" value={formData.x} onChange={(e) => setFormData({ ...formData, x: e.target.value })} placeholder="https://x.com/tuperfil" />
                                                         </div>
                                                         <div className="col-span-full space-y-1">
-                                                            <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest decoration-primary decoration-2 underline-offset-4">Video Promocional (YouTube Embed)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-indigo-200" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="Pega aquí el link de YouTube (para el embed)..." />
+                                                            <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest decoration-primary decoration-2 underline-offset-4 flex items-center gap-2">
+                                                                <Video size={14} /> Video Promocional (YouTube, TikTok, IG, FB)
+                                                            </label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-indigo-200" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="Pega aquí el link de YouTube, TikTok, Instagram o Facebook..." />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Título de Catálogo / Carta</label>
