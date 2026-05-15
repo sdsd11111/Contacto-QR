@@ -211,6 +211,7 @@ export default function VCardEditModal({
                             price: p.price || p.precio || '',
                             description: p.description || p.descripcion || '',
                             image: p.image || p.imagen || p.foto || p.url || '',
+                            video: p.video || p.video_url || '',
                             category: p.category || p.categoria || 'Sin Categoría'
                         }));
 
@@ -1673,7 +1674,8 @@ export default function VCardEditModal({
                                                                                     description: 'Descripción aquí',
                                                                                     price: '0.00',
                                                                                     category: assignedCategory,
-                                                                                    image: ''
+                                                                                    image: '',
+                                                                                    video: ''
                                                                                 };
 
                                                                                 setFormData({
@@ -1760,6 +1762,49 @@ export default function VCardEditModal({
                                                                                                 }}
                                                                                                 placeholder="Nombre Producto" 
                                                                                             />
+                                                                                            <div className="relative mt-1">
+                                                                                                <input 
+                                                                                                    className="w-full bg-white border border-gray-300 rounded-lg p-2 pr-8 text-[10px] font-bold text-navy outline-none placeholder:text-navy/30 focus:border-primary/60 transition-all shadow-sm" 
+                                                                                                    value={prod.video || ''} 
+                                                                                                    onChange={(e) => {
+                                                                                                        const updatedProducts = formData.catalogo_json.products.map(p => p.id === prod.id ? { ...p, video: e.target.value } : p);
+                                                                                                        setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: updatedProducts } });
+                                                                                                    }}
+                                                                                                    placeholder="URL Video o Sube uno (.mp4 < 5MB)" 
+                                                                                                />
+                                                                                                <label className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer text-gray-400 hover:text-primary transition-colors">
+                                                                                                    <Video size={14} />
+                                                                                                    <input 
+                                                                                                        type="file" 
+                                                                                                        accept="video/*" 
+                                                                                                        className="hidden" 
+                                                                                                        onChange={async (e) => {
+                                                                                                            const file = e.target.files?.[0];
+                                                                                                            if (!file) return;
+                                                                                                            if (file.size > 5 * 1024 * 1024) {
+                                                                                                                alert('El video debe pesar menos de 5MB');
+                                                                                                                return;
+                                                                                                            }
+                                                                                                            setUploadingImage(true);
+                                                                                                            try {
+                                                                                                                const fd = new FormData();
+                                                                                                                fd.append('file', file);
+                                                                                                                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                                                                                if (res.ok) {
+                                                                                                                    const { url } = await res.json();
+                                                                                                                    const updatedProducts = formData.catalogo_json.products.map(p => p.id === prod.id ? { ...p, video: url } : p);
+                                                                                                                    setFormData({ ...formData, catalogo_json: { ...formData.catalogo_json, products: updatedProducts } });
+                                                                                                                } else {
+                                                                                                                    const err = await res.json();
+                                                                                                                    alert(err.error || 'Error al subir video');
+                                                                                                                }
+                                                                                                            } finally {
+                                                                                                                setUploadingImage(false);
+                                                                                                            }
+                                                                                                        }} 
+                                                                                                    />
+                                                                                                </label>
+                                                                                            </div>
                                                                                             
                                                                                             <div className="flex gap-2">
                                                                                                 <div className="flex-1">

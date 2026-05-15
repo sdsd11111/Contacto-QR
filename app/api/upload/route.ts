@@ -19,11 +19,20 @@ export async function POST(request: NextRequest) {
 
         const buffer = Buffer.from(await file.arrayBuffer());
         
-        // Si no es imagen, devolvemos error (para este flujo solo queremos imágenes base64)
-        if (!file.type.startsWith('image/')) {
-            return NextResponse.json({ error: 'El archivo debe ser una imagen' }, { status: 400 });
+        // Si es un video, lo convertimos directamente a Base64 si pesa menos de 5MB
+        if (file.type.startsWith('video/')) {
+            if (buffer.length > 5 * 1024 * 1024) { // 5MB limit
+                return NextResponse.json({ error: 'El video debe pesar menos de 5MB' }, { status: 400 });
+            }
+            const base64 = buffer.toString('base64');
+            const dataUrl = `data:${file.type};base64,${base64}`;
+            return NextResponse.json({ url: dataUrl });
         }
 
+        // Si no es imagen ni video, devolvemos error
+        if (!file.type.startsWith('image/')) {
+            return NextResponse.json({ error: 'El archivo debe ser una imagen o un video' }, { status: 400 });
+        }
         // Procesar con Sharp para optimizar tamaño y convertir a WebP
         const processedBuffer = await sharp(buffer)
             .resize(1000, 1000, { fit: 'inside', withoutEnlargement: true })

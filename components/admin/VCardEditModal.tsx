@@ -1316,14 +1316,39 @@ export default function VCardEditModal({
                                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-red-500 flex items-center gap-3">
                                                 <Video size={18} /> VIDEO PROMOCIONAL
                                             </h3>
-                                            <div>
+                                            <div className="space-y-4">
                                                 <label className="text-[9px] font-black uppercase text-red-500/40 mb-2 block">Enlace de Video (YouTube, TikTok, IG, FB)</label>
-                                                <input
-                                                    className="w-full bg-[#050B1C] border border-red-500/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-red-500 transition-all font-sans text-xs"
-                                                    value={editingRegistro.youtube_video_url || ''}
-                                                    onChange={e => setEditingRegistro({ ...editingRegistro, youtube_video_url: e.target.value })}
-                                                    placeholder="Pega el link de YouTube, TikTok, Reel de IG o Video de Facebook"
-                                                />
+                                                <div className="flex gap-4">
+                                                    <input
+                                                        className="flex-1 bg-[#050B1C] border border-red-500/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-red-500 transition-all font-sans text-xs"
+                                                        value={editingRegistro.youtube_video_url || ''}
+                                                        onChange={e => setEditingRegistro({ ...editingRegistro, youtube_video_url: e.target.value })}
+                                                        placeholder="Pega el link de YouTube, TikTok, Reel de IG o Video de Facebook"
+                                                    />
+                                                    <label className="bg-red-500/20 hover:bg-red-500/40 text-red-500 p-4 rounded-2xl cursor-pointer transition-all flex items-center justify-center border border-red-500/20 shadow-lg">
+                                                        <Video size={20} />
+                                                        <input 
+                                                            type="file" 
+                                                            className="hidden" 
+                                                            accept="video/*"
+                                                            onChange={async e => {
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+                                                                if (file.size > 5 * 1024 * 1024) {
+                                                                    alert('El video debe pesar menos de 5MB');
+                                                                    return;
+                                                                }
+                                                                const fd = new FormData();
+                                                                fd.append('file', file);
+                                                                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                                if (res.ok) {
+                                                                    const { url } = await res.json();
+                                                                    setEditingRegistro({ ...editingRegistro, youtube_video_url: url });
+                                                                }
+                                                            }} 
+                                                        />
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1638,6 +1663,7 @@ export default function VCardEditModal({
                                                             categoria: targetCategory, 
                                                             category: targetCategory, 
                                                             image: '', 
+                                                            video: '',
                                                             descripcion: '', 
                                                             description: '' 
                                                         };
@@ -1705,6 +1731,48 @@ export default function VCardEditModal({
                                                                     prods[pIdx] = { ...prod, descripcion: e.target.value, description: e.target.value };
                                                                     updateCatalogo({ ...catalogoJson, products: prods });
                                                                 }} />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[9px] font-black uppercase text-white/20 mb-1 block">Video del Producto (Opcional)</label>
+                                                                <div className="flex gap-2">
+                                                                    <input 
+                                                                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-primary/60 transition-all" 
+                                                                        value={prod.video || ''} 
+                                                                        placeholder="URL YouTube o MP4"
+                                                                        onChange={e => {
+                                                                            const prods = [...catalogoJson.products];
+                                                                            const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
+                                                                            prods[pIdx] = { ...prod, video: e.target.value };
+                                                                            updateCatalogo({ ...catalogoJson, products: prods });
+                                                                        }} 
+                                                                    />
+                                                                    <label className="bg-primary/20 hover:bg-primary/40 text-primary p-2 rounded-xl cursor-pointer transition-all flex items-center justify-center border border-primary/20">
+                                                                        <Video size={16} />
+                                                                        <input 
+                                                                            type="file" 
+                                                                            className="hidden" 
+                                                                            accept="video/*"
+                                                                            onChange={async e => {
+                                                                                const file = e.target.files?.[0];
+                                                                                if (!file) return;
+                                                                                if (file.size > 5 * 1024 * 1024) {
+                                                                                    alert('El video debe pesar menos de 5MB');
+                                                                                    return;
+                                                                                }
+                                                                                const fd = new FormData();
+                                                                                fd.append('file', file);
+                                                                                const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                                                                if (res.ok) {
+                                                                                    const { url } = await res.json();
+                                                                                    const prods = [...catalogoJson.products];
+                                                                                    const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
+                                                                                    prods[pIdx] = { ...prod, video: url };
+                                                                                    updateCatalogo({ ...catalogoJson, products: prods });
+                                                                                }
+                                                                            }} 
+                                                                        />
+                                                                    </label>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>

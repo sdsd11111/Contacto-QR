@@ -13,6 +13,14 @@ export const getYouTubeID = (url: string): string | null => {
     return match && match[2].length === 11 ? match[2] : null;
 };
 
+export const getYouTubeThumbnail = (url: string): string | null => {
+    const id = getYouTubeID(url);
+    if (id) {
+        return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
+    return null;
+};
+
 export const getTikTokID = (url: string): string | null => {
     if (!url) return null;
     if (url.includes('tiktok.com')) {

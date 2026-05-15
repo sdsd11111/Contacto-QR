@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
                 data.x,
                 data.productos_servicios,
                 data.etiquetas,
-                data.email,
+                data.email || null,
                 data.sellerCode || null,
                 data.tipo_perfil || 'persona',
                 data.nombres || '',

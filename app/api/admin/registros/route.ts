@@ -101,9 +101,13 @@ export async function PATCH(req: NextRequest) {
         }
 
         // Stringify any arrays or objects for MySQL compatibility
+        // And handle empty strings for unique fields like email
         for (const key of keys) {
             if (updateFields[key] !== null && typeof updateFields[key] === 'object') {
                 updateFields[key] = JSON.stringify(updateFields[key]);
+            }
+            if (key === 'email' && updateFields[key] === '') {
+                updateFields[key] = null;
             }
         }
 
