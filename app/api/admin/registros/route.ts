@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
+import { v4 as uuidv4 } from 'uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -138,16 +139,10 @@ export async function DELETE(req: NextRequest) {
 
     try {
         const { searchParams } = new URL(req.url);
-        const rawId = searchParams.get('id');
+        const id = searchParams.get('id');
 
-        if (!rawId) {
+        if (!id) {
             return NextResponse.json({ error: 'ID es requerido' }, { status: 400 });
-        }
-
-        const id = parseInt(rawId, 10);
-        if (isNaN(id)) {
-            console.error('[ADMIN DELETE] ID inválido:', rawId);
-            return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
         }
 
         console.log('[ADMIN DELETE] Intentando eliminar registro ID:', id);
@@ -196,7 +191,6 @@ export async function POST(req: NextRequest) {
 
         // Determine correct plan based on requested plan string if needed
         // Insert into DB
-        const { v4: uuidv4 } = require('uuid');
         const newId = uuidv4();
         const editCode = 'RYA-2026-ADM-' + Math.random().toString(36).substring(2, 8).toUpperCase();
         
@@ -206,17 +200,28 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Nada que insertar' }, { status: 400 });
         }
 
+        // Stringify any arrays or objects for MySQL compatibility
+        // And handle empty strings for unique fields like email
+        for (const key of keys) {
+            if (body[key] !== null && typeof body[key] === 'object') {
+                body[key] = JSON.stringify(body[key]);
+            }
+            if (key === 'email' && body[key] === '') {
+                body[key] = null;
+            }
+        }
+
         const columns = ['id', 'edit_code', 'edit_uses_remaining', 'created_at', ...keys].join(', ');
         const placeholders = ['?', '?', '?', 'NOW()', ...keys.map(() => '?')].join(', ');
         
         const query = `INSERT INTO registraya_vcard_registros (${columns}) VALUES (${placeholders})`;
         const values = [newId, editCode, 2, ...keys.map(k => body[k])];
 
-        const [result]: any = await pool.execute(query, values);
+        await pool.execute(query, values);
 
         return NextResponse.json({
             message: 'Registro creado exitosamente',
-            data: { id: result.insertId, slug }
+            data: { id: newId, slug }
         });
 
     } catch (err: any) {
