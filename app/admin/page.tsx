@@ -50,6 +50,7 @@ import { twMerge } from "tailwind-merge";
 import Link from "next/link";
 import StatsModal from "@/components/admin/StatsModal";
 import VCardEditModal from "@/components/admin/VCardEditModal";
+import { formatPhoneEcuador } from "@/lib/utils";
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -657,6 +658,8 @@ export default function AdminDashboard() {
         }
 
         try {
+            // El VCF se genera dinámicamente en el API, no es necesario guardarlo aquí.
+            
             const res = await fetch('/api/admin/registros', {
                 method: 'PATCH',
                 headers: {
@@ -837,6 +840,8 @@ export default function AdminDashboard() {
                 body: JSON.stringify({ id: editingRegistro.id, foto_url: publicUrl })
             });
 
+            fetchRegistros(); // Sincronizar lista principal
+
         } catch (err: any) {
             alert("Error subiendo foto: " + err.message);
         } finally {
@@ -866,6 +871,8 @@ export default function AdminDashboard() {
                 },
                 body: JSON.stringify({ id: editingRegistro.id, [tipo]: publicUrl })
             });
+
+            fetchRegistros(); // Sincronizar lista principal
 
         } catch (err: any) {
             alert(`Error subiendo ${tipo}: ` + err.message);
@@ -901,6 +908,8 @@ export default function AdminDashboard() {
                 body: JSON.stringify({ id: editingRegistro.id, galeria_urls: newUrls })
             });
 
+            fetchRegistros(); // Sincronizar lista principal
+
         } catch (err: any) {
             alert("Error subiendo galería: " + err.message);
         } finally {
@@ -924,14 +933,45 @@ export default function AdminDashboard() {
         });
     };
 
-    const handleViewProfile = (registro: any) => {
-        // Si no tiene imágenes o son placeholders, abrir el modal de diseño
-        if (isPlaceholderUrl(registro.portada_desktop) || isPlaceholderUrl(registro.portada_movil)) {
-            setPromptRegistro(registro);
-            setSetupTarget('view');
-            setIsHeroPromptOpen(true);
-        } else {
+    const handleViewProfile = async (registro: any) => {
+        setIsSaving(true);
+        try {
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const res = await fetch(`/api/admin/registros/single?id=${registro.id}`, { headers: { 'x-admin-key': adminKey } });
+            const data = await res.json();
+            
+            if (res.ok && data.data) {
+                const fullRegistro = data.data;
+                // Verificar si tiene banners (sistema antiguo o nuevo)
+                let hasBanners = false;
+                if (!isPlaceholderUrl(fullRegistro.portada_desktop) || !isPlaceholderUrl(fullRegistro.portada_movil)) {
+                    hasBanners = true;
+                } else {
+                    try {
+                        const slides = typeof fullRegistro.hero_slides_json === 'string' 
+                            ? JSON.parse(fullRegistro.hero_slides_json || '[]') 
+                            : (fullRegistro.hero_slides_json || []);
+                        if (Array.isArray(slides) && slides.some((s: any) => s.active && (s.portada_desktop || s.portada_movil))) {
+                            hasBanners = true;
+                        }
+                    } catch (e) {}
+                }
+
+                if (!hasBanners) {
+                    setPromptRegistro(fullRegistro);
+                    setSetupTarget('view');
+                    setIsHeroPromptOpen(true);
+                } else {
+                    window.open(`/card/${fullRegistro.slug || fullRegistro.id}`, '_blank');
+                }
+            } else {
+                // Fallback al objeto local si falla la red
+                window.open(`/card/${registro.slug || registro.id}`, '_blank');
+            }
+        } catch (e) {
             window.open(`/card/${registro.slug || registro.id}`, '_blank');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -945,11 +985,26 @@ export default function AdminDashboard() {
                 const fullRegistro = data.data;
                 const catItems = typeof fullRegistro.catalogo_json === 'string' ? JSON.parse(fullRegistro.catalogo_json || '[]') : (fullRegistro.catalogo_json || []);
 
+                // Verificar banners
+                let hasBanners = false;
+                if (!isPlaceholderUrl(fullRegistro.portada_desktop) || !isPlaceholderUrl(fullRegistro.portada_movil)) {
+                    hasBanners = true;
+                } else {
+                    try {
+                        const slides = typeof fullRegistro.hero_slides_json === 'string' 
+                            ? JSON.parse(fullRegistro.hero_slides_json || '[]') 
+                            : (fullRegistro.hero_slides_json || []);
+                        if (Array.isArray(slides) && slides.some((s: any) => s.active && (s.portada_desktop || s.portada_movil))) {
+                            hasBanners = true;
+                        }
+                    } catch (e) {}
+                }
+
                 if (catItems.length === 0) {
                     setPromptRegistro(fullRegistro);
                     setSetupTarget('catalog');
                     setIsHeroPromptOpen(true);
-                } else if (isPlaceholderUrl(fullRegistro.portada_desktop) || isPlaceholderUrl(fullRegistro.portada_movil)) {
+                } else if (!hasBanners) {
                     setPromptRegistro(fullRegistro);
                     setSetupTarget('catalog');
                     setIsHeroPromptOpen(true);

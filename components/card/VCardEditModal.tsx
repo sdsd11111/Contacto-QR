@@ -251,7 +251,14 @@ export default function VCardEditModal({
         try {
             const formattedData = {
                 ...formData,
-                whatsapp: formatPhoneEcuador(formData.whatsapp),
+                whatsapp: (() => {
+                    let num = formData.whatsapp.replace(/\D/g, '');
+                    // Si el usuario pone 09... (10 dígitos), convertir a 5939...
+                    if (num.startsWith('0') && num.length === 10) {
+                        return '593' + num.substring(1);
+                    }
+                    return num;
+                })(),
                 template_id: formData.template_id || 'classic',
                 // Asegurar que json_override sea string para la API
                 json_override: typeof formData.json_override === 'object' 

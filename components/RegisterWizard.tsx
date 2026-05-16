@@ -37,7 +37,7 @@ import {
 import { supabase } from "@/lib/supabase";
 
 import imageCompression from 'browser-image-compression';
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneEcuador } from "@/lib/utils";
 import VideoStepGuide from "./VideoStepGuide";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { QRCodeSVG } from "qrcode.react";
@@ -1267,13 +1267,14 @@ export default function RegisterWizard({
 
             // 4b. NOTIFICAR POR WHATSAPP (Automático via Evolution API)
             try {
+                const formattedPhone = formatPhoneEcuador(dataToSubmit.whatsapp);
                 fetch('/api/notify-whatsapp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name: dataToSubmit.tipo_perfil === 'negocio' ? dataToSubmit.nombre_negocio : `${dataToSubmit.nombres} ${dataToSubmit.apellidos}`,
                         email: dataToSubmit.email,
-                        whatsapp: dataToSubmit.whatsapp,
+                        whatsapp: formattedPhone,
                         plan: dataToSubmit.plan,
                         businessName: dataToSubmit.nombre_negocio,
                         profession: dataToSubmit.profession,
@@ -1297,6 +1298,7 @@ export default function RegisterWizard({
 
             // 4c. BRIDGE ACTIVAQR2: Enviar Lead al Ecosistema Pro
             try {
+                const formattedPhone = formatPhoneEcuador(dataToSubmit.whatsapp);
                 fetch('/api/bridge/register-lead', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1304,7 +1306,7 @@ export default function RegisterWizard({
                         lead: {
                             name: dataToSubmit.tipo_perfil === 'negocio' ? dataToSubmit.nombre_negocio : `${dataToSubmit.nombres} ${dataToSubmit.apellidos}`,
                             email: dataToSubmit.email,
-                            whatsapp: dataToSubmit.whatsapp,
+                            whatsapp: formattedPhone,
                             plan: dataToSubmit.plan,
                             companyName: dataToSubmit.nombre_negocio || `${dataToSubmit.nombres} ${dataToSubmit.apellidos}`,
                             slug: slug,

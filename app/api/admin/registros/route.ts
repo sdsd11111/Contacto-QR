@@ -95,7 +95,8 @@ export async function PATCH(req: NextRequest) {
             }
         }
 
-        const keys = Object.keys(updateFields);
+        const invalidKeys = ['vcf_base64', 'vcf_version'];
+        const keys = Object.keys(updateFields).filter(k => !invalidKeys.includes(k));
         if (keys.length === 0) {
             return NextResponse.json({ error: 'Nada que actualizar' }, { status: 400 });
         }
@@ -199,23 +200,17 @@ export async function POST(req: NextRequest) {
         const newId = uuidv4();
         const editCode = 'RYA-2026-ADM-' + Math.random().toString(36).substring(2, 8).toUpperCase();
         
-        const query = `
-            INSERT INTO registraya_vcard_registros (
-                id, nombre, slug, email, whatsapp, plan, status, tipo_perfil, edit_code, edit_uses_remaining, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-        `;
-        const values = [
-            newId,
-            nombre,
-            slug,
-            email || null,
-            whatsapp || null,
-            plan,
-            status || 'entregado', // default active
-            'persona', // default
-            editCode,
-            2 // default uses
-        ];
+        const invalidKeys = ['id', 'vcf_base64', 'vcf_version'];
+        const keys = Object.keys(body).filter(k => !invalidKeys.includes(k));
+        if (keys.length === 0) {
+            return NextResponse.json({ error: 'Nada que insertar' }, { status: 400 });
+        }
+
+        const columns = ['id', 'edit_code', 'edit_uses_remaining', 'created_at', ...keys].join(', ');
+        const placeholders = ['?', '?', '?', 'NOW()', ...keys.map(() => '?')].join(', ');
+        
+        const query = `INSERT INTO registraya_vcard_registros (${columns}) VALUES (${placeholders})`;
+        const values = [newId, editCode, 2, ...keys.map(k => body[k])];
 
         const [result]: any = await pool.execute(query, values);
 

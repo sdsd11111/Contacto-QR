@@ -8,7 +8,8 @@ import {
     Instagram, Facebook, ChevronDown
 } from 'lucide-react';
 import { safeParse as safeJsonParse } from '@/lib/jsonUtils';
-import { BaseTemplateProps } from './types';
+import { BaseTemplateProps, HeroCarouselTemplateProps } from './types';
+import { formatPhoneEcuador } from '@/lib/utils';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -30,7 +31,7 @@ interface CatalogProduct {
     descripcion?: string;
 }
 
-interface CarroceriasTemplateProps {
+interface CarroceriasTemplateProps extends HeroCarouselTemplateProps {
     data: {
         nombre_negocio?: string;
         profesion?: string;
@@ -82,8 +83,8 @@ function InfoBar({ data }: { data: CarroceriasTemplateProps['data'] }) {
         <div className="w-full text-xs font-bold uppercase tracking-widest py-2 px-4 flex flex-wrap justify-center md:justify-between items-center gap-4"
              style={{ background: RED, color: '#fff' }}>
             {data.whatsapp && (
-                <a href={`tel:${data.whatsapp}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                    <Phone size={12} /> {data.whatsapp}
+                <a href={`tel:${data.whatsapp.replace(/\D/g, '')}`} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <Phone size={12} /> {formatPhoneEcuador(data.whatsapp)}
                 </a>
             )}
             {data.address && (
@@ -101,7 +102,8 @@ function InfoBar({ data }: { data: CarroceriasTemplateProps['data'] }) {
 }
 
 /** Hero section with full-bleed image and headline */
-function HeroSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
+function HeroSection(props: CarroceriasTemplateProps) {
+    const { data } = props;
     const bg = data.portada_desktop || data.portada_movil || data.foto_url
         || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=1920&auto=format&fit=crop';
 
@@ -113,20 +115,50 @@ function HeroSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
         <section className="relative w-full min-h-[75vh] flex items-end pb-12 md:pb-24" style={{ background: DARK }}>
             {/* Bg image */}
             <div className="absolute inset-0 overflow-hidden">
-                <div
-                    className="absolute inset-0 bg-cover bg-center md:hidden"
-                    style={{ 
-                        backgroundImage: `url(${data.portada_movil || data.portada_desktop || data.foto_url || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=1920&auto=format&fit=crop'})`,
-                        opacity: 0.65 
-                    }}
-                />
-                <div
-                    className="absolute inset-0 bg-cover bg-center hidden md:block"
-                    style={{ 
-                        backgroundImage: `url(${data.portada_desktop || data.portada_movil || data.foto_url || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=1920&auto=format&fit=crop'})`,
-                        opacity: 0.65 
-                    }}
-                />
+                <AnimatePresence mode="wait">
+                    {props.activeSlides && props.activeSlides.length > 0 ? (
+                        <motion.div
+                            key={props.currentSlideIndex}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 1 }}
+                            className="absolute inset-0"
+                        >
+                            <div
+                                className="absolute inset-0 bg-cover bg-center md:hidden"
+                                style={{ 
+                                    backgroundImage: `url(${props.activeSlides[props.currentSlideIndex || 0].portada_movil || props.activeSlides[props.currentSlideIndex || 0].portada_desktop || props.data.foto_url || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=1920&auto=format&fit=crop'})`,
+                                    opacity: 0.65 
+                                }}
+                            />
+                            <div
+                                className="absolute inset-0 bg-cover bg-center hidden md:block"
+                                style={{ 
+                                    backgroundImage: `url(${props.activeSlides[props.currentSlideIndex || 0].portada_desktop || props.activeSlides[props.currentSlideIndex || 0].portada_movil || props.data.foto_url || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=1920&auto=format&fit=crop'})`,
+                                    opacity: 0.65 
+                                }}
+                            />
+                        </motion.div>
+                    ) : (
+                        <>
+                            <div
+                                className="absolute inset-0 bg-cover bg-center md:hidden"
+                                style={{ 
+                                    backgroundImage: `url(${props.data.portada_movil || props.data.portada_desktop || props.data.foto_url || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=1920&auto=format&fit=crop'})`,
+                                    opacity: 0.65 
+                                }}
+                            />
+                            <div
+                                className="absolute inset-0 bg-cover bg-center hidden md:block"
+                                style={{ 
+                                    backgroundImage: `url(${props.data.portada_desktop || props.data.portada_movil || props.data.foto_url || 'https://images.unsplash.com/photo-1586528116311-ad8ed7c80a30?w=1920&auto=format&fit=crop'})`,
+                                    opacity: 0.65 
+                                }}
+                            />
+                        </>
+                    )}
+                </AnimatePresence>
                 <div className="absolute inset-0" style={{ background: `linear-gradient(90deg, ${DARK}cc 35%, ${DARK}44 100%)` }} />
             </div>
 
@@ -138,7 +170,7 @@ function HeroSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
                     </span>
 
                     <h1 className="w-fit bg-black/40 backdrop-blur-md px-8 py-4 rounded-[2.5rem] text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
-                        {data.nombre_negocio || 'Tu Empresa'}
+                        {data.nombre_negocio || data.nombre || 'Tu Empresa'}
                     </h1>
 
                     <p className="w-fit bg-black/40 backdrop-blur-md px-6 py-4 rounded-2xl text-white/70 text-base md:text-lg max-w-xl leading-relaxed border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] mb-10 border border-white/10"
@@ -262,7 +294,7 @@ function AboutSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
                         ¿Por qué <span style={{ color: RED }}>elegirnos?</span>
                     </h2>
                     <p className="text-gray-600 leading-relaxed mb-8">
-                        {data.bio || 'Somos líderes en el sector automotriz con años de experiencia brindando soluciones de calidad a nuestros clientes.'}
+                        {data.bio || `Somos líderes en brindar soluciones de calidad con años de experiencia superando las expectativas de nuestros clientes.`}
                     </p>
                     <ul className="space-y-3">
                         {checks.map((c, i) => (
@@ -609,14 +641,14 @@ function FooterSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
                     <div>
                         <h4 className="text-white font-black uppercase text-lg tracking-tight">
-                            {data.nombre_negocio}
+                            {data.nombre_negocio || data.nombre}
                         </h4>
                         <p className="text-white/40 text-xs uppercase tracking-widest mt-1">
                             {data.profesion}
                         </p>
                     </div>
                     <ul className="text-sm text-white/60 space-y-2">
-                        {data.whatsapp && <li className="flex items-center gap-2"><Phone size={14} style={{ color: RED }} /> {data.whatsapp}</li>}
+                        {data.whatsapp && <li className="flex items-center gap-2"><Phone size={14} style={{ color: RED }} /> {formatPhoneEcuador(data.whatsapp)}</li>}
                         {data.email   && <li className="flex items-center gap-2"><Mail size={14} style={{ color: RED }} /> {data.email}</li>}
                         {data.address && <li className="flex items-center gap-2"><MapPin size={14} style={{ color: RED }} /> {data.address}</li>}
                     </ul>
@@ -640,7 +672,7 @@ function FooterSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
             </div>
 
             <div className="text-center pb-6 text-white/20 text-[10px] uppercase tracking-widest">
-                &copy; {new Date().getFullYear()} {data.nombre_negocio}. Powered by ActivaQR.
+                &copy; {new Date().getFullYear()} {data.nombre_negocio || data.nombre}. Powered by ActivaQR.
             </div>
         </footer>
     );
@@ -649,7 +681,8 @@ function FooterSection({ data }: { data: CarroceriasTemplateProps['data'] }) {
 // ─────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────
-export default function CarroceriasTemplate({ data }: BaseTemplateProps) {
+export default function CarroceriasTemplate(props: CarroceriasTemplateProps) {
+    const { data } = props;
     if (!data) return null;
 
     const cats     = data.catalogo_json?.categories || [];
@@ -660,9 +693,11 @@ export default function CarroceriasTemplate({ data }: BaseTemplateProps) {
             {/* 0. NAVBAR */}
             <nav className="sticky top-0 z-[110] w-full bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 md:px-8 py-4 flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 flex items-center justify-center text-white font-black text-xl rounded-sm" style={{ background: RED }}>M</div>
+                    <div className="w-10 h-10 flex items-center justify-center text-white font-black text-xl rounded-sm" style={{ background: RED }}>
+                        {data.nombre_negocio?.charAt(0).toUpperCase() || 'A'}
+                    </div>
                     <span className="font-black uppercase tracking-tighter text-xl text-black">
-                        {data.nombre_negocio?.split(' ')[1] || 'MARTINELLI'}
+                        {data.nombre_negocio || data.nombre || 'ACTIVAQR'}
                     </span>
                 </div>
                 <div className="hidden md:flex gap-8 font-black uppercase text-[10px] tracking-widest text-gray-500">
@@ -681,7 +716,7 @@ export default function CarroceriasTemplate({ data }: BaseTemplateProps) {
             </nav>
 
             <InfoBar data={data} />
-            <HeroSection data={data} />
+            <HeroSection {...props} />
             {cats.length > 0 && <CategoryGrid categories={cats} products={products} />}
             <StatsBar />
             <AboutSection data={data} />

@@ -10,13 +10,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
     try {
         const [rows]: any = await pool.execute(
-            'SELECT nombre, bio FROM registraya_vcard_registros WHERE slug = ?',
+            'SELECT nombre, nombre_negocio, tipo_perfil, bio FROM registraya_vcard_registros WHERE slug = ?',
             [slug]
         );
 
         if (rows && rows.length > 0) {
             const client = rows[0];
-            const name = client.nombre;
+            const name = client.tipo_perfil === 'negocio' ? (client.nombre_negocio || client.nombre) : client.nombre;
             const description = client.bio || `Conéctate con ${name}. Escanea el código QR para guardar mi contacto profesional directamente en tu teléfono.`;
 
             return {

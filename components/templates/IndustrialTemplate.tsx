@@ -6,9 +6,10 @@ import { Share2, MapPin, Phone, Mail, Instagram, Facebook, Link as LinkIcon, Dow
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 import { safeParse } from '@/lib/jsonUtils';
 import CatalogProGallery from '../card/CatalogProGallery';
-import { BaseTemplateProps } from './types';
+import { BaseTemplateProps, HeroCarouselTemplateProps } from './types';
 
-export default function IndustrialTemplate({ data, afterExperienceSlot, getVideoEmbedUrl }: BaseTemplateProps) {
+export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
+    const { data, afterExperienceSlot, getVideoEmbedUrl, activeSlides, currentSlideIndex } = props;
     if (!data) return null;
 
     // Default values if data is missing
@@ -41,7 +42,7 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
     const chooseUs = {
         badge: (isAuthorityEnabled ? authorityModule.badge : industrialConfig.badge) || "Garantía de Calidad",
         title: (isAuthorityEnabled ? authorityModule.title : industrialConfig.title) || "Por qué elegirnos",
-        description: (isAuthorityEnabled ? authorityModule.description : industrialConfig.description) || "Nuestra infraestructura y equipo están preparados para los desafíos más exigentes. La eficiencia de su flota u operación es nuestra prioridad absoluta."
+        description: (isAuthorityEnabled ? authorityModule.description : industrialConfig.description) || "Estamos comprometidos con la excelencia y la calidad en cada uno de nuestros servicios, asegurando resultados que superan las expectativas de nuestros clientes."
     };
 
     // Experience Protocol Data (Services/Categories)
@@ -99,8 +100,10 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
             {/* 0. MINI NAVBAR */}
             <nav className="fixed top-0 left-0 w-full z-[100] px-4 md:px-8 py-3 flex justify-between items-center bg-[#001549]/95 backdrop-blur-md border-b border-white/10 shadow-2xl">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-[#FF5C00] rounded-sm flex items-center justify-center text-white font-black text-lg italic shadow-lg shadow-[#FF5C00]/20">N</div>
-                    <span className="text-white font-black uppercase tracking-tighter text-lg leading-none">{data.nombre_negocio?.split(' ')[0] || 'NEXUS'}</span>
+                    <div className="w-9 h-9 bg-[#FF5C00] rounded-sm flex items-center justify-center text-white font-black text-lg italic shadow-lg shadow-[#FF5C00]/20">
+                        {data.nombre_negocio?.charAt(0).toUpperCase() || 'A'}
+                    </div>
+                    <span className="text-white font-black uppercase tracking-tighter text-lg leading-none">{data.nombre_negocio || data.nombre || 'ACTIVAQR'}</span>
                 </div>
                 <div className="hidden md:flex gap-8 text-white/80 font-bold uppercase text-[10px] tracking-widest">
                     <a href="#servicios" className="hover:text-[#FF5C00] transition-colors">Servicios</a>
@@ -109,7 +112,7 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                 </div>
                 {data.whatsapp && (
                     <a 
-                        href={`https://wa.me/${formatPhoneEcuador(data.whatsapp)}`}
+                        href={`https://wa.me/${data.whatsapp.replace(/\D/g, '')}`}
                         className="bg-[#25D366] text-white px-5 py-2 font-black uppercase text-[10px] tracking-widest hover:bg-[#1ebd57] transition-all rounded-sm flex items-center gap-2"
                     >
                         <Phone size={14} /> WhatsApp
@@ -120,21 +123,51 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
             <section className="relative w-full min-h-[85vh] flex flex-col justify-end pb-12 md:pb-24 overflow-hidden">
                 {/* Background Image with Dark Overlay */}
                 <div className="absolute inset-0 z-0">
-                    <div
-                        className="absolute inset-0 bg-cover bg-center md:hidden"
-                        style={{ 
-                            backgroundImage: `url(${data.portada_movil || data.portada_desktop || data.foto_url})`,
-                            opacity: 0.6
-                        }}
-                    />
-                    <div
-                        className="absolute inset-0 bg-cover bg-center hidden md:block"
-                        style={{ 
-                            backgroundImage: `url(${data.portada_desktop || data.portada_movil || data.foto_url})`,
-                            opacity: 0.6
-                        }}
-                    />
-                    {(!data.portada_desktop && !data.portada_movil && !data.foto_url) && (
+                    <AnimatePresence mode="wait">
+                        {activeSlides && activeSlides.length > 0 ? (
+                            <motion.div
+                                key={currentSlideIndex}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1 }}
+                                className="absolute inset-0"
+                            >
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center md:hidden"
+                                    style={{ 
+                                        backgroundImage: `url(${activeSlides[currentSlideIndex || 0].portada_movil || activeSlides[currentSlideIndex || 0].portada_desktop || data.foto_url})`,
+                                        opacity: 0.6
+                                    }}
+                                />
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center hidden md:block"
+                                    style={{ 
+                                        backgroundImage: `url(${activeSlides[currentSlideIndex || 0].portada_desktop || activeSlides[currentSlideIndex || 0].portada_movil || data.foto_url})`,
+                                        opacity: 0.6
+                                    }}
+                                />
+                            </motion.div>
+                        ) : (
+                            <>
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center md:hidden"
+                                    style={{ 
+                                        backgroundImage: `url(${data.portada_movil || data.portada_desktop || data.foto_url})`,
+                                        opacity: 0.6
+                                    }}
+                                />
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center hidden md:block"
+                                    style={{ 
+                                        backgroundImage: `url(${data.portada_desktop || data.portada_movil || data.foto_url})`,
+                                        opacity: 0.6
+                                    }}
+                                />
+                            </>
+                        )}
+                    </AnimatePresence>
+                    {(!data.portada_desktop && !data.portada_movil && !data.foto_url && (!activeSlides || activeSlides.length === 0)) && (
                         <div className="w-full h-full bg-navy" />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#001B3D]/90 via-[#001B3D]/70 to-[#001B3D]/30" />
@@ -148,21 +181,21 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                             transition={{ duration: 0.8 }}
                         >
                             <span className="inline-block py-1 px-3 border border-[#FF5C00]/50 bg-[#FF5C00]/10 text-[#FF5C00] font-black text-[10px] tracking-widest uppercase mb-6 rounded-sm">
-                                {data.profesion || "Servicios Industriales"}
+                                {data.profesion || data.nombre_negocio || "Servicios"}
                             </span>
                             
                             <h1 className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-[2rem] text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
-                                {data.nombre_negocio || "Nombre Empresa"}
+                                {data.nombre_negocio || data.nombre || "Nombre Empresa"}
                             </h1>
                             
                             <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-lg md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
-                                {data.bio || "Soluciones robustas para operaciones de alto rendimiento. Confianza y eficiencia en cada entrega."}
+                                {data.bio || (data.nombre_negocio ? `Excelencia y compromiso en cada servicio de ${data.nombre_negocio}.` : "Soluciones de alta calidad y eficiencia en cada entrega.")}
                             </p>
 
                             <div className="flex flex-wrap gap-4">
                                 {data.whatsapp && (
                                     <a 
-                                        href={`https://wa.me/${formatPhoneEcuador(data.whatsapp)}?text=Hola,%20me%20interesan%20sus%20servicios%20industriales`}
+                                        href={`https://wa.me/${data.whatsapp.replace(/\D/g, '')}?text=Hola%20${data.nombre_negocio},%20me%20gustaría%20solicitar%20información.`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="group bg-[#FF5C00] text-white px-8 py-4 font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-[#e65300] transition-colors relative overflow-hidden"
@@ -188,7 +221,7 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                     <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center text-white/70 text-xs font-bold uppercase tracking-widest">
                         {data.email && <div className="flex items-center gap-2"><Mail size={14} className="text-[#FF5C00]" /> {data.email}</div>}
                         {data.address && <div className="flex items-center gap-2"><MapPin size={14} className="text-[#FF5C00]" /> {data.address}</div>}
-                        {data.whatsapp && <div className="flex items-center gap-2"><Phone size={14} className="text-[#FF5C00]" /> {data.whatsapp}</div>}
+                        {data.whatsapp && <div className="flex items-center gap-2"><Phone size={14} className="text-[#FF5C00]" /> {formatPhoneEcuador(data.whatsapp)}</div>}
                     </div>
                 </div>
             </section>
@@ -253,8 +286,8 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                     <section className="py-24 px-4 bg-navy relative overflow-hidden">
                         <div className="max-w-5xl mx-auto relative z-10">
                             <div className="text-center mb-12">
-                                <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-xs mb-3">Operaciones en Vivo</h4>
-                                <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Nuestra <span className="text-[#FF5C00]">Infraestructura</span></h2>
+                                <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-xs mb-3">En Acción</h4>
+                                <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Nuestra <span className="text-[#FF5C00]">Experiencia</span></h2>
                             </div>
                             <div className={cn(
                                 "relative w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5 mx-auto",
@@ -343,7 +376,7 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                             <div className="max-w-7xl mx-auto">
                                 <div className="text-center mb-16">
                                     <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Galería de Proyectos</h4>
-                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestra <span className="text-[#FF5C00]">Flota</span></h2>
+                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestro <span className="text-[#FF5C00]">Catálogo</span></h2>
                                     <div className="w-20 h-1 bg-[#FF5C00] mx-auto mt-6" />
                                 </div>
                                 
@@ -422,8 +455,8 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
             <footer className="bg-[#001229] pt-20 pb-10 px-4 text-white">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-12 border-b border-white/10 pb-16">
                     <div className="w-full md:w-1/3 text-center md:text-left">
-                        <h2 className="text-2xl font-black uppercase tracking-tight mb-4">{data.nombre_negocio}</h2>
-                        <p className="text-white/50 text-sm mb-6">Líderes en soluciones industriales y logísticas.</p>
+                        <h2 className="text-2xl font-black uppercase tracking-tight mb-4">{data.nombre_negocio || data.nombre}</h2>
+                        <p className="text-white/50 text-sm mb-6">{data.profesion || "Líderes en soluciones de alta calidad."}</p>
                         <div className="flex gap-4 justify-center md:justify-start">
                             {data.instagram && <a href={data.instagram} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[#FF5C00] rounded-full flex items-center justify-center transition-colors"><Instagram size={18} /></a>}
                             {data.facebook && <a href={data.facebook} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[#FF5C00] rounded-full flex items-center justify-center transition-colors"><Facebook size={18} /></a>}
@@ -442,7 +475,7 @@ export default function IndustrialTemplate({ data, afterExperienceSlot, getVideo
                     </div>
                 </div>
                 <div className="text-center mt-10 text-[10px] uppercase tracking-widest text-white/30 font-bold">
-                    &copy; {new Date().getFullYear()} {data.nombre_negocio}. Powered by ActivaQR.
+                    &copy; {new Date().getFullYear()} {data.nombre_negocio || data.nombre}. Powered by ActivaQR.
                 </div>
             </footer>
         </div>

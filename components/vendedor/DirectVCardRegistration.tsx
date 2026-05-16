@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import imageCompression from "browser-image-compression";
-import { cn } from "@/lib/utils";
+import { cn, formatPhoneEcuador } from "@/lib/utils";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 const PRODUCT_PLANS = [
@@ -245,8 +245,8 @@ export default function DirectVCardRegistration({
         if (file.type.startsWith('image/')) {
             try {
                 const options = {
-                    maxSizeMB: 0.7,
-                    maxWidthOrHeight: 1200,
+                    maxSizeMB: 0.8,
+                    maxWidthOrHeight: 1400,
                     useWebWorker: true,
                 };
                 const compressedFile = await imageCompression(file, options);
@@ -592,8 +592,6 @@ export default function DirectVCardRegistration({
                 status: formData.status,
                 plan: formData.plan,
                 slug: slug,
-                vcf_base64: Buffer.from(vcfContent).toString('base64'),
-                vcf_version: '4.0',
                 seller_id: formData.seller_id,
                 direccion: formData.address || null,
                 bio: formData.bio || null,
@@ -641,6 +639,62 @@ export default function DirectVCardRegistration({
             const result = await response.json();
 
             if (response.ok && result.success) {
+                const formattedPhone = formatPhoneEcuador(formData.whatsapp);
+
+                // --- POST-REGISTRATION HOOKS (Standardization) ---
+                
+                // 1. Notificar por WhatsApp
+                try {
+                    fetch('/api/notify-whatsapp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: formData.tipo_perfil === 'negocio' ? formData.nombre_negocio : `${formData.nombres} ${formData.apellidos}`,
+                            email: formData.email,
+                            whatsapp: formattedPhone,
+                            plan: formData.plan,
+                            businessName: formData.nombre_negocio,
+                            profession: formData.profession,
+                            foto_url: photoUrl,
+                            catalogo_json: JSON.stringify({ 
+                                categories: catalogItems.map((cat: any) => cat.title || 'General'),
+                                products: catalogItems.flatMap((cat: any) => 
+                                    (cat.items || []).map((item: any) => ({ 
+                                        nombre: item.name, 
+                                        precio: item.price 
+                                    }))
+                                ) 
+                            }),
+                            hero_button_text: formData.hero_button_text,
+                            hero_action: formData.hero_action,
+                            receiptUrl: receiptUrl
+                        })
+                    }).catch(err => console.error("Error silencioso en notificación WhatsApp:", err));
+                } catch (notifyErr) {
+                    console.error("Error al disparar notificación WhatsApp:", notifyErr);
+                }
+
+                // 2. Bridge ActivaQR2: Registro de Lead
+                try {
+                    fetch('/api/bridge/register-lead', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            lead: {
+                                name: formData.tipo_perfil === 'negocio' ? formData.nombre_negocio : `${formData.nombres} ${formData.apellidos}`,
+                                email: formData.email,
+                                whatsapp: formattedPhone,
+                                plan: formData.plan,
+                                companyName: formData.nombre_negocio || `${formData.nombres} ${formData.apellidos}`,
+                                slug: slug,
+                                source: 'vendedor_direct_registration'
+                            }
+                        })
+                    }).catch(err => console.warn("Bridge ActivaQR2 (Silencioso):", err.message));
+                } catch (bridgeErr) {
+                    console.error("Error en Bridge ActivaQR2:", bridgeErr);
+                }
+
                 alert("¡Contacto Digital Generado Exitosamente!");
                 onSuccess(); // Close form and trigger refetch
             } else {

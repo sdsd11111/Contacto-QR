@@ -96,7 +96,7 @@ export async function GET(
 
         // Función para line folding (removida para campos de texto por problemas en Android)
 
-        // 2. Generar vCard con todos los campos (Version 3.0)
+        // 2. Generar vCard con todos los campos (Version 4.0 para paridad con /registro)
         let fullName = '';
         let structuredName = ''; // Campo N:
         let organization = '';   // Campo ORG:
@@ -104,9 +104,7 @@ export async function GET(
         if (user.tipo_perfil === 'negocio') {
             organization = user.nombre_negocio || nombre;
             if (user.contacto_nombre || user.contacto_apellido) {
-                // To display First Name Last Name correctly on phones, it must be: LastName;FirstName;;;
                 structuredName = `${escapeVCardValue(user.contacto_apellido || '')};${escapeVCardValue(user.contacto_nombre || '')};;;`;
-                // Set Formatted Name (FN) to: Business Name - Contact Name 
                 const contactFullName = `${user.contacto_nombre || ''} ${user.contacto_apellido || ''}`.trim();
                 fullName = `${organization} - ${contactFullName}`;
             } else {
@@ -114,7 +112,6 @@ export async function GET(
                 fullName = organization;
             }
         } else {
-            // Caso Persona (o legacy)
             const firstName = user.nombres || nombre.split(' ')[0] || '';
             const lastName = user.apellidos || nombre.split(' ').slice(1).join(' ') || '';
             fullName = `${firstName} ${lastName}`.trim() || nombre;
@@ -124,45 +121,26 @@ export async function GET(
 
         const vcardLines = [
             'BEGIN:VCARD',
-            'VERSION:3.0',
-            `FN:${escapeVCardValue(fullName)}`,
-            `N:${structuredName}`, // Ya escapado individualmente
-            user.profesion ? `TITLE:${escapeVCardValue(user.profesion)}` : '',
-            `TEL;TYPE=CELL,VOICE:${whatsappWithPlus}`,
-            `X-ABLabel:Móvil`,
+            'VERSION:4.0',
+            `FN;CHARSET=UTF-8:${escapeVCardValue(fullName)}`,
+            `N;CHARSET=UTF-8:${structuredName}`, // Ya escapado individualmente
+            user.profesion ? `TITLE;CHARSET=UTF-8:${escapeVCardValue(user.profesion)}` : '',
+            organization ? `ORG;CHARSET=UTF-8:${escapeVCardValue(organization)}` : '',
+            `TEL;TYPE=cell,text,voice;VALUE=uri:tel:+${cleanWhatsApp}`,
             `EMAIL;TYPE=WORK,INTERNET:${escapeVCardValue(user.email)}`,
-            user.direccion ? `ADR;TYPE=WORK:;;${escapeVCardValue(user.direccion)};;;;` : '',
+            user.direccion ? `ADR;TYPE=WORK;LABEL="${escapeVCardValue(user.direccion)}":;;${escapeVCardValue(user.direccion)};;;;` : '',
             user.web ? `URL:${escapeVCardValue(user.web)}` : '',
-            `NOTE:${escapeVCardValue(noteContent)}`, // Simplified notes
-            // Standard generic URLs instead of itemX to guarantee Android support
-            user.google_business ? `URL:${escapeVCardValue(user.google_business)}` : '',
-            user.review_url ? `URL:${escapeVCardValue(user.review_url)}` : '',
-            // Categories (Tags)
+            `NOTE:${escapeVCardValue(noteContent)}`,
+            user.google_business ? `URL;type=GOOGLE_BUSINESS:${escapeVCardValue(user.google_business)}` : '',
             user.etiquetas ? `CATEGORIES:${escapeVCardValue(user.etiquetas)}` : '',
-            // Standard URLs (fallback) and explicit X-SOCIALPROFILE for better iOS integration
-            user.instagram ? `URL;type=INSTAGRAM:${escapeVCardValue(user.instagram)}` : '',
-            user.instagram ? `X-SOCIALPROFILE;type=instagram:${escapeVCardValue(user.instagram)}` : '',
-            user.facebook ? `URL;type=FACEBOOK:${escapeVCardValue(user.facebook)}` : '',
-            user.facebook ? `X-SOCIALPROFILE;type=facebook:${escapeVCardValue(user.facebook)}` : '',
-            user.linkedin ? `URL;type=LINKEDIN:${escapeVCardValue(user.linkedin)}` : '',
-            user.linkedin ? `X-SOCIALPROFILE;type=linkedin:${escapeVCardValue(user.linkedin)}` : '',
-            user.tiktok ? `URL;type=TIKTOK:${escapeVCardValue(user.tiktok)}` : '',
-            user.tiktok ? `X-SOCIALPROFILE;type=tiktok:${escapeVCardValue(user.tiktok)}` : '',
+            user.instagram ? `X-SOCIALPROFILE;TYPE=instagram;LABEL=Instagram:${escapeVCardValue(user.instagram)}` : '',
+            user.facebook ? `X-SOCIALPROFILE;TYPE=facebook;LABEL=Facebook:${escapeVCardValue(user.facebook)}` : '',
+            user.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin;LABEL=LinkedIn:${escapeVCardValue(user.linkedin)}` : '',
+            user.tiktok ? `X-SOCIALPROFILE;TYPE=tiktok;LABEL=TikTok:${escapeVCardValue(user.tiktok)}` : '',
             user.youtube ? `URL;type=YOUTUBE:${escapeVCardValue(user.youtube)}` : '',
             user.x ? `URL;type=X:${escapeVCardValue(user.x)}` : '',
-            // Strong WhatsApp discovery tags (using whatsappWithPlus to preserve the crucial '+' prefix for international numbers)
-            whatsappWithPlus ? `X-SOCIALPROFILE;TYPE=whatsapp:whatsapp:${whatsappWithPlus}` : '',
-            whatsappWithPlus ? `IMPP;X-SERVICE-TYPE=WhatsApp:whatsapp:${whatsappWithPlus}` : '',
-            whatsappWithPlus ? `IMPP;SERVICE-TYPE=WhatsApp:whatsapp:${whatsappWithPlus}` : '',
-            
-            // Native Android Connected Apps tags
-            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.profile;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
-            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.voip;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
-            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.w4b.profile;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
-            whatsappWithPlus ? `X-ANDROID-CUSTOM:vnd.android.cursor.item/vnd.com.whatsapp.w4b.voip;${whatsappWithPlus};;;;;;;;;;;;;;;` : '',
-            
-            user.nombre_negocio ? `X-WA-BIZ-NAME:${escapeVCardValue(user.nombre_negocio)}` : '',
-            `X-CUSTOM(WTSAPP);TYPE=pref:whatsapp:${whatsappWithPlus}`,
+            `X-SOCIALPROFILE;TYPE=whatsapp;LABEL=WhatsApp:https://wa.me/${cleanWhatsApp}`,
+            `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
         ];
 
         // --- INJERTO VIP PRE-GENERACIÓN (SOLO Carlos Vásquez - litos-ink-vape-urban-shop-zg5z) ---

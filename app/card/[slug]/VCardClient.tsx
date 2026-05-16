@@ -151,7 +151,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         const vcfContent = [
             'BEGIN:VCARD',
             'VERSION:3.0',
-            `FN:${data.nombres ?? ''} ${data.apellidos ?? ''}`.trim(),
+            `FN:${(data.nombres || data.apellidos) ? `${data.nombres ?? ''} ${data.apellidos ?? ''}`.trim() : (data.nombre_negocio || '')}`,
             `ORG:${data.nombre_negocio || data.company || ''}`,
             `TITLE:${data.profession || ''}`,
             `TEL;TYPE=CELL,VOICE:${data.whatsapp || ''}`,

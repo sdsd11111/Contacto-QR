@@ -518,7 +518,7 @@ export default function ClassicTemplate({
                                             <div className="w-full mt-12">
                                                 <div className="grid grid-cols-3 gap-4 md:gap-6">
                                                     <button
-                                                        onClick={() => window.location.href = `tel:${data.celular}`}
+                                                        onClick={() => window.location.href = `tel:${data.whatsapp?.replace(/\D/g, '')}`}
                                                         className="flex flex-col items-center justify-center gap-3 py-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[var(--theme-primary)] transition-all group shadow-xl"
                                                     >
                                                         <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center text-[var(--theme-primary)] group-hover:scale-110 transition-transform">
