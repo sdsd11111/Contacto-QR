@@ -1009,7 +1009,7 @@ export default function AdminDashboard() {
                     setSetupTarget('catalog');
                     setIsHeroPromptOpen(true);
                 } else {
-                    window.open(`/catalog/${fullRegistro.slug || fullRegistro.id}`, '_blank');
+                    openCatalogManager(fullRegistro);
                 }
             } else {
                 alert("Error al cargar los datos del catálogo.");
@@ -2427,20 +2427,22 @@ export default function AdminDashboard() {
             </AnimatePresence>
             <AnimatePresence>
                 {isHeroPromptOpen && promptRegistro && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-xl">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-4 bg-black/90 backdrop-blur-xl">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity : 0, scale: 0.9 }}
-                            className="w-full max-w-2xl bg-[#0A0B1E] border border-white/10 rounded-[48px] overflow-hidden shadow-3xl relative"
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-2xl bg-[#0A0B1E] border border-white/10 rounded-[32px] md:rounded-[48px] overflow-hidden shadow-3xl relative flex flex-col max-h-[95vh] md:max-h-[90vh]"
                         >
                             <button 
                                 onClick={() => setIsHeroPromptOpen(false)}
-                                className="absolute top-8 right-8 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/40 hover:text-white z-50"
+                                className="absolute top-4 right-4 md:top-8 md:right-8 p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/40 hover:text-white z-[60] shadow-xl backdrop-blur-md border border-white/10"
+                                title="Cerrar"
                             >
                                 <X size={24} />
                             </button>
-                            <div className="p-10 text-center">
+                            <div className="flex-1 overflow-y-auto p-6 md:p-12 custom-scrollbar">
+                                <div className="text-center">
                                 <div className="w-20 h-20 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
                                     {setupTarget === 'catalog' ? <Store size={40} /> : <ImageIcon size={40} />}
                                 </div>
@@ -2672,17 +2674,21 @@ export default function AdminDashboard() {
                                     </div>
                                 )}
 
-                                <div className="flex flex-col gap-4">
+                                </div>
+                            </div>
+
+                            <div className="p-6 md:p-8 bg-[#0A0B1E]/80 backdrop-blur-xl border-t border-white/10">
+                                <div className="flex flex-col gap-3">
                                     <button
                                         onClick={handleHeroUploadConfirm}
                                         disabled={(!promptRegistro.portada_desktop || !isPlaceholderUrl(promptRegistro.portada_desktop)) && (!promptRegistro.portada_movil || !isPlaceholderUrl(promptRegistro.portada_movil)) ? false : (setupTarget === 'view')}
-                                        className="w-full bg-primary text-navy py-5 rounded-[24px] font-black uppercase tracking-widest shadow-orange hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                                        className="w-full bg-primary text-navy py-4 md:py-5 rounded-[20px] md:rounded-[24px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
                                     >
                                         {setupTarget === 'catalog' ? 'Activar Catálogo y Continuar' : 'Guardar y Ver Perfil'}
                                     </button>
                                     <button
                                         onClick={() => setIsHeroPromptOpen(false)}
-                                        className="w-full py-5 rounded-[24px] border border-white/10 text-white/40 font-black uppercase tracking-widest hover:bg-white/5 transition-all"
+                                        className="w-full py-4 md:py-5 rounded-[20px] md:rounded-[24px] border border-white/10 text-white/40 font-black uppercase tracking-widest hover:bg-white/5 transition-all text-[10px] md:text-xs"
                                     >
                                         Ahora No
                                     </button>
@@ -2693,7 +2699,158 @@ export default function AdminDashboard() {
                 )}
             </AnimatePresence>
 
-            {/* Modal para Crear Cliente (Básico) */}
+            {/* Modal de Gestión de Catálogo (Completo) */}
+            <AnimatePresence>
+                {isCatalogManagerOpen && catalogRegistro && (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 md:p-4 bg-black/95 backdrop-blur-2xl">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="w-full max-w-4xl bg-[#0A0B1E] border border-white/10 rounded-[32px] md:rounded-[48px] shadow-3xl relative flex flex-col max-h-[95vh] md:max-h-[90vh] overflow-hidden"
+                        >
+                            {/* Header */}
+                            <div className="p-8 md:p-12 border-b border-white/5 flex justify-between items-start bg-[#0A0B1E]/80 backdrop-blur-xl">
+                                <div>
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <div className="w-10 h-10 bg-primary/20 text-primary rounded-xl flex items-center justify-center shadow-inner">
+                                            <Store size={24} />
+                                        </div>
+                                        <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter">Gestor de Catálogo</h3>
+                                    </div>
+                                    <p className="text-white/40 text-[10px] font-black uppercase tracking-widest ml-14">
+                                        {catalogRegistro.nombre} • {catalogItems.length} Productos
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={() => setIsCatalogManagerOpen(false)}
+                                    className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-white/40 hover:text-white border border-white/10 shadow-xl backdrop-blur-md"
+                                >
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            {/* Body Scrollable */}
+                            <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
+                                {/* Formulario para nuevo item */}
+                                <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 md:p-8 mb-12">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-8 border-b border-white/5 pb-4">Añadir Nuevo Producto</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-6">
+                                            <div className="aspect-square bg-white/5 rounded-[24px] border-2 border-dashed border-white/10 flex flex-col items-center justify-center relative overflow-hidden group">
+                                                {catalogImageFile ? (
+                                                    <img src={URL.createObjectURL(catalogImageFile)} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="flex flex-col items-center gap-3 text-white/20">
+                                                        <Upload size={32} />
+                                                        <span className="text-[10px] uppercase font-black tracking-widest">Imagen del Producto</span>
+                                                    </div>
+                                                )}
+                                                <label className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
+                                                    <Upload size={24} className="text-white" />
+                                                    <input 
+                                                        type="file" 
+                                                        className="hidden" 
+                                                        accept="image/*" 
+                                                        onChange={(e) => setCatalogImageFile(e.target.files?.[0] || null)} 
+                                                    />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black uppercase text-white/40 ml-1">Título del Producto</label>
+                                                <input 
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/50 transition-all"
+                                                    value={newCatalogItem.titulo}
+                                                    onChange={e => setNewCatalogItem({...newCatalogItem, titulo: e.target.value})}
+                                                    placeholder="Nombre del producto o servicio"
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black uppercase text-white/40 ml-1">Categoría</label>
+                                                    <input 
+                                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary/50 transition-all"
+                                                        value={newCatalogItem.categoria}
+                                                        onChange={e => setNewCatalogItem({...newCatalogItem, categoria: e.target.value})}
+                                                        placeholder="Ej: Hamburguesas"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="text-[9px] font-black uppercase text-white/40 ml-1">Precio</label>
+                                                    <input 
+                                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-bold text-primary outline-none focus:border-primary/50 transition-all"
+                                                        value={newCatalogItem.precio}
+                                                        onChange={e => setNewCatalogItem({...newCatalogItem, precio: e.target.value})}
+                                                        placeholder="Ej: 15.00"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black uppercase text-white/40 ml-1">Descripción</label>
+                                                <textarea 
+                                                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 font-medium text-white/80 outline-none focus:border-primary/50 transition-all min-h-[100px] resize-none"
+                                                    value={newCatalogItem.descripcion}
+                                                    onChange={e => setNewCatalogItem({...newCatalogItem, descripcion: e.target.value})}
+                                                    placeholder="Breve descripción..."
+                                                />
+                                            </div>
+                                            <button 
+                                                onClick={handleAddCatalogItem}
+                                                disabled={isSavingCatalog || !newCatalogItem.titulo || !catalogImageFile}
+                                                className="w-full bg-primary text-navy py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3"
+                                            >
+                                                {isSavingCatalog ? <RefreshCw className="animate-spin" size={16} /> : <Plus size={16} />}
+                                                {isSavingCatalog ? 'Añadiendo...' : 'Añadir al Catálogo'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Lista de items existentes */}
+                                <div className="space-y-6 pb-12">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-4 ml-1">Productos Existentes ({catalogItems.length})</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {catalogItems.map((item: any, index: number) => (
+                                            <div key={item.id || index} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex gap-6 group hover:bg-white/[0.08] transition-all relative">
+                                                <div className="w-20 h-20 bg-white/5 rounded-2xl overflow-hidden flex-shrink-0 border border-white/5">
+                                                    <img src={item.url} className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h5 className="font-bold text-white text-sm line-clamp-1">{item.titulo}</h5>
+                                                        <button 
+                                                            onClick={() => handleDeleteCatalogItem(index)}
+                                                            className="text-white/20 hover:text-red-500 transition-colors p-1"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-[10px] font-black text-primary uppercase mb-2 tracking-tighter">{item.categoria}</p>
+                                                    <p className="text-[10px] text-white/40 line-clamp-2 leading-relaxed">{item.descripcion}</p>
+                                                    {item.precio && <p className="text-xs font-black text-white mt-2">${item.precio}</p>}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {catalogItems.length === 0 && (
+                                        <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-[40px]">
+                                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <Store size={32} className="text-white/10" />
+                                            </div>
+                                            <p className="text-white/20 text-xs font-black uppercase tracking-widest">No hay productos en el catálogo</p>
+                                            <p className="text-white/10 text-[10px] uppercase mt-2 font-bold">Comienza añadiendo uno arriba</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <AnimatePresence>
                 {isCreateClientModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
