@@ -61,6 +61,7 @@
 - [ ] FAQ: Integrar lógica de "Reseñas en Esteroides".
 
 ### Próximos Pasos Técnicos
+- [ ] Implementar validación de correos únicos en el registro (actualmente acepta repetidos de forma temporal).
 - [ ] Limpiar código muerto en `PlanContactoDigitalClient.tsx` resultante de iteraciones fallidas.
 - [ ] Optimizar pesos de imágenes en `/images/Reingenierìa/`.
 - [ ] Pendiente: generar 5ª imagen de Auditoría (Flotas comparte con Educación).
