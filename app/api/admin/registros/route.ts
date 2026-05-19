@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { syncMenuDigitalToRelational } from '@/lib/menuSync';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,6 +121,15 @@ export async function PATCH(req: NextRequest) {
 
         await pool.execute(query, [...values, id]);
 
+        // If menu_digital was updated, sync to relational tables!
+        if (keys.includes('menu_digital')) {
+            try {
+                await syncMenuDigitalToRelational(pool, id, updateFields['menu_digital']);
+            } catch (syncErr) {
+                console.error("Error syncing menu to relational tables in admin PATCH:", syncErr);
+            }
+        }
+
         // Fetch updated record
         const [rows] = await pool.execute('SELECT * FROM registraya_vcard_registros WHERE id = ?', [id]);
         return NextResponse.json({ data: rows });
@@ -218,6 +228,15 @@ export async function POST(req: NextRequest) {
         const values = [newId, editCode, 2, ...keys.map(k => body[k])];
 
         await pool.execute(query, values);
+
+        // If menu_digital is present, sync it to relational tables!
+        if (body.menu_digital) {
+            try {
+                await syncMenuDigitalToRelational(pool, newId, body.menu_digital);
+            } catch (syncErr) {
+                console.error("Error syncing menu to relational tables in admin POST:", syncErr);
+            }
+        }
 
         return NextResponse.json({
             message: 'Registro creado exitosamente',

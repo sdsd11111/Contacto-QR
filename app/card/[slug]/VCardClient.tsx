@@ -182,8 +182,14 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                 `URL:${data.web || ''}`,
                 `ADR;TYPE=WORK:;;${data.address || ''};;;;`,
                 `NOTE:${data.bio || ''}`,
+                data.instagram ? `URL;type=INSTAGRAM:${data.instagram}` : '',
+                data.facebook ? `URL;type=FACEBOOK:${data.facebook}` : '',
+                data.linkedin ? `URL;type=LINKEDIN:${data.linkedin}` : '',
+                data.tiktok ? `URL;type=TIKTOK:${data.tiktok}` : '',
+                data.youtube ? `URL;type=YOUTUBE:${data.youtube}` : '',
+                data.x ? `URL;type=X:${data.x}` : '',
                 'END:VCARD'
-            ].join('\n');
+            ].filter(Boolean).join('\n');
 
             const blob = new Blob([vcfContent], { type: 'text/vcard' });
             const url = window.URL.createObjectURL(blob);

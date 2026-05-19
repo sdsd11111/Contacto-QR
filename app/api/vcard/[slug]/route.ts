@@ -192,12 +192,17 @@ export async function GET(
             user.google_business ? `URL;type=GOOGLE_BUSINESS:${escapeVCardValue(user.google_business)}` : '',
             user.etiquetas ? `CATEGORIES:${escapeVCardValue(user.etiquetas)}` : '',
             user.instagram ? `X-SOCIALPROFILE;TYPE=instagram;LABEL=Instagram:${escapeVCardValue(user.instagram)}` : '',
+            user.instagram ? `URL;type=INSTAGRAM:${escapeVCardValue(user.instagram)}` : '',
             user.facebook ? `X-SOCIALPROFILE;TYPE=facebook;LABEL=Facebook:${escapeVCardValue(user.facebook)}` : '',
+            user.facebook ? `URL;type=FACEBOOK:${escapeVCardValue(user.facebook)}` : '',
             user.linkedin ? `X-SOCIALPROFILE;TYPE=linkedin;LABEL=LinkedIn:${escapeVCardValue(user.linkedin)}` : '',
+            user.linkedin ? `URL;type=LINKEDIN:${escapeVCardValue(user.linkedin)}` : '',
             user.tiktok ? `X-SOCIALPROFILE;TYPE=tiktok;LABEL=TikTok:${escapeVCardValue(user.tiktok)}` : '',
+            user.tiktok ? `URL;type=TIKTOK:${escapeVCardValue(user.tiktok)}` : '',
             user.youtube ? `URL;type=YOUTUBE:${escapeVCardValue(user.youtube)}` : '',
             user.x ? `URL;type=X:${escapeVCardValue(user.x)}` : '',
             `X-SOCIALPROFILE;TYPE=whatsapp;LABEL=WhatsApp:https://wa.me/${cleanWhatsApp}`,
+            `URL;type=WHATSAPP:https://wa.me/${cleanWhatsApp}`,
             `REV:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
         ];
 

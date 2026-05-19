@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity, Video } from 'lucide-react';
+import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity, Video, Camera } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 
 interface VCardEditModalProps {
@@ -62,6 +62,237 @@ export default function VCardEditModal({
             setEditCode(savedCode);
         }
     }, []);
+
+    // Relational Menu Builder States & Hooks
+    const [menuCategories, setMenuCategories] = useState<any[]>([]);
+    const [loadingMenu, setLoadingMenu] = useState(false);
+    const [expandedCategories, setExpandedCategories] = useState<Record<number, boolean>>({});
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [showAIImporter, setShowAIImporter] = useState(false);
+    const [aiRawText, setAiRawText] = useState('');
+
+    useEffect(() => {
+        const loadMenuData = async () => {
+            if (!userData?.id) return;
+            setLoadingMenu(true);
+            try {
+                const res = await fetch(`/api/menu/categories?vcard_id=${userData.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const categories = data.categories || [];
+                    
+                    const fullCategories = await Promise.all(categories.map(async (cat: any) => {
+                        const prodRes = await fetch(`/api/menu/products?categoria_id=${cat.id}`);
+                        const prodData = prodRes.ok ? await prodRes.json() : { products: [] };
+                        return {
+                            ...cat,
+                            products: prodData.products || []
+                        };
+                    }));
+                    
+                    setMenuCategories(fullCategories);
+                }
+            } catch (err) {
+                console.error("Error al cargar menú:", err);
+            } finally {
+                setLoadingMenu(false);
+            }
+        };
+
+        if (activeSection === 'carta' && userData?.id) {
+            loadMenuData();
+        }
+    }, [activeSection, userData?.id]);
+
+    const handleAddCategory = async () => {
+        if (!newCategoryName.trim() || !userData?.id) return;
+        try {
+            const res = await fetch('/api/menu/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    vcard_id: userData.id,
+                    nombre: newCategoryName.trim(),
+                    code: editCode
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setMenuCategories(prev => [...prev, { ...data.category, products: [] }]);
+                setNewCategoryName('');
+                setExpandedCategories(prev => ({ ...prev, [data.category.id]: true }));
+            } else {
+                const errData = await res.json();
+                alert(errData.error || 'Error al crear categoría');
+            }
+        } catch (err) {
+            alert('Error de conexión');
+        }
+    };
+
+    const handleUpdateCategoryName = async (id: number, newName: string) => {
+        if (!newName.trim()) return;
+        try {
+            const res = await fetch('/api/menu/categories', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id,
+                    nombre: newName.trim(),
+                    code: editCode
+                })
+            });
+            if (res.ok) {
+                setMenuCategories(prev => prev.map(cat => cat.id === id ? { ...cat, nombre: newName.trim() } : cat));
+            }
+        } catch (err) {
+            console.error('Error updating category name:', err);
+        }
+    };
+
+    const handleDeleteCategory = async (id: number) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar esta categoría? Todos los productos dentro de ella se eliminarán permanentemente.')) return;
+        try {
+            const res = await fetch(`/api/menu/categories?id=${id}&code=${editCode}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setMenuCategories(prev => prev.filter(cat => cat.id !== id));
+            } else {
+                alert('Error al eliminar la categoría');
+            }
+        } catch (err) {
+            alert('Error de conexión');
+        }
+    };
+
+    const handleAddProduct = async (categoryId: number) => {
+        try {
+            const res = await fetch('/api/menu/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    categoria_id: categoryId,
+                    nombre: 'Nuevo Producto/Servicio',
+                    descripcion: '',
+                    precio: null,
+                    imagen_url: null,
+                    disponible: 1,
+                    code: editCode
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setMenuCategories(prev => prev.map(cat => {
+                    if (cat.id === categoryId) {
+                        return {
+                            ...cat,
+                            products: [...(cat.products || []), data.product]
+                        };
+                    }
+                    return cat;
+                }));
+            } else {
+                alert('Error al agregar el producto');
+            }
+        } catch (err) {
+            alert('Error de conexión');
+        }
+    };
+
+    const handleUpdateProduct = async (productId: number, fields: any) => {
+        try {
+            const res = await fetch('/api/menu/products', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: productId,
+                    ...fields,
+                    code: editCode
+                })
+            });
+            if (res.ok) {
+                setMenuCategories(prev => prev.map(cat => {
+                    const products = cat.products || [];
+                    if (products.some((p: any) => p.id === productId)) {
+                        return {
+                            ...cat,
+                            products: products.map((p: any) => p.id === productId ? { ...p, ...fields } : p)
+                        };
+                    }
+                    return cat;
+                }));
+            }
+        } catch (err) {
+            console.error('Error updating product:', err);
+        }
+    };
+
+    const handleDeleteProduct = async (categoryId: number, productId: number) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar este producto/servicio?')) return;
+        try {
+            const res = await fetch(`/api/menu/products?id=${productId}&code=${editCode}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setMenuCategories(prev => prev.map(cat => {
+                    if (cat.id === categoryId) {
+                        return {
+                            ...cat,
+                            products: (cat.products || []).filter((p: any) => p.id !== productId)
+                        };
+                    }
+                    return cat;
+                }));
+            } else {
+                alert('Error al eliminar el producto');
+            }
+        } catch (err) {
+            alert('Error de conexión');
+        }
+    };
+
+    const handleProductImageChange = async (e: React.ChangeEvent<HTMLInputElement>, categoryId: number, productId: number) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadingImage(true);
+        const fd = new FormData();
+        fd.append('file', file);
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (res.ok) {
+                const { url } = await res.json();
+                const putRes = await fetch('/api/menu/products', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: productId,
+                        imagen_url: url,
+                        code: editCode
+                    })
+                });
+                if (putRes.ok) {
+                    setMenuCategories(prev => prev.map(cat => {
+                        if (cat.id === categoryId) {
+                            return {
+                                ...cat,
+                                products: (cat.products || []).map((p: any) => p.id === productId ? { ...p, imagen_url: url } : p)
+                            };
+                        }
+                        return cat;
+                    }));
+                } else {
+                    alert('Error al guardar la URL de la imagen');
+                }
+            } else {
+                alert('Error al subir la imagen');
+            }
+        } catch (err) {
+            alert('Error al subir la imagen');
+        } finally {
+            setUploadingImage(false);
+        }
+    };
 
     const [formData, setFormData] = useState({
         tipo_perfil: 'persona' as 'persona' | 'negocio',
@@ -261,6 +492,28 @@ export default function VCardEditModal({
                     return num;
                 })(),
                 template_id: formData.template_id || 'classic',
+                menu_digital: menuCategories.length > 0 
+                    ? JSON.stringify(menuCategories.map(cat => ({
+                        id: cat.id,
+                        name: cat.nombre,
+                        items: (cat.products || []).map((prod: any) => {
+                            let formattedPrice = '';
+                            if (prod.precio !== null && prod.precio !== undefined) {
+                                formattedPrice = `$${Number(prod.precio).toFixed(2)}`;
+                            } else if (prod.price) {
+                                formattedPrice = prod.price;
+                            }
+                            return {
+                                id: prod.id,
+                                name: prod.nombre,
+                                desc: prod.descripcion || prod.desc || '',
+                                price: formattedPrice,
+                                image: prod.imagen_url || prod.image || '',
+                                disponible: prod.disponible !== undefined ? prod.disponible : 1
+                            };
+                        })
+                    })))
+                    : formData.menu_digital,
                 // Asegurar que json_override sea string para la API
                 json_override: typeof formData.json_override === 'object' 
                     ? JSON.stringify(formData.json_override) 
@@ -562,14 +815,9 @@ export default function VCardEditModal({
     };
 
     const handleAutoStructure = async () => {
-        const text = formData.menu_digital;
-        if (!text || text.length < 10) {
-            alert('Por favor escribe algo de texto primero para poder estructurarlo.');
-            return;
-        }
-
-        if (text.trim().startsWith('[')) {
-            alert('Parece que ya tienes un formato JSON. Si quieres re-estructurar, borra los corchetes y deja solo el texto.');
+        const text = aiRawText;
+        if (!text || text.trim().length < 10) {
+            alert('Por favor escribe algo de texto con tus productos/servicios primero.');
             return;
         }
 
@@ -582,14 +830,84 @@ export default function VCardEditModal({
             });
             
             const data = await res.json();
-            if (data.json) {
-                setFormData({ ...formData, menu_digital: data.json });
-            } else {
+            if (!data.json) {
                 alert(data.error || 'Error al estructurar el menú.');
+                return;
             }
+
+            let structuredMenu = [];
+            try {
+                structuredMenu = JSON.parse(data.json);
+            } catch (jsonErr) {
+                const cleaned = data.json.replace(/```json/g, '').replace(/```/g, '').trim();
+                structuredMenu = JSON.parse(cleaned);
+            }
+
+            if (!Array.isArray(structuredMenu)) {
+                throw new Error("El formato devuelto no es un arreglo válido");
+            }
+
+            const newCategories: any[] = [];
+            for (const cat of structuredMenu) {
+                // 1. Crear categoría en DB
+                const catRes = await fetch('/api/menu/categories', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        vcard_id: userData.id,
+                        nombre: cat.name || cat.nombre || 'Sin Nombre',
+                        code: editCode
+                    })
+                });
+
+                if (!catRes.ok) continue;
+                const catData = await catRes.json();
+                const createdCat = { ...catData.category, products: [] };
+
+                // 2. Crear sus productos
+                const items = cat.items || cat.productos || [];
+                const createdProducts = [];
+                for (const item of items) {
+                    let rawPrice = item.price || item.precio;
+                    let parsedPrice: number | null = null;
+                    if (rawPrice !== undefined && rawPrice !== null) {
+                        const cleanPriceStr = String(rawPrice).replace(/[^0-9.]/g, '');
+                        if (cleanPriceStr) {
+                            parsedPrice = parseFloat(cleanPriceStr);
+                        }
+                    }
+
+                    const prodRes = await fetch('/api/menu/products', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            categoria_id: createdCat.id,
+                            nombre: item.name || item.nombre || 'Producto sin nombre',
+                            descripcion: item.desc || item.descripcion || '',
+                            precio: parsedPrice,
+                            imagen_url: null,
+                            disponible: 1,
+                            code: editCode
+                        })
+                    });
+
+                    if (prodRes.ok) {
+                        const prodData = await prodRes.json();
+                        createdProducts.push(prodData.product);
+                    }
+                }
+
+                createdCat.products = createdProducts;
+                newCategories.push(createdCat);
+            }
+
+            setMenuCategories(prev => [...prev, ...newCategories]);
+            setAiRawText('');
+            setShowAIImporter(false);
+            alert('¡Menú estructurado y guardado exitosamente!');
         } catch (err) {
             console.error('Error structuring menu:', err);
-            alert('Error de conexión con la IA.');
+            alert('Hubo un error al estructurar o procesar los datos con la IA.');
         } finally {
             setIsStructuring(false);
         }
@@ -894,17 +1212,41 @@ export default function VCardEditModal({
                                                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sobre Mí / Bio</label>
                                                                 <textarea className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Cuéntales qué haces..." />
                                                             </div>
-                                                            {/* Soluciones Destacadas - Visible for professional plans except Catalog (as it has its own catalog) */}
-                                                             {(userData?.plan === 'business' || userData?.plan === 'pro' || userData?.plan === 'digital' || (!userData?.plan && userData?.tipo_perfil === 'negocio')) && userData?.plan !== 'catalog' && (
-                                                                 <div className="col-span-full space-y-1">
-                                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Soluciones Destacadas</label>
-                                                                     <textarea 
-                                                                         className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" 
-                                                                         rows={3} 
-                                                                         value={formData.productos_servicios} 
-                                                                         onChange={(e) => setFormData({ ...formData, productos_servicios: e.target.value })} 
-                                                                         placeholder="Lista tus soluciones o servicios principales..." 
-                                                                     />
+                                                                              {/* Soluciones Destacadas - Visible for professional plans except Catalog (as it has its own catalog) */}
+                                                             {(userData?.plan === 'business' || userData?.plan === 'pro' || userData?.plan === 'digital' || (!userData?.plan && userData?.tipo_perfil === 'negocio') || userData?.plan === 'catalog') && (
+                                                                 <div className="col-span-full space-y-2">
+                                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Soluciones Destacadas</label>
+                                                                     {((userData?.plan === 'business' || userData?.plan === 'catalog') && menuCategories && menuCategories.length > 0) ? (
+                                                                         <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-4 space-y-3 transition-all">
+                                                                             <div className="flex items-center gap-2">
+                                                                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold animate-pulse">✨</span>
+                                                                                 <span className="text-[10px] font-black text-navy/70 uppercase tracking-wider">
+                                                                                     Sincronizado automáticamente con tu Carta / Menú
+                                                                                 </span>
+                                                                             </div>
+                                                                             <p className="text-[10px] text-gray-400 leading-normal">
+                                                                                 Las categorías activas de tu Menú Digital o Catálogo de Servicios alimentan automáticamente la sección de servicios principales en tu vCard.
+                                                                             </p>
+                                                                             <div className="flex flex-wrap gap-1.5 pt-1">
+                                                                                 {menuCategories.slice(0, 6).map((cat: any, i: number) => (
+                                                                                     <span key={cat.id || i} className="inline-flex items-center bg-white border border-gray-200 px-3 py-1.5 rounded-xl text-[10px] font-bold text-navy/80 shadow-sm border-dashed">
+                                                                                         <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5" />
+                                                                                         {cat.nombre || cat.name}
+                                                                                     </span>
+                                                                                 ))}
+                                                                             </div>
+                                                                         </div>
+                                                                     ) : (
+                                                                         userData?.plan !== 'catalog' && (
+                                                                             <textarea 
+                                                                                 className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" 
+                                                                                 rows={3} 
+                                                                                 value={formData.productos_servicios} 
+                                                                                 onChange={(e) => setFormData({ ...formData, productos_servicios: e.target.value })} 
+                                                                                 placeholder="Lista tus soluciones o servicios principales..." 
+                                                                             />
+                                                                         )
+                                                                     )}
                                                                  </div>
                                                              )}
                                                              {formData.tipo_perfil === 'negocio' && (
@@ -1156,40 +1498,220 @@ export default function VCardEditModal({
                                                         exit={{ height: 0, opacity: 0 }}
                                                         className="overflow-hidden bg-white border-t border-gray-100"
                                                     >
-                                                        <div className="p-6 space-y-6">
-                                                            <div className="flex justify-between items-center border-b pb-2">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contenido de la Carta o Servicios</label>
-                                                                <button 
-                                                                    type="button"
-                                                                    onClick={handleAutoStructure}
-                                                                    disabled={isStructuring}
-                                                                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
-                                                                >
-                                                                    {isStructuring ? (
-                                                                        <Loader2 size={12} className="animate-spin" />
-                                                                    ) : (
-                                                                        <Zap size={12} />
-                                                                    )}
-                                                                    {isStructuring ? 'Procesando...' : 'Estructurar con IA'}
-                                                                </button>
-                                                            </div>
-                                                            <textarea
-                                                                className="w-full border rounded-2xl p-4 font-mono text-sm text-gray-900 bg-gray-50 focus:border-primary outline-none min-h-[150px] scrollbar-hide"
-                                                                value={formData.menu_digital || ''}
-                                                                onChange={e => setFormData({ ...formData, menu_digital: e.target.value })}
-                                                                placeholder='Pega tu lista de productos o el JSON estructurado: [{"name": "Bebidas", "items": [{"name": "Agua", "price": "$1.50"}]}]'
-                                                            />
-                                                            <p className="text-[10px] text-gray-500 leading-relaxed italic">
-                                                                * Puedes escribir tus productos de forma sencilla (ej: "Pizza Americana $10") y presionar <strong>"Estructurar con IA"</strong> para convertirlo en un diseño premium automáticamente.
-                                                            </p>
-                                                        </div>
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    )}
+                                                         <div className="p-6 space-y-6">
+                                                             {/* AI Importer Toggle Section */}
+                                                             <div className="mb-4 bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                                                                 <div className="flex justify-between items-center">
+                                                                     <div className="flex items-center gap-2">
+                                                                         <Zap size={16} className="text-primary animate-pulse" />
+                                                                         <div>
+                                                                             <span className="font-black text-navy uppercase text-xs tracking-tight block">¿Tienes una lista en texto plano?</span>
+                                                                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Nuestra IA la estructura y la inserta automáticamente</span>
+                                                                         </div>
+                                                                     </div>
+                                                                     <button
+                                                                         type="button"
+                                                                         onClick={() => setShowAIImporter(!showAIImporter)}
+                                                                         className="bg-primary hover:bg-primary-dark text-white px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                                                                     >
+                                                                         {showAIImporter ? 'Cerrar Asistente' : 'Estructurar con IA'}
+                                                                     </button>
+                                                                 </div>
+                                                                 
+                                                                 {showAIImporter && (
+                                                                     <div className="mt-4 pt-4 border-t border-gray-200/60 space-y-3">
+                                                                         <textarea
+                                                                             className="w-full border rounded-xl p-3 text-xs text-gray-900 bg-white focus:border-primary outline-none min-h-[120px] scrollbar-hide font-bold"
+                                                                             value={aiRawText}
+                                                                             onChange={e => setAiRawText(e.target.value)}
+                                                                             placeholder={`Pega tus productos aquí de forma simple. Ejemplo:\n\nEntradas:\n- Tequeños con salsa de ajo $6.50\n- Papas fritas artesanales $4.00\n\nBebidas:\n- Coca Cola $1.50\n- Limonada Imperial $2.50`}
+                                                                         />
+                                                                         <div className="flex justify-between items-center">
+                                                                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider italic">
+                                                                                 * Creará las categorías y productos directamente.
+                                                                             </span>
+                                                                             <button
+                                                                                 type="button"
+                                                                                 onClick={handleAutoStructure}
+                                                                                 disabled={isStructuring}
+                                                                                 className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary-dark px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                                                                             >
+                                                                                 {isStructuring ? (
+                                                                                     <>
+                                                                                         <Loader2 size={12} className="animate-spin" />
+                                                                                         Estructurando...
+                                                                                     </>
+                                                                                 ) : (
+                                                                                     <>
+                                                                                         <Zap size={12} />
+                                                                                         Estructurar e Importar
+                                                                                     </>
+                                                                                 )}
+                                                                             </button>
+                                                                         </div>
+                                                                     </div>
+                                                                 )}
+                                                             </div>
 
-                                    {/* SECCIÓN 2.7: MÓDULO INDUSTRIAL (Sólo si template es industrial) */}
+                                                             {/* Loader / Visual Menu Builder */}
+                                                             {loadingMenu ? (
+                                                                 <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                                                                     <Loader2 size={32} className="text-primary animate-spin" />
+                                                                     <span className="text-[10px] font-black text-navy/40 uppercase tracking-widest animate-pulse">Cargando catálogo digital...</span>
+                                                                 </div>
+                                                             ) : (
+                                                                 <div className="space-y-4">
+                                                                     {menuCategories.length === 0 ? (
+                                                                         <div className="text-center py-8 bg-gray-50 border border-dashed rounded-2xl">
+                                                                             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Aún no tienes categorías en tu menú</p>
+                                                                             <p className="text-[10px] text-gray-400 max-w-xs mx-auto">Comienza agregando una categoría abajo o usa nuestro asistente de Inteligencia Artificial.</p>
+                                                                         </div>
+                                                                     ) : (
+                                                                         <div className="space-y-3">
+                                                                             {menuCategories.map((cat: any) => {
+                                                                                 const isExpanded = !!expandedCategories[cat.id];
+                                                                                 return (
+                                                                                     <div key={cat.id} className="border border-gray-200/80 rounded-2xl overflow-hidden bg-white shadow-sm">
+                                                                                         {/* Category Header */}
+                                                                                         <div className="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100/50 transition-colors">
+                                                                                             <div className="flex items-center gap-2 flex-1">
+                                                                                                 <button
+                                                                                                     type="button"
+                                                                                                     onClick={() => setExpandedCategories(prev => ({ ...prev, [cat.id]: !isExpanded }))}
+                                                                                                     className="p-1 text-gray-400 hover:text-navy"
+                                                                                                 >
+                                                                                                     <ChevronDown size={18} className={cn("transition-transform text-navy/40", !isExpanded && "-rotate-90")} />
+                                                                                                 </button>
+                                                                                                 <input
+                                                                                                     type="text"
+                                                                                                     defaultValue={cat.nombre}
+                                                                                                     onBlur={e => handleUpdateCategoryName(cat.id, e.target.value)}
+                                                                                                     placeholder="Nombre de la categoría"
+                                                                                                     className="bg-transparent border-b border-transparent hover:border-gray-300 focus:border-primary font-black uppercase text-navy tracking-tight text-xs p-1 outline-none transition-colors w-full max-w-xs"
+                                                                                                 />
+                                                                                             </div>
+                                                                                             <div className="flex items-center gap-2">
+                                                                                                 <button
+                                                                                                     type="button"
+                                                                                                     onClick={() => handleAddProduct(cat.id)}
+                                                                                                     className="bg-primary/10 hover:bg-primary/20 text-primary px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                                                                                                 >
+                                                                                                     + Producto
+                                                                                                 </button>
+                                                                                                 <button
+                                                                                                     type="button"
+                                                                                                     onClick={() => handleDeleteCategory(cat.id)}
+                                                                                                     className="text-red-500 hover:bg-red-50 p-1.5 rounded-xl transition-all"
+                                                                                                     title="Eliminar Categoría"
+                                                                                                 >
+                                                                                                     <Trash2 size={14} />
+                                                                                                 </button>
+                                                                                             </div>
+                                                                                         </div>
+
+                                                                                         {/* Products List (Expanded) */}
+                                                                                         {isExpanded && (
+                                                                                             <div className="p-3 border-t border-gray-100 bg-white space-y-3">
+                                                                                                 {(cat.products || []).length === 0 ? (
+                                                                                                     <p className="text-[10px] font-bold text-gray-400 text-center py-4 uppercase tracking-wider">No hay productos en esta categoría</p>
+                                                                                                 ) : (
+                                                                                                     <div className="divide-y divide-gray-100">
+                                                                                                         {(cat.products || []).map((prod: any) => (
+                                                                                                             <div key={prod.id} className="py-3 first:pt-0 last:pb-0 flex flex-col md:flex-row gap-3 items-start md:items-center">
+                                                                                                                 {/* Input details */}
+                                                                                                                 <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-2 w-full">
+                                                                                                                     <div className="md:col-span-5">
+                                                                                                                         <input
+                                                                                                                             type="text"
+                                                                                                                             defaultValue={prod.nombre}
+                                                                                                                             onBlur={e => handleUpdateProduct(prod.id, { nombre: e.target.value })}
+                                                                                                                             placeholder="Nombre del producto"
+                                                                                                                             className="w-full text-xs font-bold text-navy border-b border-gray-100 focus:border-primary p-1 outline-none transition-colors"
+                                                                                                                         />
+                                                                                                                     </div>
+                                                                                                                     <div className="md:col-span-5">
+                                                                                                                         <input
+                                                                                                                             type="text"
+                                                                                                                             defaultValue={prod.descripcion || ''}
+                                                                                                                             onBlur={e => handleUpdateProduct(prod.id, { descripcion: e.target.value })}
+                                                                                                                             placeholder="Descripción corta"
+                                                                                                                             className="w-full text-xs font-medium text-gray-600 border-b border-gray-100 focus:border-primary p-1 outline-none transition-colors"
+                                                                                                                         />
+                                                                                                                     </div>
+                                                                                                                     <div className="md:col-span-2">
+                                                                                                                         <div className="flex items-center border-b border-gray-100 focus-within:border-primary p-1 transition-colors">
+                                                                                                                             <span className="text-[10px] font-bold text-gray-400 mr-0.5">$</span>
+                                                                                                                             <input
+                                                                                                                                 type="number"
+                                                                                                                                 step="0.01"
+                                                                                                                                 defaultValue={prod.precio || ''}
+                                                                                                                                 onBlur={e => handleUpdateProduct(prod.id, { precio: e.target.value ? parseFloat(e.target.value) : null })}
+                                                                                                                                 placeholder="0.00"
+                                                                                                                                 className="w-full text-xs font-bold text-navy outline-none bg-transparent"
+                                                                                                                             />
+                                                                                                                         </div>
+                                                                                                                     </div>
+                                                                                                                 </div>
+
+                                                                                                                 {/* Actions & Availability */}
+                                                                                                                 <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                                                                                                                     <label className="flex items-center gap-1.5 cursor-pointer">
+                                                                                                                         <input
+                                                                                                                             type="checkbox"
+                                                                                                                             defaultChecked={prod.disponible === 1}
+                                                                                                                             onChange={e => handleUpdateProduct(prod.id, { disponible: e.target.checked ? 1 : 0 })}
+                                                                                                                             className="rounded border-gray-300 text-primary focus:ring-primary h-3 w-3"
+                                                                                                                         />
+                                                                                                                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest select-none">Disponible</span>
+                                                                                                                     </label>
+                                                                                                                     <button
+                                                                                                                         type="button"
+                                                                                                                         onClick={() => handleDeleteProduct(cat.id, prod.id)}
+                                                                                                                         className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-xl transition-all"
+                                                                                                                         title="Eliminar Producto"
+                                                                                                                     >
+                                                                                                                         <Trash2 size={14} />
+                                                                                                                     </button>
+                                                                                                                 </div>
+                                                                                                             </div>
+                                                                                                         ))}
+                                                                                                     </div>
+                                                                                                 )}
+                                                                                             </div>
+                                                                                         )}
+                                                                                     </div>
+                                                                                 );
+                                                                             })}
+                                                                         </div>
+                                                                     )}
+
+                                                                     {/* Add Category Section */}
+                                                                     <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
+                                                                         <input
+                                                                             type="text"
+                                                                             value={newCategoryName}
+                                                                             onChange={e => setNewCategoryName(e.target.value)}
+                                                                             placeholder="Nueva categoría (ej: Bebidas, Postres, Entradas)"
+                                                                             className="flex-1 text-xs font-bold text-navy border rounded-xl px-3 py-2 outline-none focus:border-primary"
+                                                                         />
+                                                                         <button
+                                                                             type="button"
+                                                                             onClick={handleAddCategory}
+                                                                             className="bg-navy hover:bg-navy-dark text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all"
+                                                                         >
+                                                                             + Categoría
+                                                                          </button>
+                                                                     </div>
+                                                                 </div>
+                                                             )}
+                                                         </div>
+                                                     </motion.div>
+                                                 )}
+                                             </AnimatePresence>
+                                         </div>
+                                     )}
+
+                                     {/* SECCIÓN 2.7: MÓDULO INDUSTRIAL (Sólo si template es industrial) */}
                                     {formData.template_id === 'industrial' && (
                                         <div className="border-2 border-[#FF5C00]/20 rounded-2xl overflow-hidden shadow-sm">
                                             <button 

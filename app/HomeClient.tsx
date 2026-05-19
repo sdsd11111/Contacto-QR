@@ -206,7 +206,7 @@ export default function HomeClient() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="text-3xl md:text-5xl lg:text-6xl font-black text-foreground leading-[1.05] mb-6 tracking-tighter"
+                            className="text-3xl md:text-6xl font-black text-foreground leading-[1.05] mb-6 tracking-tighter"
                         >
                           <span style={{
                             fontSize: '0.7rem',

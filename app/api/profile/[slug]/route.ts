@@ -3,16 +3,99 @@ import pool from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+// Helper simple para parsear JSON de forma segura
+function safeParseJson(str: string | null): any {
+    if (!str) return null;
+    try {
+        return JSON.parse(str);
+    } catch {
+        return null;
+    }
+}
+
+// Repara un string JSON truncado de forma robusta retrocediendo caracteres
+function repairTruncatedJsonExhaustive(str: string | null | undefined): any[] | null {
+    if (!str) return null;
+    const trimmed = str.trim();
+    
+    // Intentar parse estándar primero
+    try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed;
+    } catch (e) {
+        // continuar con reparación
+    }
+
+    const candidates = [
+        '',
+        ']',
+        '}',
+        '}]',
+        '}}]',
+        ']}]',
+        '}]}]',
+        '"}]',
+        '"}',
+        ',""}]',
+        ',[]}]',
+        '}]}',
+        ']}'
+    ];
+
+    for (let i = trimmed.length; i > 0; i--) {
+        const sub = trimmed.substring(0, i);
+        for (const cand of candidates) {
+            try {
+                const repaired = sub + cand;
+                const parsed = JSON.parse(repaired);
+                if (Array.isArray(parsed)) {
+                    console.log(`[API JIT JoiRepair] Successfully repaired truncated JSON at index ${i} with suffix: ${cand}`);
+                    return parsed;
+                }
+            } catch (err) {
+                // ignorar error e intentar siguiente candidato
+            }
+        }
+    }
+    return null;
+}
+
+// Limpia el menú reparado removiendo ítems o categorías incompletas o sin nombre
+function cleanRepairedMenu(menu: any[] | null): any[] {
+    if (!Array.isArray(menu)) return [];
+    
+    return menu
+        .map(cat => {
+            if (!cat || typeof cat !== 'object' || !cat.name) return null;
+            
+            const cleanItems = Array.isArray(cat.items) 
+                ? cat.items.filter((item: any) => item && typeof item === 'object' && item.name && String(item.name).trim().length > 0)
+                : [];
+                
+            return {
+                name: String(cat.name).trim(),
+                items: cleanItems.map((item: any) => ({
+                    name: String(item.name).trim(),
+                    price: item.price ? String(item.price).trim() : '',
+                    desc: item.desc ? String(item.desc).trim() : '',
+                    image: item.image || item.imagen || ''
+                }))
+            };
+        })
+        .filter(cat => cat !== null && cat.name.length > 0);
+}
+
 export async function GET(
     request: NextRequest,
     context: { params: Promise<{ slug: string }> }
 ) {
     try {
         const { slug } = await context.params;
+        const connection = await pool.getConnection();
 
         try {
             // Search by slug or id - ONLY returning public fields
-            const [rows] = await pool.execute(
+            const [rows] = await connection.execute(
                 `SELECT 
                     id, slug, nombre, profesion, empresa, bio, direccion, web, whatsapp, email, 
                     google_business, instagram, linkedin, facebook, tiktok, youtube, x, productos_servicios, 
@@ -36,10 +119,121 @@ export async function GET(
             }
 
             const user = users[0];
+            const vcardId = user.id;
+
+            // 1. Verificar si existen datos relacionales del menú
+            const [catRows] = await connection.execute(
+                'SELECT id FROM registraya_menu_categorias WHERE registro_id = ? LIMIT 1',
+                [vcardId]
+            );
+
+            const hasRelationalData = (catRows as any[]).length > 0;
+
+            // 2. Si no tiene datos relacionales pero posee JSON legacy en menu_digital, realizamos migración JIT (Just-In-Time)
+            if (!hasRelationalData && user.menu_digital && user.menu_digital.trim().startsWith('[')) {
+                // Intentar recuperar el JSON de forma robusta e inteligente (incluso si está truncado)
+                const rawLegacyMenu = repairTruncatedJsonExhaustive(user.menu_digital);
+                const legacyMenu = cleanRepairedMenu(rawLegacyMenu);
+                
+                if (legacyMenu.length > 0) {
+                    console.log(`Starting JIT menu migration for profile ID: ${vcardId}...`);
+                    await connection.beginTransaction();
+                    try {
+                        for (let cIdx = 0; cIdx < legacyMenu.length; cIdx++) {
+                            const cat = legacyMenu[cIdx];
+                            if (!cat || !cat.name) continue;
+
+                            // Insertar Categoría
+                            const [catResult] = await connection.execute(
+                                'INSERT INTO registraya_menu_categorias (registro_id, nombre, orden) VALUES (?, ?, ?)',
+                                [vcardId, cat.name.trim(), cIdx]
+                            );
+                            const categoryId = (catResult as any).insertId;
+
+                            // Insertar Productos de esta Categoría
+                            if (Array.isArray(cat.items)) {
+                                for (let pIdx = 0; pIdx < cat.items.length; pIdx++) {
+                                    const item = cat.items[pIdx];
+                                    if (!item || !item.name) continue;
+
+                                    // Limpiar y validar precio
+                                    let cleanPrice = null;
+                                    if (item.price) {
+                                        const numericStr = String(item.price).replace(/[^\d.]/g, '');
+                                        if (numericStr) {
+                                            cleanPrice = parseFloat(numericStr);
+                                            if (isNaN(cleanPrice)) cleanPrice = null;
+                                        }
+                                    }
+
+                                    await connection.execute(
+                                        `INSERT INTO registraya_menu_productos 
+                                         (categoria_id, nombre, descripcion, precio, imagen_url, orden, disponible) 
+                                         VALUES (?, ?, ?, ?, ?, ?, 1)`,
+                                        [categoryId, item.name.trim(), item.desc || null, cleanPrice, item.image || null, pIdx]
+                                    );
+                                }
+                            }
+                        }
+                        await connection.commit();
+                        console.log(`✅ JIT migration completed for profile ID: ${vcardId}!`);
+                    } catch (migrationErr) {
+                        await connection.rollback();
+                        console.error(`❌ JIT Migration failed for profile ID: ${vcardId}:`, migrationErr);
+                    }
+                }
+            }
+
+            // 3. Reconstruir menu_digital dinámicamente desde las tablas relacionales para retrocompatibilidad total del frontend
+            const [dbCategories] = await connection.execute(
+                'SELECT * FROM registraya_menu_categorias WHERE registro_id = ? ORDER BY orden ASC, created_at ASC',
+                [vcardId]
+            );
+
+            const structuredCategories: any[] = [];
+            const categories = dbCategories as any[];
+
+            for (const cat of categories) {
+                const [dbProducts] = await connection.execute(
+                    'SELECT * FROM registraya_menu_productos WHERE categoria_id = ? ORDER BY orden ASC, created_at ASC',
+                    [cat.id]
+                );
+
+                const items = (dbProducts as any[]).map(prod => {
+                    // Formatear precio para que el frontend legacy no se rompa (ej: 12.50 -> "$12.50")
+                    let formattedPrice = '';
+                    if (prod.price !== null && prod.price !== undefined) {
+                        formattedPrice = `$${Number(prod.price).toFixed(2)}`;
+                    }
+
+                    return {
+                        id: prod.id,
+                        name: prod.nombre,
+                        desc: prod.descripcion || '',
+                        price: formattedPrice,
+                        image: prod.imagen_url || '',
+                        disponible: prod.disponible
+                    };
+                });
+
+                structuredCategories.push({
+                    id: cat.id,
+                    name: cat.nombre,
+                    items
+                });
+            }
+
+            // Si hay datos estructurados, los inyectamos en user.menu_digital en formato JSON string
+            if (structuredCategories.length > 0) {
+                user.menu_digital = JSON.stringify(structuredCategories);
+            } else {
+                user.menu_digital = null;
+            }
+
             return NextResponse.json(user);
 
-        } catch (dbErr) {
-            throw dbErr;
+        } finally {
+            connection.release();
         }
     } catch (err: any) {
         console.error('Error fetching profile:', err);

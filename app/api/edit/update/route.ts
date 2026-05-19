@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { formatPhoneEcuador } from '@/lib/utils';
+import { syncMenuDigitalToRelational } from '@/lib/menuSync';
 
 export const dynamic = 'force-dynamic';
 
@@ -163,6 +164,13 @@ export async function POST(req: NextRequest) {
             queryParams.push(user.id);
 
             await connection.execute(updateQuery, queryParams);
+
+            // Synchronize menu_digital string with relational database tables
+            try {
+                await syncMenuDigitalToRelational(connection, user.id, data.menu_digital);
+            } catch (syncErr) {
+                console.error("Error syncing menu to relational tables in update route:", syncErr);
+            }
 
             return NextResponse.json({
                 success: true,

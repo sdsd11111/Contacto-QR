@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 import { formatPhoneEcuador } from '@/lib/utils';
+import { syncMenuDigitalToRelational } from '@/lib/menuSync';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,8 +98,13 @@ export async function POST(req: NextRequest) {
                     hero_action || null, hero_button_text || null, hero_file_url || null, hero_external_link || null, heroWifiStepsStr,
                     hero_section_title || null, hero_step1_title || null, hero_step1_text || null, hero_step2_title || null, hero_step2_text || null, hero_step3_title || null, hero_step3_text || null,
                     heroSlidesJsonStr, template_id || 'classic',
-                    email
                 ]);
+
+                try {
+                    await syncMenuDigitalToRelational(pool, existingUser.id, menu_digital);
+                } catch (syncErr) {
+                    console.error("Error syncing menu to relational tables in register UPDATE:", syncErr);
+                }
 
                 return NextResponse.json({ success: true, action: 'updated', id: existingUser.id });
 
@@ -186,6 +192,12 @@ export async function POST(req: NextRequest) {
                 ];
 
                 await pool.execute(insertQuery, values);
+
+                try {
+                    await syncMenuDigitalToRelational(pool, newId, menu_digital);
+                } catch (syncErr) {
+                    console.error("Error syncing menu to relational tables in register INSERT:", syncErr);
+                }
 
                 return NextResponse.json({ success: true, action: 'created', id: newId, edit_code: serverGeneratedEditCode });
             }

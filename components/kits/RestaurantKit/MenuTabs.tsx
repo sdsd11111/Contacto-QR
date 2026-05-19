@@ -24,11 +24,6 @@ function MenuItemRow(props: any) {
             onMouseLeave={e => (e.currentTarget.style.borderColor = '')}
         >
             <div className="flex-1 flex gap-4">
-                {image && (
-                    <div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-gray-100">
-                        <img src={image} alt={name || 'Item'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    </div>
-                )}
                 <div className="pr-4 flex-1">
                     <h4
                         className="font-sans-body font-bold text-lg text-black uppercase tracking-tight transition-colors"
@@ -63,7 +58,9 @@ export default function MenuTabs({
     title = 'NUESTRA CARTA',
 }: MenuTabsProps) {
     const [activeIdx, setActiveIdx] = useState(0);
+    const [visibleItemsCount, setVisibleItemsCount] = useState(15);
     const tabsRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
@@ -95,6 +92,32 @@ export default function MenuTabs({
         const amount = isMobile ? 120 : 180;
         el.scrollBy({ left: direction === 'left' ? -amount : amount, behavior: 'smooth' });
     };
+
+    // Reset visibility count when active index changes
+    useEffect(() => {
+        setVisibleItemsCount(15);
+    }, [activeIdx]);
+
+    // IntersectionObserver sentinel for progressive infinite scrolling
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+                setVisibleItemsCount(prev => prev + 15);
+            }
+        }, {
+            rootMargin: '200px',
+        });
+
+        observer.observe(sentinel);
+        return () => {
+            if (sentinel) {
+                observer.unobserve(sentinel);
+            }
+        };
+    }, [activeIdx]);
 
     const activeCategory = categories[activeIdx];
     if (!categories.length) return null;
@@ -138,7 +161,7 @@ export default function MenuTabs({
                 {/* Contenedor de tabs con scroll horizontal nativo */}
                 <div
                     ref={tabsRef}
-                    className="flex md:justify-center gap-3 md:gap-4 overflow-x-auto px-2 md:px-10 scrollbar-hide snap-x snap-mandatory"
+                    className="flex gap-3 md:gap-4 overflow-x-auto px-2 md:px-10 scrollbar-hide snap-x snap-mandatory"
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                     {categories.map((cat, idx) => (
@@ -153,7 +176,7 @@ export default function MenuTabs({
                                     tab?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                                 }
                             }}
-                            className={`shrink-0 snap-center px-5 md:px-8 py-3 font-display-condensed text-lg md:text-xl tracking-widest transition-all duration-300 border whitespace-nowrap ${
+                            className={`shrink-0 snap-center snap-always px-5 md:px-8 py-3 font-display-condensed text-lg md:text-xl tracking-widest transition-all duration-300 border whitespace-nowrap ${
                                 activeIdx === idx
                                     ? 'bg-black text-white border-black'
                                     : 'bg-white text-black border-gray-200 hover:border-gray-400'
@@ -176,11 +199,18 @@ export default function MenuTabs({
                         transition={{ duration: 0.35, ease: 'easeInOut' }}
                         className="grid grid-cols-1 md:grid-cols-2 gap-x-12 md:gap-x-16 gap-y-6 md:gap-y-8"
                     >
-                        {activeCategory.items.map((item, idx) => (
+                        {activeCategory.items.slice(0, visibleItemsCount).map((item, idx) => (
                             <MenuItemRow key={idx} {...item} accentColor={accentColor} />
                         ))}
                     </motion.div>
                 </AnimatePresence>
+
+                {/* Sentinel for Infinite Scroll under active category */}
+                {activeCategory && activeCategory.items && activeCategory.items.length > visibleItemsCount && (
+                    <div ref={sentinelRef} className="h-14 flex items-center justify-center mt-8">
+                        <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${accentCSS} transparent` }} />
+                    </div>
+                )}
             </div>
 
             {/* Indicador de slide en mobile (dots) */}

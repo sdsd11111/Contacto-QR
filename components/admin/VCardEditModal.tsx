@@ -897,66 +897,106 @@ export default function VCardEditModal({
                                                 />
                                             </div>
                                             {/* Soluciones Destacadas - Visible for professional plans except Catalog (as it has its own catalog) */}
-                                            {(editingRegistro.plan === 'business' || editingRegistro.plan === 'digital' || editingRegistro.plan === 'pro' || editingRegistro.plan === 'basic') && (
+                                            {(() => {
+                                                let menuCategories: any[] = [];
+                                                try {
+                                                    if (editingRegistro.menu_digital) {
+                                                        const parsed = typeof editingRegistro.menu_digital === 'string' ? JSON.parse(editingRegistro.menu_digital) : editingRegistro.menu_digital;
+                                                        if (parsed && parsed.categories && Array.isArray(parsed.categories)) {
+                                                            menuCategories = parsed.categories;
+                                                        }
+                                                    }
+                                                } catch (e) {
+                                                    // ignore
+                                                }
+                                                
+                                                return (editingRegistro.plan === 'business' || editingRegistro.plan === 'catalog' || editingRegistro.plan === 'digital' || editingRegistro.plan === 'pro' || editingRegistro.plan === 'basic') && (
                                                 <div className="space-y-3">
-                                                    <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
-                                                        <div>
-                                                            <label className="text-[10px] font-black uppercase tracking-widest text-primary block">Soluciones Destacadas</label>
-                                                            <p className="text-[9px] font-bold text-white/40 leading-tight mt-1">Edita o elimina los servicios extraídos.</p>
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-primary block ml-1">Soluciones Destacadas</label>
+                                                    {((editingRegistro.plan === 'business' || editingRegistro.plan === 'catalog') && menuCategories && menuCategories.length > 0) ? (
+                                                        <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3 transition-all">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold animate-pulse">✨</span>
+                                                                <span className="text-[10px] font-black text-primary uppercase tracking-wider">
+                                                                    Sincronizado automáticamente con tu Carta / Menú
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-[10px] text-white/50 leading-normal">
+                                                                Las categorías activas de tu Menú Digital o Catálogo de Servicios alimentan automáticamente la sección de servicios principales en tu vCard.
+                                                            </p>
+                                                            <div className="flex flex-wrap gap-1.5 pt-1">
+                                                                {menuCategories.slice(0, 6).map((cat: any, i: number) => (
+                                                                    <span key={cat.id || i} className="inline-flex items-center bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-bold text-white/80 shadow-sm border-dashed">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5" />
+                                                                        {cat.nombre || cat.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const current = (editingRegistro.productos_servicios || '').trim();
-                                                                const separator = '\n';
-                                                                setEditingRegistro({ ...editingRegistro, productos_servicios: current + (current ? separator : '') + 'Nuevo Servicio' });
-                                                            }}
-                                                            className="text-white hover:text-primary bg-white/5 hover:bg-white/10 px-4 py-2 font-black uppercase text-[9px] rounded-lg flex items-center gap-1 transition-all"
-                                                        >
-                                                            <Plus size={12} /> Añadir
-                                                        </button>
-                                                    </div>
-                                                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                                        {(() => {
-                                                            const rawText = editingRegistro.productos_servicios || '';
-                                                            const separator = '\n';
-                                                            const items = rawText.split(/[,\n]/).map((i: string) => i.trim()).filter((i: string) => i);
-                                                            
-                                                            if (items.length === 0) {
-                                                                return <p className="text-[10px] text-white/30 italic px-2">Aún no hay servicios destacados.</p>;
-                                                            }
-
-                                                            return items.map((item: string, idx: number) => (
-                                                                <div key={idx} className="flex gap-3 items-center bg-white/5 border border-white/10 p-3 rounded-xl hover:border-primary/30 transition-all group">
-                                                                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[12px] group-hover:scale-110 transition-transform">
-                                                                        ✨
+                                                    ) : (
+                                                        editingRegistro.plan !== 'catalog' && (
+                                                            <>
+                                                                <div className="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/10">
+                                                                    <div>
+                                                                        <p className="text-[9px] font-bold text-white/40 leading-tight">Edita o elimina los servicios extraídos.</p>
                                                                     </div>
-                                                                    <input
-                                                                        className="flex-1 bg-transparent border-b border-transparent focus:border-primary/50 outline-none text-xs font-bold text-white/90 placeholder-white/20 transition-all"
-                                                                        value={item}
-                                                                        onChange={e => {
-                                                                            const newItems = [...items];
-                                                                            newItems[idx] = e.target.value;
-                                                                            setEditingRegistro({ ...editingRegistro, productos_servicios: newItems.join('\n') });
-                                                                        }}
-                                                                    />
                                                                     <button 
                                                                         type="button"
                                                                         onClick={() => {
-                                                                            const newItems = [...items];
-                                                                            newItems.splice(idx, 1);
-                                                                            setEditingRegistro({ ...editingRegistro, productos_servicios: newItems.join('\n') });
+                                                                            const current = (editingRegistro.productos_servicios || '').trim();
+                                                                            const separator = '\n';
+                                                                            setEditingRegistro({ ...editingRegistro, productos_servicios: current + (current ? separator : '') + 'Nuevo Servicio' });
                                                                         }}
-                                                                        className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors opacity-100 md:opacity-0 group-hover:opacity-100"
+                                                                        className="text-white hover:text-primary bg-white/5 hover:bg-white/10 px-4 py-2 font-black uppercase text-[9px] rounded-lg flex items-center gap-1 transition-all"
                                                                     >
-                                                                        <Trash2 size={14} />
+                                                                        <Plus size={12} /> Añadir
                                                                     </button>
                                                                 </div>
-                                                            ));
-                                                        })()}
-                                                    </div>
+                                                                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                                                    {(() => {
+                                                                        const rawText = editingRegistro.productos_servicios || '';
+                                                                        const separator = '\n';
+                                                                        const items = rawText.split(/[,\n]/).map((i: string) => i.trim()).filter((i: string) => i);
+                                                                        
+                                                                        if (items.length === 0) {
+                                                                            return <p className="text-[10px] text-white/30 italic px-2">Aún no hay servicios destacados.</p>;
+                                                                        }
+
+                                                                        return items.map((item: string, idx: number) => (
+                                                                            <div key={idx} className="flex gap-3 items-center bg-white/5 border border-white/10 p-3 rounded-xl hover:border-primary/30 transition-all group">
+                                                                                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[12px] group-hover:scale-110 transition-transform">
+                                                                                    ✨
+                                                                                </div>
+                                                                                <input
+                                                                                    className="flex-1 bg-transparent border-b border-transparent focus:border-primary/50 outline-none text-xs font-bold text-white/90 placeholder-white/20 transition-all"
+                                                                                    value={item}
+                                                                                    onChange={e => {
+                                                                                        const newItems = [...items];
+                                                                                        newItems[idx] = e.target.value;
+                                                                                        setEditingRegistro({ ...editingRegistro, productos_servicios: newItems.join('\n') });
+                                                                                    }}
+                                                                                />
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        const newItems = [...items];
+                                                                                        newItems.splice(idx, 1);
+                                                                                        setEditingRegistro({ ...editingRegistro, productos_servicios: newItems.join('\n') });
+                                                                                    }}
+                                                                                    className="p-2 text-white/20 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors opacity-100 md:opacity-0 group-hover:opacity-100"
+                                                                                >
+                                                                                    <Trash2 size={14} />
+                                                                                </button>
+                                                                            </div>
+                                                                        ));
+                                                                    })()}
+                                                                </div>
+                                                            </>
+                                                        )
+                                                    )}
                                                 </div>
-                                            )}
+                                                );
+                                            })()}
 
                                             {/* Etiquetas / Tags - Visible for all professional plans including Catalog */}
                                             {(editingRegistro.plan === 'business' || editingRegistro.plan === 'catalog' || editingRegistro.plan === 'digital' || editingRegistro.plan === 'pro' || editingRegistro.plan === 'basic') && (
