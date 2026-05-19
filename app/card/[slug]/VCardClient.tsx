@@ -138,7 +138,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     }, [data?.foto_url, slug, data?.nombre_negocio]);
 
     // ─── Acciones ─────────────────────────────────────────────────────────────
-    const downloadVCF = useCallback(() => {
+    const downloadVCF = useCallback(async () => {
         if (!data) return;
 
         // Track download asynchronously
@@ -148,30 +148,54 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
             body: JSON.stringify({ slug: data.slug, method: 'profile_button' })
         }).catch(err => console.error("Error tracking download:", err));
 
-        const vcfContent = [
-            'BEGIN:VCARD',
-            'VERSION:3.0',
-            `FN:${(data.nombres || data.apellidos) ? `${data.nombres ?? ''} ${data.apellidos ?? ''}`.trim() : (data.nombre_negocio || '')}`,
-            `ORG:${data.nombre_negocio || data.company || ''}`,
-            `TITLE:${data.profession || ''}`,
-            `TEL;TYPE=CELL,VOICE:${data.whatsapp || ''}`,
-            `EMAIL:${data.email || ''}`,
-            `URL:${data.web || ''}`,
-            `ADR;TYPE=WORK:;;${data.address || ''};;;;`,
-            `NOTE:${data.bio || ''}`,
-            'END:VCARD'
-        ].join('\n');
+        try {
+            // Descargar el archivo VCF real generado por el backend
+            const response = await fetch(`/api/vcard/${data.slug || slug}`);
+            if (!response.ok) throw new Error('Error al generar vCard');
 
-        const blob = new Blob([vcfContent], { type: 'text/vcard' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `${data.nombres}_${data.apellidos}.vcf`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url); // Evita memory leak
-    }, [data]);
+            const vcfBlob = await response.blob();
+            const url = window.URL.createObjectURL(vcfBlob);
+            const a = document.createElement("a");
+            a.href = url;
+            
+            const rawFilename = (data.nombres || data.apellidos) 
+                ? `${data.nombres ?? ''}_${data.apellidos ?? ''}`.trim() 
+                : (data.nombre_negocio || data.nombre || 'contacto');
+            const filename = `${rawFilename.replace(/[^a-zA-Z0-9]/g, '_')}.vcf`;
+            
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error descargando VCF:", error);
+            // Fallback a generación del lado del cliente en caso de error de red o de servidor
+            const vcfContent = [
+                'BEGIN:VCARD',
+                'VERSION:3.0',
+                `FN:${(data.nombres || data.apellidos) ? `${data.nombres ?? ''} ${data.apellidos ?? ''}`.trim() : (data.nombre_negocio || '')}`,
+                `ORG:${data.nombre_negocio || data.company || ''}`,
+                `TITLE:${data.profession || ''}`,
+                `TEL;TYPE=CELL,VOICE:${data.whatsapp || ''}`,
+                `EMAIL:${data.email || ''}`,
+                `URL:${data.web || ''}`,
+                `ADR;TYPE=WORK:;;${data.address || ''};;;;`,
+                `NOTE:${data.bio || ''}`,
+                'END:VCARD'
+            ].join('\n');
+
+            const blob = new Blob([vcfContent], { type: 'text/vcard' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${data.nombres || 'contacto'}_${data.apellidos || ''}.vcf`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }
+    }, [data, slug]);
 
     const handleHeroClick = useCallback(() => {
         if (!data) return;
