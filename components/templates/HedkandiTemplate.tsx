@@ -123,7 +123,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                     href={`https://wa.me/${props.data.whatsapp.replace(/\D/g, '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="bg-transparent text-white px-12 py-4 font-display-condensed text-xl tracking-widest uppercase border border-white hover:bg-white hover:text-black transition-colors duration-300"
+                                    className="bg-black/40 backdrop-blur-md text-white px-12 py-4 font-display-condensed text-xl tracking-widest uppercase border border-white/20 hover:bg-white hover:text-black transition-colors duration-300"
                                 >
                                     WHATSAPP
                                 </motion.a>
