@@ -50,11 +50,15 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
         let replacements: any = {};
         let images: any[] = [];
         let descriptions: any = {};
+        let experienceTitles: any[] = [];
+        let experienceDescriptions: any[] = [];
         const raw = data.json_override;
         const parsed = safeParse(raw, {});
         replacements = parsed;
         images = parsed.experienceImages || [];
         descriptions = parsed.experienceDescriptions || {};
+        experienceTitles = parsed.experienceTitles || [];
+        experienceDescriptions = parsed.experienceDescriptions || [];
 
         const rawLines = data.productos_servicios?.split('\n').map((l: string) => l.trim()).filter(Boolean) || [];
         
@@ -68,14 +72,21 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
 
         return rawLines.slice(0, 6).map((cat: string, index: number) => {
             const customImg = images.find((i: any) => i.index === index);
-            const displayTitle = replacements[cat] || cat;
-            const description = descriptions[cat] || "Servicio especializado diseñado para garantizar la máxima eficiencia operativa.";
+            const customTitleObj = (experienceTitles || []).find((t: any) => t.index === index);
+            const customDescObj = (Array.isArray(experienceDescriptions) ? experienceDescriptions : []).find((d: any) => d.index === index);
+            
+            const displayTitle = customTitleObj?.title || replacements[cat] || cat;
+            
+            // Check if descriptions is an array (index-based) or object (key-based)
+            const displayDesc = customDescObj?.description || 
+                                (typeof descriptions === 'object' && !Array.isArray(descriptions) ? descriptions[cat] : "") || 
+                                "Servicio especializado diseñado para garantizar la máxima eficiencia operativa.";
             
             return {
                 id: index,
                 title: displayTitle,
                 img: customImg?.url || '',
-                description: description
+                description: displayDesc
             };
         });
     })();

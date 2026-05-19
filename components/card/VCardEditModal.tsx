@@ -49,8 +49,9 @@ export default function VCardEditModal({
     const [uploadingImage, setUploadingImage] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const [usesRemaining, setUsesRemaining] = useState(0);
-    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'autoridad' | 'industrial' | 'code' | 'success' | null>(initialSection);
+    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'autoridad' | 'industrial' | 'carta' | 'code' | 'success' | null>(initialSection);
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
+    const [isStructuring, setIsStructuring] = useState(false);
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
     const productCategoryFilterRef = useRef('Todas');
 
@@ -432,9 +433,10 @@ export default function VCardEditModal({
         let title = "";
         let subtitle = "";
         let images: any[] = [];
+        let parsed: any = {};
         try {
             const raw = formData.json_override;
-            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
             title = parsed.experienceTitle || (formData.nombre_negocio ? `THE ${formData.nombre_negocio} EXPERIENCE` : "THE NEW GUEST EXPERIENCE");
             subtitle = parsed.experienceSubtitle || "Especialidad";
             images = parsed.experienceImages || [];
@@ -449,8 +451,7 @@ export default function VCardEditModal({
             const raw = formData.json_override;
             if (!raw) return {};
             try {
-                const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-                return parsed || {};
+                return typeof raw === 'string' ? JSON.parse(raw) : raw;
             } catch (e) { return {}; }
         })();
 
@@ -468,30 +469,42 @@ export default function VCardEditModal({
             subtitle,
             categories: rawLines.map((cat: string, index: number) => {
                 const customImg = images.find((i: any) => i.index === index);
-                const displayTitle = replacements[cat] || cat;
-                const description = descriptions[cat] || "";
+                const customTitleObj = (parsed.experienceTitles || []).find((t: any) => t.index === index);
+                const customDescObj = (Array.isArray(parsed.experienceDescriptions) ? parsed.experienceDescriptions : []).find((d: any) => d.index === index);
+                
+                // Prioridad: 1. Título por índice, 2. Reemplazo global, 3. Texto original
+                const displayTitle = customTitleObj?.title || replacements[cat] || cat;
+                
+                // Prioridad: 1. Descripción por índice, 2. Descripción global por key, 3. Vacío
+                const displayDesc = customDescObj?.description || (typeof descriptions === 'object' && !Array.isArray(descriptions) ? descriptions[cat] : "") || "";
                 
                 return {
                     index,
                     originalTitle: cat,
                     title: displayTitle,
-                    description: description,
+                    description: displayDesc,
                     img: customImg?.url || ''
                 }
             })
         };
     })();
 
-    const updateCategoryDescription = (originalTitle: string, newDesc: string) => {
+    const updateCategoryDescription = (index: number, newDesc: string) => {
         setFormData(prev => {
             const raw = prev.json_override;
             const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
             
-            const nextDescriptions = { ...(parsed.experienceDescriptions || {}) };
-            if (newDesc) {
-                nextDescriptions[originalTitle] = newDesc;
-            } else {
-                delete nextDescriptions[originalTitle];
+            const nextDescriptions = [...(Array.isArray(parsed.experienceDescriptions) ? parsed.experienceDescriptions : [])];
+            const existingIdx = nextDescriptions.findIndex((d: any) => d.index === index);
+            
+            if (existingIdx >= 0) {
+                if (newDesc) {
+                    nextDescriptions[existingIdx].description = newDesc;
+                } else {
+                    nextDescriptions.splice(existingIdx, 1);
+                }
+            } else if (newDesc) {
+                nextDescriptions.push({ index, description: newDesc });
             }
             
             return { 
@@ -520,20 +533,66 @@ export default function VCardEditModal({
         });
     };
 
-    const updateCategoryTitle = (originalTitle: string, newTitle: string) => {
+    const updateCategoryTitle = (index: number, newTitle: string) => {
         setFormData(prev => {
             const raw = prev.json_override;
             const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
             
-            const nextParsed = { ...parsed };
-            if (newTitle && newTitle !== originalTitle) {
-                nextParsed[originalTitle] = newTitle;
-            } else {
-                delete nextParsed[originalTitle];
+            const nextTitles = [...(Array.isArray(parsed.experienceTitles) ? parsed.experienceTitles : [])];
+            const existingIdx = nextTitles.findIndex((t: any) => t.index === index);
+            
+            if (existingIdx >= 0) {
+                if (newTitle) {
+                    nextTitles[existingIdx].title = newTitle;
+                } else {
+                    nextTitles.splice(existingIdx, 1);
+                }
+            } else if (newTitle) {
+                nextTitles.push({ index, title: newTitle });
             }
             
-            return { ...prev, json_override: nextParsed };
+            return { 
+                ...prev, 
+                json_override: {
+                    ...parsed,
+                    experienceTitles: nextTitles
+                } 
+            };
         });
+    };
+
+    const handleAutoStructure = async () => {
+        const text = formData.menu_digital;
+        if (!text || text.length < 10) {
+            alert('Por favor escribe algo de texto primero para poder estructurarlo.');
+            return;
+        }
+
+        if (text.trim().startsWith('[')) {
+            alert('Parece que ya tienes un formato JSON. Si quieres re-estructurar, borra los corchetes y deja solo el texto.');
+            return;
+        }
+
+        setIsStructuring(true);
+        try {
+            const res = await fetch('/api/structure-menu', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            
+            const data = await res.json();
+            if (data.json) {
+                setFormData({ ...formData, menu_digital: data.json });
+            } else {
+                alert(data.error || 'Error al estructurar el menú.');
+            }
+        } catch (err) {
+            console.error('Error structuring menu:', err);
+            alert('Error de conexión con la IA.');
+        } finally {
+            setIsStructuring(false);
+        }
     };
 
     const handleCategoryImage = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -1045,7 +1104,7 @@ export default function VCardEditModal({
                                                                                 <input 
                                                                                     className="w-full bg-transparent border-b border-gray-200 focus:border-primary outline-none py-1 text-sm font-bold text-navy"
                                                                                     value={cat.title}
-                                                                                    onChange={(e) => updateCategoryTitle(cat.originalTitle, e.target.value)}
+                                                                                    onChange={(e) => updateCategoryTitle(idx, e.target.value)}
                                                                                     placeholder={cat.originalTitle}
                                                                                 />
                                                                             </div>
@@ -1055,7 +1114,7 @@ export default function VCardEditModal({
                                                                                     className="w-full bg-gray-100/50 rounded-lg p-2 text-[10px] font-medium text-navy/70 border border-transparent focus:border-primary/30 outline-none resize-none"
                                                                                     rows={2}
                                                                                     value={cat.description}
-                                                                                    onChange={(e) => updateCategoryDescription(cat.originalTitle, e.target.value)}
+                                                                                    onChange={(e) => updateCategoryDescription(idx, e.target.value)}
                                                                                     placeholder="Breve descripción del servicio..."
                                                                                 />
                                                                             </div>
@@ -1069,6 +1128,66 @@ export default function VCardEditModal({
                                             )}
                                         </AnimatePresence>
                                     </div>
+
+                                    {/* SECCIÓN 2.6: CARTA / MENÚ DIGITAL */}
+                                    {(userData?.plan === 'business' || userData?.plan === 'catalog' || userData?.plan === 'digital' || userData?.plan === 'pro') && (
+                                        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                            <button 
+                                                onClick={() => setActiveSection(activeSection === 'carta' ? null : 'carta')}
+                                                className="w-full flex items-center justify-between p-4 bg-orange-500/5 hover:bg-orange-500/10 transition-colors"
+                                                type="button"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                                                        <Zap size={18} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="font-black text-navy uppercase text-sm tracking-tighter block">Carta / Menú Digital</span>
+                                                        <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Soporta URL, Texto o JSON estructurado</span>
+                                                    </div>
+                                                </div>
+                                                <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'carta' && "rotate-180")} />
+                                            </button>
+                                            <AnimatePresence>
+                                                {activeSection === 'carta' && (
+                                                    <motion.div 
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: "auto", opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        className="overflow-hidden bg-white border-t border-gray-100"
+                                                    >
+                                                        <div className="p-6 space-y-6">
+                                                            <div className="flex justify-between items-center border-b pb-2">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contenido de la Carta o Servicios</label>
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={handleAutoStructure}
+                                                                    disabled={isStructuring}
+                                                                    className="flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                                                                >
+                                                                    {isStructuring ? (
+                                                                        <Loader2 size={12} className="animate-spin" />
+                                                                    ) : (
+                                                                        <Zap size={12} />
+                                                                    )}
+                                                                    {isStructuring ? 'Procesando...' : 'Estructurar con IA'}
+                                                                </button>
+                                                            </div>
+                                                            <textarea
+                                                                className="w-full border rounded-2xl p-4 font-mono text-sm text-gray-900 bg-gray-50 focus:border-primary outline-none min-h-[150px] scrollbar-hide"
+                                                                value={formData.menu_digital || ''}
+                                                                onChange={e => setFormData({ ...formData, menu_digital: e.target.value })}
+                                                                placeholder='Pega tu lista de productos o el JSON estructurado: [{"name": "Bebidas", "items": [{"name": "Agua", "price": "$1.50"}]}]'
+                                                            />
+                                                            <p className="text-[10px] text-gray-500 leading-relaxed italic">
+                                                                * Puedes escribir tus productos de forma sencilla (ej: "Pizza Americana $10") y presionar <strong>"Estructurar con IA"</strong> para convertirlo en un diseño premium automáticamente.
+                                                            </p>
+                                                        </div>
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    )}
 
                                     {/* SECCIÓN 2.7: MÓDULO INDUSTRIAL (Sólo si template es industrial) */}
                                     {formData.template_id === 'industrial' && (

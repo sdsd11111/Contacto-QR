@@ -73,9 +73,67 @@ export async function GET(
 
         const isCarlosVIP = slug === 'litos-ink-vape-urban-shop-zg5z' || user.id === '6212fd72-e576-474d-8c60-66d9802826ec';
 
+        // Intentar extraer productos/servicios reales de catalogo_json o menu_digital
+        let extractedProducts: string[] = [];
+
+        if (user.catalogo_json) {
+            try {
+                const parsed = JSON.parse(user.catalogo_json);
+                const items = Array.isArray(parsed) ? parsed : (parsed.products || []);
+                if (Array.isArray(items)) {
+                    items.forEach((item: any) => {
+                        const pName = item.name || item.titulo || item.titulo_producto;
+                        if (pName) extractedProducts.push(pName.trim());
+                    });
+                }
+            } catch (e) {
+                console.error("Error parsing user.catalogo_json for VCF:", e);
+            }
+        }
+
+        if (extractedProducts.length === 0 && user.menu_digital) {
+            const trimmedMenu = user.menu_digital.trim();
+            if (trimmedMenu.startsWith('[') || trimmedMenu.startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(trimmedMenu);
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach((cat: any) => {
+                            const items = cat.items || [];
+                            if (Array.isArray(items)) {
+                                items.forEach((item: any) => {
+                                    const pName = item.name || item.titulo || item.nombre;
+                                    if (pName) extractedProducts.push(pName.trim());
+                                });
+                            } else {
+                                const pName = cat.name || cat.titulo || cat.nombre;
+                                if (pName) extractedProducts.push(pName.trim());
+                            }
+                        });
+                    } else if (parsed.products) {
+                        const items = parsed.products || [];
+                        if (Array.isArray(items)) {
+                            items.forEach((item: any) => {
+                                const pName = item.name || item.titulo || item.nombre;
+                                if (pName) extractedProducts.push(pName.trim());
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing user.menu_digital for VCF:", e);
+                }
+            }
+        }
+
+        let productsText = '';
+        if (extractedProducts.length > 0) {
+            productsText = extractedProducts.map(p => `- ${p}`).join('\n');
+        } else if (user.productos_servicios) {
+            productsText = user.productos_servicios;
+        }
+
         let noteContent = bio;
-        if (user.productos_servicios) {
-            noteContent += `\n\nProductos/Servicios:\n${user.productos_servicios}`;
+        if (productsText) {
+            noteContent += `\n\nProductos/Servicios:\n${productsText}`;
         }
 
         const gallery = getGalleryArray(user.galeria_urls);
