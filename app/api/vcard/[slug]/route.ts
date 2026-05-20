@@ -179,12 +179,12 @@ export async function GET(
 
         const vcardLines = [
             'BEGIN:VCARD',
-            'VERSION:4.0',
+            'VERSION:3.0',
             `FN;CHARSET=UTF-8:${escapeVCardValue(fullName)}`,
             `N;CHARSET=UTF-8:${structuredName}`, // Ya escapado individualmente
             user.profesion ? `TITLE;CHARSET=UTF-8:${escapeVCardValue(user.profesion)}` : '',
             organization ? `ORG;CHARSET=UTF-8:${escapeVCardValue(organization)}` : '',
-            `TEL;TYPE=cell,text,voice;VALUE=uri:tel:+${cleanWhatsApp}`,
+            `TEL;TYPE=CELL:+${cleanWhatsApp}`,
             `EMAIL;TYPE=WORK,INTERNET:${escapeVCardValue(user.email)}`,
             user.direccion ? `ADR;TYPE=WORK;LABEL="${escapeVCardValue(user.direccion)}":;;${escapeVCardValue(user.direccion)};;;;` : '',
             user.web ? `URL:${escapeVCardValue(user.web)}` : '',
@@ -249,6 +249,21 @@ export async function GET(
             }
         }
 
+        // Helper para detectar tipo MIME desde la URL o Content-Type
+        const detectImageType = (url: string, contentType?: string | null): string => {
+            if (contentType) {
+                if (contentType.includes('png')) return 'PNG';
+                if (contentType.includes('gif')) return 'GIF';
+                if (contentType.includes('webp')) return 'JPEG'; // WebP se convierte a JPEG
+                if (contentType.includes('jpeg') || contentType.includes('jpg')) return 'JPEG';
+            }
+            const ext = url.split('?')[0].split('.').pop()?.toLowerCase() || '';
+            if (ext === 'png') return 'PNG';
+            if (ext === 'gif') return 'GIF';
+            if (ext === 'webp') return 'JPEG'; // WebP se trata como JPEG tras conversión
+            return 'JPEG'; // default
+        };
+
         // Procesar foto
         if (user.foto_url) {
             try {
@@ -265,8 +280,8 @@ export async function GET(
 
                     const b64 = processedBuffer.toString('base64');
 
-                    // Fold base64 string every 74 characters to be safe for vCard specification
-                    const foldedB64 = b64.match(/.{1,74}/g)?.join('\r\n ') || b64;
+                    // Fold base64 string every 72 characters to be safe for vCard specification
+                    const foldedB64 = b64.match(/.{1,72}/g)?.join('\r\n ') || b64;
                     vcardLines.push(`PHOTO;ENCODING=b;TYPE=JPEG:${foldedB64}`);
                 }
             } catch (e) {
@@ -276,9 +291,11 @@ export async function GET(
                     const photoResp = await fetch(user.foto_url);
                     if (photoResp.ok) {
                         const buffer = await photoResp.arrayBuffer();
+                        const contentType = photoResp.headers.get('content-type');
+                        const imageType = detectImageType(user.foto_url, contentType);
                         const b64 = Buffer.from(buffer).toString('base64');
-                        const foldedB64 = b64.match(/.{1,74}/g)?.join('\r\n ') || b64;
-                        vcardLines.push(`PHOTO;ENCODING=b;TYPE=JPEG:${foldedB64}`);
+                        const foldedB64 = b64.match(/.{1,72}/g)?.join('\r\n ') || b64;
+                        vcardLines.push(`PHOTO;ENCODING=b;TYPE=${imageType}:${foldedB64}`);
                     }
                 } catch (innerE) {
                     console.error("Critical fallback photo error:", innerE);

@@ -1034,7 +1034,7 @@ export default function RegisterWizard({
         let photoBlock = '';
         if (photoBase64) {
             const folded = photoBase64.match(/.{1,72}/g)?.join('\r\n ') || photoBase64;
-            photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:data:image/jpeg;base64,${folded}`;
+            photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:${folded}`;
         }
 
         let fullName = '';

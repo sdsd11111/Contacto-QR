@@ -39,7 +39,7 @@ export function generateVCard(data: VCardData, photoBase64: string | null): stri
         const cleanBase64 = photoBase64.includes(',') ? photoBase64.split(',')[1] : photoBase64;
         // Fold base64 string to 72 characters per line per vCard spec
         const folded = cleanBase64.match(/.{1,72}/g)?.join('\r\n ') || cleanBase64;
-        photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:data:image/jpeg;base64,${folded}`;
+        photoBlock = `PHOTO;ENCODING=b;TYPE=JPEG:${folded}`;
     }
 
     let fullName = '';
