@@ -10,6 +10,7 @@ import {
 import { safeParse as safeJsonParse } from '@/lib/jsonUtils';
 import { BaseTemplateProps, HeroCarouselTemplateProps } from './types';
 import { formatPhoneEcuador } from '@/lib/utils';
+import ShareButton from '@/components/ShareButton';
 
 // ─────────────────────────────────────────────
 // TYPES
@@ -171,7 +172,7 @@ function HeroSection(props: CarroceriasTemplateProps) {
                         {data.profesion || 'Especialistas Automotrices'}
                     </span>
 
-                    <h1 className="w-fit bg-black/40 backdrop-blur-md px-8 py-4 rounded-[2.5rem] text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
+                    <h1 className="w-fit bg-black/40 backdrop-blur-md px-8 py-4 rounded-[2.5rem] text-[28px] sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
                         {data.nombre_negocio || data.nombre || 'Tu Empresa'}
                     </h1>
 
@@ -180,7 +181,7 @@ function HeroSection(props: CarroceriasTemplateProps) {
                         {data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
                     </p>
 
-                    <div className="flex flex-wrap gap-4">
+                    <div className="flex flex-wrap gap-4 items-center">
                         <a href={waLink} target="_blank" rel="noopener noreferrer"
                            className="flex items-center gap-2 px-8 py-4 font-black uppercase text-sm tracking-widest text-white transition-all hover:brightness-90 active:scale-95"
                            style={{ background: RED }}>
@@ -191,6 +192,13 @@ function HeroSection(props: CarroceriasTemplateProps) {
                            style={{ borderColor: '#ffffff55' }}>
                             Ver Productos <ChevronDown size={18} />
                         </a>
+
+                        <ShareButton 
+                            title={data.nombre_negocio || data.nombre || 'Tu Empresa'}
+                            text={data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
+                            variant="button"
+                            buttonStyle="outline"
+                        />
                     </div>
                 </motion.div>
             </div>

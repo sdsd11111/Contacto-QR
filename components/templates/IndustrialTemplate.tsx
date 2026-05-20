@@ -6,6 +6,7 @@ import { Share2, MapPin, Phone, Mail, Instagram, Facebook, Link as LinkIcon, Dow
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 import { safeParse } from '@/lib/jsonUtils';
 import CatalogProGallery from '../card/CatalogProGallery';
+import ShareButton from '@/components/ShareButton';
 import { BaseTemplateProps, HeroCarouselTemplateProps } from './types';
 import { checkIsVerticalVideo } from '@/lib/videoUtils';
 
@@ -199,15 +200,15 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                 {data.profesion || data.nombre_negocio || "Servicios"}
                             </span>
                             
-                            <h1 className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-[2rem] text-3xl sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
+                            <h1 className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-[2rem] text-[28px] sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
                                 {data.nombre_negocio || data.nombre || "Nombre Empresa"}
                             </h1>
                             
-                            <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-lg md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
+                            <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-base md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                                 {data.bio || (data.nombre_negocio ? `Excelencia y compromiso en cada servicio de ${data.nombre_negocio}.` : "Soluciones de alta calidad y eficiencia en cada entrega.")}
                             </p>
 
-                            <div className="flex flex-wrap gap-4">
+                            <div className="flex flex-wrap gap-4 items-center">
                                 {data.whatsapp && (
                                     <a 
                                         href={`https://wa.me/${data.whatsapp.replace(/\D/g, '')}?text=Hola%20${data.nombre_negocio},%20me%20gustaría%20solicitar%20información.`}
@@ -226,6 +227,13 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                 >
                                     <Share2 size={18} />
                                 </button>
+
+                                <ShareButton 
+                                    title={data.nombre_negocio || data.nombre || "Nombre Empresa"}
+                                    text={data.bio || "Soluciones de alta calidad y eficiencia en cada entrega."}
+                                    variant="button"
+                                    buttonStyle="outline"
+                                />
                             </div>
                         </motion.div>
                     </div>
