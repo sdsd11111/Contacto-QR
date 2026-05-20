@@ -6,11 +6,43 @@ import { syncMenuDigitalToRelational } from '@/lib/menuSync';
 
 export const dynamic = 'force-dynamic';
 
+async function resolveShortUrl(url: string | null | undefined): Promise<string | null | undefined> {
+    if (!url) return url;
+    const lower = url.toLowerCase().trim();
+    
+    const shouldResolve = 
+        lower.includes('vm.tiktok.com') || 
+        lower.includes('vt.tiktok.com') || 
+        lower.includes('fb.watch') || 
+        lower.includes('facebook.com/share');
+        
+    if (!shouldResolve) return url;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos max de timeout
+
+        const response = await fetch(url, {
+            method: 'GET',
+            redirect: 'follow',
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+        });
+        clearTimeout(timeoutId);
+        return response.url || url;
+    } catch (e) {
+        console.error('Failed to resolve short URL:', url, e);
+        return url;
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
-        const {
+        let {
             nombre, email, profesion, empresa, bio, direccion,
             web, google_business, instagram, linkedin, facebook, tiktok, youtube, x, productos_servicios,
             plan, foto_url, comprobante_url, galeria_urls,
@@ -23,6 +55,12 @@ export async function POST(req: NextRequest) {
             hero_section_title, hero_step1_title, hero_step1_text, hero_step2_title, hero_step2_text, hero_step3_title, hero_step3_text,
             hero_slides_json, template_id
         } = body;
+
+        // Resolver URL corta de video si existe
+        if (youtube_video_url) {
+            youtube_video_url = await resolveShortUrl(youtube_video_url);
+        }
+
 
         // SECURITY: Never accept 'pagado' status from client. 
         // Only webhooks or admin can change status to paid.

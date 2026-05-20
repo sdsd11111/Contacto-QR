@@ -1040,39 +1040,42 @@ export default function PlanBusinessClient() {
                         <motion.div
                             animate={{ x: ["0%", "-50%"] }}
                             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                            className="flex gap-8 whitespace-nowrap py-4"
+                            className="flex gap-0 whitespace-nowrap py-4"
                         >
-                            {[
-                                "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
-                                "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
-                                "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
-                                "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
-                                "Yessy 2026.jpg"
-                            ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <img
-                                        src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
-                            {/* Duplicar para el scroll infinito */}
-                            {[
-                                "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
-                                "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
-                                "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
-                                "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
-                                "Yessy 2026.jpg"
-                            ].map((logo, i) => (
-                                <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <img
-                                        src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
+                            <div className="flex gap-8 pr-8 shrink-0">
+                                {[
+                                    "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
+                                    "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
+                                    "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
+                                    "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
+                                    "Yessy 2026.jpg"
+                                ].map((logo, i) => (
+                                    <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-8 pr-8 shrink-0" aria-hidden="true">
+                                {[
+                                    "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
+                                    "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
+                                    "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
+                                    "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
+                                    "Yessy 2026.jpg"
+                                ].map((logo, i) => (
+                                    <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </motion.div>
                     </div>
 
@@ -1081,35 +1084,38 @@ export default function PlanBusinessClient() {
                         <motion.div
                             animate={{ x: ["-50%", "0%"] }}
                             transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-                            className="flex gap-8 whitespace-nowrap py-4"
+                            className="flex gap-0 whitespace-nowrap py-4"
                         >
-                            {[
-                                "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
-                                "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
-                                "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
-                            ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <img
-                                        src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
-                            {/* Duplicar para el scroll infinito */}
-                            {[
-                                "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
-                                "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
-                                "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
-                            ].map((logo, i) => (
-                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/10 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <img
-                                        src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
+                            <div className="flex gap-8 pr-8 shrink-0">
+                                {[
+                                    "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
+                                    "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
+                                    "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
+                                ].map((logo, i) => (
+                                    <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-8 pr-8 shrink-0" aria-hidden="true">
+                                {[
+                                    "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
+                                    "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
+                                    "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
+                                ].map((logo, i) => (
+                                    <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-surface rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </motion.div>
                     </div>
 

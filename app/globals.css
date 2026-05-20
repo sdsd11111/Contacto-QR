@@ -1,4 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500;700;800;950&display=swap');
 @import "tailwindcss";
+
+/* Global Font Utilities for Templates */
+.font-display-condensed { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+.font-serif-elegant { font-family: 'Cormorant Garamond', serif; }
+.font-sans-body { font-family: 'Montserrat', sans-serif; }
 
 :root {
   /* ── Midnight Obsidian — Dark Cinematic Core ── */
@@ -236,4 +242,16 @@ body {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Prevent section-dark overrides on light backgrounds (eg: buttons) ── */
+.section-dark .bg-white.text-navy,
+.section-dark .bg-cream.text-navy,
+.section-dark .bg-surface.text-navy {
+  color: var(--navy) !important;
+}
+.section-dark .bg-white.text-navy:hover,
+.section-dark .bg-cream.text-navy:hover,
+.section-dark .bg-surface.text-navy:hover {
+  color: #ffffff !important;
 }

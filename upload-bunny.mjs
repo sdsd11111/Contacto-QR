@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 
-const ZONE = 'cesarweb';
+const ZONE = 'activaqr-archivos';
 const API_KEY = process.env.BUNNY_API_KEY;
 if (!API_KEY) {
   console.error('❌ BUNNY_API_KEY no está configurada en las variables de entorno');
   process.exit(1);
 }
-const HOST = 'br.storage.bunnycdn.com';
+const HOST = 'storage.bunnycdn.com';
 
 const digitalDir = path.join(process.cwd(), 'public', 'images', 'contacto-digital');
 const businessDir = path.join(process.cwd(), 'public', 'images', 'contacto-bussines');
@@ -43,7 +43,7 @@ async function uploadFile(filePath, relativePath, prefix) {
         
         if (res.ok) {
             console.log(`Success: ${storagePath}`);
-            return `https://cesarweb.b-cdn.net/${storagePath}`;
+            return `https://activaqr-archivos.b-cdn.net/${storagePath}`;
         } else {
             const err = await res.text();
             console.error(`Failed: ${res.status} ${err}`);

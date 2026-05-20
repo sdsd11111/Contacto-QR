@@ -983,33 +983,23 @@ export default function AdminDashboard() {
             const data = await res.json();
             if (res.ok && data.data) {
                 const fullRegistro = data.data;
-                const catItems = typeof fullRegistro.catalogo_json === 'string' ? JSON.parse(fullRegistro.catalogo_json || '[]') : (fullRegistro.catalogo_json || []);
-
-                // Verificar banners
-                let hasBanners = false;
-                if (!isPlaceholderUrl(fullRegistro.portada_desktop) || !isPlaceholderUrl(fullRegistro.portada_movil)) {
-                    hasBanners = true;
-                } else {
-                    try {
-                        const slides = typeof fullRegistro.hero_slides_json === 'string' 
-                            ? JSON.parse(fullRegistro.hero_slides_json || '[]') 
-                            : (fullRegistro.hero_slides_json || []);
-                        if (Array.isArray(slides) && slides.some((s: any) => s.active && (s.portada_desktop || s.portada_movil))) {
-                            hasBanners = true;
-                        }
-                    } catch (e) {}
+                let catItems = [];
+                try {
+                    let parsed = typeof fullRegistro.catalogo_json === 'string' ? JSON.parse(fullRegistro.catalogo_json || '[]') : (fullRegistro.catalogo_json || []);
+                    if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                    let extracted = Array.isArray(parsed) ? parsed : (parsed?.products || []);
+                    if (typeof extracted === 'string') extracted = JSON.parse(extracted);
+                    catItems = Array.isArray(extracted) ? extracted : [];
+                } catch(e) {
+                    catItems = [];
                 }
 
                 if (catItems.length === 0) {
                     setPromptRegistro(fullRegistro);
                     setSetupTarget('catalog');
                     setIsHeroPromptOpen(true);
-                } else if (!hasBanners) {
-                    setPromptRegistro(fullRegistro);
-                    setSetupTarget('catalog');
-                    setIsHeroPromptOpen(true);
                 } else {
-                    openCatalogManager(fullRegistro);
+                    window.open(`/card/${fullRegistro.slug || fullRegistro.id}`, '_blank');
                 }
             } else {
                 alert("Error al cargar los datos del catálogo.");
@@ -1030,7 +1020,17 @@ export default function AdminDashboard() {
             if (res.ok && data.data) {
                 const fullRegistro = data.data;
                 setCatalogRegistro(fullRegistro);
-                setCatalogItems(typeof fullRegistro.catalogo_json === 'string' ? JSON.parse(fullRegistro.catalogo_json || '[]') : (fullRegistro.catalogo_json || []));
+                let itemsToSet = [];
+                try {
+                    let parsed = typeof fullRegistro.catalogo_json === 'string' ? JSON.parse(fullRegistro.catalogo_json || '[]') : (fullRegistro.catalogo_json || []);
+                    if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                    let extracted = Array.isArray(parsed) ? parsed : (parsed?.products || []);
+                    if (typeof extracted === 'string') extracted = JSON.parse(extracted);
+                    itemsToSet = Array.isArray(extracted) ? extracted : [];
+                } catch(e) {
+                    itemsToSet = [];
+                }
+                setCatalogItems(itemsToSet);
                 setIsCatalogManagerOpen(true);
             } else {
                 alert("Error al cargar los datos.");
@@ -2066,21 +2066,25 @@ export default function AdminDashboard() {
                                                     <Download size={18} />
                                                 </a>
 
-                                                <button
-                                                    onClick={() => handleViewProfile(r)}
-                                                    className="p-2 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
-                                                    title="Ver Perfil"
-                                                >
-                                                    <Eye size={18} />
-                                                </button>
+                                                {r.plan === 'business' && (
+                                                    <button
+                                                        onClick={() => handleViewProfile(r)}
+                                                        className="p-2 bg-white/5 text-white/40 rounded-xl hover:bg-white/10 hover:text-white transition-all"
+                                                        title="Ver Perfil"
+                                                    >
+                                                        <Eye size={18} />
+                                                    </button>
+                                                )}
 
-                                                <button
-                                                    onClick={() => handleCatalogSetup(r)}
-                                                    className="p-2 bg-[#f66739]/10 text-[#f66739] rounded-xl hover:bg-[#f66739] hover:text-white transition-all shadow-lg shadow-[#f66739]/10"
-                                                    title="Ver Catálogo / Productos"
-                                                >
-                                                    <Store size={18} />
-                                                </button>
+                                                {r.plan === 'catalog' && (
+                                                    <button
+                                                        onClick={() => handleCatalogSetup(r)}
+                                                        className="p-2 bg-[#f66739]/10 text-[#f66739] rounded-xl hover:bg-[#f66739] hover:text-white transition-all shadow-lg shadow-[#f66739]/10"
+                                                        title="Ver Catálogo / Productos"
+                                                    >
+                                                        <Store size={18} />
+                                                    </button>
+                                                )}
 
                                                 {/* Botón Analíticas de Descargas */}
                                                 <button

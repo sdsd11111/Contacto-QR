@@ -42,6 +42,26 @@ export const getInstagramID = (url: string): string | null => {
 export const getFacebookURL = (url: string): string | null => {
     if (!url) return null;
     if (url.includes('facebook.com') || url.includes('fb.watch')) {
+        // Si ya es un reel real con ID numérico en la ruta, retornar la URL base limpia
+        const canonicalReelMatch = url.match(/facebook\.com\/reel\/(\d+)/);
+        if (canonicalReelMatch) {
+            return `https://www.facebook.com/reel/${canonicalReelMatch[1]}`;
+        }
+        const canonicalVideoMatch = url.match(/facebook\.com\/watch\/\?v=(\d+)/) || url.match(/facebook\.com\/video\.php\?v=(\d+)/) || url.match(/facebook\.com\/[^\/]+\/videos\/(\d+)/);
+        if (canonicalVideoMatch) {
+            return `https://www.facebook.com/video.php?v=${canonicalVideoMatch[1]}`;
+        }
+
+        // Transformar links de redirección móvil /share/r/ a links nativos de Reel
+        const shareReelMatch = url.match(/\/share\/r\/([A-Za-z0-9_-]+)/);
+        if (shareReelMatch) {
+            return `https://www.facebook.com/reel/${shareReelMatch[1]}`;
+        }
+        // Transformar links de redirección móvil /share/v/ a links nativos de Video
+        const shareVideoMatch = url.match(/\/share\/v\/([A-Za-z0-9_-]+)/);
+        if (shareVideoMatch) {
+            return `https://www.facebook.com/video.php?v=${shareVideoMatch[1]}`;
+        }
         return url;
     }
     return null;
@@ -65,5 +85,50 @@ export const getVideoEmbedUrl = (url: string | null | undefined): string | null 
     const fbUrl = getFacebookURL(url);
     if (fbUrl) return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(fbUrl)}&show_text=0`;
 
+    // Si pasaron un iframe de YouTube/TikTok/Vimeo, intentar extraer el src
+    if (url.trim().toLowerCase().startsWith('<iframe')) {
+        const srcMatch = url.match(/src=["'](.*?)["']/);
+        if (srcMatch && srcMatch[1]) {
+            return srcMatch[1];
+        }
+    }
+
     return null;
 };
+
+/**
+ * Determina si un video es vertical (TikTok, Instagram, YouTube Shorts, Facebook Reels).
+ */
+export const checkIsVerticalVideo = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    let cleanUrl = url.trim().toLowerCase();
+
+    // Si es un iframe, extraemos la URL de src
+    if (cleanUrl.startsWith('<iframe')) {
+        const srcMatch = url.match(/src=["'](.*?)["']/i);
+        if (srcMatch && srcMatch[1]) {
+            cleanUrl = srcMatch[1].toLowerCase();
+        }
+    }
+
+    // 1. TikTok siempre es vertical (9:16)
+    if (cleanUrl.includes('tiktok.com')) return true;
+
+    // 2. Instagram suele ser vertical o cuadrado (lo tratamos como vertical en la UI)
+    if (cleanUrl.includes('instagram.com')) return true;
+
+    // 3. YouTube Shorts son verticales (9:16)
+    if (cleanUrl.includes('youtube.com/shorts') || cleanUrl.includes('youtu.be/shorts')) return true;
+
+    // 4. Facebook Reels son verticales (9:16)
+    if (
+        cleanUrl.includes('facebook.com/reel') || 
+        cleanUrl.includes('/share/r/') || 
+        (cleanUrl.includes('facebook.com/plugins/video') && cleanUrl.includes('/reel/'))
+    ) {
+        return true;
+    }
+
+    return false;
+};
+

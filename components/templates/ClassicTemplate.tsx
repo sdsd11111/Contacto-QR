@@ -11,6 +11,7 @@ import CatalogGallery from '@/components/card/CatalogGallery';
 import CabinetMenu from '@/components/CabinetMenu';
 import { safeParse } from '@/lib/jsonUtils';
 import type { ClassicTemplateProps } from '@/components/templates/types';
+import { checkIsVerticalVideo } from '@/lib/videoUtils';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -304,25 +305,29 @@ export default function ClassicTemplate({
             {/* =================== FULLSCREEN HERO =================== */}
             {showHero && activeSlides.length > 0 && (
                 <section className="relative min-h-screen w-full flex flex-col items-center justify-end pb-12 md:pb-24 overflow-hidden">
-                    <AnimatePresence mode="popLayout">
-                        <motion.div
-                            key={activeSlides[currentSlideIndex].id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 1 }}
-                            className="absolute inset-0"
-                        >
-                            <div
-                                className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden"
-                                style={{ backgroundImage: `url('${activeSlides[currentSlideIndex].portada_movil || activeSlides[currentSlideIndex].portada_desktop}')` }}
-                            />
-                            <div
-                                className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block"
-                                style={{ backgroundImage: `url('${activeSlides[currentSlideIndex].portada_desktop || activeSlides[currentSlideIndex].portada_movil}')` }}
-                            />
-                        </motion.div>
-                    </AnimatePresence>
+                    <div className="absolute inset-0 z-0">
+                        {activeSlides.map((slide, idx) => (
+                            <motion.div
+                                key={slide.id || idx}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: currentSlideIndex === idx ? 1 : 0 }}
+                                transition={{ duration: 1.5, ease: "easeInOut" }}
+                                className="absolute inset-0"
+                                style={{ 
+                                    pointerEvents: currentSlideIndex === idx ? 'auto' : 'none'
+                                }}
+                            >
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center bg-no-repeat md:hidden"
+                                    style={{ backgroundImage: `url('${slide.portada_movil || slide.portada_desktop}')` }}
+                                />
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center bg-no-repeat hidden md:block"
+                                    style={{ backgroundImage: `url('${slide.portada_desktop || slide.portada_movil}')` }}
+                                />
+                            </motion.div>
+                        ))}
+                    </div>
 
                     <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70 z-0" />
 
@@ -580,14 +585,11 @@ export default function ClassicTemplate({
                                             )}
 
                                             {(() => {
-                                                const embedUrl = getVideoEmbedUrl(data.youtube_video_url) || 
-                                                               getVideoEmbedUrl(data.youtube) || 
-                                                               getVideoEmbedUrl(data.tiktok);
+                                                const videoUrl = data.youtube_video_url || data.youtube || data.tiktok;
+                                                const embedUrl = getVideoEmbedUrl(videoUrl);
                                                 
                                                 if (embedUrl) {
-                                                    const isVertical = embedUrl.includes('tiktok.com/embed') || 
-                                                                     embedUrl.includes('instagram.com') || 
-                                                                     embedUrl.includes('facebook.com/plugins/video');
+                                                    const isVertical = checkIsVerticalVideo(videoUrl);
                                                     
                                                     return (
                                                         <div className="mt-12 md:mt-20">
@@ -907,17 +909,45 @@ export default function ClassicTemplate({
                         )}
 
 
-                {(data.google_business || data.address || data.direccion) && (() => {
-                    const isGoogleLink = data.google_business?.startsWith('http');
-                    const businessName = data.nombre_negocio || data.nombre || '';
-                    const addressText = data.direccion || data.address || '';
-                    const coordMatch = data.google_business?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                {(() => {
+                    const rawGoogleBusiness = data?.google_business || "https://maps.app.goo.gl/zGHf7235Myux7T4P7";
+                    const isGoogleLink = rawGoogleBusiness.startsWith('http');
+                    const businessName = data?.nombre_negocio || data?.nombre || '';
+                    const addressText = data?.direccion || data?.address || '';
+                    const coordMatch = rawGoogleBusiness.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
                     const hasCoords = coordMatch && coordMatch.length >= 3;
-                    const mapQuery = hasCoords 
-                        ? `${coordMatch[1]},${coordMatch[2]}` 
-                        : isGoogleLink 
-                            ? `${businessName} ${addressText}`.trim() 
-                            : (data.google_business || addressText || businessName);
+                    const isIframe = rawGoogleBusiness.trim().toLowerCase().startsWith('<iframe');
+                    const isEmbedLink = rawGoogleBusiness.includes('/maps/embed');
+
+                    let finalMapSrc = '';
+                    let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName || "Loja, Ecuador")}`;
+                    
+                    if (isGoogleLink && !isEmbedLink) {
+                        buttonHref = rawGoogleBusiness;
+                    }
+
+                    if (isIframe) {
+                        const match = rawGoogleBusiness.match(/src=["'](.*?)["']/);
+                        finalMapSrc = match ? match[1] : '';
+                    } else if (isEmbedLink) {
+                        finalMapSrc = rawGoogleBusiness;
+                    } else {
+                        let mapQuery = hasCoords 
+                            ? `${coordMatch[1]},${coordMatch[2]}` 
+                            : (isGoogleLink && !addressText) 
+                                ? businessName 
+                                : isGoogleLink 
+                                    ? `${businessName} ${addressText}`.trim() 
+                                    : (rawGoogleBusiness || addressText || businessName);
+                                    
+                        if (!mapQuery || mapQuery.trim() === '') {
+                            mapQuery = "Loja, Ecuador";
+                        }
+                                    
+                        finalMapSrc = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
+                            ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
+                            : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
+                    }
                     
                     return (
                         <div className="lg:col-span-12 order-4 xl:order-5 mt-16 md:mt-32 w-full">
@@ -935,7 +965,7 @@ export default function ClassicTemplate({
                                     </p>
                                 </div>
                                 <a 
-                                    href={isGoogleLink ? data.google_business : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName)}`}
+                                    href={buttonHref}
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="bg-white text-navy px-10 py-6 rounded-full text-sm font-black uppercase tracking-widest flex items-center gap-4 transition-all hover:scale-105 shadow-2xl hover:bg-[var(--theme-primary)] hover:text-white group"
@@ -947,18 +977,21 @@ export default function ClassicTemplate({
                             
                             <div className="max-w-5xl mx-auto px-4 w-full">
                                 <div className="w-full h-[400px] md:h-[500px] relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] bg-navy/40 backdrop-blur-md">
-                                    <iframe
-                                        width="100%"
-                                        height="100%"
-                                        frameBorder="0"
-                                        style={{ border: 0, filter: 'grayscale(0.6) contrast(1.1) brightness(0.8)' }}
-                                        src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
-                                            ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
-                                            : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
-                                        }
-                                        allowFullScreen
-                                        title="Ubicación en Google Maps"
-                                    ></iframe>
+                                    {finalMapSrc ? (
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            style={{ border: 0, filter: 'grayscale(0.6) contrast(1.1) brightness(0.8)' }}
+                                            src={finalMapSrc}
+                                            allowFullScreen
+                                            title="Ubicación en Google Maps"
+                                        ></iframe>
+                                    ) : (
+                                        <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/40 text-sm font-bold tracking-widest uppercase">
+                                            Mapa no disponible
+                                        </div>
+                                    )}
                                     <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/10 rounded-[inherit]" />
                                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-navy/20 via-transparent to-navy/40" />
                                 </div>

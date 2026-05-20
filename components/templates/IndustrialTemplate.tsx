@@ -7,6 +7,8 @@ import { formatPhoneEcuador, cn } from '@/lib/utils';
 import { safeParse } from '@/lib/jsonUtils';
 import CatalogProGallery from '../card/CatalogProGallery';
 import { BaseTemplateProps, HeroCarouselTemplateProps } from './types';
+import { checkIsVerticalVideo } from '@/lib/videoUtils';
+
 
 export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
     const { data, afterExperienceSlot, getVideoEmbedUrl, activeSlides, currentSlideIndex } = props;
@@ -134,50 +136,52 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
             <section className="relative w-full min-h-[85vh] flex flex-col justify-end pb-12 md:pb-24 overflow-hidden">
                 {/* Background Image with Dark Overlay */}
                 <div className="absolute inset-0 z-0">
-                    <AnimatePresence mode="wait">
-                        {activeSlides && activeSlides.length > 0 ? (
+                    {activeSlides && activeSlides.length > 0 ? (
+                        activeSlides.map((slide, idx) => (
                             <motion.div
-                                key={currentSlideIndex}
+                                key={slide.id || idx}
                                 initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 1 }}
+                                animate={{ opacity: currentSlideIndex === idx ? 1 : 0 }}
+                                transition={{ duration: 1.5, ease: "easeInOut" }}
                                 className="absolute inset-0"
+                                style={{ 
+                                    pointerEvents: currentSlideIndex === idx ? 'auto' : 'none'
+                                }}
                             >
                                 <div
                                     className="absolute inset-0 bg-cover bg-center md:hidden"
                                     style={{ 
-                                        backgroundImage: `url(${activeSlides[currentSlideIndex || 0].portada_movil || activeSlides[currentSlideIndex || 0].portada_desktop || data.foto_url})`,
+                                        backgroundImage: `url(${slide.portada_movil || slide.portada_desktop || data.foto_url})`,
                                         opacity: 0.6
                                     }}
                                 />
                                 <div
                                     className="absolute inset-0 bg-cover bg-center hidden md:block"
                                     style={{ 
-                                        backgroundImage: `url(${activeSlides[currentSlideIndex || 0].portada_desktop || activeSlides[currentSlideIndex || 0].portada_movil || data.foto_url})`,
+                                        backgroundImage: `url(${slide.portada_desktop || slide.portada_movil || data.foto_url})`,
                                         opacity: 0.6
                                     }}
                                 />
                             </motion.div>
-                        ) : (
-                            <>
-                                <div
-                                    className="absolute inset-0 bg-cover bg-center md:hidden"
-                                    style={{ 
-                                        backgroundImage: `url(${data.portada_movil || data.portada_desktop || data.foto_url})`,
-                                        opacity: 0.6
-                                    }}
-                                />
-                                <div
-                                    className="absolute inset-0 bg-cover bg-center hidden md:block"
-                                    style={{ 
-                                        backgroundImage: `url(${data.portada_desktop || data.portada_movil || data.foto_url})`,
-                                        opacity: 0.6
-                                    }}
-                                />
-                            </>
-                        )}
-                    </AnimatePresence>
+                        ))
+                    ) : (
+                        <>
+                            <div
+                                className="absolute inset-0 bg-cover bg-center md:hidden"
+                                style={{ 
+                                    backgroundImage: `url(${data.portada_movil || data.portada_desktop || data.foto_url})`,
+                                    opacity: 0.6
+                                }}
+                            />
+                            <div
+                                className="absolute inset-0 bg-cover bg-center hidden md:block"
+                                style={{ 
+                                    backgroundImage: `url(${data.portada_desktop || data.portada_movil || data.foto_url})`,
+                                    opacity: 0.6
+                                }}
+                            />
+                        </>
+                    )}
                     {(!data.portada_desktop && !data.portada_movil && !data.foto_url && (!activeSlides || activeSlides.length === 0)) && (
                         <div className="w-full h-full bg-navy" />
                     )}
@@ -289,9 +293,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                 const embedUrl = getVideoEmbedUrl?.(videoUrl);
                 if (!embedUrl) return null;
 
-                const isVertical = embedUrl.includes('tiktok.com/embed') || 
-                                 embedUrl.includes('instagram.com') || 
-                                 embedUrl.includes('facebook.com/plugins/video');
+                const isVertical = checkIsVerticalVideo(videoUrl);
 
                 return (
                     <section className="py-24 px-4 bg-navy relative overflow-hidden">
@@ -411,56 +413,88 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
             )}
 
             {/* 5. LOCATION / MAP */}
-            {(data.google_business || data.address || data.direccion) && (() => {
-                const isGoogleLink = data.google_business?.startsWith('http');
-                const businessName = data.nombre_negocio || data.nombre || '';
-                const addressText = data.direccion || data.address || '';
-                const coordMatch = data.google_business?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-                const hasCoords = coordMatch && coordMatch.length >= 3;
-                const mapQuery = hasCoords 
-                    ? `${coordMatch[1]},${coordMatch[2]}` 
-                    : isGoogleLink 
-                        ? `${businessName} ${addressText}`.trim() 
-                        : (data.google_business || addressText || businessName);
-                
-                return (
-                    <section id="ubicacion" className="py-24 px-4 bg-white relative">
-                        <div className="max-w-7xl mx-auto">
-                            <div className="text-center mb-16">
-                                <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Centro de Operaciones</h4>
-                                <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight mb-6">Nuestra <span className="text-[#FF5C00]">Ubicación</span></h2>
-                                <p className="text-navy/60 font-medium leading-relaxed max-w-2xl mx-auto mb-8">
-                                    {data.direccion || data.address || "Visítanos en nuestra ubicación oficial para una atención directa y especializada."}
-                                </p>
-                                <a 
-                                    href={isGoogleLink ? data.google_business : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName)}`}
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-3 bg-navy text-white px-8 py-4 font-black uppercase text-sm tracking-widest hover:bg-[#FF5C00] transition-colors"
-                                >
-                                    <MapPin size={18} />
-                                    Trazar Ruta
-                                </a>
+                {(() => {
+                    const rawGoogleBusiness = data?.google_business || "https://maps.app.goo.gl/zGHf7235Myux7T4P7";
+                    const isGoogleLink = rawGoogleBusiness.startsWith('http');
+                    const businessName = data?.nombre_negocio || data?.nombre || '';
+                    const addressText = data?.direccion || data?.address || '';
+                    const coordMatch = rawGoogleBusiness.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                    const hasCoords = coordMatch && coordMatch.length >= 3;
+                    const isIframe = rawGoogleBusiness.trim().toLowerCase().startsWith('<iframe');
+                    const isEmbedLink = rawGoogleBusiness.includes('/maps/embed');
+
+                    let finalMapSrc = '';
+                    let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName || "Loja, Ecuador")}`;
+                    
+                    if (isGoogleLink && !isEmbedLink) {
+                        buttonHref = rawGoogleBusiness;
+                    }
+
+                    if (isIframe) {
+                        const match = rawGoogleBusiness.match(/src=["'](.*?)["']/);
+                        finalMapSrc = match ? match[1] : '';
+                    } else if (isEmbedLink) {
+                        finalMapSrc = rawGoogleBusiness;
+                    } else {
+                        let mapQuery = hasCoords 
+                            ? `${coordMatch[1]},${coordMatch[2]}` 
+                            : (isGoogleLink && !addressText) 
+                                ? businessName 
+                                : isGoogleLink 
+                                    ? `${businessName} ${addressText}`.trim() 
+                                    : (rawGoogleBusiness || addressText || businessName);
+                                    
+                        if (!mapQuery || mapQuery.trim() === '') {
+                            mapQuery = "Loja, Ecuador";
+                        }
+                                    
+                        finalMapSrc = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
+                            ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
+                            : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
+                    }
+                    
+                    return (
+                        <section className="bg-white py-24 relative overflow-hidden" id="ubicacion">
+                            <div className="absolute top-0 right-0 w-1/3 h-full bg-navy/5 transform skew-x-12 translate-x-32" />
+                            <div className="max-w-7xl mx-auto px-4 relative z-10">
+                                <div className="text-center mb-16">
+                                    <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Centro de Operaciones</h4>
+                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight mb-6">Nuestra <span className="text-[#FF5C00]">Ubicación</span></h2>
+                                    <p className="text-navy/60 font-medium leading-relaxed max-w-2xl mx-auto mb-8">
+                                        {data.direccion || data.address || "Visítanos en nuestra ubicación oficial para una atención directa y especializada."}
+                                    </p>
+                                    <a 
+                                        href={buttonHref}
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-3 bg-navy text-white px-8 py-4 font-black uppercase text-sm tracking-widest hover:bg-[#FF5C00] transition-colors"
+                                    >
+                                        <MapPin size={18} />
+                                        Trazar Ruta
+                                    </a>
+                                </div>
+                                <div className="w-full h-[400px] md:h-[600px] relative border-4 border-navy/5 shadow-2xl overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF5C00] z-10 flex items-center justify-center transform translate-x-12 -translate-y-12 rotate-45 group-hover:scale-110 transition-transform" />
+                                    {finalMapSrc ? (
+                                        <iframe
+                                            width="100%"
+                                            height="100%"
+                                            frameBorder="0"
+                                            style={{ border: 0, filter: 'grayscale(1) contrast(1.2)' }}
+                                            src={finalMapSrc}
+                                            allowFullScreen
+                                            title="Ubicación en Google Maps"
+                                        ></iframe>
+                                    ) : (
+                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm font-bold tracking-widest uppercase">
+                                            Mapa no disponible
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="w-full h-[400px] md:h-[600px] relative border-4 border-navy/5 shadow-2xl overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF5C00] z-10 flex items-center justify-center transform translate-x-12 -translate-y-12 rotate-45 group-hover:scale-110 transition-transform" />
-                                <iframe
-                                    width="100%"
-                                    height="100%"
-                                    frameBorder="0"
-                                    style={{ border: 0, filter: 'grayscale(1) contrast(1.2)' }}
-                                    src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
-                                        ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
-                                        : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`
-                                    }
-                                    allowFullScreen
-                                    title="Ubicación en Google Maps"
-                                ></iframe>
-                            </div>
-                        </div>
-                    </section>
-                );
-            })()}
+                        </section>
+                    );
+                })()}
 
             {/* 5. FOOTER / CONTACT */}
             <footer className="bg-[#001229] pt-20 pb-10 px-4 text-white">

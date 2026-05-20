@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn, Info, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getVideoEmbedUrl, getYouTubeThumbnail } from "@/lib/videoUtils";
+import { getVideoEmbedUrl, getYouTubeThumbnail, checkIsVerticalVideo } from "@/lib/videoUtils";
 
 export interface CatalogItem {
     id: string;
@@ -266,10 +266,16 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
                                                 const embedUrl = getVideoEmbedUrl(videoUrl);
                                                 
                                                 if (embedUrl) {
+                                                    const isVertical = checkIsVerticalVideo(videoUrl);
                                                     return (
                                                         <iframe 
                                                             src={embedUrl}
-                                                            className="w-full aspect-video rounded-2xl md:rounded-[32px] shadow-2xl"
+                                                            className={cn(
+                                                                "rounded-2xl md:rounded-[32px] shadow-2xl mx-auto",
+                                                                isVertical 
+                                                                    ? "h-full max-h-[60vh] md:max-h-[75vh] aspect-[9/16]" 
+                                                                    : "w-full aspect-video"
+                                                            )}
                                                             allowFullScreen
                                                             allow="autoplay; encrypted-media"
                                                         />

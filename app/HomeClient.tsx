@@ -176,12 +176,10 @@ export default function HomeClient() {
             <section className="relative min-h-screen w-full overflow-hidden flex items-center bg-background section-dark">
                 {/* Background Image Container - Right Aligned & Full Height */}
                 <div className="absolute inset-0 z-0">
-                    <Image
+                    <img
                         src="/images/Reingenierìa/v2_tarjetas_mano.webp"
                         alt="ActivaQR - El poder del contacto digital"
-                        fill
-                        priority
-                        className="object-cover"
+                        className="absolute inset-0 w-full h-full object-cover"
                     />
                     {/* Subtle Overlay to ensure overall branding consistency */}
                     <div className="absolute inset-0 bg-background/20 lg:bg-transparent"></div>
@@ -341,32 +339,29 @@ export default function HomeClient() {
                     <div className="relative flex md:grid md:grid-cols-3 gap-8 mt-24 w-full max-w-5xl mx-auto overflow-x-auto md:overflow-visible pb-12 md:pb-0 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
                         {/* Card 1 */}
                         <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-navy/10 transform -rotate-2 md:hover:rotate-0 transition-transform duration-500">
-                            <Image
-                                src="/images/Reingenierìa/Portadas%20tipo%20historia/card_35_contacto.webp"
+                            <img
+                                src="/images/Reingenierìa/Portadas tipo historia/card_35_contacto.webp"
                                 alt="Plan Contacto Digital"
-                                fill
-                                sizes="(max-width: 768px) 80vw, 33vw"
-                                className="object-cover"
+                                className="w-full h-full object-cover"
+                                loading="lazy"
                             />
                         </div>
                         {/* Card 2 */}
                         <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-navy/10 z-10 md:scale-110 shadow-primary/20 transform rotate-1 md:hover:rotate-0 transition-transform duration-500">
-                            <Image
-                                src="/images/Reingenierìa/Portadas%20tipo%20historia/card_100_business.webp"
+                            <img
+                                src="/images/Reingenierìa/Portadas tipo historia/card_100_business.webp"
                                 alt="Plan Contacto Business"
-                                fill
-                                sizes="(max-width: 768px) 80vw, 33vw"
-                                className="object-cover"
+                                className="w-full h-full object-cover"
+                                loading="lazy"
                             />
                         </div>
                         {/* Card 3 */}
                         <div className="w-[80vw] md:w-auto shrink-0 snap-center relative aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-navy/10 transform rotate-3 md:hover:rotate-0 transition-transform duration-500">
-                            <Image
-                                src="/images/Reingenierìa/Portadas%20tipo%20historia/card_200_catalogo.webp"
+                            <img
+                                src="/images/Reingenierìa/Portadas tipo historia/card_200_catalogo.webp"
                                 alt="Plan Contacto Catálogo"
-                                fill
-                                sizes="(max-width: 768px) 80vw, 33vw"
-                                className="object-cover"
+                                className="w-full h-full object-cover"
+                                loading="lazy"
                             />
                         </div>
                     </div>
@@ -395,43 +390,42 @@ export default function HomeClient() {
                         <motion.div
                             animate={{ x: ["0%", "-50%"] }}
                             transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-                            className="flex gap-8 whitespace-nowrap py-4"
+                            className="flex gap-0 whitespace-nowrap py-4"
                         >
-                            {[
-                                "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
-                                "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
-                                "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
-                                "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
-                                "Yessy 2026.jpg"
-                            ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <Image
-                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        width={128}
-                                        height={128}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
-                            {/* Duplicar para el scroll infinito */}
-                            {[
-                                "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
-                                "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
-                                "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
-                                "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
-                                "Yessy 2026.jpg"
-                            ].map((logo, i) => (
-                                <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <Image
-                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        width={128}
-                                        height={128}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
+                            <div className="flex gap-8 pr-8 shrink-0">
+                                {[
+                                    "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
+                                    "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
+                                    "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
+                                    "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
+                                    "Yessy 2026.jpg"
+                                ].map((logo, i) => (
+                                    <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-8 pr-8 shrink-0" aria-hidden="true">
+                                {[
+                                    "@pily_vanss.webp", "CITY Shoes.jpg", "Calefones Loja.jpg", "Clínica San Bernardo.png",
+                                    "Daniel Rojas - Naluz.jpeg", "Dulce Tradición.jpg", "Estetica Mariaelena Cabrera.png",
+                                    "Estilista Julita Gallegos.jpeg", "Fahac.jpg", "Gaby Vera.jpg",
+                                    "Jose Arevalo - Confecciones Arevalo  Covatex.webp", "Kaweh.jfif", "La Casa de la tia Omaira.jpg",
+                                    "Yessy 2026.jpg"
+                                ].map((logo, i) => (
+                                    <div key={`dub1-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </motion.div>
                     </div>
 
@@ -440,39 +434,38 @@ export default function HomeClient() {
                         <motion.div
                             animate={{ x: ["-50%", "0%"] }}
                             transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-                            className="flex gap-8 whitespace-nowrap py-4"
+                            className="flex gap-0 whitespace-nowrap py-4"
                         >
-                            {[
-                                "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
-                                "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
-                                "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
-                            ].map((logo, i) => (
-                                <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <Image
-                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        width={128}
-                                        height={128}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
-                            {/* Duplicar para el scroll infinito */}
-                            {[
-                                "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
-                                "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
-                                "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
-                            ].map((logo, i) => (
-                                <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
-                                    <Image
-                                        src={`/logos_clientes/clientes de Activa QR/${logo}`}
-                                        alt={`Cliente ActivaQR ${i}`}
-                                        width={128}
-                                        height={128}
-                                        className="w-full h-full object-cover rounded-full"
-                                    />
-                                </div>
-                            ))}
+                            <div className="flex gap-8 pr-8 shrink-0">
+                                {[
+                                    "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
+                                    "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
+                                    "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
+                                ].map((logo, i) => (
+                                    <div key={i} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex gap-8 pr-8 shrink-0" aria-hidden="true">
+                                {[
+                                    "Las costillas del veci.jpg", "Loja Garden.jpg", "Lojanias.jpg", "Maricela.png",
+                                    "Nelvia Sarmiento.webp", "Sareni.webp", "Sur Bike.jpg", "Tapicería Brito.webp",
+                                    "camila.webp", "descarga.jfif", "logo-200-millas.png", "punto smart.jfif", "santa petrona.jpg"
+                                ].map((logo, i) => (
+                                    <div key={`dub2-${i}`} className="w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full p-1 border-2 border-white/5 shadow-sm hover:border-primary/50 transition-colors flex items-center justify-center overflow-hidden shrink-0 grayscale hover:grayscale-0 transition-all duration-500">
+                                        <img
+                                            src={`/logos_clientes/clientes%20de%20Activa%20QR/${logo.replaceAll(' ', '%20')}`}
+                                            alt={`Cliente ActivaQR ${i}`}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </motion.div>
                     </div>
 
@@ -613,12 +606,10 @@ export default function HomeClient() {
                                     </div>
                                     <div className="relative">
                                         <div className="absolute -inset-10 bg-primary/10 blur-3xl rounded-full"></div>
-                                        <Image
+                                        <img
                                             src="/images/estado%20de%20whatsapp.png"
                                             alt="Estados de WhatsApp"
-                                            width={448}
-                                            height={800}
-                                            className="relative rounded-[2rem] shadow-2xl border-4 border-white transform rotate-2 max-w-md mx-auto h-auto"
+                                            className="relative rounded-[2rem] shadow-2xl border-4 border-white transform rotate-2 max-w-md mx-auto w-full h-auto"
                                         />
                                     </div>
                                 </motion.div>
@@ -648,12 +639,10 @@ export default function HomeClient() {
                                                 QUIERO AUTOMATIZAR
                                             </Link>
                                         </div>
-                                        <Image
+                                        <img
                                             src="/images/mockup_laptop_automatizacion_activaqr_1772769734997.png"
                                             alt="Automatización ActivaQR"
-                                            width={512}
-                                            height={300}
-                                            className="relative rounded-[2rem] shadow-2xl border-4 border-navy/10 max-w-lg mx-auto"
+                                            className="relative rounded-[2rem] shadow-2xl border-4 border-navy/10 max-w-lg mx-auto w-full h-auto"
                                         />
                                     </div>
                                 </motion.div>
@@ -736,12 +725,10 @@ export default function HomeClient() {
                                 className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
-                                    <Image
+                                    <img
                                         src="/logos_clientes/clientes%20de%20Activa%20QR/Yessy%202026.jpg"
                                         alt="Yessy - Enfermería a domicilio"
-                                        fill
-                                        sizes="(max-width: 768px) 85vw, 33vw"
-                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
                                     <div className="absolute bottom-6 left-6 right-6">
@@ -780,12 +767,10 @@ export default function HomeClient() {
                                 className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
-                                    <Image
+                                    <img
                                         src="/logos_clientes/clientes%20de%20Activa%20QR/Las%20costillas%20del%20veci.jpg"
                                         alt="Las Costillas del Veci - Restaurante"
-                                        fill
-                                        sizes="(max-width: 768px) 85vw, 33vw"
-                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
                                     <div className="absolute bottom-6 left-6 right-6">
@@ -824,12 +809,10 @@ export default function HomeClient() {
                                 className="w-[85vw] md:w-auto shrink-0 snap-center bg-white p-2 rounded-[2.5rem] shadow-xl border border-navy/5 relative group hover:translate-y-[-5px] transition-transform duration-500"
                             >
                                 <div className="relative aspect-square w-full rounded-[2rem] overflow-hidden mb-6">
-                                    <Image
+                                    <img
                                         src="/logos_clientes/clientes%20de%20Activa%20QR/Loja%20Garden.jpg"
                                         alt="Loja Garden"
-                                        fill
-                                        sizes="(max-width: 768px) 85vw, 33vw"
-                                        className="object-cover group-hover:scale-110 transition-transform duration-700"
+                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent"></div>
                                     <div className="absolute bottom-6 left-6 right-6">

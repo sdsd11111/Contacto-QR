@@ -1423,10 +1423,6 @@ export default function DirectVCardRegistration({
                                                                 onChange={async (e) => {
                                                                     const file = e.target.files?.[0];
                                                                     if (file) {
-                                                                        if (file.size > 5 * 1024 * 1024) {
-                                                                            alert("El archivo supera los 5MB permitidos.");
-                                                                            return;
-                                                                        }
                                                                         const fd = new FormData();
                                                                         fd.append('file', file);
                                                                         try {
@@ -1672,10 +1668,6 @@ export default function DirectVCardRegistration({
                                                                     onChange={async (e) => {
                                                                         const file = e.target.files?.[0];
                                                                         if (file) {
-                                                                            if (file.size > 5 * 1024 * 1024) {
-                                                                                alert("El archivo supera los 5MB permitidos.");
-                                                                                return;
-                                                                            }
                                                                             const fd = new FormData();
                                                                             fd.append('file', file);
                                                                             try {

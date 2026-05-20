@@ -123,6 +123,9 @@ export default function VCardEditModal({
         const fd = new FormData();
         fd.append('file', file);
         try {
+            if (editingRegistro?.slug) {
+                fd.append('slug', editingRegistro.slug);
+            }
             const res = await fetch('/api/upload', { method: 'POST', body: fd });
             if (res.ok) {
                 const { url } = await res.json();
@@ -324,6 +327,9 @@ export default function VCardEditModal({
         const fd = new FormData();
         fd.append('file', file);
         try {
+            if (editingRegistro?.slug) {
+                fd.append('slug', editingRegistro.slug);
+            }
             const res = await fetch('/api/upload', { method: 'POST', body: fd });
             if (res.ok) {
                 const { url } = await res.json();
@@ -1374,12 +1380,11 @@ export default function VCardEditModal({
                                                             onChange={async e => {
                                                                 const file = e.target.files?.[0];
                                                                 if (!file) return;
-                                                                if (file.size > 5 * 1024 * 1024) {
-                                                                    alert('El video debe pesar menos de 5MB');
-                                                                    return;
-                                                                }
                                                                 const fd = new FormData();
                                                                 fd.append('file', file);
+                                                                if (editingRegistro?.slug) {
+                                                                    fd.append('slug', editingRegistro.slug);
+                                                                }
                                                                 const res = await fetch('/api/upload', { method: 'POST', body: fd });
                                                                 if (res.ok) {
                                                                     const { url } = await res.json();
@@ -1731,6 +1736,9 @@ export default function VCardEditModal({
                                                                     if (!file) return;
                                                                     const fd = new FormData();
                                                                     fd.append('file', file);
+                                                                    if (editingRegistro?.slug) {
+                                                                        fd.append('slug', editingRegistro.slug);
+                                                                    }
                                                                     const res = await fetch('/api/upload', { method: 'POST', body: fd });
                                                                     if (res.ok) {
                                                                         const { url } = await res.json();
@@ -1795,12 +1803,11 @@ export default function VCardEditModal({
                                                                             onChange={async e => {
                                                                                 const file = e.target.files?.[0];
                                                                                 if (!file) return;
-                                                                                if (file.size > 5 * 1024 * 1024) {
-                                                                                    alert('El video debe pesar menos de 5MB');
-                                                                                    return;
-                                                                                }
                                                                                 const fd = new FormData();
                                                                                 fd.append('file', file);
+                                                                                if (editingRegistro?.slug) {
+                                                                                    fd.append('slug', editingRegistro.slug);
+                                                                                }
                                                                                 const res = await fetch('/api/upload', { method: 'POST', body: fd });
                                                                                 if (res.ok) {
                                                                                     const { url } = await res.json();

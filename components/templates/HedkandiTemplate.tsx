@@ -5,6 +5,9 @@ import { motion } from 'framer-motion';
 import { HedkandiTemplateProps } from './types';
 import { safeParse } from '@/lib/jsonUtils';
 import { Shield } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { checkIsVerticalVideo } from '@/lib/videoUtils';
+
 
 /** Imágenes de fallback organizadas por categoría visual para la grilla de experiencia */
 const FALLBACK_EXPERIENCE_IMAGES = [
@@ -31,14 +34,8 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
     return (
         <div className="w-full min-h-screen bg-white text-[#1A1A1A] overflow-x-hidden selection:bg-[#7292ab] selection:text-white">
             
-            {/* INJECT CUSTOM FONTS AND HIDE GLOBAL HEADER/FOOTER */}
+            {/* HIDE GLOBAL HEADER/FOOTER */}
             <style dangerouslySetInnerHTML={{__html: `
-                @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Montserrat:wght@300;400;500&display=swap');
-                
-                .font-display-condensed { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
-                .font-serif-elegant { font-family: 'Cormorant Garamond', serif; }
-                .font-sans-body { font-family: 'Montserrat', sans-serif; }
-                
                 /* Hide global navigation for this template */
                 header, footer, nav { display: none !important; }
             `}} />
@@ -56,7 +53,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 transition={{ duration: 1.5, ease: "easeInOut" }}
                                 className="absolute inset-0"
                                 style={{ 
-                                    display: props.currentSlideIndex === idx ? 'block' : 'none'
+                                    pointerEvents: props.currentSlideIndex === idx ? 'auto' : 'none'
                                 }}
                             >
                                 <div
@@ -268,41 +265,52 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             {/* ─── VIDEO/DESTACADO SECTION ─── */}
             <section className="bg-white py-12 px-4">
                 <div className="max-w-7xl mx-auto flex justify-center">
-                    <motion.div
-                        initial={{ y: 40, opacity: 0 }}
-                        whileInView={{ y: 0, opacity: 1 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1 }}
-                        className="w-full max-w-[450px] md:max-w-[600px] flex justify-center"
-                    >
-                        {(props.data?.video_url || props.data?.youtube_url || props.data?.youtube_video_url) ? (
-                            <div className="w-full rounded-[3rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] border border-black/5 bg-black/5 p-3 md:p-6">
-                                <div className="aspect-[9/16] rounded-[2rem] overflow-hidden bg-black">
-                                    <iframe 
-                                        width="100%" 
-                                        height="100%" 
-                                        src={(() => {
-                                            const url = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
-                                            return props.getVideoEmbedUrl(url) || '';
-                                        })()} 
-                                        title="Video player" 
-                                        frameBorder="0" 
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                        allowFullScreen 
-                                        className="w-full h-full"
-                                    ></iframe>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="w-full max-w-[400px] aspect-[4/5] rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl">
-                                <img 
-                                    src={props.data?.foto_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"} 
-                                    alt={props.data?.nombre_negocio}
-                                    className="w-full h-full object-cover transition-all duration-1000"
-                                />
-                            </div>
-                        )}
-                    </motion.div>
+                    {(() => {
+                        const videoUrl = props.data?.video_url || props.data?.youtube_video_url || props.data?.youtube_url;
+                        const embedUrl = props.getVideoEmbedUrl(videoUrl);
+                        const isVertical = checkIsVerticalVideo(videoUrl);
+
+                        return (
+                            <motion.div
+                                initial={{ y: 40, opacity: 0 }}
+                                whileInView={{ y: 0, opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 1 }}
+                                className={cn(
+                                    "w-full flex justify-center mx-auto",
+                                    embedUrl ? (isVertical ? "max-w-[450px]" : "max-w-4xl") : "max-w-[400px]"
+                                )}
+                            >
+                                {embedUrl ? (
+                                    <div className="w-full rounded-[3rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] border border-black/5 bg-black/5 p-3 md:p-6">
+                                        <div className={cn(
+                                            "rounded-[2rem] overflow-hidden bg-black",
+                                            isVertical ? "aspect-[9/16]" : "aspect-video"
+                                        )}>
+                                            <iframe 
+                                                width="100%" 
+                                                height="100%" 
+                                                src={embedUrl} 
+                                                title="Video player" 
+                                                frameBorder="0" 
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                allowFullScreen 
+                                                className="w-full h-full"
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-full aspect-[4/5] rounded-[3rem] overflow-hidden border border-black/5 shadow-2xl">
+                                        <img 
+                                            src={props.data?.foto_url || "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=800&auto=format&fit=crop"} 
+                                            alt={props.data?.nombre_negocio}
+                                            className="w-full h-full object-cover transition-all duration-1000"
+                                        />
+                                    </div>
+                                )}
+                            </motion.div>
+                        );
+                    })()}
                 </div>
             </section>
 
@@ -571,17 +579,46 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             {props.afterMarqueeSlot}
 
             {/* Ubicación / Mapa */}
-            {(props.data?.google_business || props.data?.address || props.data?.direccion) && (() => {
-                const isGoogleLink = props.data.google_business?.startsWith('http');
-                const businessName = props.data.nombre_negocio || props.data.nombre || '';
-                const addressText = props.data.direccion || props.data.address || '';
-                const coordMatch = props.data.google_business?.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+            {/* Ubicación / Mapa */}
+            {(() => {
+                const rawGoogleBusiness = props.data?.google_business || "https://maps.app.goo.gl/zGHf7235Myux7T4P7";
+                const isGoogleLink = rawGoogleBusiness.startsWith('http');
+                const businessName = props.data?.nombre_negocio || props.data?.nombre || '';
+                const addressText = props.data?.direccion || props.data?.address || '';
+                const coordMatch = rawGoogleBusiness.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
                 const hasCoords = coordMatch && coordMatch.length >= 3;
-                const mapQuery = hasCoords 
-                    ? `${coordMatch[1]},${coordMatch[2]}` 
-                    : isGoogleLink 
-                        ? `${businessName} ${addressText}`.trim() 
-                        : (props.data.google_business || addressText || businessName);
+                const isIframe = rawGoogleBusiness.trim().toLowerCase().startsWith('<iframe');
+                const isEmbedLink = rawGoogleBusiness.includes('/maps/embed');
+
+                let finalMapSrc = '';
+                let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName || "Loja, Ecuador")}`;
+                
+                if (isGoogleLink && !isEmbedLink) {
+                    buttonHref = rawGoogleBusiness;
+                }
+
+                if (isIframe) {
+                    const match = rawGoogleBusiness.match(/src=["'](.*?)["']/);
+                    finalMapSrc = match ? match[1] : '';
+                } else if (isEmbedLink) {
+                    finalMapSrc = rawGoogleBusiness;
+                } else {
+                    let mapQuery = hasCoords 
+                        ? `${coordMatch[1]},${coordMatch[2]}` 
+                        : (isGoogleLink && !addressText) 
+                            ? businessName 
+                            : isGoogleLink 
+                                ? `${businessName} ${addressText}`.trim() 
+                                : (rawGoogleBusiness || addressText || businessName);
+                                
+                    if (!mapQuery || mapQuery.trim() === '') {
+                        mapQuery = "Loja, Ecuador";
+                    }
+                                
+                    finalMapSrc = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
+                        ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
+                        : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+                }
                 
                 return (
                     <section className="w-full bg-white pt-24 pb-0 overflow-hidden">
@@ -595,7 +632,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 </p>
                             </div>
                             <a 
-                                href={isGoogleLink ? props.data.google_business : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName)}`}
+                                href={buttonHref}
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="border border-black px-10 py-4 font-display-condensed text-lg tracking-widest uppercase hover:bg-black hover:text-white transition-all duration-300 whitespace-nowrap"
@@ -605,18 +642,21 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         </div>
                         
                         <div className="w-full h-[450px] md:h-[650px] relative">
-                            <iframe
-                                width="100%"
-                                height="100%"
-                                frameBorder="0"
-                                style={{ border: 0 }}
-                                src={process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
-                                    ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
-                                    : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=16&ie=UTF8&iwloc=&output=embed`
-                                }
-                                allowFullScreen
-                                className="grayscale hover:grayscale-0 transition-all duration-1000"
-                            ></iframe>
+                            {finalMapSrc ? (
+                                <iframe
+                                    width="100%"
+                                    height="100%"
+                                    frameBorder="0"
+                                    style={{ border: 0 }}
+                                    src={finalMapSrc}
+                                    allowFullScreen
+                                    className="grayscale hover:grayscale-0 transition-all duration-1000"
+                                ></iframe>
+                            ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 font-sans-body uppercase tracking-widest text-sm">
+                                    Mapa no disponible
+                                </div>
+                            )}
                         </div>
                     </section>
                 );

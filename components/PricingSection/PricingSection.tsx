@@ -84,21 +84,19 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
                     <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex justify-between px-4 z-50 pointer-events-none">
                         <button 
                             onClick={() => {
-                                setActiveIndex(prev => Math.max(0, prev - 1));
+                                setActiveIndex(prev => (prev === 0 ? PLANES_DATA.length - 1 : prev - 1));
                                 setIsPaused(true);
                             }}
-                            className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white pointer-events-auto transition-all hover:bg-primary hover:border-primary disabled:opacity-0"
-                            disabled={activeIndex === 0}
+                            className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white pointer-events-auto transition-all hover:bg-primary hover:border-primary"
                         >
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                         </button>
                         <button 
                             onClick={() => {
-                                setActiveIndex(prev => Math.min(PLANES_DATA.length - 1, prev + 1));
+                                setActiveIndex(prev => (prev === PLANES_DATA.length - 1 ? 0 : prev + 1));
                                 setIsPaused(true);
                             }}
-                            className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white pointer-events-auto transition-all hover:bg-primary hover:border-primary disabled:opacity-0"
-                            disabled={activeIndex === PLANES_DATA.length - 1}
+                            className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white pointer-events-auto transition-all hover:bg-primary hover:border-primary"
                         >
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                         </button>
@@ -107,7 +105,14 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
                     <div className="relative w-full max-w-5xl flex items-center justify-center h-full">
                         <AnimatePresence mode="popLayout">
                             {PLANES_DATA.map((plan, index) => {
-                                const position = index - activeIndex;
+                                // Circular position mapping for infinite loop
+                                let position = index - activeIndex;
+                                const half = PLANES_DATA.length / 2;
+                                if (position > half) {
+                                    position -= PLANES_DATA.length;
+                                } else if (position < -half) {
+                                    position += PLANES_DATA.length;
+                                }
                                 const isActive = index === activeIndex;
                                 const isVisible = Math.abs(position) <= 2;
 
@@ -119,11 +124,12 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
                                         initial={false}
                                         animate={{
                                             x: `calc(-50% + ${position * 340}px)`, // Centrado perfecto + offset
-                                            scale: isActive ? 1.05 : 0.85,
+                                            scale: isActive ? 1.05 : (Math.abs(position) === 1 ? 0.85 : 0.7),
                                             zIndex: 30 - Math.abs(position) * 10,
-                                            opacity: isActive ? 1 : 0.4,
-                                            filter: isActive ? 'blur(0px)' : 'blur(4px)',
-                                            left: '50%'
+                                            opacity: isActive ? 1 : (Math.abs(position) === 1 ? 0.4 : 0),
+                                            filter: isActive ? 'blur(0px)' : (Math.abs(position) === 1 ? 'blur(4px)' : 'blur(8px)'),
+                                            left: '50%',
+                                            pointerEvents: isActive || Math.abs(position) === 1 ? 'auto' : 'none'
                                         }}
                                         transition={{
                                             type: "spring",
@@ -147,11 +153,10 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
                                                     
                                                     {/* Top Section with Scanning Image */}
                                                     <div className="absolute top-0 left-0 w-full h-1/2 overflow-hidden">
-                                                        <Image 
+                                                        <img 
                                                             src={plan.image} 
                                                             alt={plan.name} 
-                                                            fill 
-                                                            className="object-cover opacity-40 grayscale" 
+                                                            className="absolute inset-0 w-full h-full object-cover opacity-40 grayscale" 
                                                         />
                                                         <motion.div 
                                                             animate={{ top: ['0%', '100%'] }} 
@@ -165,12 +170,10 @@ export function PricingSection({ initialPlanId, onQuoteClick }: PricingSectionPr
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <Image 
+                                                    <img 
                                                         src={plan.image} 
                                                         alt={plan.name} 
-                                                        fill
-                                                        sizes="320px"
-                                                        className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                                                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                                     />
                                                     <div className={`absolute inset-0 bg-gradient-to-t ${
                                                         plan.color === 'black' ? 'from-black via-black/60' : 

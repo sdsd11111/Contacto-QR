@@ -5,6 +5,38 @@ import { syncMenuDigitalToRelational } from '@/lib/menuSync';
 
 export const dynamic = 'force-dynamic';
 
+async function resolveShortUrl(url: string | null | undefined): Promise<string | null | undefined> {
+    if (!url) return url;
+    const lower = url.toLowerCase().trim();
+    
+    const shouldResolve = 
+        lower.includes('vm.tiktok.com') || 
+        lower.includes('vt.tiktok.com') || 
+        lower.includes('fb.watch') || 
+        lower.includes('facebook.com/share');
+        
+    if (!shouldResolve) return url;
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 segundos max de timeout
+
+        const response = await fetch(url, {
+            method: 'GET',
+            redirect: 'follow',
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
+        });
+        clearTimeout(timeoutId);
+        return response.url || url;
+    } catch (e) {
+        console.error('Failed to resolve short URL:', url, e);
+        return url;
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { code, data, slug } = await req.json();
@@ -12,6 +44,12 @@ export async function POST(req: NextRequest) {
         if (!code || !data) {
             return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
         }
+
+        // Resolver URL corta de video si existe
+        if (data.youtube_video_url) {
+            data.youtube_video_url = await resolveShortUrl(data.youtube_video_url);
+        }
+
 
         const connection = await pool.getConnection();
 

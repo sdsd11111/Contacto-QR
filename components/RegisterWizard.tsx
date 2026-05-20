@@ -1124,10 +1124,11 @@ export default function RegisterWizard({
             const slug = existingUser?.slug || generateSlug(dataToSubmit);
             const planDetails = PRODUCT_PLANS.find(p => p.id === dataToSubmit.plan);
 
-            // 2. Subir imágenes localmente
+            // 2. Subir imágenes a BunnyCDN
             const uploadFile = async (file: File) => {
                 const uploadFormData = new FormData();
                 uploadFormData.append('file', file);
+                uploadFormData.append('slug', slug);
                 const res = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
                 if (!res.ok) throw new Error('Upload failed');
                 const data = await res.json();
@@ -2394,10 +2395,6 @@ return (
                                                         <input type="file" className="hidden" onChange={async e => {
                                                             const file = e.target.files?.[0];
                                                             if (!file) return;
-                                                            if (file.size > 5 * 1024 * 1024) {
-                                                                alert("El archivo supera los 5MB permitidos.");
-                                                                return;
-                                                            }
                                                             const fd = new FormData();
                                                             fd.append('file', file);
                                                             try {
