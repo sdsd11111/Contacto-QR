@@ -32,14 +32,25 @@ export async function POST(request: NextRequest) {
         let mimeType = file.type || 'application/octet-stream';
 
         if (file.type.startsWith('image/')) {
-            // Procesar imagen con Sharp para optimizar tamaño y convertir a WebP
-            uploadBuffer = await sharp(buffer)
-                .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
-                .webp({ quality: 80 })
-                .toBuffer();
-            
-            filename = `${uuidv4()}.webp`;
-            mimeType = 'image/webp';
+            try {
+                // Procesar imagen con Sharp para optimizar tamaño y convertir a WebP
+                uploadBuffer = await sharp(buffer)
+                    .resize(1200, 1200, { fit: 'inside', withoutEnlargement: true })
+                    .webp({ quality: 80 })
+                    .toBuffer();
+
+                filename = `${uuidv4()}.webp`;
+                mimeType = 'image/webp';
+            } catch (sharpError: any) {
+                console.error('Error procesando imagen con Sharp:', sharpError);
+                // Si falla Sharp, subir la imagen original sin procesar
+                console.log('Subiendo imagen original sin procesar debido a error de Sharp');
+                uploadBuffer = buffer;
+                const originalName = file.name || 'image';
+                const ext = originalName.includes('.') ? originalName.split('.').pop() : 'jpg';
+                filename = `${uuidv4()}.${(ext || 'jpg').toLowerCase()}`;
+                mimeType = file.type;
+            }
         } else {
             // Para videos y otros archivos (PDF, VCF, etc.), mantenemos su extensión original
             const originalName = file.name || 'file';
@@ -50,7 +61,7 @@ export async function POST(request: NextRequest) {
         // URL del endpoint de almacenamiento de BunnyCDN
         const storageUrl = `https://${HOST}/${ZONE}/uploads/${slug}/${filename}`;
 
-        console.log(`Uploading ${file.name} to BunnyCDN: uploads/${slug}/${filename}`);
+        console.log(`Uploading ${file.name} (${(file.size / 1024).toFixed(2)}KB) to BunnyCDN: uploads/${slug}/${filename}`);
 
         // Subir el archivo a BunnyCDN Storage vía PUT
         const cdnResponse = await fetch(storageUrl, {
@@ -65,7 +76,7 @@ export async function POST(request: NextRequest) {
         if (!cdnResponse.ok) {
             const errorText = await cdnResponse.text();
             console.error('Error al subir a BunnyCDN:', cdnResponse.status, errorText);
-            throw new Error(`Error en el almacenamiento externo (${cdnResponse.status})`);
+            return NextResponse.json({ error: `Error en el almacenamiento externo (${cdnResponse.status}): ${errorText}` }, { status: 500 });
         }
 
         // Generar la URL pública del CDN

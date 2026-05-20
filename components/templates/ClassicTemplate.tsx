@@ -356,7 +356,7 @@ export default function ClassicTemplate({
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8, ease: 'easeOut' }}
-                            className="w-fit mx-auto bg-black/40 backdrop-blur-md border border-white/10 px-8 py-4 rounded-[2rem] text-[28px] sm:text-5xl md:text-7xl lg:text-[80px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] mb-6"
+                            className="w-fit mx-auto bg-black/40 backdrop-blur-md border border-white/10 px-8 py-4 rounded-[2rem] text-[28px] sm:text-5xl md:text-7xl lg:text-[55px] font-black uppercase italic tracking-tighter text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] leading-[1] break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] mb-6"
                         >
                             {data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
                         </motion.h1>
@@ -384,7 +384,7 @@ export default function ClassicTemplate({
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -20 }}
                                     transition={{ duration: 0.8, delay: 0.2 }}
-                                    className="w-fit mx-auto bg-black/40 backdrop-blur-md border border-white/10 px-8 py-4 rounded-2xl text-base sm:text-2xl md:text-4xl font-display-condensed italic text-white/90 drop-shadow-2xl break-words max-w-[85vw] md:max-w-4xl leading-tight tracking-[0.1em] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] mb-10"
+                                    className="w-fit mx-auto bg-black/40 backdrop-blur-md border border-white/10 px-8 py-4 rounded-2xl text-base sm:text-2xl md:text-[20px] font-display-condensed italic text-white/90 drop-shadow-2xl break-words max-w-[85vw] md:max-w-4xl leading-tight tracking-[0.1em] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] mb-10"
                                 >
                                     {activeSlides[currentSlideIndex].description || data.profesion}
                                 </motion.p>

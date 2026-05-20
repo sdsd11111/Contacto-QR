@@ -200,11 +200,11 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                 {data.profesion || data.nombre_negocio || "Servicios"}
                             </span>
                             
-                            <h1 className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-[2rem] text-[28px] sm:text-4xl md:text-7xl font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
+                            <h1 className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-[2rem] text-[28px] sm:text-4xl md:text-[55px] font-black text-white uppercase leading-[0.95] tracking-tighter mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
                                 {data.nombre_negocio || data.nombre || "Nombre Empresa"}
                             </h1>
                             
-                            <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-base md:text-xl text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
+                            <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-base md:text-[20px] text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                                 {data.bio || (data.nombre_negocio ? `Excelencia y compromiso en cada servicio de ${data.nombre_negocio}.` : "Soluciones de alta calidad y eficiencia en cada entrega.")}
                             </p>
 

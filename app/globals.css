@@ -255,3 +255,11 @@ body {
 .section-dark .bg-surface.text-navy:hover {
   color: #ffffff !important;
 }
+
+/* ── Eliminar border de botones en desktop ── */
+@media (min-width: 1024px) {
+  button,
+  a {
+    border: none !important;
+  }
+}

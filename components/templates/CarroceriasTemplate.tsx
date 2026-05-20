@@ -172,11 +172,11 @@ function HeroSection(props: CarroceriasTemplateProps) {
                         {data.profesion || 'Especialistas Automotrices'}
                     </span>
 
-                    <h1 className="w-fit bg-black/40 backdrop-blur-md px-8 py-4 rounded-[2.5rem] text-[28px] sm:text-4xl md:text-7xl font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
+                    <h1 className="w-fit bg-black/40 backdrop-blur-md px-8 py-4 rounded-[2.5rem] text-[28px] sm:text-4xl md:text-[55px] font-black text-white uppercase leading-none tracking-tight mb-6 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
                         {data.nombre_negocio || data.nombre || 'Tu Empresa'}
                     </h1>
 
-                    <p className="w-fit bg-black/40 backdrop-blur-md px-6 py-4 rounded-2xl text-white/70 text-base md:text-lg max-w-xl leading-relaxed border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] mb-10 border border-white/10"
+                    <p className="w-fit bg-black/40 backdrop-blur-md px-6 py-4 rounded-2xl text-white/70 text-base md:text-[20px] max-w-xl leading-relaxed border-l-4 pl-5 [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] mb-10 border border-white/10"
                        style={{ borderColor: YELLOW }}>
                         {data.bio || 'Calidad, confianza y compromiso en cada proyecto automotriz.'}
                     </p>

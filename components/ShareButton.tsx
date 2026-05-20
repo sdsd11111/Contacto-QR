@@ -48,8 +48,8 @@ export default function ShareButton({
 
     if (variant === "button") {
         const buttonStyles = {
-            white: "bg-white text-black hover:bg-black hover:text-white border border-white",
-            green: "bg-[#25D366] text-white hover:bg-white hover:text-[#25D366] border border-transparent hover:border-[#25D366]",
+            white: "bg-white text-black hover:bg-black hover:text-white",
+            green: "bg-[#25D366] text-white hover:bg-white hover:text-[#25D366] hover:border-[#25D366]",
             outline: "bg-white/10 text-white border border-white/20 hover:bg-white hover:text-black"
         };
 
@@ -59,6 +59,7 @@ export default function ShareButton({
                 whileTap={{ scale: 0.95 }}
                 onClick={handleShare}
                 className={`font-display-condensed tracking-widest uppercase transition-colors duration-300 flex items-center justify-center gap-2 ${buttonStyles[buttonStyle]} ${className}`}
+                style={{ border: 'none !important' }}
             >
                 <Share2 size={16} />
                 {buttonText}

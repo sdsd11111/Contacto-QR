@@ -92,14 +92,14 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         transition={{ delay: 0.5, duration: 1 }}
                         className="w-full max-w-4xl flex flex-col items-center"
                     >
-                        <h1 className="w-fit mx-auto bg-black/50 backdrop-blur-md px-8 py-4 sm:px-10 sm:py-5 rounded-[2rem] text-white text-[28px] sm:text-5xl md:text-7xl lg:text-[7rem] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
+                        <h1 className="w-fit mx-auto bg-black/50 backdrop-blur-md px-8 py-4 sm:px-10 sm:py-5 rounded-[2rem] text-white text-[28px] sm:text-5xl md:text-7xl lg:text-[55px] leading-none font-display-condensed uppercase drop-shadow-2xl mb-4 break-words [text-shadow:_-2px_-2px_0_#000,_2px_-2px_0_#000,_-2px_2px_0_#000,_2px_2px_0_#000] border border-white/10">
                             {props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title 
                                 ? props.activeSlides[props.currentSlideIndex || 0].title 
                                 : (props.data?.nombre_negocio || "FOR THOSE WHO KNOW")}
                         </h1>
                         
                         {(props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio) && (
-                            <p className="w-fit mx-auto bg-black/50 backdrop-blur-md px-6 py-3 sm:px-8 sm:py-3.5 rounded-xl text-white/90 font-sans-body text-base sm:text-base md:text-lg uppercase tracking-[0.2em] mb-8 max-w-3xl leading-relaxed [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] border border-white/10 font-bold">
+                            <p className="w-fit mx-auto bg-black/50 backdrop-blur-md px-6 py-3 sm:px-8 sm:py-3.5 rounded-xl text-white/90 font-sans-body text-base sm:text-base md:text-[20px] uppercase tracking-[0.2em] mb-8 max-w-3xl leading-relaxed [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000] border border-white/10 font-bold">
                                 {props.activeSlides?.[props.currentSlideIndex || 0]?.description || props.data?.bio || "PREMIUM EXPERIENCE"}
                             </p>
                         )}
@@ -109,11 +109,12 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={props.downloadVCF}
-                                className="bg-white text-black px-4 py-3 sm:px-12 sm:py-4 font-display-condensed text-xs sm:text-lg sm:text-xl tracking-widest uppercase hover:bg-black hover:text-white border border-white transition-colors duration-300 flex-1 min-w-[100px] max-w-[140px]"
+                                className="bg-white text-black px-4 py-3 sm:px-8 sm:py-4 md:px-6 md:py-3 font-display-condensed text-xs sm:text-sm md:text-base tracking-normal sm:tracking-widest uppercase hover:bg-black hover:text-white transition-colors duration-300 flex-1 min-w-[100px] sm:max-w-[160px] md:max-w-[180px]"
+                                style={{ border: 'none !important' }}
                             >
                                 Guardar contacto
                             </motion.button>
-                            
+
                             {props.data?.whatsapp && (
                                 <motion.a
                                     whileHover={{ scale: 1.05 }}
@@ -121,21 +122,22 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                     href={`https://wa.me/${props.data.whatsapp.replace(/\D/g, '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="bg-[#25D366] text-white px-4 py-3 sm:px-12 sm:py-4 font-display-condensed text-xs sm:text-lg sm:text-xl tracking-widest uppercase border border-transparent hover:bg-white hover:text-[#25D366] hover:border-[#25D366] transition-colors duration-300 flex-1 min-w-[100px] max-w-[140px]"
+                                    className="bg-[#25D366] text-white px-4 py-3 sm:px-8 sm:py-4 md:px-6 md:py-3 font-display-condensed text-xs sm:text-sm md:text-base tracking-normal sm:tracking-widest uppercase hover:bg-white hover:text-[#25D366] hover:border-[#25D366] transition-colors duration-300 flex-1 min-w-[100px] sm:max-w-[160px] md:max-w-[180px]"
+                                    style={{ border: 'none !important' }}
                                 >
                                     WHATSAPP
                                 </motion.a>
                             )}
 
-                            <ShareButton 
-                                title={props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title 
-                                    ? props.activeSlides[props.currentSlideIndex || 0].title 
+                            <ShareButton
+                                title={props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title
+                                    ? props.activeSlides[props.currentSlideIndex || 0].title
                                     : (props.data?.nombre_negocio || "FOR THOSE WHO KNOW")}
                                 text={props.data?.bio || "PREMIUM EXPERIENCE"}
                                 variant="button"
                                 buttonStyle="white"
                                 buttonText="COMPARTIR"
-                                className="flex-1 min-w-[100px] max-w-[140px] px-4 py-3 sm:px-8 sm:py-4 text-xs sm:text-lg sm:text-xl"
+                                className="flex-1 min-w-[100px] sm:max-w-[160px] md:max-w-[180px] px-4 py-3 sm:px-8 sm:py-4 md:px-6 md:py-3 text-xs sm:text-sm md:text-base tracking-normal sm:tracking-widest"
                             />
                         </div>
                     </motion.div>
@@ -579,9 +581,10 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                     <h4 className="font-display-condensed text-3xl md:text-4xl tracking-widest mb-8 text-black">
                         ORDENA POR WHATSAPP
                     </h4>
-                    <button 
+                    <button
                         onClick={props.downloadVCF}
-                        className="bg-black text-white px-12 md:px-16 py-4 md:py-5 font-display-condensed text-xl md:text-2xl tracking-widest uppercase hover:bg-white hover:text-black hover:border-black border border-transparent transition-all duration-500"
+                        className="bg-black text-white px-12 md:px-16 py-4 md:py-5 font-display-condensed text-xl md:text-2xl tracking-widest uppercase hover:bg-white hover:text-black hover:border-black border-none transition-all duration-500"
+                        style={{ border: 'none !important' }}
                     >
                         GUARDAR CONTACTO
                     </button>
