@@ -36,6 +36,50 @@ export default function VCardEditModal({
     const [heroSectionOpen, setHeroSectionOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'identidad' | 'contacto' | 'contenido' | 'hero' | 'catalogo' | 'qr' | 'vip' | 'categorias'>('identidad');
     const [isStructuring, setIsStructuring] = useState(false);
+    // ── Slug Changer ──
+    const [newSlug, setNewSlug] = useState('');
+    const [isChangingSlug, setIsChangingSlug] = useState(false);
+    const [slugMessage, setSlugMessage] = useState('');
+    const [slugError, setSlugError] = useState(false);
+
+    const handleChangeSlug = async () => {
+        if (!newSlug || newSlug === editingRegistro.slug) return;
+        if (!/^[a-z0-9-]+$/.test(newSlug)) {
+            alert('❌ El slug solo puede contener: minúsculas, números y guiones');
+            return;
+        }
+        if (newSlug.length < 5 || newSlug.length > 100) {
+            alert('❌ El slug debe tener entre 5 y 100 caracteres');
+            return;
+        }
+        setIsChangingSlug(true);
+        try {
+            const adminKey = localStorage.getItem('admin_access_key') || '';
+            const res = await fetch('/api/admin/change-slug', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-key': adminKey
+                },
+                body: JSON.stringify({
+                    id: editingRegistro.id,
+                    new_slug: newSlug
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('❌ Error: ' + (data.error || 'Error al cambiar slug'));
+                return;
+            }
+            alert('✅ Slug cambiado correctamente.\n\nAntes: /' + editingRegistro.slug + '\nAhora: /' + newSlug);
+            setEditingRegistro({ ...editingRegistro, slug: newSlug });
+            setNewSlug('');
+        } catch (err) {
+            alert('❌ Error de conexión al cambiar el slug');
+        } finally {
+            setIsChangingSlug(false);
+        }
+    };
 
     const handleAutoStructure = async () => {
         const text = editingRegistro.menu_digital;
@@ -454,7 +498,40 @@ export default function VCardEditModal({
                 <div className="sticky top-0 z-20 bg-[#050B1C]/80 backdrop-blur-xl border-b border-white/10 p-8 flex justify-between items-start">
                     <div>
                         <h3 className="text-3xl font-black uppercase italic tracking-tighter">Editar Registro</h3>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-2">ID: {editingRegistro.id} • Slug: /{editingRegistro.slug}</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-2">ID: {editingRegistro.id}</p>
+                        <div className="mt-2 flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Slug:</span>
+                            <span className="text-[10px] font-mono font-black text-white/80">/{editingRegistro.slug}</span>
+                            <span className="text-[10px] text-white/20">→</span>
+                            <input
+                                type="text"
+                                value={newSlug || editingRegistro.slug || ''}
+                                onChange={(e) => setNewSlug(e.target.value)}
+                                className="bg-white/5 border border-white/10 rounded-md px-2 py-1 text-[10px] font-mono font-bold text-white/80 w-44 focus:outline-none focus:border-primary/50"
+                                placeholder="nuevo-slug"
+                            />
+                            {newSlug && newSlug !== editingRegistro.slug && (
+                                <button
+                                    onClick={handleChangeSlug}
+                                    disabled={isChangingSlug}
+                                    className="px-3 py-1 rounded-md bg-primary/20 border border-primary/30 text-primary text-[9px] font-black uppercase tracking-wider hover:bg-primary/30 transition-all disabled:opacity-50 flex items-center gap-1"
+                                >
+                                    {isChangingSlug ? (
+                                        <><Loader2 size={10} className="animate-spin" /> Guardando...</>
+                                    ) : (
+                                        <><CheckCircle size={10} /> Guardar Slug</>
+                                    )}
+                                </button>
+                            )}
+                            {slugMessage && (
+                                <span className={cn(
+                                    "text-[9px] font-bold uppercase tracking-wider",
+                                    slugError ? "text-red-400" : "text-green-400"
+                                )}>
+                                    {slugMessage}
+                                </span>
+                            )}
+                        </div>
                         {editingRegistro.edit_code && (
                             <div className="mt-3 flex items-center gap-2">
                                 <span className="text-[11px] font-mono font-black text-green-400 bg-green-400/10 px-3 py-1 rounded-md border border-green-400/20 tracking-widest flex items-center gap-2">
