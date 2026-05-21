@@ -124,40 +124,28 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                             </p>
                         )}
 
-                        <div className="flex flex-wrap gap-2 justify-center items-center w-full px-2">
+                        <div className="flex flex-col items-center gap-3 w-full px-2">
+                            {/* Botón principal: Guardar Contacto */}
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={props.downloadVCF}
-                                className="bg-white text-black px-4 py-3 sm:px-8 sm:py-4 md:px-6 md:py-3 font-display-condensed text-xs sm:text-sm md:text-base tracking-normal sm:tracking-widest uppercase hover:bg-black hover:text-white transition-colors duration-300 flex-1 min-w-[100px] sm:max-w-[160px] md:max-w-[180px]"
+                                className="bg-white text-black w-full max-w-xs px-6 py-3 font-display-condensed text-sm tracking-widest uppercase hover:bg-black hover:text-white transition-colors duration-300"
                                 style={{ border: 'none !important' }}
                             >
                                 Guardar contacto
                             </motion.button>
 
-                            {props.data?.whatsapp && (
-                                <motion.a
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    href={`https://wa.me/${props.data.whatsapp.replace(/\D/g, '')}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="bg-[#25D366] text-white px-4 py-3 sm:px-8 sm:py-4 md:px-6 md:py-3 font-display-condensed text-xs sm:text-sm md:text-base tracking-normal sm:tracking-widest uppercase hover:bg-white hover:text-[#25D366] hover:border-[#25D366] transition-colors duration-300 flex-1 min-w-[100px] sm:max-w-[160px] md:max-w-[180px]"
-                                    style={{ border: 'none !important' }}
-                                >
-                                    WHATSAPP
-                                </motion.a>
-                            )}
-
+                            {/* Botón secundario: Compartir — estilo sutil Classic */}
                             <ShareButton
                                 title={props.activeSlides && props.activeSlides[props.currentSlideIndex || 0]?.title
                                     ? props.activeSlides[props.currentSlideIndex || 0].title
                                     : (props.data?.nombre_negocio || "FOR THOSE WHO KNOW")}
                                 text={props.data?.bio || "PREMIUM EXPERIENCE"}
                                 variant="button"
-                                buttonStyle="white"
+                                buttonStyle="outline"
                                 buttonText="COMPARTIR"
-                                className="flex-1 min-w-[100px] sm:max-w-[160px] md:max-w-[180px] px-4 py-3 sm:px-8 sm:py-4 md:px-6 md:py-3 text-xs sm:text-sm md:text-base tracking-normal sm:tracking-widest"
+                                className="!bg-black/80 backdrop-blur-sm !border-white/30 !text-white hover:!bg-black px-5 py-2 rounded-full text-xs tracking-widest"
                             />
                         </div>
                     </motion.div>
