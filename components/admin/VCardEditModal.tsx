@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Trash2, Download, Save, RefreshCw, QrCode, ExternalLink, Clock, X as CloseIcon, Video, Store, Library, Plus, Edit, Zap, ChevronDown, Star, Info, LogOut, CheckCircle, FileText, Loader2, ShieldCheck, User, Image as ImageIcon, AlertCircle, Copy, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { uploadFile } from '@/lib/upload';
 
 interface VCardEditModalProps {
     isOpen: boolean;
@@ -164,19 +165,9 @@ export default function VCardEditModal({
     };
 
     const handleHeroSlideImageUpload = async (file: File, slideId: string, field: 'portada_desktop' | 'portada_movil') => {
-        const fd = new FormData();
-        fd.append('file', file);
         try {
-            if (editingRegistro?.slug) {
-                fd.append('slug', editingRegistro.slug);
-            }
-            const res = await fetch('/api/upload', { method: 'POST', body: fd });
-            if (res.ok) {
-                const { url } = await res.json();
-                updateHeroSlides(heroSlides.map((s: any) => s.id === slideId ? { ...s, [field]: url } : s));
-            } else {
-                alert('Error al subir la imagen.');
-            }
+            const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
+            updateHeroSlides(heroSlides.map((s: any) => s.id === slideId ? { ...s, [field]: url } : s));
         } catch (err) {
             console.error('Error uploading hero slide image:', err);
             alert('Error de conexión al subir imagen.');
@@ -368,37 +359,28 @@ export default function VCardEditModal({
     const handleCategoryPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         if (!e.target.files || !e.target.files[0]) return;
         const file = e.target.files[0];
-        const fd = new FormData();
-        fd.append('file', file);
         try {
-            if (editingRegistro?.slug) {
-                fd.append('slug', editingRegistro.slug);
-            }
-            const res = await fetch('/api/upload', { method: 'POST', body: fd });
-            if (res.ok) {
-                const { url } = await res.json();
-                let parsed: any = {};
-                try {
-                    const raw = editingRegistro.json_override;
-                    parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
-                } catch (err) {}
-                
-                const currentImages = [...(parsed.experienceImages || [])];
-                const existingIndex = currentImages.findIndex((i: any) => i.index === index);
-                
-                if (existingIndex >= 0) {
-                    currentImages[existingIndex] = { ...currentImages[existingIndex], url };
-                } else {
-                    currentImages.push({ index, url });
-                }
-                
-                parsed.experienceImages = currentImages;
-                setEditingRegistro({ ...editingRegistro, json_override: parsed });
+            const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
+            
+            let parsed: any = {};
+            try {
+                const raw = editingRegistro.json_override;
+                parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+            } catch (err) {}
+            
+            const currentImages = [...(parsed.experienceImages || [])];
+            const existingIndex = currentImages.findIndex((i: any) => i.index === index);
+            
+            if (existingIndex >= 0) {
+                currentImages[existingIndex] = { ...currentImages[existingIndex], url };
             } else {
-                alert('Error al subir la imagen.');
+                currentImages.push({ index, url });
             }
+            
+            parsed.experienceImages = currentImages;
+            setEditingRegistro({ ...editingRegistro, json_override: parsed });
         } catch (err) {
-            alert('Error de conexión al subir imagen.');
+            alert('Error al subir la imagen.');
         }
     };
 
@@ -1457,16 +1439,8 @@ export default function VCardEditModal({
                                                             onChange={async e => {
                                                                 const file = e.target.files?.[0];
                                                                 if (!file) return;
-                                                                const fd = new FormData();
-                                                                fd.append('file', file);
-                                                                if (editingRegistro?.slug) {
-                                                                    fd.append('slug', editingRegistro.slug);
-                                                                }
-                                                                const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                                if (res.ok) {
-                                                                    const { url } = await res.json();
-                                                                    setEditingRegistro({ ...editingRegistro, youtube_video_url: url });
-                                                                }
+                                                                const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
+                                                                setEditingRegistro({ ...editingRegistro, youtube_video_url: url });
                                                             }} 
                                                         />
                                                     </label>
@@ -1811,19 +1785,11 @@ export default function VCardEditModal({
                                                                 <input type="file" className="hidden" accept="image/*" onChange={async e => {
                                                                     const file = e.target.files?.[0];
                                                                     if (!file) return;
-                                                                    const fd = new FormData();
-                                                                    fd.append('file', file);
-                                                                    if (editingRegistro?.slug) {
-                                                                        fd.append('slug', editingRegistro.slug);
-                                                                    }
-                                                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                                    if (res.ok) {
-                                                                        const { url } = await res.json();
-                                                                        const prods = [...catalogoJson.products];
-                                                                        const pIdx = prods.findIndex(p => p.id === prod.id);
-                                                                        prods[pIdx] = { ...prod, image: url };
-                                                                        updateCatalogo({ ...catalogoJson, products: prods });
-                                                                    }
+                                                                    const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
+                                                                    const prods = [...catalogoJson.products];
+                                                                    const pIdx = prods.findIndex(p => p.id === prod.id);
+                                                                    prods[pIdx] = { ...prod, image: url };
+                                                                    updateCatalogo({ ...catalogoJson, products: prods });
                                                                 }} />
                                                             </label>
                                                         </div>
@@ -1885,14 +1851,11 @@ export default function VCardEditModal({
                                                                                 if (editingRegistro?.slug) {
                                                                                     fd.append('slug', editingRegistro.slug);
                                                                                 }
-                                                                                const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                                                                if (res.ok) {
-                                                                                    const { url } = await res.json();
-                                                                                    const prods = [...catalogoJson.products];
-                                                                                    const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
-                                                                                    prods[pIdx] = { ...prod, video: url };
-                                                                                    updateCatalogo({ ...catalogoJson, products: prods });
-                                                                                }
+                                                                                const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
+                                                                                const prods = [...catalogoJson.products];
+                                                                                const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
+                                                                                prods[pIdx] = { ...prod, video: url };
+                                                                                updateCatalogo({ ...catalogoJson, products: prods });
                                                                             }} 
                                                                         />
                                                                     </label>

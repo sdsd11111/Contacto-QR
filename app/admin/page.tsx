@@ -859,11 +859,8 @@ export default function AdminDashboard() {
 
         setIsSaving(true);
         try {
-            const uploadFormData = new FormData();
-            uploadFormData.append('file', file);
-            const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
-            if (!uploadRes.ok) throw new Error(`Error subiendo ${tipo} al servidor`);
-            const { url: publicUrl } = await uploadRes.json();
+            const { uploadFile } = await import('@/lib/upload');
+            const { url: publicUrl } = await uploadFile({ file, slug: editingRegistro.id });
 
             setEditingRegistro({ ...editingRegistro, [tipo]: publicUrl });
 
@@ -890,14 +887,11 @@ export default function AdminDashboard() {
 
         setIsSaving(true);
         try {
+            const { uploadFile } = await import('@/lib/upload');
             const newUrls = [...(editingRegistro.galeria_urls || [])];
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                const uploadFormData = new FormData();
-                uploadFormData.append('file', file);
-                const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
-                if (!uploadRes.ok) throw new Error(`Error subiendo imagen #${i + 1} al servidor`);
-                const { url: publicUrl } = await uploadRes.json();
+                const { url: publicUrl } = await uploadFile({ file, slug: editingRegistro.id });
                 newUrls.push(publicUrl);
             }
 
