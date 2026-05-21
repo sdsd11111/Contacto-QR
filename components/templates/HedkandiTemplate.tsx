@@ -31,6 +31,25 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
  
     // State for the Experience Slider
     const [activeExpIndex, setActiveExpIndex] = React.useState(0);
+    // State for Lightbox
+    const [lightboxImg, setLightboxImg] = React.useState<string | null>(null);
+
+    // Close lightbox on Escape key + lock body scroll
+    React.useEffect(() => {
+        if (!lightboxImg) {
+            document.body.style.overflow = '';
+            return;
+        }
+        document.body.style.overflow = 'hidden';
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setLightboxImg(null);
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => {
+            document.body.style.overflow = '';
+            window.removeEventListener('keydown', handleKey);
+        };
+    }, [lightboxImg]);
  
     return (
         <div className="w-full min-h-screen bg-white text-[#1A1A1A] overflow-x-hidden selection:bg-[#7292ab] selection:text-white">
@@ -215,19 +234,27 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                         className="absolute inset-0 w-full h-full"
                                         style={{ display: activeExpIndex === idx ? 'block' : 'none' }}
                                     >
-                                        {/* Background Image */}
+                                        {/* Clickable area — opens lightbox */}
                                         <div 
-                                            className="absolute inset-0 bg-cover bg-center"
-                                            style={{ backgroundImage: `url(${col.img})` }}
-                                        ></div>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+                                            className="absolute inset-0 cursor-pointer"
+                                            onClick={() => setLightboxImg(col.img)}
+                                        >
+                                            {/* Background Image */}
+                                            <div 
+                                                className="absolute inset-0 bg-cover bg-center"
+                                                style={{ backgroundImage: `url(${col.img})` }}
+                                            />
+                                            {/* Gradient */}
+                                            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent pointer-events-none" />
+                                        </div>
                                         
-                                        {/* Content Overlay */}
-                                        <div className="relative z-10 h-full w-full p-8 md:p-20 flex flex-col justify-center items-start">
+                                        {/* Content Overlay (above clickable area) */}
+                                        <div className="relative z-10 h-full w-full p-8 md:p-20 flex flex-col justify-center items-start pointer-events-none">
                                             <motion.div
                                                 initial={{ y: 20, opacity: 0 }}
                                                 animate={{ y: activeExpIndex === idx ? 0 : 20, opacity: activeExpIndex === idx ? 1 : 0 }}
                                                 transition={{ delay: 0.3, duration: 0.6 }}
+                                                className="pointer-events-auto"
                                             >
                                                 <span className="font-display-condensed text-white/40 text-xl tracking-[0.4em] uppercase block mb-4">
                                                     Categoría {col.num}
@@ -271,6 +298,31 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                 ))}
                             </div>
                         </div>
+
+                        {/* ─── LIGHTBOX ─── */}
+                        {lightboxImg && (
+                            <div 
+                                className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4 md:p-10 cursor-pointer"
+                                onClick={() => setLightboxImg(null)}
+                            >
+                                {/* Close button */}
+                                <button 
+                                    onClick={() => setLightboxImg(null)}
+                                    className="absolute top-4 right-4 md:top-8 md:right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-10"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                                {/* Image */}
+                                <img 
+                                    src={lightboxImg} 
+                                    alt="Imagen ampliada"
+                                    className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl cursor-default"
+                                    onClick={(e) => e.stopPropagation()}
+                                />
+                            </div>
+                        )}
                     </section>
                 );
             })()}
