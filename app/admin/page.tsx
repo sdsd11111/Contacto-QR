@@ -823,8 +823,12 @@ export default function AdminDashboard() {
 
         setIsSaving(true);
         try {
+            // Comprimir la imagen antes de subir para evitar error 413
+            const { compressImage } = await import('@/lib/imageCompress');
+            const compressedFile = await compressImage(file);
+
             const uploadFormData = new FormData();
-            uploadFormData.append('file', file);
+            uploadFormData.append('file', compressedFile);
             const uploadRes = await fetch('/api/upload', { method: 'POST', body: uploadFormData });
             if (!uploadRes.ok) throw new Error('Error subiendo foto al servidor');
             const { url: publicUrl } = await uploadRes.json();
@@ -1047,9 +1051,11 @@ export default function AdminDashboard() {
         setIsSavingCatalog(true);
 
         try {
-            // Subir imagen
+            // Subir imagen (comprimir antes para evitar error 413)
+            const { compressImage } = await import('@/lib/imageCompress');
+            const compressedFile = await compressImage(catalogImageFile);
             const fd = new FormData();
-            fd.append('file', catalogImageFile);
+            fd.append('file', compressedFile);
             const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
             if (!uploadRes.ok) throw new Error('Error subiendo imagen del catálogo');
             const { url } = await uploadRes.json();
