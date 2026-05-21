@@ -119,8 +119,19 @@ export default function MenuTabs({
         };
     }, [activeIdx]);
 
-    const activeCategory = categories[activeIdx];
+    // Asegurar que el índice siempre esté dentro de los límites
+    const safeActiveIdx = activeIdx >= categories.length ? 0 : activeIdx;
+
+    // Restablecer el índice a 0 si la cantidad de categorías disminuye
+    useEffect(() => {
+        if (activeIdx >= categories.length) {
+            setActiveIdx(0);
+        }
+    }, [categories.length, activeIdx]);
+
     if (!categories.length) return null;
+    const activeCategory = categories[safeActiveIdx];
+    if (!activeCategory) return null;
 
     // Color CSS real para usar en estilos inline
     const accentCSS = accentColor.startsWith('#') ? accentColor : `#${accentColor}`;

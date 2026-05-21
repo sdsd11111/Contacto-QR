@@ -11,6 +11,7 @@ import CatalogGallery from '@/components/card/CatalogGallery';
 import CabinetMenu from '@/components/CabinetMenu';
 import ShareButton from '@/components/ShareButton';
 import { safeParse } from '@/lib/jsonUtils';
+import MapSection from '@/components/MapSection';
 import type { ClassicTemplateProps } from '@/components/templates/types';
 import { checkIsVerticalVideo } from '@/lib/videoUtils';
 
@@ -198,7 +199,7 @@ export default function ClassicTemplate({
     const getHeroButtonText = () => {
         if (data.hero_button_text) return data.hero_button_text;
         const action = data.hero_action || 'wifi';
-        if (action === 'wifi') return "ACCEDE A NUESTRO INTERNET";
+        if (action === 'wifi') return "VER OFERTA";
         if (action === 'file') return "DESCARGAR CONTACTO O ARCHIVO";
         return "VER MÁS INFORMACIÓN";
     };
@@ -422,31 +423,6 @@ export default function ClassicTemplate({
                         transition={{ duration: 0.8, delay: 0.5 }}
                         className="relative z-10 pb-8 md:pb-24 flex flex-col items-center gap-3 md:gap-6"
                     >
-                        <button
-                            onClick={handleHeroClick}
-                            className="group flex flex-col items-center gap-2 md:gap-4 focus:outline-none w-[75vw] max-w-xs md:w-auto md:max-w-none"
-                        >
-                            <span 
-                                className="w-full justify-center text-xs sm:text-sm md:text-xl font-display-condensed tracking-[0.3em] px-10 py-5 md:px-16 md:py-7 rounded-2xl md:rounded-full group-hover:scale-105 transition-all flex items-center gap-4 text-center shadow-2xl relative overflow-hidden group"
-                                style={{
-                                    background: 'white',
-                                    color: 'black'
-                                }}
-                            >
-                                <motion.div 
-                                    className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 transition-opacity"
-                                />
-                                {getHeroButtonIcon()}
-                                {getHeroButtonText()}
-                            </span>
-                            <motion.div
-                                animate={{ y: [0, 12, 0] }}
-                                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                            >
-                                <ChevronDown size={28} className="text-white/70 md:w-12 md:h-12" />
-                            </motion.div>
-                        </button>
-
                         <ShareButton 
                             title={data.tipo_perfil === 'negocio' ? (data.nombre_negocio || data.nombre) : data.nombre}
                             text={data.bio || "Mira este perfil digital"}
@@ -564,7 +540,7 @@ export default function ClassicTemplate({
                                         </div>
                                     </div>
 
-                                    {(data.bio || data.productos_servicios) && (
+                                    {(data.bio || data.productos_servicios || data.catalogo_json || data.menu_digital) && (
                                         <motion.div
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
@@ -635,105 +611,151 @@ export default function ClassicTemplate({
                                                 return null;
                                             })()}
 
-                                            {data.productos_servicios && (!showCatalog || !data.catalogo_json) && (
-                                                <div className="mt-12">
-                                                    <div className="flex items-center justify-between mb-10">
-                                                        <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-[var(--theme-primary)] flex items-center gap-3">
-                                                            <span className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
-                                                                <Briefcase size={14} className="text-[var(--theme-primary)]" />
+                                            {(() => {
+                                                // PRIORIDAD:
+                                                // 1. Menú Digital (formato [{name, items}])
+                                                // 2. Catálogo de productos/servicios (JSON)
+                                                // 3. productos_servicios (campo legado de texto libre)
+                                                let productsList: string[] = [];
+
+                                                // 1. Intentar desde menu_digital
+                                                const menuCats = safeParse<any[]>(data.menu_digital, []);
+                                                if (Array.isArray(menuCats) && menuCats.length > 0 && menuCats[0]?.name) {
+                                                    productsList = menuCats.map(cat => cat.name || cat.nombre).filter(Boolean);
+                                                }
+
+                                                // 2. Si no hay menú, intentar desde catalogo_json
+                                                if (productsList.length === 0 && data.catalogo_json) {
+                                                    const parsedCatalog = safeParse<any>(data.catalogo_json, { products: [], categories: [] });
+                                                    const catalogCats = parsedCatalog?.categories || [];
+                                                    if (Array.isArray(catalogCats) && catalogCats.length > 0) {
+                                                        productsList = catalogCats;
+                                                    } else if (Array.isArray(parsedCatalog?.products) && parsedCatalog.products.length > 0) {
+                                                        const cats = Array.from(new Set(parsedCatalog.products.map((item: any) => item.category || item.categoria))).filter(Boolean) as string[];
+                                                        productsList = cats;
+                                                    }
+                                                    if (productsList.length === 0 && Array.isArray(parsedCatalog) && parsedCatalog.length > 0) {
+                                                        const cats = Array.from(new Set(parsedCatalog.map((item: any) => item.category || item.categoria))).filter(Boolean) as string[];
+                                                        productsList = cats;
+                                                    }
+                                                }
+
+                                                // 3. Último recurso: productos_servicios
+                                                if (productsList.length === 0 && data.productos_servicios) {
+                                                    productsList = data.productos_servicios
+                                                        .split(data.productos_servicios.includes('\n') ? '\n' : ',')
+                                                        .map((item: string) => item.trim())
+                                                        .filter((item: string) => item !== '');
+                                                }
+
+                                                if (productsList.length === 0) return null;
+
+                                                // ─── Leer datos de experiencia desde json_override ───
+                                                const overridesParsed = safeParse<any>(data?.json_override, {});
+                                                const experienceTitles: Array<{index: number, title: string}> = overridesParsed.experienceTitles || [];
+                                                const experienceImages: Array<{index: number, url: string}> = overridesParsed.experienceImages || [];
+                                                const experienceSectionTitle = overridesParsed.experienceTitle || '';
+                                                const experienceSubtitle = overridesParsed.experienceSubtitle || '';
+
+                                                // Si hay títulos personalizados configurados, limitar categorías a ese número
+                                                if (experienceTitles.length > 0 && productsList.length > experienceTitles.length) {
+                                                    productsList = productsList.slice(0, experienceTitles.length);
+                                                }
+
+                                                const visibleProducts = isProductsExpanded ? productsList : productsList.slice(0, 4);
+
+                                                // Imágenes por defecto (fallback)
+                                                const defaultCatImages = [
+                                                    "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2070&auto=format&fit=crop",
+                                                    "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop",
+                                                    "https://images.unsplash.com/photo-1492724441997-5dc865305da7?q=80&w=2070&auto=format&fit=crop",
+                                                    "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?q=80&w=2070&auto=format&fit=crop",
+                                                    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=2070&auto=format&fit=crop"
+                                                ];
+
+                                                return (
+                                                    <div className="mt-12">
+                                                        <div className="flex items-center justify-between mb-10">
+                                                            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-[var(--theme-primary)] flex items-center gap-3">
+                                                                <span className="w-8 h-8 rounded-full bg-[var(--theme-primary)]/20 flex items-center justify-center">
+                                                                    <Briefcase size={14} className="text-[var(--theme-primary)]" />
+                                                                </span>
+                                                                {experienceSectionTitle || 'Soluciones destacadas'}
+                                                            </h4>
+                                                            <span className="hidden md:inline-flex px-4 py-1.5 bg-white/5 rounded-full text-[9px] font-black uppercase tracking-widest text-white/40 border border-white/5">
+                                                                {experienceSubtitle || 'Nuestras especialidades'}
                                                             </span>
-                                                            Soluciones destacadas
-                                                        </h4>
-                                                        <span className="hidden md:inline-flex px-4 py-1.5 bg-white/5 rounded-full text-[9px] font-black uppercase tracking-widest text-white/40 border border-white/5">
-                                                            Nuestras especialidades
-                                                        </span>
-                                                    </div>
+                                                        </div>
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                                                        {(() => {
-                                                            const allProducts = data.productos_servicios
-                                                                .split(data.productos_servicios.includes('\n') ? '\n' : ',')
-                                                                .map((item: string) => item.trim())
-                                                                .filter((item: string) => item !== '');
-                                                            
-                                                            const visibleProducts = isProductsExpanded ? allProducts : allProducts.slice(0, 4);
-                                                            
-                                                            // Curated visual images for Foto Films context
-                                                            const catImages = [
-                                                                "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=2070&auto=format&fit=crop", // Camera
-                                                                "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=2070&auto=format&fit=crop", // Laptop/Design
-                                                                "https://images.unsplash.com/photo-1492724441997-5dc865305da7?q=80&w=2070&auto=format&fit=crop", // Printing
-                                                                "https://images.unsplash.com/photo-1554048612-b6a482bc67e5?q=80&w=2070&auto=format&fit=crop", // Video
-                                                                "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=2070&auto=format&fit=crop"  // Studio
-                                                            ];
-
-                                                            return (
-                                                                <>
-                                                                    {visibleProducts.map((line: string, index: number) => {
-                                                                        const cleanText = line.replace(/^[-•*]\s*/, '');
-                                                                        return (
-                                                                            <motion.div 
-                                                                                key={index} 
-                                                                                initial={{ opacity: 0, y: 20 }}
-                                                                                whileInView={{ opacity: 1, y: 0 }}
-                                                                                viewport={{ once: true }}
-                                                                                transition={{ delay: index * 0.1 }}
-                                                                                whileHover={{ y: -10 }}
-                                                                                className="group relative h-[300px] md:h-[400px] rounded-[32px] overflow-hidden border border-white/10 bg-black/40 shadow-2xl"
-                                                                            >
-                                                                                <img 
-                                                                                    src={catImages[index % catImages.length]} 
-                                                                                    alt={cleanText}
-                                                                                    className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-700"
-                                                                                />
-                                                                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                                                            {visibleProducts.map((line: string, index: number) => {
+                                                                // Aplicar título personalizado desde experienceTitles si existe
+                                                                const customTitleObj = experienceTitles.find((t: any) => t.index === index);
+                                                                const displayText = customTitleObj?.title || line.replace(/^[-•*]\s*/, '');
+                                                                
+                                                                // Aplicar imagen personalizada desde experienceImages si existe
+                                                                const customImg = experienceImages.find((img: any) => img.index === index);
+                                                                const imgSrc = customImg?.url || defaultCatImages[index % defaultCatImages.length];
+                                                                
+                                                                return (
+                                                                    <motion.div 
+                                                                        key={index} 
+                                                                        initial={{ opacity: 0, y: 20 }}
+                                                                        whileInView={{ opacity: 1, y: 0 }}
+                                                                        viewport={{ once: true }}
+                                                                        transition={{ delay: index * 0.1 }}
+                                                                        whileHover={{ y: -10 }}
+                                                                        className="group relative h-[300px] md:h-[400px] rounded-[32px] overflow-hidden border border-white/10 bg-black/40 shadow-2xl"
+                                                                    >
+                                                                        <img 
+                                                                            src={imgSrc}
+                                                                            alt={displayText}
+                                                                            className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-700"
+                                                                        />
+                                                                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                                                                        
+                                                                        <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                                                                            <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                                                                                <span className="px-3 py-1 bg-[var(--theme-primary)] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-4 inline-block shadow-lg shadow-[var(--theme-primary)]/40">
+                                                                                    {experienceSubtitle || 'Categoría'}
+                                                                                </span>
+                                                                                <h3 className="text-2xl md:text-3xl lg:text-4xl font-display-condensed font-black text-white uppercase italic leading-none mb-4 break-words">
+                                                                                    {displayText}
+                                                                                </h3>
+                                                                                <div className="h-0.5 w-12 bg-[var(--theme-primary)] group-hover:w-full transition-all duration-700 mb-6" />
                                                                                 
-                                                                                <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                                                                                    <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                                                                                        <span className="px-3 py-1 bg-[var(--theme-primary)] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-4 inline-block shadow-lg shadow-[var(--theme-primary)]/40">
-                                                                                            Categoría
-                                                                                        </span>
-                                                                                        <h3 className="text-2xl md:text-3xl lg:text-4xl font-display-condensed font-black text-white uppercase italic leading-none mb-4 break-words">
-                                                                                            {cleanText}
-                                                                                        </h3>
-                                                                                        <div className="h-0.5 w-12 bg-[var(--theme-primary)] group-hover:w-full transition-all duration-700 mb-6" />
-                                                                                        
-                                                                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                                                                            <button 
-                                                                                                onClick={handleWhatsapp}
-                                                                                                className="w-full py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
-                                                                                            >
-                                                                                                Consultar ahora
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    </div>
+                                                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                                                                    <button 
+                                                                                        onClick={handleWhatsapp}
+                                                                                        className="w-full py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+                                                                                    >
+                                                                                        Consultar ahora
+                                                                                    </button>
                                                                                 </div>
-
-                                                                                {/* Decorative Icon */}
-                                                                                <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
-                                                                                    <Zap size={20} className="text-[var(--theme-primary)]" />
-                                                                                </div>
-                                                                            </motion.div>
-                                                                        );
-                                                                    })}
-                                                                    
-                                                                    {allProducts.length > 4 && (
-                                                                        <div className="col-span-full mt-12 flex justify-center">
-                                                                            <button 
-                                                                                onClick={() => setIsProductsExpanded(!isProductsExpanded)}
-                                                                                className="flex items-center gap-3 px-10 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black tracking-[0.4em] uppercase transition-all hover:scale-105 active:scale-95"
-                                                                            >
-                                                                                {isProductsExpanded ? 'Cerrar galería' : `Ver todo el portafolio (${allProducts.length - 4})`}
-                                                                                <ChevronDown size={20} className={cn("transition-transform duration-500", isProductsExpanded && "rotate-180")} />
-                                                                            </button>
+                                                                            </div>
                                                                         </div>
-                                                                    )}
-                                                                </>
-                                                            );
-                                                        })()}
+                                                                        <div className="absolute top-6 right-6 w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                                                            <Zap size={20} className="text-[var(--theme-primary)]" />
+                                                                        </div>
+                                                                    </motion.div>
+                                                                );
+                                                            })}
+                                                            
+                                                            {productsList.length > 4 && (
+                                                                <div className="col-span-full mt-12 flex justify-center">
+                                                                    <button 
+                                                                        onClick={() => setIsProductsExpanded(!isProductsExpanded)}
+                                                                        className="flex items-center gap-3 px-10 py-4 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black tracking-[0.4em] uppercase transition-all hover:scale-105 active:scale-95"
+                                                                    >
+                                                                        {isProductsExpanded ? 'Cerrar galería' : `Ver todo el portafolio (${productsList.length - 4})`}
+                                                                        <ChevronDown size={20} className={cn("transition-transform duration-500", isProductsExpanded && "rotate-180")} />
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
                                         </motion.div>
                                     )}
                                 </div>
@@ -744,9 +766,8 @@ export default function ClassicTemplate({
 
                         {/* Slot placeholder — el contenido real se renderiza fuera del grid */}
 
-                        {/* Catálogo de Productos/Servicios (Si no viene por Slot) */}
-                        {/* Catálogo de Productos/Servicios (Si no viene por Slot) */}
-                        {!afterExperienceSlot && (showCatalog || data?.plan === 'catalog' || data?.plan === 'digital') && (() => {
+                        {/* Catálogo de Productos/Servicios */}
+                        {(showCatalog || data?.plan === 'catalog' || data?.plan === 'digital') && (() => {
                             // Intentar obtener el JSON del catálogo: prioritario catalogo_json, pero permitimos menu_digital si es JSON
                             let catalogSource = data.catalogo_json;
                             
@@ -782,8 +803,20 @@ export default function ClassicTemplate({
                                 </div>
                             );
                         })()}
+                    </div>
+                </div>
 
-                        {(data.plan === 'business' || data.plan === 'catalog') && data.google_rating && (
+                {/* ─── NUESTRA CARTA (FULL WIDTH) ─── */}
+                {afterExperienceSlot && (
+                    <div className="w-full mt-12 md:mt-20">
+                        {afterExperienceSlot}
+                    </div>
+                )}
+
+                <div className="max-w-6xl mx-auto relative z-10 px-2 md:px-4">
+                    <div className="grid lg:grid-cols-12 gap-6 md:gap-8 items-stretch">
+
+                        {data.google_rating && (
                             <div className="lg:col-span-12 order-3 xl:order-4 mt-8 md:mt-16 w-full">
                                 <motion.div 
                                     initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -918,43 +951,13 @@ export default function ClassicTemplate({
 
 
                 {(() => {
+                    const addressText = data?.direccion || data?.address || '';
                     const rawGoogleBusiness = data?.google_business || "https://maps.app.goo.gl/zGHf7235Myux7T4P7";
                     const isGoogleLink = rawGoogleBusiness.startsWith('http');
-                    const businessName = data?.nombre_negocio || data?.nombre || '';
-                    const addressText = data?.direccion || data?.address || '';
-                    const coordMatch = rawGoogleBusiness.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-                    const hasCoords = coordMatch && coordMatch.length >= 3;
-                    const isIframe = rawGoogleBusiness.trim().toLowerCase().startsWith('<iframe');
-                    const isEmbedLink = rawGoogleBusiness.includes('/maps/embed');
-
-                    let finalMapSrc = '';
-                    let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName || "Loja, Ecuador")}`;
                     
-                    if (isGoogleLink && !isEmbedLink) {
+                    let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || data?.nombre_negocio || data?.nombre || "Loja, Ecuador")}`;
+                    if (isGoogleLink) {
                         buttonHref = rawGoogleBusiness;
-                    }
-
-                    if (isIframe) {
-                        const match = rawGoogleBusiness.match(/src=["'](.*?)["']/);
-                        finalMapSrc = match ? match[1] : '';
-                    } else if (isEmbedLink) {
-                        finalMapSrc = rawGoogleBusiness;
-                    } else {
-                        let mapQuery = hasCoords 
-                            ? `${coordMatch[1]},${coordMatch[2]}` 
-                            : (isGoogleLink && !addressText) 
-                                ? businessName 
-                                : isGoogleLink 
-                                    ? `${businessName} ${addressText}`.trim() 
-                                    : (rawGoogleBusiness || addressText || businessName);
-                                    
-                        if (!mapQuery || mapQuery.trim() === '') {
-                            mapQuery = "Loja, Ecuador";
-                        }
-                                    
-                        finalMapSrc = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
-                            ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
-                            : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
                     }
                     
                     return (
@@ -969,7 +972,7 @@ export default function ClassicTemplate({
                                         Ubicación estratégica
                                     </h4>
                                     <p className="text-white/50 text-sm md:text-base font-medium max-w-xl leading-relaxed">
-                                        {data.direccion || data.address || "Visítanos en nuestra ubicación oficial para una experiencia personalizada."}
+                                        {addressText || "Visítanos en nuestra ubicación oficial para una experiencia personalizada."}
                                     </p>
                                 </div>
                                 <a 
@@ -984,25 +987,16 @@ export default function ClassicTemplate({
                             </div>
                             
                             <div className="max-w-5xl mx-auto px-4 w-full">
-                                <div className="w-full h-[400px] md:h-[500px] relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] bg-navy/40 backdrop-blur-md">
-                                    {finalMapSrc ? (
-                                        <iframe
-                                            width="100%"
-                                            height="100%"
-                                            frameBorder="0"
-                                            style={{ border: 0, filter: 'grayscale(0.6) contrast(1.1) brightness(0.8)' }}
-                                            src={finalMapSrc}
-                                            allowFullScreen
-                                            title="Ubicación en Google Maps"
-                                        ></iframe>
-                                    ) : (
-                                        <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/40 text-sm font-bold tracking-widest uppercase">
-                                            Mapa no disponible
-                                        </div>
-                                    )}
+                                <MapSection 
+                                    googleBusiness={data?.google_business}
+                                    businessName={data?.nombre_negocio || data?.nombre || ''}
+                                    addressText={addressText}
+                                    containerClassName="w-full h-[400px] md:h-[500px] relative rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/20 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] bg-navy/40 backdrop-blur-md"
+                                    iframeStyle={{ filter: 'contrast(1.05) brightness(0.9)' }}
+                                >
                                     <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/10 rounded-[inherit]" />
                                     <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-navy/20 via-transparent to-navy/40" />
-                                </div>
+                                </MapSection>
                             </div>
                         </div>
                     );
@@ -1013,13 +1007,6 @@ export default function ClassicTemplate({
                         </div>
                     </div>
                 </div>
-
-                {/* ─── Slot Full-Width: rompe el patrón Navy con blanco ─── */}
-                {afterExperienceSlot && (
-                    <div className="w-full mt-12 md:mt-20">
-                        {afterExperienceSlot}
-                    </div>
-                )}
 
                 {beforeMarqueeSlot && (
                     <div className="w-full max-w-7xl mx-auto px-4 mt-16 md:mt-32">

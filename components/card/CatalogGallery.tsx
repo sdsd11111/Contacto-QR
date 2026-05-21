@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn, Info, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -67,6 +67,15 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
     }, [items, customCategories]);
 
     const [activeCategory, setActiveCategory] = useState<string>(() => categories[0] || '');
+
+    // Sincronizar la categoría activa si cambia la lista (renombrado, eliminación, etc.)
+    useEffect(() => {
+        if (categories.length > 0 && !categories.includes(activeCategory)) {
+            setActiveCategory(categories[0]);
+        } else if (categories.length === 0) {
+            setActiveCategory('');
+        }
+    }, [categories, activeCategory]);
 
     // Filter items based on active category
     const filteredItems = useMemo(() => {

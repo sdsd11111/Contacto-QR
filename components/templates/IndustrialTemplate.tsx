@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, MapPin, Phone, Mail, Instagram, Facebook, Link as LinkIcon, Download, Zap, ChevronRight, Activity, Shield, Clock, Users, Building, Truck } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 import { safeParse } from '@/lib/jsonUtils';
+import MapSection from '@/components/MapSection';
 import CatalogProGallery from '../card/CatalogProGallery';
 import ShareButton from '@/components/ShareButton';
 import { BaseTemplateProps, HeroCarouselTemplateProps } from './types';
@@ -422,43 +423,13 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
 
             {/* 5. LOCATION / MAP */}
                 {(() => {
+                    const addressText = data?.direccion || data?.address || '';
                     const rawGoogleBusiness = data?.google_business || "https://maps.app.goo.gl/zGHf7235Myux7T4P7";
                     const isGoogleLink = rawGoogleBusiness.startsWith('http');
-                    const businessName = data?.nombre_negocio || data?.nombre || '';
-                    const addressText = data?.direccion || data?.address || '';
-                    const coordMatch = rawGoogleBusiness.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-                    const hasCoords = coordMatch && coordMatch.length >= 3;
-                    const isIframe = rawGoogleBusiness.trim().toLowerCase().startsWith('<iframe');
-                    const isEmbedLink = rawGoogleBusiness.includes('/maps/embed');
-
-                    let finalMapSrc = '';
-                    let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName || "Loja, Ecuador")}`;
                     
-                    if (isGoogleLink && !isEmbedLink) {
+                    let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || data?.nombre_negocio || data?.nombre || "Loja, Ecuador")}`;
+                    if (isGoogleLink) {
                         buttonHref = rawGoogleBusiness;
-                    }
-
-                    if (isIframe) {
-                        const match = rawGoogleBusiness.match(/src=["'](.*?)["']/);
-                        finalMapSrc = match ? match[1] : '';
-                    } else if (isEmbedLink) {
-                        finalMapSrc = rawGoogleBusiness;
-                    } else {
-                        let mapQuery = hasCoords 
-                            ? `${coordMatch[1]},${coordMatch[2]}` 
-                            : (isGoogleLink && !addressText) 
-                                ? businessName 
-                                : isGoogleLink 
-                                    ? `${businessName} ${addressText}`.trim() 
-                                    : (rawGoogleBusiness || addressText || businessName);
-                                    
-                        if (!mapQuery || mapQuery.trim() === '') {
-                            mapQuery = "Loja, Ecuador";
-                        }
-                                    
-                        finalMapSrc = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
-                            ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
-                            : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&output=embed`;
                     }
                     
                     return (
@@ -469,7 +440,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                     <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Centro de Operaciones</h4>
                                     <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight mb-6">Nuestra <span className="text-[#FF5C00]">Ubicación</span></h2>
                                     <p className="text-navy/60 font-medium leading-relaxed max-w-2xl mx-auto mb-8">
-                                        {data.direccion || data.address || "Visítanos en nuestra ubicación oficial para una atención directa y especializada."}
+                                        {addressText || "Visítanos en nuestra ubicación oficial para una atención directa y especializada."}
                                     </p>
                                     <a 
                                         href={buttonHref}
@@ -481,24 +452,15 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                         Trazar Ruta
                                     </a>
                                 </div>
-                                <div className="w-full h-[400px] md:h-[600px] relative border-4 border-navy/5 shadow-2xl overflow-hidden group">
+                                <MapSection 
+                                    googleBusiness={data?.google_business}
+                                    businessName={data?.nombre_negocio || data?.nombre || ''}
+                                    addressText={addressText}
+                                    containerClassName="w-full h-[400px] md:h-[600px] relative border-4 border-navy/5 shadow-2xl overflow-hidden group"
+                                    iframeStyle={{ filter: 'contrast(1.1) brightness(0.95)' }}
+                                >
                                     <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF5C00] z-10 flex items-center justify-center transform translate-x-12 -translate-y-12 rotate-45 group-hover:scale-110 transition-transform" />
-                                    {finalMapSrc ? (
-                                        <iframe
-                                            width="100%"
-                                            height="100%"
-                                            frameBorder="0"
-                                            style={{ border: 0, filter: 'grayscale(1) contrast(1.2)' }}
-                                            src={finalMapSrc}
-                                            allowFullScreen
-                                            title="Ubicación en Google Maps"
-                                        ></iframe>
-                                    ) : (
-                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-sm font-bold tracking-widest uppercase">
-                                            Mapa no disponible
-                                        </div>
-                                    )}
-                                </div>
+                                </MapSection>
                             </div>
                         </section>
                     );

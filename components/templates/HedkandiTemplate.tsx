@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { HedkandiTemplateProps } from './types';
 import { safeParse } from '@/lib/jsonUtils';
+import MapSection from '@/components/MapSection';
 import { Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { checkIsVerticalVideo } from '@/lib/videoUtils';
@@ -499,6 +500,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             })()}
 
             {/* 4. GOOGLE TRUST & SOCIAL SECTION */}
+            {props.data?.google_rating && (
             <section className="bg-[#1A1A1A] py-24 px-4 md:px-12 relative overflow-hidden">
                 {/* Background ambient glow */}
                 <div 
@@ -528,34 +530,42 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
 
                         {/* Stars */}
                         <div className="flex gap-2 mb-6">
-                            {[...Array(5)].map((_, i) => (
-                                <svg 
-                                    key={i} 
-                                    className="w-6 h-6 md:w-8 md:h-8 fill-current" 
-                                    viewBox="0 0 20 20"
-                                    style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}
-                                >
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                            ))}
+                            {[...Array(5)].map((_, i) => {
+                                const r = parseFloat(String(props.data?.google_rating));
+                                const isFilled = i < Math.floor(r);
+                                const isHalf = !isFilled && i < r;
+                                return (
+                                    <svg 
+                                        key={i} 
+                                        className="w-6 h-6 md:w-8 md:h-8 fill-current" 
+                                        viewBox="0 0 20 20"
+                                        style={{ 
+                                            color: isFilled || isHalf ? (props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626') : 'rgba(255,255,255,0.15)',
+                                            opacity: isHalf ? 0.5 : 1
+                                        }}
+                                    >
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                    </svg>
+                                );
+                            })}
                         </div>
 
                         {/* Rating Number */}
                         <div className="font-display-condensed text-8xl md:text-9xl leading-none text-white mb-4">
-                            {props.data?.rating || "5.0"}
+                            {parseFloat(String(props.data?.google_rating)).toFixed(1)}
                         </div>
                         <div className="font-sans-body text-xs md:text-sm tracking-widest uppercase text-white/60 mb-10">
-                            {props.data?.reviews || "10+"} RESEÑAS EN <span className="font-bold" style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}>GOOGLE BUSINESS</span>
+                            {props.data?.google_reviews_count || "10+"} RESEÑAS EN <span className="font-bold" style={{ color: props.themePrimary !== '#1A1A1A' ? props.themePrimary : '#dc2626' }}>GOOGLE BUSINESS</span>
                         </div>
 
                         {/* Quote */}
                         <p className="font-sans-body text-sm md:text-lg text-white/80 italic mb-12 max-w-2xl leading-relaxed">
-                            "{props.data?.testimonio_destacado || "Gracias a nuestra comunidad por calificarnos. ¡Tu opinión nos ayuda a crecer!"}"
+                            "Gracias a nuestra comunidad por calificarnos con {props.data?.google_rating} estrellas. ¡Tu opinión nos ayuda a crecer!"
                         </p>
 
                         {/* Action Button */}
                         <a 
-                            href={props.data?.google_maps_url || props.data?.link_google_maps || "#"}
+                            href={props.data?.google_business || "#"}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="group relative flex items-center gap-4 bg-white/5 border border-white/10 hover:bg-white/10 px-8 md:px-12 py-5 rounded-2xl transition-all duration-500"
@@ -601,6 +611,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                     </div>
                 </div>
             </section>
+            )}
 
             {/* ─── SLOT 2: Antes de Marquee CTA (info secundaria, ubicación, horarios) ─── */}
             {props.beforeMarqueeSlot}
@@ -645,88 +656,38 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             {props.afterMarqueeSlot}
 
             {/* Ubicación / Mapa */}
-            {/* Ubicación / Mapa */}
-            {(() => {
-                const rawGoogleBusiness = props.data?.google_business || "https://maps.app.goo.gl/zGHf7235Myux7T4P7";
-                const isGoogleLink = rawGoogleBusiness.startsWith('http');
-                const businessName = props.data?.nombre_negocio || props.data?.nombre || '';
-                const addressText = props.data?.direccion || props.data?.address || '';
-                const coordMatch = rawGoogleBusiness.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-                const hasCoords = coordMatch && coordMatch.length >= 3;
-                const isIframe = rawGoogleBusiness.trim().toLowerCase().startsWith('<iframe');
-                const isEmbedLink = rawGoogleBusiness.includes('/maps/embed');
-
-                let finalMapSrc = '';
-                let buttonHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addressText || businessName || "Loja, Ecuador")}`;
+            <section className="w-full bg-white pt-24 pb-0 overflow-hidden">
+                <div className="max-w-7xl mx-auto px-4 md:px-12 mb-12 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+                    <div className="flex-1">
+                        <h4 className="font-display-condensed text-3xl md:text-4xl tracking-widest text-black mb-4">
+                            UBICACIÓN ESTRATÉGICA
+                        </h4>
+                        <p className="font-sans-body uppercase tracking-[0.3em] text-xs md:text-sm text-black/40 leading-relaxed max-w-xl">
+                            {props.data?.direccion || props.data?.address || "Visítanos en nuestra ubicación oficial"}
+                        </p>
+                    </div>
+                    <a 
+                        href={
+                            (props.data?.google_business || "").startsWith('http')
+                                ? props.data?.google_business
+                                : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(props.data?.direccion || props.data?.address || props.data?.nombre_negocio || props.data?.nombre || "Loja, Ecuador")}`
+                        }
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="border border-black px-10 py-4 font-display-condensed text-lg tracking-widest uppercase hover:bg-black hover:text-white transition-all duration-300 whitespace-nowrap"
+                    >
+                        VER EN GOOGLE MAPS
+                    </a>
+                </div>
                 
-                if (isGoogleLink && !isEmbedLink) {
-                    buttonHref = rawGoogleBusiness;
-                }
-
-                if (isIframe) {
-                    const match = rawGoogleBusiness.match(/src=["'](.*?)["']/);
-                    finalMapSrc = match ? match[1] : '';
-                } else if (isEmbedLink) {
-                    finalMapSrc = rawGoogleBusiness;
-                } else {
-                    let mapQuery = hasCoords 
-                        ? `${coordMatch[1]},${coordMatch[2]}` 
-                        : (isGoogleLink && !addressText) 
-                            ? businessName 
-                            : isGoogleLink 
-                                ? `${businessName} ${addressText}`.trim() 
-                                : (rawGoogleBusiness || addressText || businessName);
-                                
-                    if (!mapQuery || mapQuery.trim() === '') {
-                        mapQuery = "Loja, Ecuador";
-                    }
-                                
-                    finalMapSrc = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY 
-                        ? `https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY}&q=${encodeURIComponent(mapQuery)}`
-                        : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
-                }
-                
-                return (
-                    <section className="w-full bg-white pt-24 pb-0 overflow-hidden">
-                        <div className="max-w-7xl mx-auto px-4 md:px-12 mb-12 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
-                            <div className="flex-1">
-                                <h4 className="font-display-condensed text-3xl md:text-4xl tracking-widest text-black mb-4">
-                                    UBICACIÓN ESTRATÉGICA
-                                </h4>
-                                <p className="font-sans-body uppercase tracking-[0.3em] text-xs md:text-sm text-black/40 leading-relaxed max-w-xl">
-                                    {addressText || "Visítanos en nuestra ubicación oficial"}
-                                </p>
-                            </div>
-                            <a 
-                                href={buttonHref}
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="border border-black px-10 py-4 font-display-condensed text-lg tracking-widest uppercase hover:bg-black hover:text-white transition-all duration-300 whitespace-nowrap"
-                            >
-                                VER EN GOOGLE MAPS
-                            </a>
-                        </div>
-                        
-                        <div className="w-full h-[450px] md:h-[650px] relative">
-                            {finalMapSrc ? (
-                                <iframe
-                                    width="100%"
-                                    height="100%"
-                                    frameBorder="0"
-                                    style={{ border: 0 }}
-                                    src={finalMapSrc}
-                                    allowFullScreen
-                                    className="grayscale hover:grayscale-0 transition-all duration-1000"
-                                ></iframe>
-                            ) : (
-                                <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 font-sans-body uppercase tracking-widest text-sm">
-                                    Mapa no disponible
-                                </div>
-                            )}
-                        </div>
-                    </section>
-                );
-            })()}
+                <MapSection 
+                    googleBusiness={props.data?.google_business}
+                    businessName={props.data?.nombre_negocio || props.data?.nombre || ''}
+                    addressText={props.data?.direccion || props.data?.address || ''}
+                    containerClassName="w-full h-[450px] md:h-[650px] relative"
+                    iframeClassName="hover:grayscale transition-all duration-1000"
+                />
+            </section>
         </div>
     );
 }

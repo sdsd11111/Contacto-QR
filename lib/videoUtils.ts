@@ -55,12 +55,14 @@ export const getFacebookURL = (url: string): string | null => {
         // Transformar links de redirección móvil /share/r/ a links nativos de Reel
         const shareReelMatch = url.match(/\/share\/r\/([A-Za-z0-9_-]+)/);
         if (shareReelMatch) {
-            return `https://www.facebook.com/reel/${shareReelMatch[1]}`;
+            // Usar URL original porque el short code NO es un ID de reel válido para el embed
+            return url;
         }
         // Transformar links de redirección móvil /share/v/ a links nativos de Video
         const shareVideoMatch = url.match(/\/share\/v\/([A-Za-z0-9_-]+)/);
         if (shareVideoMatch) {
-            return `https://www.facebook.com/video.php?v=${shareVideoMatch[1]}`;
+            // Usar URL original porque el short code NO es un ID de video válido para el embed
+            return url;
         }
         return url;
     }
