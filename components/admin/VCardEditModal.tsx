@@ -931,7 +931,7 @@ export default function VCardEditModal({
                                                                 Las categorías activas de tu Menú Digital o Catálogo de Servicios alimentan automáticamente la sección de servicios principales en tu vCard.
                                                             </p>
                                                             <div className="flex flex-wrap gap-1.5 pt-1">
-                                                                {menuCategories.slice(0, 6).map((cat: any, i: number) => (
+                                                                {menuCategories.map((cat: any, i: number) => (
                                                                     <span key={cat.id || i} className="inline-flex items-center bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-bold text-white/80 shadow-sm border-dashed">
                                                                         <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5" />
                                                                         {cat.nombre || cat.name}

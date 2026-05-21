@@ -73,7 +73,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
             ];
         }
 
-        return rawLines.slice(0, 6).map((cat: string, index: number) => {
+        return rawLines.map((cat: string, index: number) => {
             const customImg = images.find((i: any) => i.index === index);
             const customTitleObj = (experienceTitles || []).find((t: any) => t.index === index);
             const customDescObj = (Array.isArray(experienceDescriptions) ? experienceDescriptions : []).find((d: any) => d.index === index);

@@ -148,8 +148,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
             {!props.hideExperience && (() => {
                 const rawLines = props.data?.productos_servicios
                     ?.split('\n')
-                    .filter((l: string) => l.trim().length > 0)
-                    .slice(0, 6) || [];
+                    .filter((l: string) => l.trim().length > 0) || [];
 
                 const banners = rawLines.length >= 1
                     ? rawLines.map((cat: string, i: number) => {
