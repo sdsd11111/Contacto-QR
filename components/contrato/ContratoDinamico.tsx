@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, ShieldCheck, Scale, CreditCard, Smartphone, ExternalLink } from 'lucide-react';
+import { FileText, ShieldCheck, Scale } from 'lucide-react';
 import { ContratoData } from './DatosForm';
 import { SERVICIOS_LIST } from '@/lib/contrato-utils';
-import PayPhoneWidget from './PayPhoneWidget';
 
 interface ContratoDinamicoProps {
   data: ContratoData;
@@ -15,11 +14,6 @@ interface ContratoDinamicoProps {
   aceptaPrivacidad: boolean;
   onToggleTerminos: () => void;
   onTogglePrivacidad: () => void;
-  // Payment
-  paymentOption: 'completo' | 'anticipo_porcentaje' | 'anticipo_valor';
-  paymentValue: number;
-  onPaymentOptionChange: (opt: 'completo' | 'anticipo_porcentaje' | 'anticipo_valor') => void;
-  onPaymentValueChange: (val: number) => void;
 }
 
 const PRIVACIDAD_TEXTO = `
@@ -48,7 +42,6 @@ Puedes retirar tu consentimiento en cualquier momento escribiendo "BAJA" en nues
 export default function ContratoDinamico({
   data, contratoId, expandedSection, onToggleSection,
   aceptaTerminos, aceptaPrivacidad, onToggleTerminos, onTogglePrivacidad,
-  paymentOption, paymentValue, onPaymentOptionChange, onPaymentValueChange
 }: ContratoDinamicoProps) {
   const serviciosTexto = (data.servicios_seleccionados || []).map(id => {
     const s = SERVICIOS_LIST.find(sv => sv.id === id);
@@ -220,136 +213,6 @@ export default function ContratoDinamico({
         </div>
       </AccordionSection>
 
-      {/* Sección D — Método de pago */}
-      <AccordionSection
-        id="pago"
-        icon={<CreditCard size={18} />}
-        title="Sección D — Método de pago"
-        isOpen={expandedSection === 'pago'}
-        onToggle={() => onToggleSection('pago')}
-      >
-        <div className="space-y-5">
-          <div className="bg-navy text-white p-5 rounded-xl text-center">
-            <p className="text-xs uppercase tracking-wider opacity-70 font-bold">Total del servicio</p>
-            <p className="text-3xl font-black mt-1">${(data.monto_total || 0).toFixed(2)} USD</p>
-            {(data.monto_anticipo || 0) > 0 && (
-              <p className="text-sm opacity-70 mt-1">Anticipo sugerido: ${(data.monto_anticipo || 0).toFixed(2)} USD</p>
-            )}
-          </div>
-
-          {/* Opciones de pago */}
-          <div className="space-y-3">
-            <p className="text-sm font-bold text-navy uppercase tracking-wider">Selecciona cómo deseas pagar:</p>
-
-            <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-              paymentOption === 'completo' ? 'border-primary bg-primary/5' : 'border-navy/10 bg-cream/30'
-            }`}>
-              <input type="radio" name="payment" value="completo" checked={paymentOption === 'completo'} onChange={() => onPaymentOptionChange('completo')} className="w-4 h-4 text-primary" />
-              <div>
-                <p className="text-sm font-bold text-navy">Pago completo</p>
-                <p className="text-xs text-navy/60">Cancela el total ahora: <strong className="text-primary">${(data.monto_total || 0).toFixed(2)} USD</strong></p>
-              </div>
-            </label>
-
-            <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-              paymentOption === 'anticipo_porcentaje' ? 'border-primary bg-primary/5' : 'border-navy/10 bg-cream/30'
-            }`}>
-              <input type="radio" name="payment" value="anticipo_porcentaje" checked={paymentOption === 'anticipo_porcentaje'} onChange={() => onPaymentOptionChange('anticipo_porcentaje')} className="w-4 h-4 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm font-bold text-navy">Anticipo por porcentaje</p>
-                <p className="text-xs text-navy/60 mb-2">Elige el % del total que pagarás ahora</p>
-                {paymentOption === 'anticipo_porcentaje' && (
-                  <div className="flex items-center gap-3">
-                    <input type="range" min="10" max="100" value={paymentValue} onChange={(e) => onPaymentValueChange(parseInt(e.target.value))} className="flex-1 accent-primary" />
-                    <span className="text-sm font-black text-primary min-w-[60px] text-right">{paymentValue}%</span>
-                  </div>
-                )}
-                <p className="text-xs text-navy/50 mt-1">A pagar ahora: <strong className="text-primary">${((data.monto_total || 0) * (paymentOption === 'anticipo_porcentaje' ? paymentValue : 50) / 100).toFixed(2)} USD</strong></p>
-              </div>
-            </label>
-
-            <label className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-              paymentOption === 'anticipo_valor' ? 'border-primary bg-primary/5' : 'border-navy/10 bg-cream/30'
-            }`}>
-              <input type="radio" name="payment" value="anticipo_valor" checked={paymentOption === 'anticipo_valor'} onChange={() => onPaymentOptionChange('anticipo_valor')} className="w-4 h-4 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm font-bold text-navy">Anticipo por valor fijo</p>
-                <p className="text-xs text-navy/60 mb-2">Ingresa el monto exacto que pagarás ahora</p>
-                {paymentOption === 'anticipo_valor' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-navy font-bold">$</span>
-                    <input type="number" value={paymentValue} onChange={(e) => onPaymentValueChange(parseFloat(e.target.value) || 0)} min="0" max={data.monto_total || 0} className="w-full px-3 py-2 rounded-lg border border-navy/10 text-navy font-bold text-lg outline-none focus:border-primary" />
-                    <span className="text-xs text-navy/50">USD</span>
-                  </div>
-                )}
-              </div>
-            </label>
-          </div>
-
-          {/* Calcular monto a pagar */}
-          <div className="bg-navy/5 p-4 rounded-xl">
-            <div className="flex justify-between text-sm">
-              <span className="text-navy/60">Total del servicio:</span>
-              <span className="font-bold">${(data.monto_total || 0).toFixed(2)} USD</span>
-            </div>
-            <div className="flex justify-between text-sm mt-1">
-              <span className="text-navy/60">A pagar ahora:</span>
-              <span className="font-black text-primary text-lg">
-                ${(() => {
-                  if (paymentOption === 'completo') return (data.monto_total || 0).toFixed(2);
-                  if (paymentOption === 'anticipo_porcentaje') return ((data.monto_total || 0) * paymentValue / 100).toFixed(2);
-                  return paymentValue.toFixed(2);
-                })()} USD
-              </span>
-            </div>
-            {paymentOption !== 'completo' && (
-              <div className="flex justify-between text-sm mt-1">
-                <span className="text-navy/60">Saldo restante:</span>
-                <span className="font-bold">${(() => {
-                  const pagado = paymentOption === 'anticipo_porcentaje' 
-                    ? (data.monto_total || 0) * paymentValue / 100 
-                    : paymentValue;
-                  return Math.max(0, (data.monto_total || 0) - pagado).toFixed(2);
-                })()} USD</span>
-              </div>
-            )}
-          </div>
-
-          {/* Widget PayPhone */}
-          <div className="pt-4 border-t border-navy/5">
-            <div className="text-center mb-4">
-              <div className="w-12 h-12 bg-[#ff6f00]/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Smartphone className="text-[#ff6f00]" size={24} />
-              </div>
-              <h3 className="text-base font-black uppercase italic tracking-tighter text-navy mb-1">Pago Seguro con PayPhone</h3>
-              <p className="text-xs text-navy/50 mb-1">Paga con cualquier tarjeta de crédito o débito</p>
-              <p className="text-lg font-black text-primary tracking-tighter">
-                ${(() => {
-                  if (paymentOption === 'completo') return (data.monto_total || 0).toFixed(2);
-                  if (paymentOption === 'anticipo_porcentaje') return ((data.monto_total || 0) * paymentValue / 100).toFixed(2);
-                  return paymentValue.toFixed(2);
-                })()} USD
-              </p>
-            </div>
-
-            <PayPhoneWidget
-              amount={(() => {
-                if (paymentOption === 'completo') return (data.monto_total || 0);
-                if (paymentOption === 'anticipo_porcentaje') return (data.monto_total || 0) * paymentValue / 100;
-                return paymentValue;
-              })()}
-              clientName={data.cliente_nombre}
-              clientEmail={data.cliente_email}
-              clientPhone={data.cliente_telefono}
-              contractId={contratoId}
-            />
-
-            <p className="text-[9px] text-navy/30 mt-4 text-center uppercase tracking-widest font-black">
-              Transacción procesada por PayPhone
-            </p>
-          </div>
-        </div>
-      </AccordionSection>
     </div>
   );
 }

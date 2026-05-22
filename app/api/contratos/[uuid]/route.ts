@@ -99,7 +99,27 @@ export async function PATCH(
 
         const contrato = existing[0];
         if (contrato.acepta_terminos === 1 && contrato.firma_nombre?.length > 0) {
-            return NextResponse.json({ error: 'El contrato ya está firmado. No se puede modificar.' }, { status: 400 });
+            // Contrato ya firmado — permitir PATCH de campos no críticos (materiales, etc.)
+            // pero ignorar silenciosamente los datos del cliente
+            console.log('[Contratos] PATCH en contrato ya firmado — ignorando datos de cliente');
+            const updates: string[] = [];
+            const values: any[] = [];
+            const camposPermitidosPostFirma = ['logo_url', 'fotos_url', 'archivos_extra_url'];
+            
+            for (const campo of camposPermitidosPostFirma) {
+                if (body[campo] !== undefined) {
+                    updates.push(`${campo} = ?`);
+                    values.push(typeof body[campo] === 'object' ? JSON.stringify(body[campo]) : body[campo]);
+                }
+            }
+            
+            if (updates.length > 0) {
+                updates.push('updated_at = NOW()');
+                values.push(uuid);
+                await pool.execute(`UPDATE contratos SET ${updates.join(', ')} WHERE id = ?`, values);
+            }
+            
+            return NextResponse.json({ success: true, message: 'Contrato ya firmado. Materiales actualizados.' });
         }
 
         // Construir UPDATE dinámico con los campos enviados

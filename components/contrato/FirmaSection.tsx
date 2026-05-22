@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, AlertCircle, Loader2, PenLine } from 'lucide-react';
+import { CheckCircle, AlertCircle, Loader2, PenLine, Smartphone } from 'lucide-react';
+import PayPhoneWidget from './PayPhoneWidget';
 
 interface FirmaSectionProps {
   aceptaTerminos: boolean;
@@ -114,14 +115,13 @@ export default function FirmaSection({
           ) : (
             <>
               <CheckCircle size={22} />
-              Firmar y enviar contrato
+              Firmar y pagar →
             </>
           )}
         </button>
 
         <p className="text-center text-[10px] text-navy/30">
-          Al enviar, aceptas que este documento constituye una firma electrónica válida según la legislación ecuatoriana.
-          Recibirás una copia de confirmación.
+          Al firmar, aceptas la firma electrónica y serás redirigido a PayPhone para realizar el pago seguro.
         </p>
       </div>
     </div>
@@ -129,46 +129,200 @@ export default function FirmaSection({
 }
 
 /**
- * Pantalla de éxito después de firmar el contrato.
+ * Pantalla de éxito después de firmar el contrato — con PayPhone para pagar.
  */
-export function FirmaExitosa({ contratoId, producto }: { contratoId: string; producto?: { id: string; slug: string } | null }) {
-  return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <div className="bg-white p-8 md:p-12 rounded-[2rem] border border-navy/5 shadow-xl shadow-navy/5 max-w-lg w-full text-center">
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle size={40} className="text-green-600" />
-        </div>
-        <h2 className="text-2xl font-black text-navy uppercase mb-3">¡Listo! 🎉</h2>
-        <p className="text-navy/70 font-medium mb-2">
-          Contrato firmado exitosamente.
-        </p>
-        <p className="text-sm text-navy/50 mb-6">
-          El asesor te contactará pronto. También te avisaremos por WhatsApp.
-        </p>
+export function FirmaExitosa({
+  contratoId, producto, pagoData
+}: {
+  contratoId: string;
+  producto?: { id: string; slug: string } | null;
+  pagoData?: { monto: number; contratoId: string; cliente: { nombre: string; email: string; telefono: string } } | null;
+}) {
+  const [mostrarPago, setMostrarPago] = useState(false);
+  const [payOption, setPayOption] = useState<'completo' | 'porcentaje' | 'valor' | 'abono'>('completo');
+  const [payValue, setPayValue] = useState(50);
+  const total = pagoData?.monto || 0;
 
-        {/* Producto creado */}
-        {producto && (
-          <div className="bg-navy/5 p-4 rounded-xl mb-4 text-left">
-            <div className="flex items-center gap-2 text-green-700 mb-2">
-              <CheckCircle size={16} />
-              <span className="text-xs font-bold uppercase">Producto creado en ActivaQR</span>
-            </div>
-            <p className="text-[10px] text-navy/50 font-mono break-all">ID: {producto.id}</p>
+  const montoAPagar = payOption === 'completo' ? total
+    : payOption === 'porcentaje' ? total * payValue / 100
+    : payValue; // valor fijo o abono
+
+  if (!mostrarPago) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <div className="bg-white p-8 md:p-12 rounded-[2rem] border border-navy/5 shadow-xl shadow-navy/5 max-w-lg w-full text-center">
+          <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle size={40} className="text-green-600" />
           </div>
-        )}
+          <h2 className="text-2xl font-black text-navy uppercase mb-3">✅ Contrato firmado</h2>
+          <p className="text-navy/70 font-medium mb-6">
+            Ahora puedes generar el pago para activar tu producto.
+          </p>
 
-        <div className="bg-navy/5 p-4 rounded-xl mb-6">
-          <p className="text-xs text-navy/50 uppercase tracking-wider font-bold mb-1">ID del contrato</p>
-          <p className="text-sm font-mono text-navy font-bold break-all">{contratoId}</p>
+          {/* Botón para pagar */}
+          {pagoData && pagoData.monto > 0 && (
+            <button
+              type="button"
+              onClick={() => setMostrarPago(true)}
+              className="w-full bg-primary text-white font-black uppercase tracking-widest py-5 px-6 rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 mb-3 text-lg"
+            >
+              💳 Generar pago
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => window.location.href = '/'}
+            className="w-full border border-navy/20 text-navy font-bold uppercase tracking-widest py-4 px-6 rounded-xl hover:bg-navy/5 transition-all"
+          >
+            Volver al inicio
+          </button>
         </div>
+      </div>
+    );
+  }
 
-        <button
-          type="button"
-          onClick={() => window.location.href = '/'}
-          className="w-full bg-primary text-white font-black uppercase tracking-widest py-4 px-6 rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20"
-        >
-          Volver al inicio
-        </button>
+  // Pantalla de pago con PayPhone
+  if (!pagoData) return null;
+
+  return (
+    <div className="min-h-screen py-12 px-4">
+      <div className="max-w-lg mx-auto">
+        <div className="bg-white p-8 rounded-[2rem] border border-navy/5 shadow-xl shadow-navy/5">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-black text-navy uppercase mb-1">Método de Pago</h2>
+            <p className="text-sm text-navy/50">
+              Total del servicio: <strong className="text-primary">${total.toFixed(2)} USD</strong>
+            </p>
+          </div>
+
+          {/* Opciones de pago */}
+          <div className="space-y-3 mb-6">
+            <p className="text-xs font-bold text-navy uppercase tracking-wider">¿Cómo deseas pagar?</p>
+
+            <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+              payOption === 'completo' ? 'border-primary bg-primary/5' : 'border-navy/10'
+            }`}>
+              <input type="radio" name="pay" checked={payOption === 'completo'} onChange={() => setPayOption('completo')} className="w-4 h-4 text-primary" />
+              <div>
+                <p className="text-sm font-bold text-navy">Pago completo</p>
+                <p className="text-xs text-navy/60">${total.toFixed(2)} USD</p>
+              </div>
+            </label>
+
+            <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+              payOption === 'porcentaje' ? 'border-primary bg-primary/5' : 'border-navy/10'
+            }`}>
+              <input type="radio" name="pay" checked={payOption === 'porcentaje'} onChange={() => setPayOption('porcentaje')} className="w-4 h-4 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-navy">Anticipo por %</p>
+                {payOption === 'porcentaje' && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input type="range" min="10" max="100" value={payValue} onChange={e => setPayValue(parseInt(e.target.value))} className="flex-1 accent-primary" />
+                    <span className="text-sm font-black text-primary min-w-[40px]">{payValue}%</span>
+                  </div>
+                )}
+                <p className="text-xs text-navy/50 mt-1">${(total * payValue / 100).toFixed(2)} USD ahora</p>
+              </div>
+            </label>
+
+            <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+              payOption === 'valor' ? 'border-primary bg-primary/5' : 'border-navy/10'
+            }`}>
+              <input type="radio" name="pay" checked={payOption === 'valor'} onChange={() => setPayOption('valor')} className="w-4 h-4 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-navy">Anticipo por valor fijo</p>
+                {payOption === 'valor' && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-navy font-bold">$</span>
+                    <input type="number" value={payValue} onChange={e => setPayValue(parseFloat(e.target.value) || 0)} min="0" max={total} className="w-full px-3 py-2 rounded-lg border border-navy/10 text-navy font-bold outline-none focus:border-primary" />
+                  </div>
+                )}
+              </div>
+            </label>
+
+            <label className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+              payOption === 'abono' ? 'border-primary bg-primary/5' : 'border-navy/10'
+            }`}>
+              <input type="radio" name="pay" checked={payOption === 'abono'} onChange={() => { setPayOption('abono'); setPayValue(20); }} className="w-4 h-4 text-primary" />
+              <div className="flex-1">
+                <p className="text-sm font-bold text-navy">💰 Abono (efectivo / transferencia)</p>
+                <p className="text-xs text-navy/60">El cliente paga en físico — no necesita PayPhone</p>
+                {payOption === 'abono' && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-navy font-bold">$</span>
+                    <input type="number" value={payValue} onChange={e => setPayValue(parseFloat(e.target.value) || 0)} min="1" className="w-full px-3 py-2 rounded-lg border border-navy/10 text-navy font-bold outline-none focus:border-primary" />
+                  </div>
+                )}
+              </div>
+            </label>
+
+            {/* Resumen */}
+            <div className="bg-navy/5 p-3 rounded-xl text-sm space-y-1">
+              <div className="flex justify-between"><span className="text-navy/60">Total:</span><span className="font-bold">${total.toFixed(2)} USD</span></div>
+              <div className="flex justify-between"><span className="text-navy/60">A pagar ahora:</span><span className="font-black text-primary">${montoAPagar.toFixed(2)} USD</span></div>
+              {payOption !== 'completo' && payOption !== 'abono' && (
+                <div className="flex justify-between"><span className="text-navy/60">Saldo restante:</span><span className="font-bold">${Math.max(0, total - montoAPagar).toFixed(2)} USD</span></div>
+              )}
+              {payOption === 'abono' && (
+                <div className="flex justify-between"><span className="text-navy/60">Saldo por pagar:</span><span className="font-bold">${Math.max(0, total - montoAPagar).toFixed(2)} USD</span></div>
+              )}
+            </div>
+          </div>
+
+          {payOption === 'abono' ? (
+            /* Abono en efectivo — sin PayPhone */
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle size={32} className="text-green-600" />
+              </div>
+              <h3 className="text-xl font-black uppercase italic tracking-tighter text-navy mb-2">💰 Abono registrado</h3>
+              <p className="text-sm text-navy/60 mb-2">El cliente abonó <strong className="text-primary text-lg">${montoAPagar.toFixed(2)} USD</strong></p>
+              <p className="text-xs text-navy/50 mb-6">Saldo pendiente: ${Math.max(0, total - montoAPagar).toFixed(2)} USD</p>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  // Redirigir a home — el producto ya fue creado al firmar
+                  window.location.href = '/';
+                }}
+                className="w-full bg-green-600 text-white font-black uppercase tracking-widest py-4 px-6 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-600/20"
+              >
+                ✅ Finalizar — Producto creado
+              </button>
+            </div>
+          ) : (
+            /* Pago con PayPhone */
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-[#ff6f00]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Smartphone className="text-[#ff6f00]" size={32} />
+              </div>
+              <h3 className="text-xl font-black uppercase italic tracking-tighter text-navy mb-2">Pago Seguro con PayPhone</h3>
+              <p className="text-sm text-navy/60 mb-4">Paga con cualquier tarjeta de crédito o débito de forma segura.</p>
+              <p className="text-2xl font-black text-primary mb-6">${montoAPagar.toFixed(2)} USD</p>
+            </div>
+          )}
+
+          {payOption !== 'abono' && (
+            <PayPhoneWidget
+              amount={montoAPagar}
+              clientName={pagoData.cliente.nombre}
+              clientEmail={pagoData.cliente.email}
+              clientPhone={pagoData.cliente.telefono}
+              contractId={pagoData.contratoId}
+            />
+          )}
+
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => window.location.href = '/'}
+              className="text-sm text-navy/40 hover:text-navy transition-colors font-medium underline"
+            >
+              Pagar después — Volver al inicio
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

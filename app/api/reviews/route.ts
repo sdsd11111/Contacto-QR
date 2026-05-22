@@ -5,10 +5,12 @@ export async function GET() {
   const API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 
   if (!PLACE_ID || !API_KEY) {
-    return NextResponse.json(
-      { error: 'Missing configuration (Place ID or API Key)' },
-      { status: 500 }
-    );
+    console.warn('[Reviews] API no configurada - PLACE_ID o API_KEY faltante');
+    return NextResponse.json({
+      rating: 0,
+      user_ratings_total: 0,
+      reviews: [],
+    });
   }
 
   try {

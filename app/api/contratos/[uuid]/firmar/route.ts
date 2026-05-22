@@ -282,7 +282,12 @@ Puedes retirar tu consentimiento en cualquier momento escribiendo "BAJA" en nues
                     digital: 'contacto', business: 'business',
                     catalogo: 'catalogo', web: 'web', auditoria: 'auditoria',
                 };
-                const planValue = planMapping[contrato.servicio_contratado] || 'contacto';
+                // Usar el servicio de MAYOR valor (no el primero)
+                const ordenServicios = ['digital', 'business', 'catalogo', 'web', 'auditoria'];
+                const servPrincipal = serviciosSeleccionados.reduce((a, b) =>
+                    ordenServicios.indexOf(a) > ordenServicios.indexOf(b) ? a : b
+                , serviciosSeleccionados[0] || contrato.servicio_contratado);
+                const planValue = planMapping[servPrincipal] || 'contacto';
                 const tipoPerfil = contrato.cliente_cedula_ruc?.length === 13 ? 'negocio' : 'persona';
                 const nombresArr = (contrato.cliente_nombre || '').split(' ');
                 const nombres = nombresArr.slice(0, Math.ceil(nombresArr.length / 2)).join(' ');
@@ -301,7 +306,6 @@ Puedes retirar tu consentimiento en cualquier momento escribiendo "BAJA" en nues
                         ? `+593 ${rawPhone.substring(1)}`
                         : telefono;
 
-                const servPrincipal = serviciosSeleccionados[0] || contrato.servicio_contratado;
                 const templateId = servPrincipal === 'business' || servPrincipal === 'catalogo' ? 'dynamic' : 'classic';
                 const tieneRuc = contrato.cliente_cedula_ruc && contrato.cliente_cedula_ruc.length === 13;
 

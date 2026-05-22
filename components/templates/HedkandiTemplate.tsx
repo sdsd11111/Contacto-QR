@@ -125,15 +125,23 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                         )}
 
                         <div className="flex flex-col items-center gap-3 w-full px-2">
-                            {/* Botón principal: Guardar Contacto */}
+                            {/* Botón principal: WhatsApp — mensaje personalizado según slide activo */}
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={props.downloadVCF}
-                                className="bg-white text-black w-full max-w-xs px-6 py-3 font-display-condensed text-sm tracking-widest uppercase hover:bg-black hover:text-white transition-colors duration-300"
-                                style={{ border: 'none !important' }}
+                                onClick={() => {
+                                    const waNumber = props.data?.whatsapp?.replace(/\D/g, '') || '';
+                                    const activeTitle = props.activeSlides?.[props.currentSlideIndex || 0]?.title || props.data?.nombre_negocio || '';
+                                    const message = activeTitle
+                                        ? `Hola, vi tu perfil y me interesa ${activeTitle}`
+                                        : 'Hola, vi tu perfil y me gustaría saber más';
+                                    window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(message)}`, '_blank');
+                                }}
+                                className="w-full max-w-xs px-6 py-3 font-display-condensed text-sm tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2"
+                                style={{ backgroundColor: '#25D366', color: 'white', border: 'none !important' }}
                             >
-                                Guardar contacto
+                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 1.016-.04.036-.06.054-.06.066-.015.045-.004.101.025.136.167.19.604.698.706.814.099.115.173.223.223.372.05.149.05.298-.025.471-.074.173-.397.867-.546 1.238-.074.223-.347.297-.545.223-.348-.124-1.32-.495-2.085-1.264-.77-.77-1.264-1.735-1.387-2.084-.074-.198.05-.471.223-.545.074-.025.124-.05.173-.099.074-.074.149-.198.223-.322.074-.124.099-.248.124-.372.025-.124.025-.273-.025-.422-.05-.149-.421-1.016-.578-1.389-.173-.397-.347-.397-.57-.397-.149 0-.322 0-.496.025-.173.025-.446.074-.669.298-.223.223-.843.843-.843 2.059 0 1.216.892 2.403 1.015 2.557.124.149 1.736 2.678 4.215 3.66.589.233 1.05.372 1.409.496.595.198 1.137.174 1.567.105.485-.074 1.473-.595 1.68-1.17.207-.575.207-1.068.148-1.17-.05-.099-.173-.149-.446-.298Z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.524 3.66 1.433 5.167L2 22l4.833-1.433A9.96 9.96 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2Zm0 18.182a8.16 8.16 0 0 1-4.155-1.147l-.298-.179-2.869.85.857-2.8-.194-.31a8.165 8.165 0 0 1-1.25-4.414c0-4.523 3.686-8.186 8.21-8.186 2.19 0 4.248.853 5.796 2.4a8.137 8.137 0 0 1 2.404 5.786c0 4.524-3.687 8.19-8.21 8.19l-.091-.19Z"/></svg>
+                                WHATSAPP
                             </motion.button>
 
                             {/* Botón secundario: Compartir — estilo sutil Classic */}

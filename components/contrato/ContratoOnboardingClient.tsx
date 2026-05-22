@@ -72,6 +72,13 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
   // Producto creado post-firma
   const [productoCreado, setProductoCreado] = useState<{ id: string; slug: string } | null>(null);
 
+  // Datos de pago para mostrar después de firmar
+  const [pagoData, setPagoData] = useState<{
+    monto: number;
+    contratoId: string;
+    cliente: { nombre: string; email: string; telefono: string };
+  } | null>(null);
+
   // Metadatos capturados
   const [fingerprint, setFingerprint] = useState<DeviceFingerprint | null>(null);
   const [ubicacion, setUbicacion] = useState<GeoLocation>({ lat: null, lng: null, precision: 'no_disponible' });
@@ -190,7 +197,10 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
       });
 
       if (!patchRes.ok) {
-        throw new Error('Error al guardar datos del contrato');
+        const patchErr = await patchRes.text();
+        let errMsg = 'Error al guardar datos';
+        try { const parsed = JSON.parse(patchErr); errMsg = parsed.error || errMsg; } catch {}
+        throw new Error(errMsg);
       }
 
       // Firmar el contrato
@@ -212,7 +222,7 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
       const firmarData = await firmarRes.json();
 
       if (!firmarRes.ok) {
-        throw new Error(firmarData.error || 'Error al firmar el contrato');
+        throw new Error(firmarData?.error || 'Error al firmar el contrato');
       }
 
       // Capturar producto creado
@@ -223,6 +233,22 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
       // Limpiar localStorage
       localStorage.removeItem(storageKey);
 
+      // Mostrar pantalla de pago con PayPhone
+      const montoAPagar = paymentOption === 'completo'
+        ? (formData.monto_total || 0)
+        : paymentOption === 'anticipo_porcentaje'
+          ? (formData.monto_total || 0) * paymentValue / 100
+          : paymentValue;
+
+      setPagoData({
+        monto: formData.monto_total || 0,
+        contratoId,
+        cliente: {
+          nombre: formData.cliente_nombre,
+          email: formData.cliente_email,
+          telefono: formData.cliente_telefono,
+        }
+      });
       setFirmado(true);
 
     } catch (err: any) {
@@ -237,7 +263,7 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
   if (firmado) {
     return (
       <main className="min-h-screen bg-cream py-20 px-6 font-sans text-navy">
-        <FirmaExitosa contratoId={contratoId} producto={productoCreado} />
+        <FirmaExitosa contratoId={contratoId} producto={productoCreado} pagoData={pagoData} />
       </main>
     );
   }
@@ -284,10 +310,6 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
               aceptaPrivacidad={aceptaPrivacidad}
               onToggleTerminos={() => setAceptaTerminos(!aceptaTerminos)}
               onTogglePrivacidad={() => setAceptaPrivacidad(!aceptaPrivacidad)}
-              paymentOption={paymentOption}
-              paymentValue={paymentValue}
-              onPaymentOptionChange={setPaymentOption}
-              onPaymentValueChange={setPaymentValue}
             />
 
             <SubidaMateriales
@@ -304,7 +326,7 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
               <button
                 type="button"
                 onClick={() => setCurrentStep(0)}
-                className="px-8 py-4 border border-navy/20 text-navy font-bold uppercase tracking-widest rounded-xl hover:bg-navy/5 transition-all"
+                className="px-8 py-4 bg-navy text-white font-bold uppercase tracking-widest rounded-xl hover:bg-navy/80 transition-all shadow-md"
               >
                 ← Atrás
               </button>
@@ -346,7 +368,7 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
               <button
                 type="button"
                 onClick={() => setCurrentStep(1)}
-                className="px-8 py-4 border border-navy/20 text-navy font-bold uppercase tracking-widest rounded-xl hover:bg-navy/5 transition-all"
+                className="px-8 py-4 bg-navy text-white font-bold uppercase tracking-widest rounded-xl hover:bg-navy/80 transition-all shadow-md"
               >
                 ← Atrás
               </button>
