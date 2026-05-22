@@ -31,6 +31,43 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showUploadSection, setShowUploadSection] = useState(false);
 
+  // Estado para manejo de pago exitoso (redirect desde PayPhone)
+  const [pagoConfirmando, setPagoConfirmando] = useState(false);
+  const [pagoExitoso, setPagoExitoso] = useState(false);
+  const [pagoError, setPagoError] = useState<string | null>(null);
+  const [productoCreado, setProductoCreadoResult] = useState<{ id: string; slug: string; url?: string } | null>(null);
+
+  // Detectar si venimos de un pago exitoso de PayPhone
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('pago') === 'exitoso') {
+      setPagoConfirmando(true);
+      const confirmar = async () => {
+        try {
+          const res = await fetch(`/api/contratos/${contratoId}/confirmar-pago`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data?.error || 'Error al confirmar pago');
+          }
+          if (data.producto) {
+            setProductoCreadoResult(data.producto);
+          }
+          setPagoExitoso(true);
+        } catch (err: any) {
+          setPagoError(err.message || 'Error al confirmar el pago');
+        } finally {
+          setPagoConfirmando(false);
+          // Limpiar URL params sin recargar
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      };
+      confirmar();
+    }
+  }, [contratoId]);
+
   // Datos del formulario
   const [formData, setFormData] = useState<ContratoData>({
     cliente_nombre: '',
@@ -69,8 +106,7 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
   const [paymentOption, setPaymentOption] = useState<'completo' | 'anticipo_porcentaje' | 'anticipo_valor'>('completo');
   const [paymentValue, setPaymentValue] = useState(50);
 
-  // Producto creado post-firma
-  const [productoCreado, setProductoCreado] = useState<{ id: string; slug: string } | null>(null);
+  // Producto creado post-pago (ahora se usa setProductoCreadoResult tras confirmar-pago)
 
   // Datos de pago para mostrar después de firmar
   const [pagoData, setPagoData] = useState<{
@@ -225,11 +261,6 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
         throw new Error(firmarData?.error || 'Error al firmar el contrato');
       }
 
-      // Capturar producto creado
-      if (firmarData.producto) {
-        setProductoCreado(firmarData.producto);
-      }
-
       // Limpiar localStorage
       localStorage.removeItem(storageKey);
 
@@ -260,6 +291,84 @@ export default function ContratoOnboardingClient({ contratoId }: ContratoOnboard
   };
 
   // ------ RENDER ------
+
+  // Pantalla de confirmación de pago (después de redirect de PayPhone)
+  if (pagoConfirmando || pagoExitoso) {
+    return (
+      <main className="min-h-screen bg-cream py-20 px-6 font-sans text-navy flex items-center justify-center">
+        <div className="max-w-lg w-full mx-auto">
+          {pagoConfirmando && (
+            <div className="bg-white p-12 rounded-[2rem] border border-navy/5 shadow-xl text-center">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                <svg className="animate-spin h-10 w-10 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-black text-navy uppercase mb-3">Confirmando pago</h2>
+              <p className="text-navy/60 font-medium">Espera un momento mientras activamos tu producto...</p>
+            </div>
+          )}
+          {pagoExitoso && (
+            <div className="bg-white p-12 rounded-[2rem] border border-navy/5 shadow-xl text-center">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-black text-navy uppercase mb-3">✅ ¡Pago exitoso!</h2>
+              <p className="text-navy/70 font-medium mb-2">Tu pago ha sido procesado correctamente.</p>
+              <p className="text-sm text-navy/50 mb-6">Tu producto ya está siendo creado. Recibirás un email con los detalles.</p>
+
+              {productoCreado && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-sm">
+                  <p className="font-bold text-green-800 mb-1">🎉 Producto activado</p>
+                  <p className="text-green-700">ID: {productoCreado.id?.substring(0, 12)}...</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => window.location.href = '/'}
+                className="w-full bg-primary text-white font-black uppercase tracking-widest py-5 px-6 rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 text-lg"
+              >
+                Volver al inicio
+              </button>
+              {productoCreado?.url && (
+                <button
+                  type="button"
+                  onClick={() => window.location.href = productoCreado.url!}
+                  className="w-full border border-navy/20 text-navy font-bold uppercase tracking-widest py-4 px-6 rounded-xl hover:bg-navy/5 transition-all mt-3"
+                >
+                  Ver en Admin
+                </button>
+              )}
+            </div>
+          )}
+          {pagoError && (
+            <div className="bg-white p-12 rounded-[2rem] border border-navy/5 shadow-xl text-center">
+              <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
+                <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-black text-navy uppercase mb-3">Error de confirmación</h2>
+              <p className="text-red-600 font-medium mb-4">{pagoError}</p>
+              <p className="text-sm text-navy/50 mb-6">El pago pudo haberse procesado. Contacta a soporte si persiste.</p>
+              <button
+                type="button"
+                onClick={() => window.location.href = '/'}
+                className="w-full border border-navy/20 text-navy font-bold uppercase tracking-widest py-4 px-6 rounded-xl hover:bg-navy/5 transition-all"
+              >
+                Volver al inicio
+              </button>
+            </div>
+          )}
+        </div>
+      </main>
+    );
+  }
+
   if (firmado) {
     return (
       <main className="min-h-screen bg-cream py-20 px-6 font-sans text-navy">

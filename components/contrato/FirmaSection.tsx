@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle, AlertCircle, Loader2, PenLine, Smartphone } from 'lucide-react';
 import PayPhoneWidget from './PayPhoneWidget';
 
@@ -251,7 +251,7 @@ export function FirmaExitosa({
                 {payOption === 'abono' && (
                   <div className="flex items-center gap-1 mt-1">
                     <span className="text-navy font-bold">$</span>
-                    <input type="number" value={payValue} onChange={e => setPayValue(parseFloat(e.target.value) || 0)} min="1" className="w-full px-3 py-2 rounded-lg border border-navy/10 text-navy font-bold outline-none focus:border-primary" />
+                    <input type="number" value={payValue} onChange={e => setPayValue(parseFloat(e.target.value) || 0)} min="0" className="w-full px-3 py-2 rounded-lg border border-navy/10 text-navy font-bold outline-none focus:border-primary" />
                   </div>
                 )}
               </div>
@@ -271,26 +271,8 @@ export function FirmaExitosa({
           </div>
 
           {payOption === 'abono' ? (
-            /* Abono en efectivo — sin PayPhone */
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle size={32} className="text-green-600" />
-              </div>
-              <h3 className="text-xl font-black uppercase italic tracking-tighter text-navy mb-2">💰 Abono registrado</h3>
-              <p className="text-sm text-navy/60 mb-2">El cliente abonó <strong className="text-primary text-lg">${montoAPagar.toFixed(2)} USD</strong></p>
-              <p className="text-xs text-navy/50 mb-6">Saldo pendiente: ${Math.max(0, total - montoAPagar).toFixed(2)} USD</p>
-
-              <button
-                type="button"
-                onClick={async () => {
-                  // Redirigir a home — el producto ya fue creado al firmar
-                  window.location.href = '/';
-                }}
-                className="w-full bg-green-600 text-white font-black uppercase tracking-widest py-4 px-6 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-600/20"
-              >
-                ✅ Finalizar — Producto creado
-              </button>
-            </div>
+            /* Abono en efectivo — sin PayPhone, crear producto ahora */
+            <ConfirmarPagoAbono contratoId={pagoData.contratoId} montoAbono={montoAPagar} total={total} />
           ) : (
             /* Pago con PayPhone */
             <div className="text-center mb-6">
@@ -324,6 +306,88 @@ export function FirmaExitosa({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Componente para confirmar pago en efectivo/transferencia (abono).
+ * Crea el producto llamando al endpoint confirmar-pago.
+ */
+function ConfirmarPagoAbono({ contratoId, montoAbono, total }: { contratoId: string; montoAbono: number; total: number }) {
+  const [creando, setCreando] = useState(false);
+  const [completado, setCompletado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [producto, setProducto] = useState<{ id: string; slug?: string; url?: string } | null>(null);
+
+  useEffect(() => {
+    if (creando || completado) return;
+    setCreando(true);
+    const crear = async () => {
+      try {
+        const res = await fetch(`/api/contratos/${contratoId}/confirmar-pago`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ metodo: 'abono_efectivo', monto: montoAbono }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Error al crear producto');
+        if (data.producto) setProducto(data.producto);
+        setCompletado(true);
+      } catch (err: any) {
+        setError(err.message || 'Error al crear producto');
+      } finally {
+        setCreando(false);
+      }
+    };
+    crear();
+  }, [contratoId, creando, completado]);
+
+  return (
+    <div className="text-center">
+      {creando && (
+        <div className="py-8">
+          <Loader2 size={32} className="animate-spin text-primary mx-auto mb-4" />
+          <p className="text-sm text-navy/60">Creando producto...</p>
+        </div>
+      )}
+      {completado && (
+        <>
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle size={32} className="text-green-600" />
+          </div>
+          <h3 className="text-xl font-black uppercase italic tracking-tighter text-navy mb-2">💰 Abono registrado</h3>
+          <p className="text-sm text-navy/60 mb-2">El cliente abonó <strong className="text-primary text-lg">${montoAbono.toFixed(2)} USD</strong></p>
+          <p className="text-xs text-navy/50 mb-6">Saldo pendiente: ${Math.max(0, total - montoAbono).toFixed(2)} USD</p>
+
+          {producto && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 text-xs">
+              <p className="font-bold text-green-800">✅ Producto creado</p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => window.location.href = '/'}
+            className="w-full bg-green-600 text-white font-black uppercase tracking-widest py-4 px-6 rounded-xl hover:bg-green-700 transition-all shadow-lg shadow-green-600/20"
+          >
+            ✅ Finalizar
+          </button>
+        </>
+      )}
+      {error && (
+        <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 text-sm">
+          <p className="font-bold mb-1">Error</p>
+          <p>{error}</p>
+          <button
+            type="button"
+            onClick={() => { setCreando(false); setCompletado(false); setError(null); }}
+            className="mt-3 text-red-700 underline font-medium"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
     </div>
   );
 }

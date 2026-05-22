@@ -460,6 +460,14 @@ export default function RegisterWizard({
                 if (savedData) {
                     try {
                         const parsed = JSON.parse(savedData);
+
+                        // 🔥 Si viene de un CONTRATO, redirigir a la página del contrato
+                        if (parsed.fromContrato === true && parsed.contratoId) {
+                            localStorage.removeItem('payphone_form_backup');
+                            window.location.href = `${window.location.origin}/contrato/${parsed.contratoId}?pago=exitoso`;
+                            return;
+                        }
+
                         // Clean URL
                         window.history.replaceState({}, '', window.location.pathname);
                         localStorage.removeItem('payphone_form_backup');

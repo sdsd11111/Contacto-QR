@@ -130,16 +130,6 @@ export default function AdminDashboard() {
     });
     const [isCreatingClient, setIsCreatingClient] = useState(false);
 
-    // Estado para modal de nuevo contrato
-    const [isContratoModalOpen, setIsContratoModalOpen] = useState(false);
-    const [newContratoData, setNewContratoData] = useState({
-        cliente_nombre: '',
-        cliente_telefono: '',
-        cliente_email: '',
-        servicios_seleccionados: ['digital'] as string[],
-    });
-    const [isGeneratingContrato, setIsGeneratingContrato] = useState(false);
-
     // Estado para modal de descargas
     const [isDownloadsModalOpen, setIsDownloadsModalOpen] = useState(false);
     const [downloadsModalSlug, setDownloadsModalSlug] = useState<string | null>(null);
@@ -1453,14 +1443,30 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex flex-wrap gap-2 overflow-x-hidden">
                         <button
-                            onClick={() => {
-                                setNewContratoData({
-                                    cliente_nombre: '',
-                                    cliente_telefono: '',
-                                    cliente_email: '',
-                                    servicios_seleccionados: ['digital'],
-                                });
-                                setIsContratoModalOpen(true);
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch('/api/contratos/generar', {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'},
+                                        body: JSON.stringify({
+                                            cliente_nombre: 'Nuevo Cliente',
+                                            cliente_telefono: '+593 99 999 9999',
+                                            cliente_email: 'cliente@activaqr.com',
+                                            servicios_seleccionados: ['digital'],
+                                            monto_total: 35,
+                                            monto_anticipo: 15
+                                        })
+                                    });
+                                    const data = await res.json();
+                                    if (data.contrato_url) {
+                                        await navigator.clipboard.writeText(data.contrato_url);
+                                        window.open(data.contrato_url, '_blank');
+                                    } else {
+                                        alert('Error al crear contrato');
+                                    }
+                                } catch (err) {
+                                    alert('Error de red');
+                                }
                             }}
                             className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 md:px-6 py-2.5 md:py-3 rounded-2xl font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-lg shadow-blue-500/5 shrink-0"
                         >
@@ -2876,177 +2882,6 @@ export default function AdminDashboard() {
                                     )}
                                 </div>
                             </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-
-            <AnimatePresence>
-                {isContratoModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="bg-navy border border-blue-500/20 rounded-[40px] p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-                                <FileText size={80} className="text-blue-500" />
-                            </div>
-
-                            <div className="flex justify-between items-start mb-8 relative z-10">
-                                <div>
-                                    <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Nuevo Contrato</h3>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mt-1">Selecciona los servicios</p>
-                                </div>
-                                <button onClick={() => setIsContratoModalOpen(false)} className="text-white/40 hover:text-white p-2">
-                                    <X size={24} />
-                                </button>
-                            </div>
-
-                            <form onSubmit={async (e) => {
-                                e.preventDefault();
-                                if (newContratoData.servicios_seleccionados.length === 0) {
-                                    alert('Selecciona al menos un servicio');
-                                    return;
-                                }
-                                setIsGeneratingContrato(true);
-                                try {
-                                    const total = newContratoData.servicios_seleccionados.reduce((sum, id) => {
-                                        const prices: Record<string, number> = { digital: 35, business: 100, catalogo: 200, auditoria: 0, web: 1000 };
-                                        return sum + (prices[id] || 0);
-                                    }, 0);
-                                    const anticipo = Math.round(total * 0.3);
-                                    const res = await fetch('/api/contratos/generar', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                            cliente_nombre: newContratoData.cliente_nombre || 'Nuevo Cliente',
-                                            cliente_telefono: newContratoData.cliente_telefono || '+593 99 999 9999',
-                                            cliente_email: newContratoData.cliente_email || 'cliente@activaqr.com',
-                                            servicios_seleccionados: newContratoData.servicios_seleccionados,
-                                            monto_total: total,
-                                            monto_anticipo: anticipo,
-                                        })
-                                    });
-                                    const data = await res.json();
-                                    if (data.contrato_url) {
-                                        await navigator.clipboard.writeText(data.contrato_url);
-                                        setIsContratoModalOpen(false);
-                                        window.open(data.contrato_url, '_blank');
-                                    } else {
-                                        alert('Error al crear contrato: ' + (data.error || 'desconocido'));
-                                    }
-                                } catch (err) {
-                                    alert('Error de red');
-                                } finally {
-                                    setIsGeneratingContrato(false);
-                                }
-                            }} className="space-y-6 relative z-10">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">Nombre del Cliente</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-blue-500/50 outline-none"
-                                        value={newContratoData.cliente_nombre}
-                                        onChange={(e) => setNewContratoData({ ...newContratoData, cliente_nombre: e.target.value })}
-                                        placeholder="Ej. Juan Pérez"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">WhatsApp</label>
-                                    <input
-                                        type="text"
-                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-blue-500/50 outline-none"
-                                        value={newContratoData.cliente_telefono}
-                                        onChange={(e) => setNewContratoData({ ...newContratoData, cliente_telefono: e.target.value })}
-                                        placeholder="Ej. +593991234567"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">Email</label>
-                                    <input
-                                        type="email"
-                                        className="w-full bg-[#1A1B3A] border border-white/5 rounded-2xl p-4 text-white font-bold focus:border-blue-500/50 outline-none"
-                                        value={newContratoData.cliente_email}
-                                        onChange={(e) => setNewContratoData({ ...newContratoData, cliente_email: e.target.value })}
-                                        placeholder="Ej. cliente@email.com"
-                                    />
-                                </div>
-
-                                <div className="space-y-3">
-                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest px-2">Servicios a contratar</label>
-                                    <div className="space-y-2">
-                                        {[
-                                            { id: 'digital', label: 'Contacto Digital', precio: 35, icono: '📱' },
-                                            { id: 'business', label: 'Contacto Business', precio: 100, icono: '💼' },
-                                            { id: 'catalogo', label: 'Business + Catálogo', precio: 200, icono: '📦' },
-                                            { id: 'auditoria', label: 'Auditoría Operativa', precio: 0, icono: '🔍' },
-                                            { id: 'web', label: 'Sitio Web Completo', precio: 1000, icono: '🌐' },
-                                        ].map(svc => {
-                                            const selected = newContratoData.servicios_seleccionados.includes(svc.id);
-                                            return (
-                                                <label
-                                                    key={svc.id}
-                                                    className={`flex items-center gap-3 p-4 rounded-2xl border cursor-pointer transition-all ${selected ? 'bg-blue-500/10 border-blue-500/40' : 'bg-[#1A1B3A] border-white/5 hover:border-white/20'}`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selected}
-                                                        onChange={() => {
-                                                            setNewContratoData(prev => ({
-                                                                ...prev,
-                                                                servicios_seleccionados: selected
-                                                                    ? prev.servicios_seleccionados.filter(id => id !== svc.id)
-                                                                    : [...prev.servicios_seleccionados, svc.id]
-                                                            }));
-                                                        }}
-                                                        className="accent-blue-500 w-4 h-4"
-                                                    />
-                                                    <span className="text-lg">{svc.icono}</span>
-                                                    <div className="flex-1">
-                                                        <p className="text-white font-bold text-sm">{svc.label}</p>
-                                                        <p className="text-white/40 text-[10px]">${svc.precio > 0 ? `$${svc.precio}` : 'Gratis'}</p>
-                                                    </div>
-                                                    {selected && <CheckCircle size={18} className="text-blue-400 shrink-0" />}
-                                                </label>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-
-                                <div className="bg-[#1A1B3A] rounded-2xl p-4 border border-white/5">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Total</span>
-                                        <span className="text-2xl font-black text-white">
-                                            ${newContratoData.servicios_seleccionados.reduce((sum, id) => {
-                                                const prices: Record<string, number> = { digital: 35, business: 100, catalogo: 200, auditoria: 0, web: 1000 };
-                                                return sum + (prices[id] || 0);
-                                            }, 0)}
-                                        </span>
-                                    </div>
-                                    {newContratoData.servicios_seleccionados.length > 1 && (
-                                        <p className="text-[10px] text-white/30 mt-2">
-                                            Incluye: {newContratoData.servicios_seleccionados.map(id => {
-                                                const names: Record<string, string> = { digital: 'Digital', business: 'Business', catalogo: 'Catálogo', auditoria: 'Auditoría', web: 'Web' };
-                                                return names[id] || id;
-                                            }).join(', ')}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={isGeneratingContrato || newContratoData.servicios_seleccionados.length === 0}
-                                    className="w-full bg-blue-500 text-white py-4 rounded-[24px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2 disabled:opacity-50"
-                                >
-                                    {isGeneratingContrato ? <Loader2 size={20} className="animate-spin" /> : <FileText size={20} />}
-                                    {isGeneratingContrato ? 'Generando...' : 'Generar Link del Contrato'}
-                                </button>
-                                <p className="text-center text-[10px] font-bold text-white/30 uppercase">
-                                    El link se copiará al portapapeles y se abrirá en una nueva pestaña
-                                </p>
-                            </form>
                         </motion.div>
                     </div>
                 )}

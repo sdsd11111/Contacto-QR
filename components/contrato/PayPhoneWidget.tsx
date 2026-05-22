@@ -103,6 +103,18 @@ export default function PayPhoneWidget({
       const amountInCents = Math.round(amount * 100);
       const transactionId = `contrato_${contractId}_${Date.now()}`;
 
+      // Guardar backup para que /registro sepa qué email verificar
+      try {
+        localStorage.setItem('payphone_form_backup', JSON.stringify({
+          email: clientEmail,
+          name: clientName,
+          whatsapp: clientPhone,
+          plan: 'contrato',
+          fromContrato: true,
+          contratoId: contractId,
+        }));
+      } catch (e) {}
+
       try {
         const ppb = new PBox({
           token: process.env.NEXT_PUBLIC_PAYPHONE_TOKEN,
@@ -116,7 +128,8 @@ export default function PayPhoneWidget({
           responseUrl: `${window.location.origin}/registro`,
           cancellationUrl: `${window.location.origin}/registro`,
           onComplete: () => {
-            alert('✅ ¡Pago procesado exitosamente!');
+            // Redirigir manualmente al contrato con éxito
+            window.location.href = `${window.location.origin}/contrato/${contractId}?pago=exitoso`;
           },
           onCancel: () => {
             console.log('[PayPhone] Pago cancelado');
@@ -168,7 +181,8 @@ export default function PayPhoneWidget({
       <button
         type="button"
         onClick={() => {
-          const payUrl = `https://pay.payphonetodoesposible.com/api/button/V2?token=${process.env.NEXT_PUBLIC_PAYPHONE_TOKEN}&storeId=${process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID}&amount=${Math.round(amount * 100)}&clientTransactionId=contrato_${contractId}_${Date.now()}&currency=USD&reference=Contrato%20ActivaQR%20-%20${encodeURIComponent(clientName || '')}&responseUrl=${encodeURIComponent(window.location.origin + '/registro')}`;
+          const tid = `contrato_${contractId}_${Date.now()}`;
+          const payUrl = `https://pay.payphonetodoesposible.com/api/button/V2?token=${process.env.NEXT_PUBLIC_PAYPHONE_TOKEN}&storeId=${process.env.NEXT_PUBLIC_PAYPHONE_STORE_ID}&amount=${Math.round(amount * 100)}&clientTransactionId=${tid}&currency=USD&reference=Contrato%20ActivaQR%20-%20${encodeURIComponent(clientName || '')}&responseUrl=${encodeURIComponent(window.location.origin + '/registro')}`;
           window.open(payUrl, '_blank', 'width=600,height=800');
         }}
         className="w-full bg-[#ff6f00] text-white font-black py-4 rounded-2xl uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl shadow-[#ff6f00]/20"
