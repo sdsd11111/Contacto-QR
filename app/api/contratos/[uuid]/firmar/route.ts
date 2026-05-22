@@ -30,6 +30,47 @@ export async function POST(
 ) {
     try {
         const { uuid } = await params;
+
+        // Auto-crear tabla contratos si no existe (producción)
+        await pool.execute(`CREATE TABLE IF NOT EXISTS contratos (
+            id VARCHAR(36) PRIMARY KEY,
+            cliente_nombre VARCHAR(255) NOT NULL,
+            cliente_negocio VARCHAR(255),
+            cliente_cedula_ruc VARCHAR(20),
+            cliente_telefono VARCHAR(30) NOT NULL,
+            cliente_email VARCHAR(255) NOT NULL,
+            cliente_red_social TEXT,
+            cliente_categorias TEXT,
+            facturacion_ruc VARCHAR(20),
+            facturacion_razon_social VARCHAR(255),
+            facturacion_direccion TEXT,
+            facturacion_foto_url VARCHAR(500),
+            servicio_contratado ENUM('digital','business','catalogo','auditoria','web') NOT NULL,
+            servicios_seleccionados TEXT,
+            monto_total DECIMAL(10,2) NOT NULL,
+            monto_anticipo DECIMAL(10,2) NOT NULL,
+            estado_pago ENUM('pendiente','abonado','pagado') NOT NULL DEFAULT 'pendiente',
+            snapshot_json LONGTEXT NOT NULL,
+            snapshot_hash VARCHAR(64) NOT NULL,
+            version_terminos VARCHAR(10) NOT NULL DEFAULT 'v1.0',
+            firma_nombre VARCHAR(255) NOT NULL,
+            acepta_terminos TINYINT(1) NOT NULL DEFAULT 1,
+            acepta_privacidad TINYINT(1) NOT NULL DEFAULT 1,
+            audit_id_consentimiento VARCHAR(36),
+            timestamp_firma DATETIME(3) NOT NULL,
+            ip VARCHAR(45) NOT NULL,
+            ubicacion_lat DECIMAL(10,7),
+            ubicacion_lng DECIMAL(10,7),
+            ubicacion_precision ENUM('exacta','ciudad','no_disponible') DEFAULT 'no_disponible',
+            dispositivo_fingerprint JSON,
+            contrato_url VARCHAR(500),
+            logo_url VARCHAR(500),
+            fotos_url JSON,
+            archivos_extra_url JSON,
+            created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+            updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`);
+
         const body = await req.json();
 
         const { 
@@ -201,76 +242,108 @@ Puedes retirar tu consentimiento en cualquier momento escribiendo "BAJA" en nues
         let productId = '';
         let productSlug = '';
         let productCreated = false;
+        let productError = '';
 
         try {
-            const planMapping: Record<string, string> = {
-                digital: 'contacto',
-                business: 'business',
-                catalogo: 'catalogo',
-                web: 'web',
-                auditoria: 'auditoria',
-            };
-            const planValue = planMapping[contrato.servicio_contratado] || 'contacto';
-            const tipoPerfil = contrato.cliente_cedula_ruc?.length === 13 ? 'negocio' : 'persona';
-            const nombresArr = (contrato.cliente_nombre || '').split(' ');
-            const nombres = nombresArr.slice(0, Math.ceil(nombresArr.length / 2)).join(' ');
-            const apellidos = nombresArr.slice(Math.ceil(nombresArr.length / 2)).join(' ');
+            const email = contrato.cliente_email || '';
+            const telefono = contrato.cliente_telefono || '';
 
-            productId = uuidv4();
-            const cleanName = (contrato.cliente_nombre || 'cliente').toLowerCase()
-                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                .replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-            productSlug = `${cleanName}-${Math.random().toString(36).substring(2, 6)}`;
-
-            // Limpiar teléfono
-            const rawPhone = (contrato.cliente_telefono || '').replace(/\D/g, '');
-            const formattedPhone = rawPhone.startsWith('593')
-                ? `+593 ${rawPhone.substring(3)}`
-                : rawPhone.startsWith('0')
-                    ? `+593 ${rawPhone.substring(1)}`
-                    : contrato.cliente_telefono || '';
-
-            // Obtener primer servicio como selector de template
-            const servPrincipal = serviciosSeleccionados[0] || contrato.servicio_contratado;
-            const templateId = servPrincipal === 'business' || servPrincipal === 'catalogo' ? 'dynamic' : 'classic';
-
-            const tieneRuc = contrato.cliente_cedula_ruc && contrato.cliente_cedula_ruc.length === 13;
-            await pool.execute(
-                `INSERT INTO registraya_vcard_registros (
-                    id, slug, created_at, nombre, email, whatsapp,
-                    empresa, bio, productos_servicios,
-                    instagram, facebook,
-                    plan, foto_url, status, paid_at, edit_code, edit_uses_remaining,
-                    tipo_perfil, nombres, apellidos, nombre_negocio,
-                    contacto_nombre, contacto_apellido, template_id,
-                    google_business
-                ) VALUES (?, ?, NOW(), ?, ?, ?,
-                    ?, ?, ?,
-                    ?, ?,
-                    ?, ?, 'pendiente', NULL, ?, 2,
-                    ?, ?, ?, ?,
-                    ?, ?, ?,
-                    ?)`,
-                [
-                    productId, productSlug,
-                    contrato.cliente_nombre || firma_nombre,
-                    contrato.cliente_email || '', formattedPhone,
-                    contrato.cliente_negocio || null,
-                    contrato.cliente_categorias || null,   // → bio
-                    contrato.cliente_categorias || null,  // → productos_servicios
-                    contrato.cliente_red_social || null, null,
-                    planValue, contrato.logo_url || null,
-                    `CONTRATO-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-                    tieneRuc ? 'negocio' : 'persona',
-                    nombres || contrato.cliente_nombre, apellidos || '',
-                    contrato.cliente_negocio || null,
-                    contrato.cliente_nombre || null, null,
-                    templateId,
-                    tieneRuc ? contrato.cliente_cedula_ruc : null
-                ]
+            // Verificar si ya existe un producto con ese email
+            const [existentes]: any = await pool.execute(
+                'SELECT id, slug FROM registraya_vcard_registros WHERE email = ?',
+                [email]
             );
-            productCreated = true;
-        } catch (prodErr) {
+
+            if (existentes && existentes.length > 0) {
+                // Ya existe → actualizar en lugar de insertar
+                productId = existentes[0].id;
+                productSlug = existentes[0].slug;
+                await pool.execute(
+                    `UPDATE registraya_vcard_registros SET
+                        nombre = ?, whatsapp = ?, empresa = ?,
+                        bio = ?, productos_servicios = ?, instagram = ?,
+                        updated_at = NOW()
+                    WHERE id = ?`,
+                    [
+                        contrato.cliente_nombre || firma_nombre,
+                        telefono,
+                        contrato.cliente_negocio || null,
+                        contrato.cliente_categorias || null,
+                        contrato.cliente_categorias || null,
+                        contrato.cliente_red_social || null,
+                        productId
+                    ]
+                );
+                productCreated = true;
+                console.log(`[Contratos] Producto ACTUALIZADO para ${email}: ${productId}`);
+            } else {
+                // No existe → insertar nuevo
+                const planMapping: Record<string, string> = {
+                    digital: 'contacto', business: 'business',
+                    catalogo: 'catalogo', web: 'web', auditoria: 'auditoria',
+                };
+                const planValue = planMapping[contrato.servicio_contratado] || 'contacto';
+                const tipoPerfil = contrato.cliente_cedula_ruc?.length === 13 ? 'negocio' : 'persona';
+                const nombresArr = (contrato.cliente_nombre || '').split(' ');
+                const nombres = nombresArr.slice(0, Math.ceil(nombresArr.length / 2)).join(' ');
+                const apellidos = nombresArr.slice(Math.ceil(nombresArr.length / 2)).join(' ');
+
+                productId = uuidv4();
+                const cleanName = (contrato.cliente_nombre || 'cliente').toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+                productSlug = `${cleanName}-${Math.random().toString(36).substring(2, 6)}`;
+
+                const rawPhone = telefono.replace(/\D/g, '');
+                const formattedPhone = rawPhone.startsWith('593')
+                    ? `+593 ${rawPhone.substring(3)}`
+                    : rawPhone.startsWith('0')
+                        ? `+593 ${rawPhone.substring(1)}`
+                        : telefono;
+
+                const servPrincipal = serviciosSeleccionados[0] || contrato.servicio_contratado;
+                const templateId = servPrincipal === 'business' || servPrincipal === 'catalogo' ? 'dynamic' : 'classic';
+                const tieneRuc = contrato.cliente_cedula_ruc && contrato.cliente_cedula_ruc.length === 13;
+
+                await pool.execute(
+                    `INSERT INTO registraya_vcard_registros (
+                        id, slug, created_at, nombre, email, whatsapp,
+                        empresa, bio, productos_servicios,
+                        instagram, facebook,
+                        plan, foto_url, status, paid_at, edit_code, edit_uses_remaining,
+                        tipo_perfil, nombres, apellidos, nombre_negocio,
+                        contacto_nombre, contacto_apellido, template_id,
+                        google_business
+                    ) VALUES (?, ?, NOW(), ?, ?, ?,
+                        ?, ?, ?,
+                        ?, ?,
+                        ?, ?, 'pendiente', NULL, ?, 2,
+                        ?, ?, ?, ?,
+                        ?, ?, ?,
+                        ?)`,
+                    [
+                        productId, productSlug,
+                        contrato.cliente_nombre || firma_nombre,
+                        email, formattedPhone,
+                        contrato.cliente_negocio || null,
+                        contrato.cliente_categorias || null,
+                        contrato.cliente_categorias || null,
+                        contrato.cliente_red_social || null, null,
+                        planValue, contrato.logo_url || null,
+                        `CONTRATO-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                        tieneRuc ? 'negocio' : 'persona',
+                        nombres || contrato.cliente_nombre, apellidos || '',
+                        contrato.cliente_negocio || null,
+                        contrato.cliente_nombre || null, null,
+                        templateId,
+                        tieneRuc ? contrato.cliente_cedula_ruc : null
+                    ]
+                );
+                productCreated = true;
+                console.log(`[Contratos] Producto CREADO para ${email}: ${productId}`);
+            }
+        } catch (prodErr: any) {
+            productError = prodErr?.message || 'Error desconocido';
             console.error('[Contratos] Error al crear producto desde contrato:', prodErr);
         }
 
@@ -387,7 +460,7 @@ Puedes retirar tu consentimiento en cualquier momento escribiendo "BAJA" en nues
                 id: productId,
                 slug: productSlug,
                 url: productUrl
-            } : null,
+            } : { error: productError || 'No se pudo crear' },
             notificaciones: {
                 equipo_whatsapp: teamNotified,
                 email_cliente: emailSent
