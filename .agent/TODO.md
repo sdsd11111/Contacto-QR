@@ -65,3 +65,30 @@
 - [ ] Limpiar código muerto en `PlanContactoDigitalClient.tsx` resultante de iteraciones fallidas.
 - [ ] Optimizar pesos de imágenes en `/images/Reingenierìa/`.
 - [ ] Pendiente: generar 5ª imagen de Auditoría (Flotas comparte con Educación).
+
+---
+
+## 🆕 Sesión 22 Mayo 2026 — Módulo de Contrato y Onboarding
+
+### ✅ Completado
+- [x] Tabla `contratos` con metadatos forenses (IP, geolocalización, fingerprint)
+- [x] API: `POST /api/contratos/generar` — genera UUID + link
+- [x] API: `GET /api/contratos/[uuid]` — obtiene datos del contrato
+- [x] API: `PATCH /api/contratos/[uuid]` — auto-save del formulario
+- [x] API: `POST /api/contratos/[uuid]/firmar` — firma con snapshot inmutable + hash SHA-256 + registro en consentimientos
+- [x] Página: `app/contrato/[uuid]/page.tsx` con validación de UUID
+- [x] Componentes: StepIndicator, DatosForm, DatosFacturacion (acordeón), ContratoDinamico, SubidaMateriales, FirmaSection
+- [x] Utilidades: validación cédula/RUC Ecuador (Módulo 10), hash SHA-256, fingerprint, geolocalización
+- [x] Skill de documentación: `.agent/skills/contrato-onboarding/SKILL.md`
+- [x] Notas para Cheche: `.agent/skills/contrato-onboarding/CHECHE_NOTES.md`
+- [x] `AGENTS.md` actualizado con nuevo skill
+- [x] Multi-producto: checkboxes en lugar de selector único, auto-cálculo de total
+- [x] Contrato redactado con César Augusto Reyes Jaramillo (C.I. 1103421531001) como proveedor
+- [x] Contrato: cláusula de autogestión (clave de edición), vigencia 1 año, firmado en Loja
+- [x] Compilación TypeScript: 0 errores
+
+### 🔲 Pendiente para próxima sesión
+- [ ] Interfaz admin para generar contratos (formulario + botón "Generar link")
+- [ ] Envío de email automático al cliente con copia del contrato
+- [ ] Sección "Contratos" en el panel admin (listar, filtrar, cambiar estado de pago)
+- [ ] Texto final de términos redactado por Cheche (reemplazar template en `lib/contrato-utils.ts`)

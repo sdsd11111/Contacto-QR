@@ -17,6 +17,7 @@ La **Skill Madre** contiene la visión estratégica, terminología oficial y el 
 | **Hero Standard** | [.agent/skills/hero-ui-standard/](file:///c:/Users/Cesar/Documents/GRUPO%20EMPRESARIAL%20REYES/PROYECTOS/Contacto-QR/.agent/skills/hero-ui-standard/) | Estándar de proporciones UX para cabeceras. |
 | **Frontend Lux** | [.agent/skills/frontend-lux/](file:///c:/Users/Cesar/Documents/GRUPO%20EMPRESARIAL%20REYES/PROYECTOS/Contacto-QR/.agent/skills/frontend-lux/) | Guía de diseño de lujo y legibilidad premium. |
 | **The Architect** | [.agent/skills/the-architect/](file:///c:/Users/Cesar/Documents/GRUPO%20EMPRESARIAL%20REYES/PROYECTOS/Contacto-QR/.agent/skills/the-architect/) | Generador de Blueprints con ADN ActivaQR. |
+| **Contrato Onboarding** | [.agent/skills/contrato-onboarding/](file:///c:/Users/Cesar/Documents/GRUPO%20EMPRESARIAL%20REYES/PROYECTOS/Contacto-QR/.agent/skills/contrato-onboarding/) | Módulo de Contrato y Onboarding. Firma digital, subida de materiales, metadatos forenses. |
 
 ## 🚀 Protocolo de Ejecución ActivaQR
 
