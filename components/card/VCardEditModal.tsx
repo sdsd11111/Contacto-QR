@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity, Video, Camera } from 'lucide-react';
+import { X, Save, Download, Key, AlertCircle, CheckCircle, Loader2, Edit, Image as ImageIcon, Zap, Phone, User, ChevronDown, Store, Library, Plus, Trash2, Activity, Video, Camera, Upload } from 'lucide-react';
 import { formatPhoneEcuador, cn } from '@/lib/utils';
 
 interface VCardEditModalProps {
@@ -753,6 +753,15 @@ export default function VCardEditModal({
         };
     })();
 
+    const experienceButton = (() => {
+        let parsed: any = {};
+        try {
+            const raw = formData.json_override;
+            parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+        } catch (e) {}
+        return parsed.experienceButton || { text: "", action: "whatsapp", url: "", fileUrl: "" };
+    })();
+
     const updateCategoryDescription = (index: number, newDesc: string) => {
         setFormData(prev => {
             const raw = prev.json_override;
@@ -795,6 +804,46 @@ export default function VCardEditModal({
             
             return { ...prev, json_override: nextObj };
         });
+    };
+
+    const updateExperienceButton = (fields: Partial<{ text: string; action: 'whatsapp' | 'link' | 'file'; url: string; fileUrl: string }>) => {
+        setFormData(prev => {
+            const raw = prev.json_override;
+            const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+            const currentBtn = parsed.experienceButton || { text: "", action: "whatsapp", url: "", fileUrl: "" };
+            return {
+                ...prev,
+                json_override: {
+                    ...parsed,
+                    experienceButton: { ...currentBtn, ...fields }
+                }
+            };
+        });
+    };
+
+    const handleExperienceFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !e.target.files[0]) return;
+        const file = e.target.files[0];
+        setUploadingImage(true);
+        const fd = new FormData();
+        fd.append('file', file);
+        if (userData?.slug) {
+            fd.append('slug', userData.slug);
+        }
+        try {
+            const res = await fetch('/api/upload', { method: 'POST', body: fd });
+            if (res.ok) {
+                const { url } = await res.json();
+                updateExperienceButton({ fileUrl: url });
+            } else {
+                alert('Error al subir el archivo.');
+            }
+        } catch (err) {
+            console.error("Error uploading experience file:", err);
+            alert('Error al subir el archivo.');
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     const updateCategoryTitle = (index: number, newTitle: string) => {
@@ -1478,6 +1527,80 @@ export default function VCardEditModal({
                                                                     </div>
                                                                 ))}
                                                             </div>
+                                                        </div>
+
+                                                        {/* Botón de Acción Panel */}
+                                                        <div className="border-t border-gray-100 pt-6 mt-6 space-y-6">
+                                                            <div className="flex justify-between items-center pb-2">
+                                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                                                    BOTÓN DE ACCIÓN CONFIGURABLE
+                                                                </h4>
+                                                            </div>
+                                                            
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Texto del Botón</label>
+                                                                    <input
+                                                                        className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 focus:border-primary outline-none"
+                                                                        value={experienceButton.text}
+                                                                        onChange={e => updateExperienceButton({ text: e.target.value })}
+                                                                        placeholder="Ej: CONSULTAR AHORA, VER CARTA, MÁS INFO"
+                                                                    />
+                                                                    <p className="text-[9px] text-gray-400">Si lo dejas vacío se usará "CONSULTAR AHORA" por defecto.</p>
+                                                                </div>
+
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Acción al hacer clic</label>
+                                                                    <div className="grid grid-cols-3 gap-2">
+                                                                        {(['whatsapp', 'link', 'file'] as const).map((act) => (
+                                                                            <button
+                                                                                key={act}
+                                                                                type="button"
+                                                                                onClick={() => updateExperienceButton({ action: act })}
+                                                                                className={cn(
+                                                                                    "py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border",
+                                                                                    experienceButton.action === act 
+                                                                                        ? "bg-primary text-white border-primary" 
+                                                                                        : "bg-white text-navy/50 border-gray-200 hover:border-gray-300"
+                                                                                )}
+                                                                            >
+                                                                                {act === 'whatsapp' ? 'WhatsApp' : act === 'link' ? 'Link Web' : 'Archivo / PDF'}
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {experienceButton.action === 'link' && (
+                                                                <div className="space-y-1 animate-in fade-in duration-300">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Enlace Web (URL)</label>
+                                                                    <input
+                                                                        className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 focus:border-primary outline-none"
+                                                                        value={experienceButton.url || ''}
+                                                                        onChange={e => updateExperienceButton({ url: e.target.value })}
+                                                                        placeholder="https://miweb.com/menu.pdf"
+                                                                    />
+                                                                </div>
+                                                            )}
+
+                                                            {experienceButton.action === 'file' && (
+                                                                <div className="space-y-2 animate-in fade-in duration-300">
+                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Archivo o PDF Adjunto</label>
+                                                                    <div className="flex items-center gap-4">
+                                                                        <label className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 border border-primary/20">
+                                                                            <Upload size={14} /> Subir Archivo / PDF
+                                                                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onChange={handleExperienceFileUpload} />
+                                                                        </label>
+                                                                        {experienceButton.fileUrl && (
+                                                                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl max-w-xs overflow-hidden">
+                                                                                <span className="text-[10px] text-gray-900/60 truncate font-mono">{experienceButton.fileUrl.split('/').pop()}</span>
+                                                                                <a href={experienceButton.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-[9px] font-black uppercase flex-shrink-0">Ver</a>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                    <p className="text-[9px] text-gray-400">Sube un menú, catálogo o folleto para que el cliente lo descargue directamente al pulsar el botón.</p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </motion.div>

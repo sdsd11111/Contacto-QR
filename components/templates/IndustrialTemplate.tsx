@@ -16,6 +16,25 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
     const { data, afterExperienceSlot, getVideoEmbedUrl, activeSlides, currentSlideIndex } = props;
     if (!data) return null;
 
+    const [lightboxImg, setLightboxImg] = React.useState<string | null>(null);
+
+    // Close lightbox on Escape key + lock body scroll
+    React.useEffect(() => {
+        if (!lightboxImg) {
+            document.body.style.overflow = '';
+            return;
+        }
+        document.body.style.overflow = 'hidden';
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setLightboxImg(null);
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => {
+            document.body.style.overflow = '';
+            window.removeEventListener('keydown', handleKey);
+        };
+    }, [lightboxImg]);
+
     // Default values if data is missing
     // Industrial Specific Config (from json_override)
     const { industrialConfig, authorityModule } = (() => {
@@ -94,6 +113,18 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
             };
         });
     })();
+
+    const experienceButton = (() => {
+        const raw = data.json_override;
+        const parsed = safeParse(raw, {});
+        return parsed.experienceButton || {
+            text: "CONSULTAR AHORA",
+            action: "whatsapp",
+            url: "",
+            fileUrl: ""
+        };
+    })();
+    const btnText = experienceButton.text || "CONSULTAR AHORA";
 
     const handleShare = async () => {
         if (navigator.share) {
@@ -263,7 +294,13 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                         {servicesList.map((service: any, index: number) => (
                             <div key={index} className="group relative bg-navy border border-white/10 overflow-hidden shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                                 {/* Service Image / Header Area */}
-                                <div className="h-48 relative overflow-hidden flex items-center justify-center">
+                                <div 
+                                    className={cn(
+                                        "h-48 relative overflow-hidden flex items-center justify-center",
+                                        service.img ? "cursor-pointer" : ""
+                                    )}
+                                    onClick={() => service.img && setLightboxImg(service.img)}
+                                >
                                     {service.img ? (
                                         <img 
                                             src={service.img} 
@@ -289,6 +326,42 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                     <p className="text-white/60 text-sm font-medium leading-relaxed">
                                         {service.description}
                                     </p>
+                                    
+                                    {/* Action Button */}
+                                    <div className="mt-6 flex justify-center">
+                                        {(!experienceButton.action || experienceButton.action === 'whatsapp') && (
+                                            <a 
+                                                href={`https://wa.me/${data.whatsapp?.replace(/\D/g, '')}?text=Hola, deseo información sobre ${service.title}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-[#FF5C00] hover:bg-[#e65300] text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-colors duration-300 rounded-sm inline-block shadow-md animate-none"
+                                            >
+                                                {btnText}
+                                            </a>
+                                        )}
+                                        {experienceButton.action === 'link' && (
+                                            <a 
+                                                href={experienceButton.url || "#"}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="bg-[#FF5C00] hover:bg-[#e65300] text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-colors duration-300 rounded-sm inline-block shadow-md animate-none"
+                                            >
+                                                {btnText}
+                                            </a>
+                                        )}
+                                        {experienceButton.action === 'file' && (
+                                            <a 
+                                                href={experienceButton.fileUrl || "#"}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                download
+                                                className="bg-[#FF5C00] hover:bg-[#e65300] text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-colors duration-300 rounded-sm inline-flex items-center gap-2 shadow-md animate-none"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                                {btnText}
+                                            </a>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -493,6 +566,31 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                     &copy; {new Date().getFullYear()} {data.nombre_negocio || data.nombre}. Powered by ActivaQR.
                 </div>
             </footer>
+
+            {/* ─── LIGHTBOX ─── */}
+            {lightboxImg && (
+                <div 
+                    className="fixed inset-0 z-[9999] bg-black/90 flex items-center justify-center p-4 md:p-10 cursor-pointer"
+                    onClick={() => setLightboxImg(null)}
+                >
+                    {/* Close button */}
+                    <button 
+                        onClick={() => setLightboxImg(null)}
+                        className="absolute top-4 right-4 md:top-8 md:right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all z-10"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    {/* Image */}
+                    <img 
+                        src={lightboxImg} 
+                        alt="Imagen ampliada"
+                        className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl cursor-default"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     );
 }

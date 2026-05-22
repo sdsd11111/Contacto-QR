@@ -178,6 +178,36 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                     ];
 
                 const whatsappNumber = props.data?.whatsapp?.replace(/\D/g, '') || '';
+                const getExperienceButtonForIndex = (index: number) => {
+                    const raw = props.data?.json_override;
+                    const parsed = safeParse(raw, {});
+                    
+                    if (parsed.experienceButtons && parsed.experienceButtons[index]) {
+                        const btn = parsed.experienceButtons[index];
+                        return {
+                            text: btn.text || "CONSULTAR AHORA",
+                            action: btn.action || "whatsapp",
+                            url: btn.url || "",
+                            fileUrl: btn.fileUrl || ""
+                        };
+                    }
+                    
+                    if (parsed.experienceButton) {
+                        return {
+                            text: parsed.experienceButton.text || "CONSULTAR AHORA",
+                            action: parsed.experienceButton.action || "whatsapp",
+                            url: parsed.experienceButton.url || "",
+                            fileUrl: parsed.experienceButton.fileUrl || ""
+                        };
+                    }
+                    
+                    return {
+                        text: "CONSULTAR AHORA",
+                        action: "whatsapp",
+                        url: "",
+                        fileUrl: ""
+                    };
+                };
 
                 return (
                     <section className="w-full bg-white py-24 overflow-hidden">
@@ -210,7 +240,9 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
 
                         <div className="relative w-full max-w-7xl mx-auto px-4 md:px-12">
                             <div className="relative h-[50vh] md:h-[60vh] w-full overflow-hidden rounded-[2rem] md:rounded-[3rem] shadow-2xl">
-                                {banners.map((col: any, idx: number) => (
+                                {banners.map((col: any, idx: number) => {
+                                    const experienceButton = getExperienceButtonForIndex(idx);
+                                    return (
                                     <motion.div 
                                         key={idx}
                                         initial={{ opacity: 0 }}
@@ -258,20 +290,49 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                                     {col.subtitle}
                                                 </p>
                                                 
-                                                <motion.a
-                                                    whileHover={{ scale: 1.05 }}
-                                                    whileTap={{ scale: 0.95 }}
-                                                    href={`https://wa.me/${whatsappNumber}?text=Hola, deseo información sobre ${col.title}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="bg-white text-black px-10 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:bg-black hover:text-white inline-block shadow-xl"
-                                                >
-                                                    CONSULTAR AHORA
-                                                </motion.a>
+                                                {(!experienceButton.action || experienceButton.action === 'whatsapp') && (
+                                                    <motion.a
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        href={`https://wa.me/${whatsappNumber}?text=Hola, deseo información sobre ${col.title}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="bg-white text-black px-10 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:bg-black hover:text-white inline-block shadow-xl pointer-events-auto"
+                                                    >
+                                                        {experienceButton.text}
+                                                    </motion.a>
+                                                )}
+                                                {experienceButton.action === 'link' && (
+                                                    <motion.a
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        href={experienceButton.url || "#"}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="bg-white text-black px-10 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:bg-black hover:text-white inline-block shadow-xl pointer-events-auto"
+                                                    >
+                                                        {experienceButton.text}
+                                                    </motion.a>
+                                                )}
+                                                {experienceButton.action === 'file' && (
+                                                    <motion.a
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        href={experienceButton.fileUrl || "#"}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        download
+                                                        className="bg-white text-black px-10 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:bg-black hover:text-white inline-flex items-center gap-2 shadow-xl pointer-events-auto"
+                                                    >
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                                        {experienceButton.text}
+                                                    </motion.a>
+                                                )}
                                             </motion.div>
                                         </div>
                                     </motion.div>
-                                ))}
+                                    );
+                                })}
                             </div>
                             
                             {/* Pagination Dots */}

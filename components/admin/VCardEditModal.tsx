@@ -384,6 +384,30 @@ export default function VCardEditModal({
         }
     };
 
+    const updateExperienceButton = (fields: Partial<{ text: string; action: 'whatsapp' | 'link' | 'file'; url: string; fileUrl: string }>) => {
+        let parsed: any = {};
+        try {
+            const raw = editingRegistro.json_override;
+            parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+        } catch (e) {}
+
+        const currentBtn = parsed.experienceButton || { text: "", action: "whatsapp", url: "", fileUrl: "" };
+        parsed.experienceButton = { ...currentBtn, ...fields };
+
+        setEditingRegistro({ ...editingRegistro, json_override: parsed });
+    };
+
+    const handleExperienceFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || !e.target.files[0]) return;
+        const file = e.target.files[0];
+        try {
+            const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
+            updateExperienceButton({ fileUrl: url });
+        } catch (err) {
+            alert('Error al subir el archivo.');
+        }
+    };
+
     // Preparar sugerencias/atajos rápidos para este perfil
     const quickShortcuts = [
         { label: '🖋️ Estudio de Tatuajes', value: 'Estudio de Tatuajes' },
@@ -1452,106 +1476,191 @@ export default function VCardEditModal({
                             </div>
                         )}
 
-                        {activeTab === 'categorias' && (
-                            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20 space-y-8">
-                                    <div className="flex justify-between items-center border-b border-white/5 pb-4">
-                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                                            <Layers size={16} /> IMÁGENES DE EXPERIENCIA (HERO CARDS)
-                                        </h4>
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                const current = (editingRegistro.productos_servicios || '').trim();
-                                                const separator = '\n';
-                                                setEditingRegistro({ ...editingRegistro, productos_servicios: current + (current ? separator : '') + 'Nueva Categoría' });
-                                            }}
-                                            className="bg-primary/20 hover:bg-primary/40 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
-                                        >
-                                            <Plus size={14} /> Añadir Categoría
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Título de la Sección (Opcional)</label>
-                                            <input
-                                                className="w-full bg-[#050B1C] border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all text-xs"
-                                                value={experienceCategories.title}
-                                                onChange={e => updateExperienceCategories(e.target.value, experienceCategories.categories.map((c:any) => ({index: c.index, url: c.img})).filter((c:any) => c.url), experienceCategories.subtitle)}
-                                                placeholder="Ej: THE MI MARCA EXPERIENCE"
-                                            />
-                                            <p className="text-[9px] text-primary/40 ml-1">Si lo dejas en blanco, se usará "THE [NOMBRE NEGOCIO] EXPERIENCE" por defecto.</p>
+                        {activeTab === 'categorias' && (() => {
+                            const experienceButton = (() => {
+                                let parsed: any = {};
+                                try {
+                                    const raw = editingRegistro.json_override;
+                                    parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+                                } catch (e) {}
+                                return parsed.experienceButton || { text: "", action: "whatsapp", url: "", fileUrl: "" };
+                            })();
+                            
+                            return (
+                                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20 space-y-8">
+                                        <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                                <Layers size={16} /> IMÁGENES DE EXPERIENCIA (HERO CARDS)
+                                            </h4>
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    const current = (editingRegistro.productos_servicios || '').trim();
+                                                    const separator = '\n';
+                                                    setEditingRegistro({ ...editingRegistro, productos_servicios: current + (current ? separator : '') + 'Nueva Categoría' });
+                                                }}
+                                                className="bg-primary/20 hover:bg-primary/40 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
+                                            >
+                                                <Plus size={14} /> Añadir Categoría
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Título de la Sección (Opcional)</label>
+                                                <input
+                                                    className="w-full bg-[#050B1C] border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all text-xs"
+                                                    value={experienceCategories.title}
+                                                    onChange={e => updateExperienceCategories(e.target.value, experienceCategories.categories.map((c:any) => ({index: c.index, url: c.img})).filter((c:any) => c.url), experienceCategories.subtitle)}
+                                                    placeholder="Ej: THE MI MARCA EXPERIENCE"
+                                                />
+                                                <p className="text-[9px] text-primary/40 ml-1">Si lo dejas en blanco, se usará "THE [NOMBRE NEGOCIO] EXPERIENCE" por defecto.</p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Especialidad / Subtítulo (Global)</label>
+                                                <input
+                                                    className="w-full bg-[#050B1C] border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all text-xs"
+                                                    value={experienceCategories.subtitle}
+                                                    onChange={e => updateExperienceCategories(experienceCategories.title, experienceCategories.categories.map((c:any) => ({index: c.index, url: c.img})).filter((c:any) => c.url), e.target.value)}
+                                                    placeholder="Ej: Especialidad, Expert Care, etc."
+                                                />
+                                                <p className="text-[9px] text-primary/40 ml-1">Cambia el texto pequeño sobre el título de cada tarjeta.</p>
+                                            </div>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Especialidad / Subtítulo (Global)</label>
-                                            <input
-                                                className="w-full bg-[#050B1C] border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all text-xs"
-                                                value={experienceCategories.subtitle}
-                                                onChange={e => updateExperienceCategories(experienceCategories.title, experienceCategories.categories.map((c:any) => ({index: c.index, url: c.img})).filter((c:any) => c.url), e.target.value)}
-                                                placeholder="Ej: Especialidad, Expert Care, etc."
-                                            />
-                                            <p className="text-[9px] text-primary/40 ml-1">Cambia el texto pequeño sobre el título de cada tarjeta.</p>
-                                        </div>
-                                    </div>
-
-                                    {experienceCategories.categories.length === 0 ? (
-                                        <div className="py-12 text-center border-2 border-dashed border-primary/20 rounded-3xl">
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-primary/40">No hay categorías configuradas.</p>
-                                            <p className="text-[9px] text-primary/30 mt-2">Añade servicios en la pestaña "Bio & Servicios" primero.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {experienceCategories.categories.map((cat: any) => (
-                                                <div key={cat.index} className="bg-[#050B1C] border border-white/10 rounded-3xl overflow-hidden group">
-                                                    <div className="relative aspect-square bg-white/5 flex flex-col items-center justify-center">
-                                                        {cat.img ? (
-                                                            <img src={cat.img} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="flex flex-col items-center gap-2 text-white/20">
-                                                                <ImageIcon size={32} />
-                                                                <span className="text-[9px] uppercase font-black tracking-widest">Foto por defecto</span>
-                                                            </div>
-                                                        )}
-                                                        <label className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
-                                                            <Upload size={24} className="text-white mb-2" />
-                                                            <span className="text-[10px] text-white font-black uppercase tracking-widest">Cambiar Foto</span>
-                                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleCategoryPhotoUpload(e, cat.index)} />
-                                                        </label>
-                                                    </div>
-                                                    <div className="p-4 bg-white/5 flex justify-between items-center">
-                                                        <div>
-                                                            <p className="text-[10px] font-black text-white/40 uppercase mb-1">Tarjeta {cat.index + 1}</p>
-                                                            <input 
-                                                                type="text"
-                                                                value={cat.title}
-                                                                onChange={(e) => updateCategoryTitle(cat.index, e.target.value)}
-                                                                placeholder="Nombre de categoría"
-                                                                className="bg-transparent border-none p-0 text-xs font-bold text-white uppercase focus:ring-0 w-full outline-none hover:text-primary transition-colors"
-                                                            />
+                                        {experienceCategories.categories.length === 0 ? (
+                                            <div className="py-12 text-center border-2 border-dashed border-primary/20 rounded-3xl">
+                                                <p className="text-[10px] font-black uppercase tracking-widest text-primary/40">No hay categorías configuradas.</p>
+                                                <p className="text-[9px] text-primary/30 mt-2">Añade servicios en la pestaña "Bio & Servicios" primero.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {experienceCategories.categories.map((cat: any) => (
+                                                    <div key={cat.index} className="bg-[#050B1C] border border-white/10 rounded-3xl overflow-hidden group">
+                                                        <div className="relative aspect-square bg-white/5 flex flex-col items-center justify-center">
+                                                            {cat.img ? (
+                                                                <img src={cat.img} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="flex flex-col items-center gap-2 text-white/20">
+                                                                    <ImageIcon size={32} />
+                                                                    <span className="text-[9px] uppercase font-black tracking-widest">Foto por defecto</span>
+                                                                </div>
+                                                            )}
+                                                            <label className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-all cursor-pointer backdrop-blur-sm z-10">
+                                                                <Upload size={24} className="text-white mb-2" />
+                                                                <span className="text-[10px] text-white font-black uppercase tracking-widest">Cambiar Foto</span>
+                                                                <input type="file" className="hidden" accept="image/*" onChange={(e) => handleCategoryPhotoUpload(e, cat.index)} />
+                                                            </label>
                                                         </div>
-                                                        {cat.img && (
-                                                            <button 
-                                                                type="button" 
-                                                                onClick={() => {
-                                                                    const currentImages = experienceCategories.categories.map((c:any) => ({index: c.index, url: c.img})).filter((c:any) => c.url && c.index !== cat.index);
-                                                                    updateExperienceCategories(experienceCategories.title, currentImages);
-                                                                }}
-                                                                className="p-2 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
-                                                                title="Quitar foto personalizada"
-                                                            >
-                                                                <Trash2 size={14} />
-                                                            </button>
-                                                        )}
+                                                        <div className="p-4 bg-white/5 flex justify-between items-center">
+                                                            <div>
+                                                                <p className="text-[10px] font-black text-white/40 uppercase mb-1">Tarjeta {cat.index + 1}</p>
+                                                                <input 
+                                                                    type="text"
+                                                                    value={cat.title}
+                                                                    onChange={(e) => updateCategoryTitle(cat.index, e.target.value)}
+                                                                    placeholder="Nombre de categoría"
+                                                                    className="bg-transparent border-none p-0 text-xs font-bold text-white uppercase focus:ring-0 w-full outline-none hover:text-primary transition-colors"
+                                                                />
+                                                            </div>
+                                                            {cat.img && (
+                                                                <button 
+                                                                    type="button" 
+                                                                    onClick={() => {
+                                                                        const currentImages = experienceCategories.categories.map((c:any) => ({index: c.index, url: c.img})).filter((c:any) => c.url && c.index !== cat.index);
+                                                                        updateExperienceCategories(experienceCategories.title, currentImages);
+                                                                    }}
+                                                                    className="p-2 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                                                                    title="Quitar foto personalizada"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Botón de Acción Panel */}
+                                    <div className="bg-primary/5 p-8 rounded-[2.5rem] border border-primary/20 space-y-8">
+                                        <div className="flex justify-between items-center border-b border-white/5 pb-4">
+                                            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+                                                <ExternalLink size={16} /> BOTÓN DE ACCIÓN CONFIGURABLE (CARRUSEL / SERVICIOS)
+                                            </h4>
                                         </div>
-                                    )}
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Texto del Botón</label>
+                                                <input
+                                                    className="w-full bg-[#050B1C] border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all text-xs"
+                                                    value={experienceButton.text}
+                                                    onChange={e => updateExperienceButton({ text: e.target.value })}
+                                                    placeholder="Ej: CONSULTAR AHORA, VER CARTA, MÁS INFO"
+                                                />
+                                                <p className="text-[9px] text-primary/40 ml-1">Si lo dejas vacío se usará "CONSULTAR AHORA" por defecto.</p>
+                                            </div>
+
+                                            <div className="space-y-4">
+                                                <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Acción al hacer clic</label>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    {(['whatsapp', 'link', 'file'] as const).map((act) => (
+                                                        <button
+                                                            key={act}
+                                                            type="button"
+                                                            onClick={() => updateExperienceButton({ action: act })}
+                                                            className={cn(
+                                                                "py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border",
+                                                                experienceButton.action === act 
+                                                                    ? "bg-primary text-navy border-primary" 
+                                                                    : "bg-[#050B1C] text-white/50 border-white/10 hover:border-white/20"
+                                                            )}
+                                                        >
+                                                            {act === 'whatsapp' ? 'WhatsApp' : act === 'link' ? 'Link Web' : 'Archivo / PDF'}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {experienceButton.action === 'link' && (
+                                            <div className="space-y-4 animate-in fade-in duration-300">
+                                                <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Enlace Web (URL)</label>
+                                                <input
+                                                    className="w-full bg-[#050B1C] border border-primary/20 rounded-2xl px-6 py-4 font-bold text-white outline-none focus:border-primary transition-all text-xs"
+                                                    value={experienceButton.url || ''}
+                                                    onChange={e => updateExperienceButton({ url: e.target.value })}
+                                                    placeholder="https://miweb.com/menu.pdf"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {experienceButton.action === 'file' && (
+                                            <div className="space-y-4 animate-in fade-in duration-300">
+                                                <label className="text-[10px] font-black text-primary/60 uppercase tracking-widest ml-1">Archivo o PDF Adjunto</label>
+                                                <div className="flex items-center gap-4">
+                                                    <label className="bg-primary/20 hover:bg-primary/40 text-primary px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 border border-primary/20">
+                                                        <Upload size={14} /> Subir Archivo / PDF
+                                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg animate-none" onChange={handleExperienceFileUpload} />
+                                                    </label>
+                                                    {experienceButton.fileUrl && (
+                                                        <div className="flex items-center gap-2 bg-[#050B1C] border border-white/5 px-4 py-3 rounded-2xl max-w-xs overflow-hidden">
+                                                            <span className="text-[10px] text-white/60 truncate font-mono">{experienceButton.fileUrl.split('/').pop()}</span>
+                                                            <a href={experienceButton.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-[9px] font-black uppercase flex-shrink-0">Ver</a>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className="text-[9px] text-primary/40 ml-1">Sube un menú, catálogo o folleto para que el cliente lo descargue directamente al pulsar el botón.</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {activeTab === 'qr' && (
                             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -59,9 +59,9 @@ export async function POST(req: NextRequest) {
                 );
             }
 
-            // 3. Actualizar el slug
+            // 3. Actualizar el slug + timestamp para refrescar caché OG
             await connection.execute(
-                'UPDATE registraya_vcard_registros SET slug = ? WHERE id = ?',
+                'UPDATE registraya_vcard_registros SET slug = ?, last_edited_at = NOW() WHERE id = ?',
                 [new_slug, user.id]
             );
 
