@@ -346,6 +346,39 @@ export default function VCardEditModal({
         json_override: {} as any
     });
 
+    // 🔄 Sincronizar categorías de experiencia → catálogo en vivo (cliente)
+    useEffect(() => {
+        const raw = formData?.productos_servicios || '';
+        const rawLines = raw.split('\n').map((l: string) => l.trim()).filter(Boolean);
+        if (rawLines.length === 0) return;
+
+        // Leer títulos personalizados desde json_override.experienceTitles
+        let customTitles: any[] = [];
+        try {
+            const override = typeof formData.json_override === 'string'
+                ? safeParse(formData.json_override, {})
+                : (formData.json_override || {});
+            customTitles = override.experienceTitles || [];
+        } catch {}
+
+        // Obtener los nombres VISIBLES (título personalizado o línea original)
+        const visibleNames = rawLines.map((line: string, index: number) => {
+            const custom = customTitles.find((t: any) => t.index === index);
+            return custom?.title || line;
+        }).filter(Boolean);
+
+        let catalogo = formData.catalogo_json;
+        if (!catalogo || typeof catalogo !== 'object') catalogo = { categories: [], products: [] };
+        if (!catalogo.categories) catalogo.categories = [];
+
+        const existing = (catalogo.products || []).map((p: any) => p.categoria || p.category).filter(Boolean);
+        const merged = [...new Set([...visibleNames, ...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...existing])];
+        if (JSON.stringify(catalogo.categories) !== JSON.stringify(merged)) {
+            catalogo.categories = merged;
+            setFormData({ ...formData, catalogo_json: catalogo });
+        }
+    }, [formData?.productos_servicios, formData?.json_override]);
+
     const validateCode = async () => {
         const cleanedCode = editCode.trim().replace(/\s/g, '');
         if (!cleanedCode) return;
@@ -862,6 +895,20 @@ export default function VCardEditModal({
                 }
             } else if (newTitle) {
                 nextTitles.push({ index, title: newTitle });
+            }
+            
+            // También actualizar la línea correspondiente en productos_servicios para el catálogo
+            const lines = (prev.productos_servicios || '').split('\n').map((l: string) => l.trim()).filter(Boolean);
+            if (lines[index] !== undefined && newTitle) {
+                lines[index] = newTitle;
+                return { 
+                    ...prev, 
+                    productos_servicios: lines.join('\n'),
+                    json_override: {
+                        ...parsed,
+                        experienceTitles: nextTitles
+                    } 
+                };
             }
             
             return { 
@@ -1524,6 +1571,26 @@ export default function VCardEditModal({
                                                                                 />
                                                                             </div>
                                                                         </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const lines = (formData.productos_servicios || '').split('\n').filter((l: string) => l.trim()).filter((_: string, i: number) => i !== idx);
+                                                                                const raw = formData.json_override;
+                                                                                const parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
+                                                                                const cleanTitles = (parsed.experienceTitles || []).filter((t: any) => t.index !== idx);
+                                                                                const cleanImages = (parsed.experienceImages || []).filter((i: any) => i.index !== idx);
+                                                                                const reindexedTitles = cleanTitles.map((t: any, i: number) => ({ ...t, index: i }));
+                                                                                const reindexedImages = cleanImages.map((img: any, i: number) => ({ ...img, index: i }));
+                                                                                parsed.experienceTitles = reindexedTitles;
+                                                                                if (reindexedImages.length > 0) parsed.experienceImages = reindexedImages;
+                                                                                else delete parsed.experienceImages;
+                                                                                setFormData({ ...formData, productos_servicios: lines.join('\n'), json_override: parsed });
+                                                                            }}
+                                                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors self-start mt-2"
+                                                                            title="Eliminar categoría"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
                                                                     </div>
                                                                 ))}
                                                             </div>

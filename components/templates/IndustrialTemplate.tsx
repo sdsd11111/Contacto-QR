@@ -328,8 +328,9 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                     </p>
                                     
                                     {/* Action Button */}
-                                    <div className="mt-6 flex justify-center">
+                                    <div className="mt-6 flex flex-wrap gap-2 justify-center">
                                         {(!experienceButton.action || experienceButton.action === 'whatsapp') && (
+                                            <>
                                             <a 
                                                 href={`https://wa.me/${data.whatsapp?.replace(/\D/g, '')}?text=Hola, deseo información sobre ${service.title}`}
                                                 target="_blank"
@@ -338,6 +339,18 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                             >
                                                 {btnText}
                                             </a>
+                                            <button
+                                                onClick={() => {
+                                                    const url = new URL(window.location.href);
+                                                    url.searchParams.set('cat', service.title);
+                                                    window.history.pushState({}, '', url.toString());
+                                                    document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }}
+                                                className="bg-white/10 hover:bg-white/20 text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-colors duration-300 rounded-sm inline-block shadow-md border border-white/20 cursor-pointer"
+                                            >
+                                                Ver catálogo
+                                            </button>
+                                            </>
                                         )}
                                         {experienceButton.action === 'link' && (
                                             <a 

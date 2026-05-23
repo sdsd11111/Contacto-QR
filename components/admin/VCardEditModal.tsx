@@ -34,6 +34,41 @@ export default function VCardEditModal({
     useEffect(() => {
         categoryFilterRef.current = productCategoryFilter;
     }, [productCategoryFilter]);
+
+    // 🔄 Sincronizar categorías de experiencia → catálogo en vivo
+    useEffect(() => {
+        const raw = editingRegistro?.productos_servicios || '';
+        const rawLines = raw.split('\n').map((l: string) => l.trim()).filter(Boolean);
+        if (rawLines.length === 0) return;
+
+        // Leer títulos personalizados desde json_override.experienceTitles
+        let customTitles: any[] = [];
+        try {
+            const override = typeof editingRegistro.json_override === 'string'
+                ? JSON.parse(editingRegistro.json_override || '{}')
+                : (editingRegistro.json_override || {});
+            customTitles = override.experienceTitles || [];
+        } catch {}
+
+        // Obtener los nombres VISIBLES (título personalizado o línea original)
+        const visibleNames = rawLines.map((line: string, index: number) => {
+            const custom = customTitles.find((t: any) => t.index === index);
+            return custom?.title || line;
+        }).filter(Boolean);
+
+        let catalogo = editingRegistro.catalogo_json;
+        if (typeof catalogo === 'string') { try { catalogo = JSON.parse(catalogo); } catch { catalogo = {}; } }
+        if (!catalogo || typeof catalogo !== 'object') catalogo = { categories: [], products: [] };
+        if (!catalogo.categories) catalogo.categories = [];
+
+        const existing = (catalogo.products || []).map((p: any) => p.categoria || p.category).filter(Boolean);
+        const merged = [...new Set([...visibleNames, ...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...existing])];
+        if (JSON.stringify(catalogo.categories) !== JSON.stringify(merged)) {
+            catalogo.categories = merged;
+            setEditingRegistro({ ...editingRegistro, catalogo_json: catalogo });
+        }
+    }, [editingRegistro?.productos_servicios, editingRegistro?.json_override]);
+
     const [heroSectionOpen, setHeroSectionOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'identidad' | 'contacto' | 'contenido' | 'hero' | 'catalogo' | 'qr' | 'vip' | 'categorias'>('identidad');
     const [isStructuring, setIsStructuring] = useState(false);
@@ -328,7 +363,14 @@ export default function VCardEditModal({
             parsed.experienceTitles.push({ index, title: newTitle });
         }
         
-        setEditingRegistro({ ...editingRegistro, json_override: parsed });
+        // También actualizar la línea correspondiente en productos_servicios para que el catálogo se sincronice
+        const lines = (editingRegistro.productos_servicios || '').split('\n').map((l: string) => l.trim()).filter(Boolean);
+        if (lines[index] !== undefined) {
+            lines[index] = newTitle;
+            setEditingRegistro({ ...editingRegistro, json_override: parsed, productos_servicios: lines.join('\n') });
+        } else {
+            setEditingRegistro({ ...editingRegistro, json_override: parsed });
+        }
     };
 
     const updateExperienceCategories = (newTitle: string, newImages: any[], newSubtitle?: string) => {
@@ -1578,6 +1620,31 @@ export default function VCardEditModal({
                                                                     <Trash2 size={14} />
                                                                 </button>
                                                             )}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    // Eliminar categoría: remover línea de productos_servicios + json_override
+                                                                    const lines = (editingRegistro.productos_servicios || '').split('\n').filter((l: string) => l.trim()).filter((_: string, i: number) => i !== cat.index);
+                                                                    let parsed: any = {};
+                                                                    try {
+                                                                        const raw = editingRegistro.json_override;
+                                                                        parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+                                                                    } catch (e) {}
+                                                                    const cleanTitles = (parsed.experienceTitles || []).filter((t: any) => t.index !== cat.index);
+                                                                    const cleanImages = (parsed.experienceImages || []).filter((i: any) => i.index !== cat.index);
+                                                                    // Reindexar
+                                                                    const reindexedTitles = cleanTitles.map((t: any, i: number) => ({ ...t, index: i }));
+                                                                    const reindexedImages = cleanImages.map((img: any, i: number) => ({ ...img, index: i }));
+                                                                    parsed.experienceTitles = reindexedTitles;
+                                                                    if (reindexedImages.length > 0) parsed.experienceImages = reindexedImages;
+                                                                    else delete parsed.experienceImages;
+                                                                    setEditingRegistro({ ...editingRegistro, productos_servicios: lines.join('\n'), json_override: parsed });
+                                                                }}
+                                                                className="p-2 text-red-500/60 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex-shrink-0"
+                                                                title="Eliminar categoría"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -1867,8 +1934,8 @@ export default function VCardEditModal({
                                                             price: '0.00', 
                                                             categoria: targetCategory, 
                                                             category: targetCategory, 
-                                                            image: '', 
-                                                            video: '',
+                                                            imagenes: [], 
+                                                            videos: [],
                                                             descripcion: '', 
                                                             description: '' 
                                                         };
@@ -1887,20 +1954,51 @@ export default function VCardEditModal({
                                                 {catalogoJson.products.filter((p: any) => productCategoryFilter === 'Todas' || (p.categoria || p.category) === productCategoryFilter).map((prod: any, idx: number) => (
                                                     <div key={prod.id || idx} className="bg-white/[0.07] border border-white/20 p-6 rounded-3xl flex gap-6 relative group hover:bg-white/[0.1] transition-all">
                                                         <button type="button" onClick={() => updateCatalogo({ ...catalogoJson, products: catalogoJson.products.filter((p: any) => p.id !== prod.id) })} className="absolute top-4 right-4 text-white/40 hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
-                                                        <div className="w-24 h-24 bg-white/10 rounded-2xl overflow-hidden relative border border-white/10 group-hover:border-primary/30 transition-all">
-                                                            {prod.image ? <img src={prod.image} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/20 uppercase font-black text-[10px]">Sin Imagen</div>}
-                                                            <label className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-all backdrop-blur-sm">
-                                                                <Upload size={16} className="text-white" />
-                                                                <input type="file" className="hidden" accept="image/*" onChange={async e => {
-                                                                    const file = e.target.files?.[0];
-                                                                    if (!file) return;
-                                                                    const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
-                                                                    const prods = [...catalogoJson.products];
-                                                                    const pIdx = prods.findIndex(p => p.id === prod.id);
-                                                                    prods[pIdx] = { ...prod, image: url };
-                                                                    updateCatalogo({ ...catalogoJson, products: prods });
-                                                                }} />
-                                                            </label>
+                                                        <div className="w-24 shrink-0">
+                                                            <div className="space-y-2">
+                                                                {(prod.imagenes || (prod.image ? [prod.image] : [])).length === 0 ? (
+                                                                    <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center text-white/20 uppercase font-black text-[9px] text-center leading-tight border border-white/10">Sin<br/>Imagen</div>
+                                                                ) : (
+                                                                    <div className="space-y-1">
+                                                                        {(prod.imagenes || (prod.image ? [prod.image] : [])).map((imgUrl: string, imgIdx: number) => (
+                                                                            <div key={imgIdx} className="flex gap-1 items-center">
+                                                                                <div className="w-12 h-12 rounded-lg overflow-hidden border border-white/10 shrink-0 bg-white/5">
+                                                                                    <img src={imgUrl} className="w-full h-full object-cover" />
+                                                                                </div>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => {
+                                                                                        const imgs = [...(prod.imagenes || (prod.image ? [prod.image] : []))];
+                                                                                        imgs.splice(imgIdx, 1);
+                                                                                        const prods = [...catalogoJson.products];
+                                                                                        const pIdx = prods.findIndex(p => p.id === prod.id);
+                                                                                        prods[pIdx] = { ...prod, imagenes: imgs };
+                                                                                        updateCatalogo({ ...catalogoJson, products: prods });
+                                                                                    }}
+                                                                                    className="p-1 text-white/20 hover:text-red-500 transition-colors"
+                                                                                >
+                                                                                    <CloseIcon size={10} />
+                                                                                </button>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                                <label className="flex items-center justify-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl py-1.5 px-2 cursor-pointer transition-all border border-primary/20">
+                                                                    <Upload size={10} />
+                                                                    <span className="text-[7px] font-black uppercase">Subir</span>
+                                                                    <input type="file" className="hidden" accept="image/*" onChange={async e => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (!file) return;
+                                                                        const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
+                                                                        const imgs = [...(prod.imagenes || (prod.image ? [prod.image] : []))];
+                                                                        imgs.push(url);
+                                                                        const prods = [...catalogoJson.products];
+                                                                        const pIdx = prods.findIndex(p => p.id === prod.id);
+                                                                        prods[pIdx] = { ...prod, imagenes: imgs };
+                                                                        updateCatalogo({ ...catalogoJson, products: prods });
+                                                                    }} />
+                                                                </label>
+                                                            </div>
                                                         </div>
                                                         <div className="flex-1 space-y-4">
                                                             <div className="grid grid-cols-2 gap-4">
@@ -1933,41 +2031,53 @@ export default function VCardEditModal({
                                                                 }} />
                                                             </div>
                                                             <div>
-                                                                <label className="text-[9px] font-black uppercase text-white/20 mb-1 block">Video del Producto (Opcional)</label>
-                                                                <div className="flex gap-2">
-                                                                    <input 
-                                                                        className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs font-bold text-white outline-none focus:border-primary/60 transition-all" 
-                                                                        value={prod.video || ''} 
-                                                                        placeholder="URL YouTube o MP4"
-                                                                        onChange={e => {
+                                                                <label className="text-[9px] font-black uppercase text-white/20 mb-1 block">Videos Linkeados (Opcional)</label>
+                                                                <div className="space-y-1.5">
+                                                                    {(prod.videos || (prod.video ? [prod.video] : [])).map((vUrl: string, vIdx: number) => (
+                                                                        <div key={vIdx} className="flex gap-1 items-center">
+                                                                            <input 
+                                                                                className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-[10px] font-bold text-white outline-none focus:border-primary/60 transition-all" 
+                                                                                value={vUrl} 
+                                                                                placeholder="URL YouTube"
+                                                                                onChange={e => {
+                                                                                    const vids = [...(prod.videos || (prod.video ? [prod.video] : []))];
+                                                                                    vids[vIdx] = e.target.value;
+                                                                                    const prods = [...catalogoJson.products];
+                                                                                    const pIdx = prods.findIndex(p => p.id === prod.id);
+                                                                                    prods[pIdx] = { ...prod, videos: vids };
+                                                                                    updateCatalogo({ ...catalogoJson, products: prods });
+                                                                                }} 
+                                                                            />
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    const vids = [...(prod.videos || (prod.video ? [prod.video] : []))];
+                                                                                    vids.splice(vIdx, 1);
+                                                                                    const prods = [...catalogoJson.products];
+                                                                                    const pIdx = prods.findIndex(p => p.id === prod.id);
+                                                                                    prods[pIdx] = { ...prod, videos: vids };
+                                                                                    updateCatalogo({ ...catalogoJson, products: prods });
+                                                                                }}
+                                                                                className="p-1.5 text-white/20 hover:text-red-500 transition-colors"
+                                                                            >
+                                                                                <Trash2 size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const vids = [...(prod.videos || (prod.video ? [prod.video] : []))];
+                                                                            vids.push('');
                                                                             const prods = [...catalogoJson.products];
-                                                                            const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
-                                                                            prods[pIdx] = { ...prod, video: e.target.value };
+                                                                            const pIdx = prods.findIndex(p => p.id === prod.id);
+                                                                            prods[pIdx] = { ...prod, videos: vids };
                                                                             updateCatalogo({ ...catalogoJson, products: prods });
-                                                                        }} 
-                                                                    />
-                                                                    <label className="bg-primary/20 hover:bg-primary/40 text-primary p-2 rounded-xl cursor-pointer transition-all flex items-center justify-center border border-primary/20">
-                                                                        <Video size={16} />
-                                                                        <input 
-                                                                            type="file" 
-                                                                            className="hidden" 
-                                                                            accept="video/*"
-                                                                            onChange={async e => {
-                                                                                const file = e.target.files?.[0];
-                                                                                if (!file) return;
-                                                                                const fd = new FormData();
-                                                                                fd.append('file', file);
-                                                                                if (editingRegistro?.slug) {
-                                                                                    fd.append('slug', editingRegistro.slug);
-                                                                                }
-                                                                                const { url } = await uploadFile({ file, slug: editingRegistro?.slug });
-                                                                                const prods = [...catalogoJson.products];
-                                                                                const pIdx = prods.findIndex(p => (p.id && prod.id) ? p.id === prod.id : (p.nombre === prod.nombre || p.name === prod.name));
-                                                                                prods[pIdx] = { ...prod, video: url };
-                                                                                updateCatalogo({ ...catalogoJson, products: prods });
-                                                                            }} 
-                                                                        />
-                                                                    </label>
+                                                                        }}
+                                                                        className="text-[9px] font-bold text-primary/60 hover:text-primary flex items-center gap-1 transition-colors"
+                                                                    >
+                                                                        <Plus size={12} /> Añadir otro video
+                                                                    </button>
                                                                 </div>
                                                             </div>
                                                         </div>

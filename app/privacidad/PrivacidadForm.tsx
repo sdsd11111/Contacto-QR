@@ -132,7 +132,7 @@ export default function PrivacidadForm() {
                             />
                         </div>
                         <span className="text-sm text-navy/80 group-hover:text-navy transition-colors">
-                            <strong>Autorización Obligatoria:</strong> Acepto la Política de Privacidad y autorizo a ActivaQR a contactarme por WhatsApp, entregarme su VCard y registrar mis datos en su agenda de Google (USA), lo que implica una <strong>transferencia internacional de datos</strong>.
+                            <strong>Autorización Obligatoria:</strong> Acepto la Política de Privacidad y autorizo a ActivaQR a contactarme por WhatsApp, entregarme su VCard y registrar mis datos en sus servidores propios alojados en Hostdoom (Estados Unidos), bajo acuerdos de tratamiento de datos que garantizan niveles de protección adecuados. En ningún caso mis datos son compartidos ni transferidos a terceros sin mi consentimiento explícito.
                         </span>
                     </label>
 

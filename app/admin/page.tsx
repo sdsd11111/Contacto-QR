@@ -657,6 +657,25 @@ export default function AdminDashboard() {
             editingRegistro.nombre = recalculatedNombre;
         }
 
+        // 🔗 Sincronizar categorías de experiencia con el catálogo
+        try {
+            const catsRaw = editingRegistro.productos_servicios || '';
+            const catNames = catsRaw.split('\n').map((l: string) => l.trim()).filter(Boolean);
+            
+            let catalogo = editingRegistro.catalogo_json;
+            if (typeof catalogo === 'string') { try { catalogo = JSON.parse(catalogo); } catch { catalogo = { categories: [], products: [] }; } }
+            if (!catalogo || typeof catalogo !== 'object') catalogo = { categories: [], products: [] };
+            if (!catalogo.categories) catalogo.categories = [];
+            
+            // Fusionar categorías de experiencia + categorías existentes de productos
+            const existingProductCats = (catalogo.products || []).map((p: any) => p.categoria || p.category).filter(Boolean);
+            const allCats = [...new Set([...catNames, ...catalogo.categories, ...existingProductCats])];
+            catalogo.categories = allCats;
+            editingRegistro.catalogo_json = catalogo;
+        } catch (e) {
+            console.warn('[Admin] Error sincronizando categorías:', e);
+        }
+
         try {
             // El VCF se genera dinámicamente en el API, no es necesario guardarlo aquí.
             
@@ -960,14 +979,23 @@ export default function AdminDashboard() {
                     setSetupTarget('view');
                     setIsHeroPromptOpen(true);
                 } else {
-                    window.open(`/card/${fullRegistro.slug || fullRegistro.id}`, '_blank');
+                    const targetUrl = fullRegistro.plan === 'catalog' || fullRegistro.plan === 'catalogo'
+                        ? `/catalog/${fullRegistro.slug || fullRegistro.id}`
+                        : `/card/${fullRegistro.slug || fullRegistro.id}`;
+                    window.open(targetUrl, '_blank');
                 }
             } else {
                 // Fallback al objeto local si falla la red
-                window.open(`/card/${registro.slug || registro.id}`, '_blank');
+                const targetUrl = (registro as any).plan === 'catalog' || (registro as any).plan === 'catalogo'
+                    ? `/catalog/${registro.slug || registro.id}`
+                    : `/card/${registro.slug || registro.id}`;
+                window.open(targetUrl, '_blank');
             }
         } catch (e) {
-            window.open(`/card/${registro.slug || registro.id}`, '_blank');
+            const targetUrl = (registro as any).plan === 'catalog' || (registro as any).plan === 'catalogo'
+                ? `/catalog/${registro.slug || registro.id}`
+                : `/card/${registro.slug || registro.id}`;
+            window.open(targetUrl, '_blank');
         } finally {
             setIsSaving(false);
         }
@@ -997,7 +1025,7 @@ export default function AdminDashboard() {
                     setSetupTarget('catalog');
                     setIsHeroPromptOpen(true);
                 } else {
-                    window.open(`/card/${fullRegistro.slug || fullRegistro.id}`, '_blank');
+                    window.open(`/catalog/${fullRegistro.slug || fullRegistro.id}`, '_blank');
                 }
             } else {
                 alert("Error al cargar los datos del catálogo.");

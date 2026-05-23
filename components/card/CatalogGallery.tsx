@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ZoomIn, Info, DollarSign } from 'lucide-react';
+import { X, ZoomIn, Info, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getVideoEmbedUrl, getYouTubeThumbnail, checkIsVerticalVideo } from "@/lib/videoUtils";
 
@@ -32,17 +32,34 @@ interface CatalogGalleryProps {
 
 export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: CatalogGalleryProps) {
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
+    const [mediaIndex, setMediaIndex] = useState(0);
+    const [activeMediaType, setActiveMediaType] = useState<'image' | 'video'>('image');
 
-    const [activeMedia, setActiveMedia] = useState<'image' | 'video'>('image');
+    // Obtener arrays normalizados de imágenes y videos
+    const getImages = (item: CatalogItem): string[] => {
+        const imgs = (item as any).imagenes;
+        if (Array.isArray(imgs) && imgs.length > 0) return imgs;
+        const single = item.image || item.url || item.foto || item.imagen;
+        return single ? [single] : [];
+    };
+    const getVideos = (item: CatalogItem): string[] => {
+        const vids = (item as any).videos;
+        if (Array.isArray(vids) && vids.length > 0) return vids;
+        const single = item.video || item.video_url;
+        return single ? [single] : [];
+    };
+    const getTotalMedia = (item: CatalogItem) => getImages(item).length + getVideos(item).length;
 
     const handleOpenItem = (item: CatalogItem) => {
         setSelectedItem(item);
-        setActiveMedia(item.video || item.video_url ? 'video' : 'image');
+        setMediaIndex(0);
+        setActiveMediaType(getImages(item).length > 0 ? 'image' : 'video');
         if (onLightboxToggle) onLightboxToggle(true);
     };
 
     const handleCloseItem = () => {
         setSelectedItem(null);
+        setMediaIndex(0);
         if (onLightboxToggle) onLightboxToggle(false);
     };
 
@@ -66,16 +83,22 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
         return cats;
     }, [items, customCategories]);
 
-    const [activeCategory, setActiveCategory] = useState<string>(() => categories[0] || '');
+    const [activeCategory, setActiveCategory] = useState<string>('');
+    const urlCatApplied = useRef(false);
 
-    // Sincronizar la categoría activa si cambia la lista (renombrado, eliminación, etc.)
+    // Leer categoría inicial desde URL (?cat=) solo UNA VEZ al cargar
     useEffect(() => {
-        if (categories.length > 0 && !categories.includes(activeCategory)) {
-            setActiveCategory(categories[0]);
-        } else if (categories.length === 0) {
-            setActiveCategory('');
+        if (urlCatApplied.current) return;
+        const urlCat = new URLSearchParams(window.location.search).get('cat');
+        if (urlCat) {
+            const match = categories.find(c => c.toLowerCase() === urlCat.toLowerCase());
+            if (match) { setActiveCategory(match); urlCatApplied.current = true; return; }
         }
-    }, [categories, activeCategory]);
+        if (categories.length > 0) {
+            setActiveCategory(categories[0]);
+            urlCatApplied.current = true;
+        }
+    }, [categories]);
 
     // Filter items based on active category
     const filteredItems = useMemo(() => {
@@ -99,7 +122,12 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
                     {categories.map((cat) => (
                         <button
                             key={cat}
-                            onClick={() => setActiveCategory(cat)}
+                            onClick={() => {
+                                setActiveCategory(cat);
+                                const url = new URL(window.location.href);
+                                url.searchParams.set('cat', cat);
+                                window.history.replaceState({}, '', url.toString());
+                            }}
                             className={cn(
                                 "px-5 py-2 rounded-full text-xs font-black tracking-wider uppercase transition-all duration-300 border-2",
                                 activeCategory === cat
@@ -166,11 +194,13 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
                             </div>
 
                             {(() => {
-                                const imageUrl = item.image || item.url || item.foto || item.imagen;
-                                const videoUrl = item.video || item.video_url;
+                                const images = getImages(item);
+                                const videos = getVideos(item);
+                                const imageUrl = images[0] || '';
+                                const videoUrl = videos[0] || '';
                                 
-                                // Si hay imagen, la mostramos
-                                if (imageUrl && imageUrl.trim() !== '') {
+                                // Si hay al menos una imagen, mostrar la primera
+                                if (imageUrl) {
                                     return (
                                         /* eslint-disable-next-line @next/next/no-img-element */
                                         <img
@@ -261,87 +291,102 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
 
                             {/* Image Section */}
                             <div className="w-full md:w-3/5 bg-black/50 aspect-square md:aspect-auto flex flex-col items-center justify-center relative p-4 md:p-8">
-                                <AnimatePresence mode="wait">
-                                    {activeMedia === 'video' && (selectedItem.video || selectedItem.video_url) ? (
-                                        <motion.div 
-                                            key="video"
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                            className="w-full h-full flex items-center justify-center"
-                                        >
-                                            {(() => {
-                                                const videoUrl = selectedItem.video || selectedItem.video_url || '';
-                                                const embedUrl = getVideoEmbedUrl(videoUrl);
-                                                
-                                                if (embedUrl) {
-                                                    const isVertical = checkIsVerticalVideo(videoUrl);
-                                                    return (
-                                                        <iframe 
-                                                            src={embedUrl}
-                                                            className={cn(
-                                                                "rounded-2xl md:rounded-[32px] shadow-2xl mx-auto",
-                                                                isVertical 
-                                                                    ? "h-full max-h-[60vh] md:max-h-[75vh] aspect-[9/16]" 
-                                                                    : "w-full aspect-video"
-                                                            )}
-                                                            allowFullScreen
-                                                            allow="autoplay; encrypted-media"
-                                                        />
-                                                    );
-                                                }
-                                                
-                                                return (
-                                                    <video 
-                                                        src={videoUrl} 
-                                                        controls 
-                                                        autoPlay
-                                                        className="max-w-full max-h-[50vh] md:max-h-[70vh] rounded-2xl md:rounded-[32px] shadow-2xl"
-                                                    />
-                                                );
-                                            })()}
-                                        </motion.div>
-                                    ) : (
-                                        <motion.div
-                                            key="image"
-                                            initial={{ opacity: 0, scale: 0.9 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                            className="w-full h-full flex items-center justify-center"
-                                        >
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={selectedItem.image || selectedItem.url || selectedItem.foto || selectedItem.imagen || 'https://via.placeholder.com/600x600?text=Cargando...'}
-                                                alt={selectedItem.name || selectedItem.titulo}
-                                                className="max-w-full max-h-[50vh] md:max-h-[70vh] object-contain rounded-2xl md:rounded-[32px] shadow-2xl"
-                                            />
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                                {(() => {
+                                    if (!selectedItem) return null;
+                                    const images = getImages(selectedItem);
+                                    const videos = getVideos(selectedItem);
+                                    const allMedia: Array<{ type: 'image' | 'video'; url: string }> = [
+                                        ...images.map(url => ({ type: 'image' as const, url })),
+                                        ...videos.map(url => ({ type: 'video' as const, url })),
+                                    ];
+                                    const total = allMedia.length;
+                                    const current = allMedia[mediaIndex];
+                                    if (!current) return null;
 
-                                {/* Media Selector Toggle */}
-                                {(selectedItem.video || selectedItem.video_url) && (selectedItem.image || selectedItem.url || selectedItem.foto || selectedItem.imagen) && (
-                                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 bg-black/60 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 z-20">
-                                        <button 
-                                            onClick={() => setActiveMedia('video')}
-                                            className={cn(
-                                                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                                activeMedia === 'video' ? "bg-[var(--theme-primary)] text-white shadow-lg" : "text-white/60 hover:text-white"
+                                    return (
+                                        <>
+                                            <AnimatePresence mode="wait">
+                                                <motion.div
+                                                    key={`${mediaIndex}-${current.type}`}
+                                                    initial={{ opacity: 0, x: 50 }}
+                                                    animate={{ opacity: 1, x: 0 }}
+                                                    exit={{ opacity: 0, x: -50 }}
+                                                    className="w-full h-full flex items-center justify-center"
+                                                >
+                                                    {current.type === 'video' ? (
+                                                        (() => {
+                                                            const embedUrl = getVideoEmbedUrl(current.url);
+                                                            if (embedUrl) {
+                                                                const isVertical = checkIsVerticalVideo(current.url);
+                                                                return (
+                                                                    <iframe 
+                                                                        src={embedUrl}
+                                                                        className={cn(
+                                                                            "rounded-2xl md:rounded-[32px] shadow-2xl mx-auto",
+                                                                            isVertical 
+                                                                                ? "h-full max-h-[60vh] md:max-h-[75vh] aspect-[9/16]" 
+                                                                                : "w-full aspect-video"
+                                                                        )}
+                                                                        allowFullScreen
+                                                                        allow="autoplay; encrypted-media"
+                                                                    />
+                                                                );
+                                                            }
+                                                            return (
+                                                                <video 
+                                                                    src={current.url} 
+                                                                    controls 
+                                                                    autoPlay
+                                                                    className="max-w-full max-h-[50vh] md:max-h-[70vh] rounded-2xl md:rounded-[32px] shadow-2xl"
+                                                                />
+                                                            );
+                                                        })()
+                                                    ) : (
+                                                        <img
+                                                            src={current.url}
+                                                            alt={selectedItem.name || selectedItem.titulo}
+                                                            className="max-w-full max-h-[50vh] md:max-h-[70vh] object-contain rounded-2xl md:rounded-[32px] shadow-2xl"
+                                                        />
+                                                    )}
+                                                </motion.div>
+                                            </AnimatePresence>
+
+                                            {/* Navegación entre imágenes/videos */}
+                                            {total > 1 && (
+                                                <>
+                                                    <button 
+                                                        onClick={() => setMediaIndex(i => (i - 1 + total) % total)}
+                                                        className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full transition-all z-20 border border-white/10"
+                                                    >
+                                                        <ChevronLeft size={16} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => setMediaIndex(i => (i + 1) % total)}
+                                                        className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 p-2 md:p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full transition-all z-20 border border-white/10"
+                                                    >
+                                                        <ChevronRight size={16} />
+                                                    </button>
+                                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                                        {allMedia.map((m, i) => (
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => setMediaIndex(i)}
+                                                                className={cn(
+                                                                    "w-2 h-2 rounded-full transition-all",
+                                                                    i === mediaIndex
+                                                                        ? "bg-white w-4"
+                                                                        : m.type === 'video' 
+                                                                            ? "bg-primary/60 hover:bg-primary" 
+                                                                            : "bg-white/40 hover:bg-white/60"
+                                                                )}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </>
                                             )}
-                                        >
-                                            Video
-                                        </button>
-                                        <button 
-                                            onClick={() => setActiveMedia('image')}
-                                            className={cn(
-                                                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                                                activeMedia === 'image' ? "bg-[var(--theme-primary)] text-white shadow-lg" : "text-white/60 hover:text-white"
-                                            )}
-                                        >
-                                            Foto
-                                        </button>
-                                    </div>
-                                )}
+                                        </>
+                                    );
+                                })()}
                             </div>
 
                             {/* Details Section */}

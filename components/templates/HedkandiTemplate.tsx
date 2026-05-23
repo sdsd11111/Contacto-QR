@@ -299,16 +299,32 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                                 </p>
                                                 
                                                 {(!experienceButton.action || experienceButton.action === 'whatsapp') && (
-                                                    <motion.a
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        href={`https://wa.me/${whatsappNumber}?text=Hola, deseo información sobre ${col.title}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="bg-white text-black px-10 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:bg-black hover:text-white inline-block shadow-xl pointer-events-auto"
-                                                    >
-                                                        {experienceButton.text}
-                                                    </motion.a>
+                                                    <div className="flex flex-wrap gap-3 pointer-events-auto">
+                                                        <motion.a
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            href={`https://wa.me/${whatsappNumber}?text=Hola, deseo información sobre ${col.title}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="bg-white text-black px-10 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:bg-black hover:text-white inline-block shadow-xl"
+                                                        >
+                                                            {experienceButton.text}
+                                                        </motion.a>
+                                                        <motion.button
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            onClick={() => {
+                                                                const url = new URL(window.location.href);
+                                                                url.searchParams.set('cat', col.title);
+                                                                window.history.pushState({}, '', url.toString());
+                                                                document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                            }}
+                                                            className="bg-[var(--theme-primary,#FF5C00)] text-white px-8 py-4 rounded-full font-display-condensed text-lg md:text-xl tracking-[0.2em] uppercase transition-all duration-300 hover:brightness-110 inline-block shadow-xl cursor-pointer"
+                                                            style={{ backgroundColor: props.themePrimary || '#FF5C00' }}
+                                                        >
+                                                            Ver catálogo
+                                                        </motion.button>
+                                                    </div>
                                                 )}
                                                 {experienceButton.action === 'link' && (
                                                     <motion.a

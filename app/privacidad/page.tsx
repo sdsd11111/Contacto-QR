@@ -40,7 +40,7 @@ export default function PrivacidadPage() {
                     <section>
                         <h2 className="text-xl font-bold text-navy uppercase mb-3">3. Base Legal y Transferencia Internacional</h2>
                         <p>
-                            Este tratamiento se basa en tu consentimiento libre e inequívoco. Te informamos que, para asegurar la sincronización de tu contacto, realizaremos una transferencia internacional de datos a los servidores de Google (USA), donde se aloja nuestra infraestructura de contactos.
+                            Este tratamiento se basa en tu consentimiento libre e inequívoco. Te informamos que tus datos son almacenados en servidores propios alojados en infraestructura de Hostdoom (Estados Unidos), bajo acuerdos de tratamiento de datos que garantizan niveles de protección adecuados. En ningún caso tus datos son compartidos ni transferidos a terceros sin tu consentimiento explícito.
                         </p>
                     </section>
 
@@ -54,7 +54,7 @@ export default function PrivacidadPage() {
                     <section>
                         <h2 className="text-xl font-bold text-navy uppercase mb-3">5. Tus Derechos (ARCO+PAL)</h2>
                         <p>
-                            Como titular, tienes control total sobre tus datos. Puedes ejercer tus derechos de Acceso, Rectificación, Cancelación/Eliminación, Oposición, Portabilidad, Anonimización y Limitación (ARCO+PAL) escribiendo a [Email de Soporte].
+                            Como titular, tienes control total sobre tus datos. Puedes ejercer tus derechos de Acceso, Rectificación, Cancelación/Eliminación, Oposición, Portabilidad, Anonimización y Limitación (ARCO+PAL) escribiendo a registro@activaqr.com.
                         </p>
                     </section>
 

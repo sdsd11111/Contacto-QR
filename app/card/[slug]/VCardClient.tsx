@@ -137,6 +137,18 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         }).catch(err => console.warn("[VCardClient] Could not load node-vibrant:", err));
     }, [data?.foto_url, slug, data?.nombre_negocio]);
 
+    // ─── Scroll al catálogo si viene con ?cat= (desde "Ver catálogo") ─────────
+    useEffect(() => {
+        if (!data) return;
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('cat')) {
+            setTimeout(() => {
+                const el = document.getElementById('catalogo');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 800); // Esperar a que termine de renderizar el catálogo
+        }
+    }, [data]);
+
     // ─── Acciones ─────────────────────────────────────────────────────────────
     const downloadVCF = useCallback(async () => {
         if (!data) return;

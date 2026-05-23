@@ -724,12 +724,23 @@ export default function ClassicTemplate({
                                                                                 </h3>
                                                                                 <div className="h-0.5 w-12 bg-[var(--theme-primary)] group-hover:w-full transition-all duration-700 mb-6" />
                                                                                 
-                                                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                                                                                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex gap-2">
                                                                                     <button 
                                                                                         onClick={handleWhatsapp}
-                                                                                        className="w-full py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
+                                                                                        className="flex-1 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all"
                                                                                     >
-                                                                                        Consultar ahora
+                                                                                        Consultar
+                                                                                    </button>
+                                                                                    <button
+                                                                                        onClick={() => {
+                                                                                            const url = new URL(window.location.href);
+                                                                                            url.searchParams.set('cat', displayText);
+                                                                                            window.history.pushState({}, '', url.toString());
+                                                                                            document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                                                        }}
+                                                                                        className="flex-1 py-4 rounded-2xl bg-[var(--theme-primary)] text-white text-xs font-black uppercase tracking-widest text-center hover:brightness-110 transition-all"
+                                                                                    >
+                                                                                        Ver catálogo
                                                                                     </button>
                                                                                 </div>
                                                                             </div>
