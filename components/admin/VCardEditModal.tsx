@@ -35,39 +35,24 @@ export default function VCardEditModal({
         categoryFilterRef.current = productCategoryFilter;
     }, [productCategoryFilter]);
 
-    // 🔄 Sincronizar categorías de experiencia → catálogo en vivo
+    // 🔄 Sincronizar NUEVAS líneas de productos_servicios → catálogo (solo cuando se agregan/eliminan líneas)
     useEffect(() => {
         const raw = editingRegistro?.productos_servicios || '';
         const rawLines = raw.split('\n').map((l: string) => l.trim()).filter(Boolean);
         if (rawLines.length === 0) return;
-
-        // Leer títulos personalizados desde json_override.experienceTitles
-        let customTitles: any[] = [];
-        try {
-            const override = typeof editingRegistro.json_override === 'string'
-                ? JSON.parse(editingRegistro.json_override || '{}')
-                : (editingRegistro.json_override || {});
-            customTitles = override.experienceTitles || [];
-        } catch {}
-
-        // Obtener los nombres VISIBLES (título personalizado o línea original)
-        const visibleNames = rawLines.map((line: string, index: number) => {
-            const custom = customTitles.find((t: any) => t.index === index);
-            return custom?.title || line;
-        }).filter(Boolean);
 
         let catalogo = editingRegistro.catalogo_json;
         if (typeof catalogo === 'string') { try { catalogo = JSON.parse(catalogo); } catch { catalogo = {}; } }
         if (!catalogo || typeof catalogo !== 'object') catalogo = { categories: [], products: [] };
         if (!catalogo.categories) catalogo.categories = [];
 
-        const existing = (catalogo.products || []).map((p: any) => p.categoria || p.category).filter(Boolean);
-        const merged = [...new Set([...visibleNames, ...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...existing])];
-        if (JSON.stringify(catalogo.categories) !== JSON.stringify(merged)) {
-            catalogo.categories = merged;
+        // Solo agregar líneas NUEVAS que no existan ya como categorías
+        const newCats = rawLines.filter((line: string) => !catalogo.categories.includes(line));
+        if (newCats.length > 0) {
+            catalogo.categories = [...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...newCats];
             setEditingRegistro({ ...editingRegistro, catalogo_json: catalogo });
         }
-    }, [editingRegistro?.productos_servicios, editingRegistro?.json_override]);
+    }, [editingRegistro?.productos_servicios]);
 
     const [heroSectionOpen, setHeroSectionOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'identidad' | 'contacto' | 'contenido' | 'hero' | 'catalogo' | 'qr' | 'vip' | 'categorias'>('identidad');
@@ -363,14 +348,13 @@ export default function VCardEditModal({
             parsed.experienceTitles.push({ index, title: newTitle });
         }
         
-        // También actualizar la línea correspondiente en productos_servicios para que el catálogo se sincronice
-        const lines = (editingRegistro.productos_servicios || '').split('\n').map((l: string) => l.trim()).filter(Boolean);
-        if (lines[index] !== undefined) {
-            lines[index] = newTitle;
-            setEditingRegistro({ ...editingRegistro, json_override: parsed, productos_servicios: lines.join('\n') });
-        } else {
-            setEditingRegistro({ ...editingRegistro, json_override: parsed });
+        // Actualizar el nombre DIRECTAMENTE en Catálogo Pro por su ÍNDICE
+        const catalogo = { ...(editingRegistro.catalogo_json || { categories: [], products: [] }) };
+        if (typeof catalogo.categories === 'string') { try { catalogo.categories = JSON.parse(catalogo.categories); } catch { catalogo.categories = []; } }
+        if (Array.isArray(catalogo.categories) && newTitle && index >= 0 && index < catalogo.categories.length) {
+            catalogo.categories[index] = newTitle;
         }
+        setEditingRegistro({ ...editingRegistro, json_override: parsed, catalogo_json: catalogo });
     };
 
     const updateExperienceCategories = (newTitle: string, newImages: any[], newSubtitle?: string) => {

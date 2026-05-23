@@ -321,7 +321,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
 
                                 {/* Content Area */}
                                 <div className="p-8 text-center bg-navy text-white relative z-10">
-                                    <h3 className="font-black uppercase text-xl mb-3 tracking-tight group-hover:text-[#FF5C00] transition-colors">{service.title}</h3>
+                                    <h3 className="font-black uppercase text-base md:text-lg mb-3 tracking-tight group-hover:text-[#FF5C00] transition-colors line-clamp-2">{service.title}</h3>
                                     <div className="w-8 h-1 bg-[#FF5C00] mx-auto mb-4" />
                                     <p className="text-white/60 text-sm font-medium leading-relaxed">
                                         {service.description}

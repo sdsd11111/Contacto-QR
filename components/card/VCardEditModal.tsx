@@ -49,7 +49,7 @@ export default function VCardEditModal({
     const [uploadingImage, setUploadingImage] = useState(false);
     const [userData, setUserData] = useState<any>(null);
     const [usesRemaining, setUsesRemaining] = useState(0);
-    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'autoridad' | 'industrial' | 'carta' | 'code' | 'success' | null>(initialSection);
+    const [activeSection, setActiveSection] = useState<'perfil' | 'contacto' | 'hero' | 'portada' | 'categorias' | 'catalogo' | 'autoridad' | 'industrial' | 'carta' | 'video-redes' | 'code' | 'success' | null>(initialSection);
     const [catalogTab, setCatalogTab] = useState<'config' | 'products'>('config');
     const [isStructuring, setIsStructuring] = useState(false);
     const [productCategoryFilter, setProductCategoryFilter] = useState<string>('Todas');
@@ -346,38 +346,23 @@ export default function VCardEditModal({
         json_override: {} as any
     });
 
-    // 🔄 Sincronizar categorías de experiencia → catálogo en vivo (cliente)
+    // 🔄 Sincronizar NUEVAS líneas de productos_servicios → catálogo (solo cuando se agregan/eliminan líneas completas)
     useEffect(() => {
         const raw = formData?.productos_servicios || '';
         const rawLines = raw.split('\n').map((l: string) => l.trim()).filter(Boolean);
         if (rawLines.length === 0) return;
 
-        // Leer títulos personalizados desde json_override.experienceTitles
-        let customTitles: any[] = [];
-        try {
-            const override = typeof formData.json_override === 'string'
-                ? safeParse(formData.json_override, {})
-                : (formData.json_override || {});
-            customTitles = override.experienceTitles || [];
-        } catch {}
-
-        // Obtener los nombres VISIBLES (título personalizado o línea original)
-        const visibleNames = rawLines.map((line: string, index: number) => {
-            const custom = customTitles.find((t: any) => t.index === index);
-            return custom?.title || line;
-        }).filter(Boolean);
-
         let catalogo = formData.catalogo_json;
         if (!catalogo || typeof catalogo !== 'object') catalogo = { categories: [], products: [] };
         if (!catalogo.categories) catalogo.categories = [];
 
-        const existing = (catalogo.products || []).map((p: any) => p.categoria || p.category).filter(Boolean);
-        const merged = [...new Set([...visibleNames, ...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...existing])];
-        if (JSON.stringify(catalogo.categories) !== JSON.stringify(merged)) {
-            catalogo.categories = merged;
+        // Solo agregar líneas NUEVAS que no existan ya como categorías
+        const newCats = rawLines.filter((line: string) => !catalogo.categories.includes(line));
+        if (newCats.length > 0) {
+            catalogo.categories = [...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...newCats];
             setFormData({ ...formData, catalogo_json: catalogo });
         }
-    }, [formData?.productos_servicios, formData?.json_override]);
+    }, [formData?.productos_servicios]);
 
     const validateCode = async () => {
         const cleanedCode = editCode.trim().replace(/\s/g, '');
@@ -735,7 +720,7 @@ export default function VCardEditModal({
         try {
             const raw = formData.json_override;
             parsed = typeof raw === 'string' ? safeParse(raw, {}) : (raw || {});
-            title = parsed.experienceTitle || (formData.nombre_negocio ? `THE ${formData.nombre_negocio} EXPERIENCE` : "THE NEW GUEST EXPERIENCE");
+            title = parsed.experienceTitle || "";
             subtitle = parsed.experienceSubtitle || "Especialidad";
             images = parsed.experienceImages || [];
         } catch (e) {}
@@ -897,22 +882,15 @@ export default function VCardEditModal({
                 nextTitles.push({ index, title: newTitle });
             }
             
-            // También actualizar la línea correspondiente en productos_servicios para el catálogo
-            const lines = (prev.productos_servicios || '').split('\n').map((l: string) => l.trim()).filter(Boolean);
-            if (lines[index] !== undefined && newTitle) {
-                lines[index] = newTitle;
-                return { 
-                    ...prev, 
-                    productos_servicios: lines.join('\n'),
-                    json_override: {
-                        ...parsed,
-                        experienceTitles: nextTitles
-                    } 
-                };
+            // Actualizar el nombre DIRECTAMENTE en Catálogo Pro por su ÍNDICE (sin buscar por nombre)
+            const catalogo = { ...(prev.catalogo_json || { categories: [], products: [] }) };
+            if (newTitle && index >= 0 && index < catalogo.categories.length) {
+                catalogo.categories[index] = newTitle;
             }
             
             return { 
                 ...prev, 
+                catalogo_json: catalogo,
                 json_override: {
                     ...parsed,
                     experienceTitles: nextTitles
@@ -1244,28 +1222,32 @@ export default function VCardEditModal({
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Usos Disponibles</p>
-                                        <p className="text-lg font-black text-blue-600 tracking-tighter leading-none mt-1">{usesRemaining}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-green-600">Uso Ilimitado</p>
+                                        <p className="text-lg font-black text-green-600 tracking-tighter leading-none mt-1">♾️</p>
                                     </div>
                                 </div>
 
                                 <div className="space-y-4 pb-20">
-                                    {/* SECCIÓN 1: PERFIL */}
+
+                                    {/* SECCIÓN 4: CARRUSEL DE BANNERS (HERO) */}
                                     <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                                         <button 
-                                            onClick={() => setActiveSection(activeSection === 'perfil' ? null : 'perfil')}
+                                            onClick={() => setActiveSection(activeSection === 'portada' ? null : 'portada')}
                                             className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-navy/10 flex items-center justify-center text-navy font-black italic uppercase text-xs">
-                                                    ID
+                                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                                    <ImageIcon size={18} />
                                                 </div>
-                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Identidad y Perfil</span>
+                                                <div className="text-left leading-none">
+                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter">Banners Dinámicos Hero</span>
+                                                    <p className="text-[9px] font-black text-navy/40 uppercase tracking-widest mt-0.5">{formData.hero_slides_json?.length || 0}/10 Banners Creados</p>
+                                                </div>
                                             </div>
-                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'perfil' && "rotate-180")} />
+                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'portada' && "rotate-180")} />
                                         </button>
                                         <AnimatePresence>
-                                            {activeSection === 'perfil' && (
+                                            {activeSection === 'portada' && (
                                                 <motion.div 
                                                     initial={{ height: 0, opacity: 0 }}
                                                     animate={{ height: "auto", opacity: 1 }}
@@ -1273,204 +1255,127 @@ export default function VCardEditModal({
                                                     className="overflow-hidden bg-white border-t border-gray-100"
                                                 >
                                                     <div className="p-6 space-y-6">
-                                                        <div className="flex gap-6 items-center">
-                                                            <div className="relative group w-20 h-20 shrink-0">
-                                                                <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-md">
-                                                                    {formData.foto_url || userData.foto_url ? (
-                                                                        <img src={formData.foto_url || userData.foto_url} className="w-full h-full object-cover" />
-                                                                    ) : (
-                                                                        <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl">?</div>
-                                                                    )}
-                                                                </div>
-                                                                 <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                                                      {uploadingImage ? <Loader2 size={16} className="text-white animate-spin" /> : <Edit size={16} className="text-white" />}
-                                                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'foto_url')} disabled={uploadingImage} />
-                                                                  </label>
-                                                             </div>
-                                                             <div className="flex-1 space-y-3">
-                                                                 {uploadingImage && (
-                                                                     <p className="text-[10px] text-primary font-black animate-pulse uppercase italic">Optimizando imagen...</p>
-                                                                 )}
-                                                                <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
-                                                                    {['persona', 'negocio'].map((t) => (
-                                                                        <button key={t} onClick={() => setFormData({ ...formData, tipo_perfil: t as any })} className={cn("flex-1 py-1.5 rounded-md font-bold text-[10px] uppercase tracking-widest transition-all", formData.tipo_perfil === t ? "bg-white text-primary shadow-sm" : "text-gray-500")}>
-                                                                            {t}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                                {formData.tipo_perfil === 'persona' ? (
-                                                                    <div className="grid grid-cols-2 gap-2">
-                                                                        <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.nombres} onChange={(e) => setFormData({ ...formData, nombres: e.target.value })} placeholder="Nombres" />
-                                                                        <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.apellidos} onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })} placeholder="Apellidos" />
+                                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 text-blue-800">
+                                                            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                                            <div className="text-xs">
+                                                                <p className="font-bold">Mínimo 1 Banner Activo</p>
+                                                                <p className="opacity-80 mt-1">El sistema requiere que siempre haya al menos una imagen activa para mostrar en el inicio.</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="space-y-6">
+                                                            {formData.hero_slides_json?.map((slide, index) => (
+                                                                <div key={slide.id} className={cn("border rounded-2xl p-4 transition-colors relative", slide.active ? "border-navy/10 bg-white shadow-sm" : "border-gray-200 bg-gray-50 opacity-80")}>
+                                                                    <div className="flex justify-between items-start mb-4">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="bg-navy text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{index + 1}</span>
+                                                                            <span className="text-sm font-bold text-navy uppercase">Banner</span>
+                                                                        </div>
+                                                                        
+                                                                        <div className="flex items-center gap-3">
+                                                                             <button 
+                                                                                type="button"
+                                                                                onClick={() => toggleHeroSlideActive(slide.id, slide.active)}
+                                                                                className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase transition-colors", slide.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500")}
+                                                                            >
+                                                                                {slide.active ? 'Activo' : 'Inactivo'}
+                                                                            </button>
+                                                                            <button 
+                                                                                type="button"
+                                                                                onClick={() => removeHeroSlide(slide.id)}
+                                                                                className="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
+                                                                                title="Eliminar Banner"
+                                                                            >
+                                                                                <Trash2 size={12} />
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
-                                                                ) : (
-                                                                    <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.nombre_negocio} onChange={(e) => setFormData({ ...formData, nombre_negocio: e.target.value })} placeholder="Nombre del Negocio" />
-                                                                )}
-                                                            </div>
+
+                                                                    <div className="space-y-4">
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 block mb-1">Título / Frase</label>
+                                                                            <input 
+                                                                                className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                                                                value={slide.title}
+                                                                                onChange={(e) => updateHeroSlideTitle(slide.id, e.target.value)}
+                                                                                placeholder="Ej. NUEVA COLECCIÓN"
+                                                                            />
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 block mb-1">Descripción</label>
+                                                                            <input 
+                                                                                className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                                                                                value={slide.description || ''}
+                                                                                onChange={(e) => updateHeroSlideDescription(slide.id, e.target.value)}
+                                                                                placeholder="Ej. Soluciones premium"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                            {/* Desktop */}
+                                                                            <div className="space-y-2">
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Desktop (PC) - 16:9</label>
+                                                                                    <label className="cursor-pointer text-primary hover:text-primary/70 text-[10px] font-black uppercase transition-colors">
+                                                                                        Cambiar
+                                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_desktop')} />
+                                                                                    </label>
+                                                                                </div>
+                                                                                <div className="aspect-[21/9] bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 relative group">
+                                                                                    {slide.portada_desktop ? (
+                                                                                        <img src={slide.portada_desktop} className="w-full h-full object-cover" />
+                                                                                    ) : (
+                                                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-2">
+                                                                                            <ImageIcon size={20} className="mb-2 opacity-50" />
+                                                                                            <span className="text-[10px] font-bold text-center">Subir Imagen Ordenador</span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    {!slide.portada_desktop && (
+                                                                                        <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_desktop')} />
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Movil */}
+                                                                            <div className="space-y-2">
+                                                                                <div className="flex justify-between items-center">
+                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Móvil - Vertical</label>
+                                                                                    <label className="cursor-pointer text-primary hover:text-primary/70 text-[10px] font-black uppercase transition-colors">
+                                                                                        Cambiar
+                                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_movil')} />
+                                                                                    </label>
+                                                                                </div>
+                                                                                <div className="aspect-[4/5] w-24 sm:w-32 bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 relative group">
+                                                                                    {slide.portada_movil ? (
+                                                                                        <img src={slide.portada_movil} className="w-full h-full object-cover" />
+                                                                                    ) : (
+                                                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-2">
+                                                                                            <ImageIcon size={20} className="mb-2 opacity-50" />
+                                                                                            <span className="text-[9px] font-bold text-center leading-tight">Subir Imagen Móvil</span>
+                                                                                        </div>
+                                                                                    )}
+                                                                                    {!slide.portada_movil && (
+                                                                                        <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_movil')} />
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Profesión / Rubro</label>
-                                                                <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.profession} onChange={(e) => setFormData({ ...formData, profession: e.target.value })} placeholder="Ej. Arquitecto" />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Empresa (Opcional)</label>
-                                                                <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Tu empresa" />
-                                                            </div>
-                                                            <div className="col-span-full space-y-1">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sobre Mí / Bio</label>
-                                                                <textarea className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Cuéntales qué haces..." />
-                                                            </div>
-                                                                              {/* Soluciones Destacadas - Visible for professional plans except Catalog (as it has its own catalog) */}
-                                                             {(userData?.plan === 'business' || userData?.plan === 'pro' || userData?.plan === 'digital' || (!userData?.plan && userData?.tipo_perfil === 'negocio') || userData?.plan === 'catalog') && (
-                                                                 <div className="col-span-full space-y-2">
-                                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Soluciones Destacadas</label>
-                                                                     {((userData?.plan === 'business' || userData?.plan === 'catalog') && menuCategories && menuCategories.length > 0) ? (
-                                                                         <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-4 space-y-3 transition-all">
-                                                                             <div className="flex items-center gap-2">
-                                                                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold animate-pulse">✨</span>
-                                                                                 <span className="text-[10px] font-black text-navy/70 uppercase tracking-wider">
-                                                                                     Sincronizado automáticamente con tu Carta / Menú
-                                                                                 </span>
-                                                                             </div>
-                                                                             <p className="text-[10px] text-gray-400 leading-normal">
-                                                                                 Las categorías activas de tu Menú Digital o Catálogo de Servicios alimentan automáticamente la sección de servicios principales en tu vCard.
-                                                                             </p>
-                                                                             <div className="flex flex-wrap gap-1.5 pt-1">
-                                                                                 {menuCategories.map((cat: any, i: number) => (
-                                                                                     <span key={cat.id || i} className="inline-flex items-center bg-white border border-gray-200 px-3 py-1.5 rounded-xl text-[10px] font-bold text-navy/80 shadow-sm border-dashed">
-                                                                                         <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5" />
-                                                                                         {cat.nombre || cat.name}
-                                                                                     </span>
-                                                                                 ))}
-                                                                             </div>
-                                                                         </div>
-                                                                     ) : (
-                                                                         userData?.plan !== 'catalog' && (
-                                                                             <textarea 
-                                                                                 className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" 
-                                                                                 rows={3} 
-                                                                                 value={formData.productos_servicios} 
-                                                                                 onChange={(e) => setFormData({ ...formData, productos_servicios: e.target.value })} 
-                                                                                 placeholder="Lista tus soluciones o servicios principales..." 
-                                                                             />
-                                                                         )
-                                                                     )}
-                                                                 </div>
-                                                             )}
-                                                             {formData.tipo_perfil === 'negocio' && (
-                                                                 <div className="col-span-full grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
-                                                                     <div className="space-y-1">
-                                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nombres Responsable</label>
-                                                                         <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" value={formData.contacto_nombre} onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })} placeholder="Ej. Juan" />
-                                                                     </div>
-                                                                     <div className="space-y-1">
-                                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Apellidos Responsable</label>
-                                                                         <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" value={formData.contacto_apellido} onChange={(e) => setFormData({ ...formData, contacto_apellido: e.target.value })} placeholder="Ej. Perez" />
-                                                                     </div>
-                                                                 </div>
-                                                             )}
-                                                             <div className="col-span-full space-y-1">
-                                                                 <label className="text-[10px] font-black text-primary uppercase tracking-widest">Etiquetas / Tags (Separados por coma)</label>
-                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-primary/5 border-primary/20" value={formData.etiquetas} onChange={(e) => setFormData({ ...formData, etiquetas: e.target.value })} placeholder="Ej. Parrillada, Eventos, Gourmet" />
-                                                             </div>
-                                                         </div>
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-
-                                    {/* SECCIÓN 2: CONTACTO Y REDES */}
-                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                        <button 
-                                            onClick={() => setActiveSection(activeSection === 'contacto' ? null : 'contacto')}
-                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 flex items-center justify-center text-[#25D366]">
-                                                    <Phone size={18} />
-                                                </div>
-                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Contacto y Redes Sociales</span>
-                                            </div>
-                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'contacto' && "rotate-180")} />
-                                        </button>
-                                        <AnimatePresence>
-                                            {activeSection === 'contacto' && (
-                                                <motion.div 
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: "auto", opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden bg-white border-t border-gray-100"
-                                                >
-                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-[#25D366] uppercase tracking-widest">WhatsApp</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="+593..." />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Email</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@ejemplo.com" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Instagram (Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} placeholder="https://..." />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-[#0077B5] uppercase tracking-widest">LinkedIn (Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.linkedin} onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })} placeholder="https://..." />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-black uppercase tracking-widest">TikTok (Social)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.tiktok} onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })} placeholder="Link a perfil TikTok..." />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-[#FF0000] uppercase tracking-widest">YouTube (Social)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.youtube} onChange={(e) => setFormData({ ...formData, youtube: e.target.value })} placeholder="Link a canal YouTube..." />
-                                                        </div>
-                                                        <div className="col-span-full space-y-1">
-                                                            <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest text-[#1DA1F2]">X (Twitter - Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-blue-100" value={formData.x} onChange={(e) => setFormData({ ...formData, x: e.target.value })} placeholder="https://x.com/tuperfil" />
-                                                        </div>
-                                                        <div className="col-span-full space-y-1">
-                                                            <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest decoration-primary decoration-2 underline-offset-4 flex items-center gap-2">
-                                                                <Video size={14} /> Video Promocional (YouTube, TikTok, IG, FB)
-                                                            </label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-indigo-200" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="Pega aquí el link de YouTube, TikTok, Instagram o Facebook..." />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Título de Catálogo / Carta</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={menuTitle} onChange={(e) => updateMenuTitle(e.target.value)} placeholder="Ej. NUESTRA CARTA" />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Menú Digital (Link)</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.menu_digital} onChange={(e) => setFormData({ ...formData, menu_digital: e.target.value })} placeholder="https://..." />
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-primary uppercase tracking-widest">Sitio Web</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.web} onChange={(e) => setFormData({ ...formData, web: e.target.value })} placeholder="https://..." />
-                                                        </div>
-                                                        <div className="col-span-full space-y-1">
-                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dirección Física</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Ej. Calle Principal #123" />
-                                                        </div>
-                                                        <div className="col-span-full space-y-1">
-                                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Google Business / Maps</label>
-                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.google_business} onChange={(e) => setFormData({ ...formData, google_business: e.target.value })} placeholder="Link a Maps" />
-                                                        </div>
-                                                        {(userData?.plan === 'business' || userData?.plan === 'catalog') && (
-                                                         <div className="grid grid-cols-2 gap-4 col-span-full">
-                                                             <div className="space-y-1">
-                                                                 <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Puntaje Google (Estrellas)</label>
-                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" step="0.1" min="1" max="5" value={formData.google_rating} onChange={(e) => setFormData({ ...formData, google_rating: e.target.value })} placeholder="Ej. 4.9" />
-                                                             </div>
-                                                             <div className="space-y-1">
-                                                                 <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Número de Reseñas</label>
-                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" value={formData.google_reviews_count} onChange={(e) => setFormData({ ...formData, google_reviews_count: e.target.value })} placeholder="Ej. 128" />
-                                                             </div>
-                                                         </div>
-                                                         )}
+                                                        {formData.hero_slides_json?.length < 10 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={addHeroSlide}
+                                                                className="w-full py-4 border-2 border-dashed border-primary/20 rounded-2xl flex items-center justify-center gap-2 text-primary hover:bg-primary/5 transition-colors font-bold uppercase tracking-wide text-xs"
+                                                            >
+                                                                <Plus size={16} /> Agregar Nuevo Banner Hero
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -1560,16 +1465,7 @@ export default function VCardEditModal({
                                                                                     placeholder={cat.originalTitle}
                                                                                 />
                                                                             </div>
-                                                                            <div className="space-y-1">
-                                                                                <p className="text-[10px] font-black text-navy/40 uppercase tracking-tighter">Descripción (Opcional)</p>
-                                                                                <textarea 
-                                                                                    className="w-full bg-gray-100/50 rounded-lg p-2 text-[10px] font-medium text-navy/70 border border-transparent focus:border-primary/30 outline-none resize-none"
-                                                                                    rows={2}
-                                                                                    value={cat.description}
-                                                                                    onChange={(e) => updateCategoryDescription(idx, e.target.value)}
-                                                                                    placeholder="Breve descripción del servicio..."
-                                                                                />
-                                                                            </div>
+
                                                                         </div>
                                                                         <button
                                                                             type="button"
@@ -1596,79 +1492,7 @@ export default function VCardEditModal({
                                                             </div>
                                                         </div>
 
-                                                        {/* Botón de Acción Panel */}
-                                                        <div className="border-t border-gray-100 pt-6 mt-6 space-y-6">
-                                                            <div className="flex justify-between items-center pb-2">
-                                                                <h4 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-                                                                    BOTÓN DE ACCIÓN CONFIGURABLE
-                                                                </h4>
-                                                            </div>
-                                                            
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                <div className="space-y-1">
-                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Texto del Botón</label>
-                                                                    <input
-                                                                        className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 focus:border-primary outline-none"
-                                                                        value={experienceButton.text}
-                                                                        onChange={e => updateExperienceButton({ text: e.target.value })}
-                                                                        placeholder="Ej: CONSULTAR AHORA, VER CARTA, MÁS INFO"
-                                                                    />
-                                                                    <p className="text-[9px] text-gray-400">Si lo dejas vacío se usará "CONSULTAR AHORA" por defecto.</p>
-                                                                </div>
 
-                                                                <div className="space-y-1">
-                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Acción al hacer clic</label>
-                                                                    <div className="grid grid-cols-3 gap-2">
-                                                                        {(['whatsapp', 'link', 'file'] as const).map((act) => (
-                                                                            <button
-                                                                                key={act}
-                                                                                type="button"
-                                                                                onClick={() => updateExperienceButton({ action: act })}
-                                                                                className={cn(
-                                                                                    "py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border",
-                                                                                    experienceButton.action === act 
-                                                                                        ? "bg-primary text-white border-primary" 
-                                                                                        : "bg-white text-navy/50 border-gray-200 hover:border-gray-300"
-                                                                                )}
-                                                                            >
-                                                                                {act === 'whatsapp' ? 'WhatsApp' : act === 'link' ? 'Link Web' : 'Archivo / PDF'}
-                                                                            </button>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            {experienceButton.action === 'link' && (
-                                                                <div className="space-y-1 animate-in fade-in duration-300">
-                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Enlace Web (URL)</label>
-                                                                    <input
-                                                                        className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 focus:border-primary outline-none"
-                                                                        value={experienceButton.url || ''}
-                                                                        onChange={e => updateExperienceButton({ url: e.target.value })}
-                                                                        placeholder="https://miweb.com/menu.pdf"
-                                                                    />
-                                                                </div>
-                                                            )}
-
-                                                            {experienceButton.action === 'file' && (
-                                                                <div className="space-y-2 animate-in fade-in duration-300">
-                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Archivo o PDF Adjunto</label>
-                                                                    <div className="flex items-center gap-4">
-                                                                        <label className="bg-primary/10 hover:bg-primary/20 text-primary px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2 border border-primary/20">
-                                                                            <Upload size={14} /> Subir Archivo / PDF
-                                                                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" onChange={handleExperienceFileUpload} />
-                                                                        </label>
-                                                                        {experienceButton.fileUrl && (
-                                                                            <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl max-w-xs overflow-hidden">
-                                                                                <span className="text-[10px] text-gray-900/60 truncate font-mono">{experienceButton.fileUrl.split('/').pop()}</span>
-                                                                                <a href={experienceButton.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-[9px] font-black uppercase flex-shrink-0">Ver</a>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                    <p className="text-[9px] text-gray-400">Sube un menú, catálogo o folleto para que el cliente lo descargue directamente al pulsar el botón.</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -1915,6 +1739,110 @@ export default function VCardEditModal({
                                          </div>
                                      )}
 
+                                    {/* SECCIÓN 2.8: VIDEO, REDES Y UBICACIÓN */}
+                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <button 
+                                            onClick={() => setActiveSection(activeSection === 'video-redes' ? null : 'video-redes')}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
+                                                    <Video size={18} />
+                                                </div>
+                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Video, Redes y Ubicación</span>
+                                            </div>
+                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'video-redes' && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeSection === 'video-redes' && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden bg-white border-t border-gray-100"
+                                                >
+                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        {/* Video Promocional */}
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest decoration-primary decoration-2 underline-offset-4 flex items-center gap-2">
+                                                                <Video size={14} /> Video Promocional (YouTube, TikTok, IG, FB)
+                                                            </label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-indigo-200" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="Pega aquí el link de YouTube, TikTok, Instagram o Facebook..." />
+                                                        </div>
+
+                                                        {/* Redes Sociales */}
+                                                        <div className="col-span-full">
+                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Redes Sociales</p>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-[#25D366] uppercase tracking-widest">WhatsApp</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="+593..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Email</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@ejemplo.com" />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Instagram (Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} placeholder="https://..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-[#0077B5] uppercase tracking-widest">LinkedIn (Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.linkedin} onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })} placeholder="https://..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-black uppercase tracking-widest">TikTok (Social)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.tiktok} onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })} placeholder="Link a perfil TikTok..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-[#FF0000] uppercase tracking-widest">YouTube (Social)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.youtube} onChange={(e) => setFormData({ ...formData, youtube: e.target.value })} placeholder="Link a canal YouTube..." />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-[#1DA1F2] uppercase tracking-widest">X (Twitter - Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-blue-100" value={formData.x} onChange={(e) => setFormData({ ...formData, x: e.target.value })} placeholder="https://x.com/tuperfil" />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-[#1877F2] uppercase tracking-widest">Facebook (Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-blue-100" value={formData.facebook} onChange={(e) => setFormData({ ...formData, facebook: e.target.value })} placeholder="https://facebook.com/..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-primary uppercase tracking-widest">Sitio Web</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.web} onChange={(e) => setFormData({ ...formData, web: e.target.value })} placeholder="https://..." />
+                                                        </div>
+
+                                                        {/* Calificación y Reseña */}
+                                                        {(userData?.plan === 'business' || userData?.plan === 'catalog') && (
+                                                            <div className="grid grid-cols-2 gap-4 col-span-full">
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Puntaje Google (Estrellas)</label>
+                                                                    <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" step="0.1" min="1" max="5" value={formData.google_rating} onChange={(e) => setFormData({ ...formData, google_rating: e.target.value })} placeholder="Ej. 4.9" />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Número de Reseñas</label>
+                                                                    <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" value={formData.google_reviews_count} onChange={(e) => setFormData({ ...formData, google_reviews_count: e.target.value })} placeholder="Ej. 128" />
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Ubicación */}
+                                                        <div className="col-span-full">
+                                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 mt-4">Ubicación</p>
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dirección Física</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Ej. Calle Principal #123" />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Google Business / Maps</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.google_business} onChange={(e) => setFormData({ ...formData, google_business: e.target.value })} placeholder="Link a Maps" />
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
                                      {/* SECCIÓN 2.7: MÓDULO INDUSTRIAL (Sólo si template es industrial) */}
                                     {formData.template_id === 'industrial' && (
                                         <div className="border-2 border-[#FF5C00]/20 rounded-2xl overflow-hidden shadow-sm">
@@ -2021,382 +1949,6 @@ export default function VCardEditModal({
                                             </AnimatePresence>
                                         </div>
                                     )}
-
-                                    {/* SECCIÓN 3: OFERTA DEL HERO (BOTÓN PRINCIPAL) */}
-
-                                     {(userData?.plan === 'business' || userData?.plan === 'catalog') && (
-                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                        <button 
-                                            onClick={() => setActiveSection(activeSection === 'hero' ? null : 'hero')}
-                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                                    <Zap size={18} />
-                                                </div>
-                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Oferta del Hero (Botón Principal)</span>
-                                            </div>
-                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'hero' && "rotate-180")} />
-                                        </button>
-                                        <AnimatePresence>
-                                            {activeSection === 'hero' && (
-                                                <motion.div 
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: "auto", opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden bg-white border-t border-gray-100"
-                                                >
-                                                    <div className="p-6 space-y-6">
-                                                        <div className="space-y-1">
-                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título del Botón (Texto que verá el usuario)</label>
-                                                            <input 
-                                                                className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" 
-                                                                value={formData.hero_button_text} 
-                                                                onChange={(e) => setFormData({ ...formData, hero_button_text: e.target.value })} 
-                                                                placeholder="Ej. DIA DE LA MUJER, ACCEDER WIFI, etc." 
-                                                            />
-                                                        </div>
-
-                                                        <div className="space-y-4">
-                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Acción al hacer clic</label>
-                                                            <div className="grid grid-cols-3 gap-2">
-                                                                {[
-                                                                    { id: 'wifi', label: 'Conexión WiFi', icon: <Zap size={14} /> },
-                                                                    { id: 'file', label: 'Descargar Archivo', icon: <Download size={14} /> },
-                                                                    { id: 'link', label: 'Abrir Enlace', icon: <Zap size={14} /> }
-                                                                ].map((action) => (
-                                                                    <button
-                                                                        key={action.id}
-                                                                        onClick={() => setFormData({ ...formData, hero_action: action.id as any })}
-                                                                        className={cn(
-                                                                            "flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all gap-2",
-                                                                            formData.hero_action === action.id 
-                                                                                ? "border-primary bg-primary/5 text-primary" 
-                                                                                : "border-gray-100 text-gray-400 hover:border-gray-200"
-                                                                        )}
-                                                                    >
-                                                                        {action.icon}
-                                                                        <span className="text-[9px] font-black uppercase tracking-tight">{action.label}</span>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-4">
-                                                            <div className="space-y-1">
-                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Título de la Sección de Pasos</label>
-                                                                <input 
-                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" 
-                                                                    value={formData.hero_section_title} 
-                                                                    onChange={(e) => setFormData({ ...formData, hero_section_title: e.target.value })} 
-                                                                    placeholder="Ej. Configuración WiFi, Oferta Especial, etc." 
-                                                                />
-                                                            </div>
-                                                        </div>
-
-                                                        {formData.hero_action === 'wifi' && (
-                                                            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-6">
-                                                                <div className="space-y-4 pb-4 border-b border-gray-200">
-                                                                    <h5 className="text-[10px] font-black text-navy uppercase tracking-widest">Datos de la Oferta / Promoción</h5>
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                                        <input className="w-full border rounded-lg p-2 text-gray-900 text-sm font-bold" value={formData.wifi_ssid} onChange={(e) => setFormData({ ...formData, wifi_ssid: e.target.value })} placeholder="Título de la Oferta" />
-                                                                        <input className="w-full border rounded-lg p-2 text-gray-900 text-sm font-bold" value={formData.wifi_password} onChange={(e) => setFormData({ ...formData, wifi_password: e.target.value })} placeholder="Subtítulo / Descripción" />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="space-y-6">
-                                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Configuración de Pasos:</p>
-                                                                    
-                                                                    {/* Paso 1 */}
-                                                                    <div className="space-y-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                                                                        <label className="flex items-center gap-2 cursor-pointer">
-                                                                            <input 
-                                                                                type="checkbox" 
-                                                                                checked={formData.hero_wifi_steps.includes('step1')} 
-                                                                                onChange={(e) => {
-                                                                                    const steps = e.target.checked 
-                                                                                        ? [...formData.hero_wifi_steps, 'step1']
-                                                                                        : formData.hero_wifi_steps.filter(s => s !== 'step1');
-                                                                                    setFormData({ ...formData, hero_wifi_steps: steps });
-                                                                                }}
-                                                                                className="rounded border-gray-300 text-primary w-4 h-4"
-                                                                            />
-                                                                            <span className="text-[11px] font-black text-navy uppercase">Mostrar Paso 1</span>
-                                                                        </label>
-                                                                        <input 
-                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-bold bg-gray-50" 
-                                                                            value={formData.hero_step1_title} 
-                                                                            onChange={(e) => setFormData({ ...formData, hero_step1_title: e.target.value })} 
-                                                                            placeholder="Título Paso 1" 
-                                                                        />
-                                                                    </div>
-
-                                                                    {/* Paso 2 */}
-                                                                    <div className="space-y-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                                                                        <label className="flex items-center gap-2 cursor-pointer">
-                                                                            <input 
-                                                                                type="checkbox" 
-                                                                                checked={formData.hero_wifi_steps.includes('step2')} 
-                                                                                onChange={(e) => {
-                                                                                    const steps = e.target.checked 
-                                                                                        ? [...formData.hero_wifi_steps, 'step2']
-                                                                                        : formData.hero_wifi_steps.filter(s => s !== 'step2');
-                                                                                    setFormData({ ...formData, hero_wifi_steps: steps });
-                                                                                }}
-                                                                                className="rounded border-gray-300 text-primary w-4 h-4"
-                                                                            />
-                                                                            <span className="text-[11px] font-black text-navy uppercase">Mostrar Paso 2</span>
-                                                                        </label>
-                                                                        <input 
-                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-bold bg-gray-50" 
-                                                                            value={formData.hero_step2_title} 
-                                                                            onChange={(e) => setFormData({ ...formData, hero_step2_title: e.target.value })} 
-                                                                            placeholder="Título Paso 2" 
-                                                                        />
-                                                                        <textarea 
-                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-medium bg-gray-50" 
-                                                                            rows={2}
-                                                                            value={formData.hero_step2_text} 
-                                                                            onChange={(e) => setFormData({ ...formData, hero_step2_text: e.target.value })} 
-                                                                            placeholder="Texto descriptivo para el paso 2..." 
-                                                                        />
-                                                                    </div>
-
-                                                                    {/* Paso 3 */}
-                                                                    <div className="space-y-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                                                                        <label className="flex items-center gap-2 cursor-pointer">
-                                                                            <input 
-                                                                                type="checkbox" 
-                                                                                checked={formData.hero_wifi_steps.includes('step3')} 
-                                                                                onChange={(e) => {
-                                                                                    const steps = e.target.checked 
-                                                                                        ? [...formData.hero_wifi_steps, 'step3']
-                                                                                        : formData.hero_wifi_steps.filter(s => s !== 'step3');
-                                                                                    setFormData({ ...formData, hero_wifi_steps: steps });
-                                                                                }}
-                                                                                className="rounded border-gray-300 text-primary w-4 h-4"
-                                                                            />
-                                                                            <span className="text-[11px] font-black text-navy uppercase">Mostrar Paso 3</span>
-                                                                        </label>
-                                                                        <input 
-                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-bold bg-gray-50" 
-                                                                            value={formData.hero_step3_title} 
-                                                                            onChange={(e) => setFormData({ ...formData, hero_step3_title: e.target.value })} 
-                                                                            placeholder="Título Paso 3" 
-                                                                        />
-                                                                        <textarea 
-                                                                            className="w-full border rounded-lg p-2 text-gray-900 text-xs font-medium bg-gray-50" 
-                                                                            rows={2}
-                                                                            value={formData.hero_step3_text} 
-                                                                            onChange={(e) => setFormData({ ...formData, hero_step3_text: e.target.value })} 
-                                                                            placeholder="Instrucciones para paso 3..." 
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {formData.hero_action === 'file' && (
-                                                            <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                                                                <label className="text-[10px] font-black text-navy uppercase tracking-widest flex items-center gap-2">
-                                                                    <Download size={14} /> Archivo a Descargar (VCF, PDF, etc.)
-                                                                </label>
-                                                                <div className="flex flex-col gap-3">
-                                                                    <div className="flex gap-2">
-                                                                        <input 
-                                                                            className="flex-1 border rounded-lg p-3 text-sm font-bold bg-white" 
-                                                                            value={formData.hero_file_url} 
-                                                                            onChange={(e) => setFormData({ ...formData, hero_file_url: e.target.value })} 
-                                                                            placeholder="URL o sube un archivo" 
-                                                                        />
-                                                                        <label className="cursor-pointer bg-primary text-white px-4 py-3 rounded-lg text-xs font-black uppercase flex items-center gap-2 hover:bg-primary/90 transition-all shrink-0">
-                                                                            {loading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
-                                                                            Subir
-                                                                            <input type="file" className="hidden" onChange={handleFileChange} />
-                                                                        </label>
-                                                                    </div>
-                                                                    {formData.hero_file_url && formData.hero_file_url.startsWith('data:') && (
-                                                                        <p className="text-[10px] text-green-600 font-bold flex items-center gap-1">
-                                                                            <CheckCircle size={12} /> Archivo cargado correctamente (Base64)
-                                                                        </p>
-                                                                    )}
-                                                                    <p className="text-[10px] text-gray-400 font-medium italic">Puedes subir tu archivo directamente aquí o pegar un link de Drive/Dropbox.</p>
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {formData.hero_action === 'link' && (
-                                                            <div className="space-y-3 p-4 bg-gray-50 rounded-2xl border border-gray-200">
-                                                                <label className="text-[10px] font-black text-navy uppercase tracking-widest flex items-center gap-2">
-                                                                    <Zap size={14} /> Enlace Externo
-                                                                </label>
-                                                                <input 
-                                                                    className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" 
-                                                                    value={formData.hero_external_link} 
-                                                                    onChange={(e) => setFormData({ ...formData, hero_external_link: e.target.value })} 
-                                                                    placeholder="https://tupagina.com/oferta" 
-                                                                />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
-                                     )}
-
-                                    {/* SECCIÓN 4: CARRUSEL DE BANNERS (HERO) */}
-                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                                        <button 
-                                            onClick={() => setActiveSection(activeSection === 'portada' ? null : 'portada')}
-                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
-                                                    <ImageIcon size={18} />
-                                                </div>
-                                                <div className="text-left leading-none">
-                                                    <span className="font-black text-navy uppercase text-sm tracking-tighter">Banners Dinámicos Hero</span>
-                                                    <p className="text-[9px] font-black text-navy/40 uppercase tracking-widest mt-0.5">{formData.hero_slides_json?.length || 0}/10 Banners Creados</p>
-                                                </div>
-                                            </div>
-                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'portada' && "rotate-180")} />
-                                        </button>
-                                        <AnimatePresence>
-                                            {activeSection === 'portada' && (
-                                                <motion.div 
-                                                    initial={{ height: 0, opacity: 0 }}
-                                                    animate={{ height: "auto", opacity: 1 }}
-                                                    exit={{ height: 0, opacity: 0 }}
-                                                    className="overflow-hidden bg-white border-t border-gray-100"
-                                                >
-                                                    <div className="p-6 space-y-6">
-                                                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 text-blue-800">
-                                                            <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                                                            <div className="text-xs">
-                                                                <p className="font-bold">Mínimo 1 Banner Activo</p>
-                                                                <p className="opacity-80 mt-1">El sistema requiere que siempre haya al menos una imagen activa para mostrar en el inicio.</p>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-6">
-                                                            {formData.hero_slides_json?.map((slide, index) => (
-                                                                <div key={slide.id} className={cn("border rounded-2xl p-4 transition-colors relative", slide.active ? "border-navy/10 bg-white shadow-sm" : "border-gray-200 bg-gray-50 opacity-80")}>
-                                                                    <div className="flex justify-between items-start mb-4">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="bg-navy text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">{index + 1}</span>
-                                                                            <span className="text-sm font-bold text-navy uppercase">Banner</span>
-                                                                        </div>
-                                                                        
-                                                                        <div className="flex items-center gap-3">
-                                                                             <button 
-                                                                                type="button"
-                                                                                onClick={() => toggleHeroSlideActive(slide.id, slide.active)}
-                                                                                className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase transition-colors", slide.active ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-500")}
-                                                                            >
-                                                                                {slide.active ? 'Activo' : 'Inactivo'}
-                                                                            </button>
-                                                                            <button 
-                                                                                type="button"
-                                                                                onClick={() => removeHeroSlide(slide.id)}
-                                                                                className="w-7 h-7 rounded-full bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-100 transition-colors"
-                                                                                title="Eliminar Banner"
-                                                                            >
-                                                                                <Trash2 size={12} />
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="space-y-4">
-                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                        <div>
-                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 block mb-1">Título / Frase</label>
-                                                                            <input 
-                                                                                className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                                                                value={slide.title}
-                                                                                onChange={(e) => updateHeroSlideTitle(slide.id, e.target.value)}
-                                                                                placeholder="Ej. NUEVA COLECCIÓN"
-                                                                            />
-                                                                        </div>
-                                                                        <div>
-                                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-2 block mb-1">Descripción</label>
-                                                                            <input 
-                                                                                className="w-full bg-gray-50/50 border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold text-navy placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                                                                                value={slide.description || ''}
-                                                                                onChange={(e) => updateHeroSlideDescription(slide.id, e.target.value)}
-                                                                                placeholder="Ej. Soluciones premium"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-
-                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                            {/* Desktop */}
-                                                                            <div className="space-y-2">
-                                                                                <div className="flex justify-between items-center">
-                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Desktop (PC) - 16:9</label>
-                                                                                    <label className="cursor-pointer text-primary hover:text-primary/70 text-[10px] font-black uppercase transition-colors">
-                                                                                        Cambiar
-                                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_desktop')} />
-                                                                                    </label>
-                                                                                </div>
-                                                                                <div className="aspect-[21/9] bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 relative group">
-                                                                                    {slide.portada_desktop ? (
-                                                                                        <img src={slide.portada_desktop} className="w-full h-full object-cover" />
-                                                                                    ) : (
-                                                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-2">
-                                                                                            <ImageIcon size={20} className="mb-2 opacity-50" />
-                                                                                            <span className="text-[10px] font-bold text-center">Subir Imagen Ordenador</span>
-                                                                                        </div>
-                                                                                    )}
-                                                                                    {!slide.portada_desktop && (
-                                                                                        <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_desktop')} />
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-
-                                                                            {/* Movil */}
-                                                                            <div className="space-y-2">
-                                                                                <div className="flex justify-between items-center">
-                                                                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Móvil - Vertical</label>
-                                                                                    <label className="cursor-pointer text-primary hover:text-primary/70 text-[10px] font-black uppercase transition-colors">
-                                                                                        Cambiar
-                                                                                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_movil')} />
-                                                                                    </label>
-                                                                                </div>
-                                                                                <div className="aspect-[4/5] w-24 sm:w-32 bg-gray-100 rounded-xl overflow-hidden border-2 border-dashed border-gray-200 relative group">
-                                                                                    {slide.portada_movil ? (
-                                                                                        <img src={slide.portada_movil} className="w-full h-full object-cover" />
-                                                                                    ) : (
-                                                                                        <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-2">
-                                                                                            <ImageIcon size={20} className="mb-2 opacity-50" />
-                                                                                            <span className="text-[9px] font-bold text-center leading-tight">Subir Imagen Móvil</span>
-                                                                                        </div>
-                                                                                    )}
-                                                                                    {!slide.portada_movil && (
-                                                                                        <input type="file" accept="image/*" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onChange={(e) => handleHeroSlideImage(e, slide.id, 'portada_movil')} />
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-
-                                                        {formData.hero_slides_json?.length < 10 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={addHeroSlide}
-                                                                className="w-full py-4 border-2 border-dashed border-primary/20 rounded-2xl flex items-center justify-center gap-2 text-primary hover:bg-primary/5 transition-colors font-bold uppercase tracking-wide text-xs"
-                                                            >
-                                                                <Plus size={16} /> Agregar Nuevo Banner Hero
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                    </div>
 
                                     {/* SECCIÓN 5: CATÁLOGO DE PRODUCTOS (VISIBLE SI EL PLAN ES CATALOG O SI SE PERMITE EXPLÍCITAMENTE) */}
                                      {(userData?.plan === 'catalog' || allowCatalog) && (
@@ -2898,6 +2450,237 @@ export default function VCardEditModal({
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
+                                    {/* SECCIÓN 1: PERFIL */}
+                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <button 
+                                            onClick={() => setActiveSection(activeSection === 'perfil' ? null : 'perfil')}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-navy/10 flex items-center justify-center text-navy font-black italic uppercase text-xs">
+                                                    ID
+                                                </div>
+                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Identidad y Perfil</span>
+                                            </div>
+                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'perfil' && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeSection === 'perfil' && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden bg-white border-t border-gray-100"
+                                                >
+                                                    <div className="p-6 space-y-6">
+                                                        <div className="flex gap-6 items-center">
+                                                            <div className="relative group w-20 h-20 shrink-0">
+                                                                <div className="w-full h-full bg-gray-200 rounded-full overflow-hidden border-2 border-white shadow-md">
+                                                                    {formData.foto_url || userData.foto_url ? (
+                                                                        <img src={formData.foto_url || userData.foto_url} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold text-xl">?</div>
+                                                                    )}
+                                                                </div>
+                                                                 <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                                                      {uploadingImage ? <Loader2 size={16} className="text-white animate-spin" /> : <Edit size={16} className="text-white" />}
+                                                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageChange(e, 'foto_url')} disabled={uploadingImage} />
+                                                                  </label>
+                                                             </div>
+                                                             <div className="flex-1 space-y-3">
+                                                                 {uploadingImage && (
+                                                                     <p className="text-[10px] text-primary font-black animate-pulse uppercase italic">Optimizando imagen...</p>
+                                                                 )}
+                                                                <div className="flex gap-2 p-1 bg-gray-100 rounded-lg">
+                                                                    {['persona', 'negocio'].map((t) => (
+                                                                        <button key={t} onClick={() => setFormData({ ...formData, tipo_perfil: t as any })} className={cn("flex-1 py-1.5 rounded-md font-bold text-[10px] uppercase tracking-widest transition-all", formData.tipo_perfil === t ? "bg-white text-primary shadow-sm" : "text-gray-500")}>
+                                                                            {t}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {formData.tipo_perfil === 'persona' ? (
+                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                        <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.nombres} onChange={(e) => setFormData({ ...formData, nombres: e.target.value })} placeholder="Nombres" />
+                                                                        <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.apellidos} onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })} placeholder="Apellidos" />
+                                                                    </div>
+                                                                ) : (
+                                                                    <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.nombre_negocio} onChange={(e) => setFormData({ ...formData, nombre_negocio: e.target.value })} placeholder="Nombre del Negocio" />
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Profesión / Rubro</label>
+                                                                <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.profession} onChange={(e) => setFormData({ ...formData, profession: e.target.value })} placeholder="Ej. Arquitecto" />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Empresa (Opcional)</label>
+                                                                <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} placeholder="Tu empresa" />
+                                                            </div>
+                                                            <div className="col-span-full space-y-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sobre Mí / Bio</label>
+                                                                <textarea className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" rows={3} value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} placeholder="Cuéntales qué haces..." />
+                                                            </div>
+                                                                              {/* Soluciones Destacadas */}
+                                                             {(userData?.plan === 'business' || userData?.plan === 'pro' || userData?.plan === 'digital' || (!userData?.plan && userData?.tipo_perfil === 'negocio') || userData?.plan === 'catalog') && (
+                                                                 <div className="col-span-full space-y-2">
+                                                                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block">Soluciones Destacadas</label>
+                                                                     {((userData?.plan === 'business' || userData?.plan === 'catalog') && menuCategories && menuCategories.length > 0) ? (
+                                                                         <div className="bg-gray-50 border border-gray-200/80 rounded-2xl p-4 space-y-3 transition-all">
+                                                                             <div className="flex items-center gap-2">
+                                                                                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-bold animate-pulse">✨</span>
+                                                                                 <span className="text-[10px] font-black text-navy/70 uppercase tracking-wider">
+                                                                                     Sincronizado automáticamente con tu Carta / Menú
+                                                                                 </span>
+                                                                             </div>
+                                                                             <p className="text-[10px] text-gray-400 leading-normal">
+                                                                                 Las categorías activas de tu Menú Digital o Catálogo de Servicios alimentan automáticamente la sección de servicios principales en tu vCard.
+                                                                             </p>
+                                                                             <div className="flex flex-wrap gap-1.5 pt-1">
+                                                                                 {menuCategories.map((cat: any, i: number) => (
+                                                                                     <span key={cat.id || i} className="inline-flex items-center bg-white border border-gray-200 px-3 py-1.5 rounded-xl text-[10px] font-bold text-navy/80 shadow-sm border-dashed">
+                                                                                         <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5" />
+                                                                                         {cat.nombre || cat.name}
+                                                                                     </span>
+                                                                                 ))}
+                                                                             </div>
+                                                                         </div>
+                                                                     ) : (
+                                                                         userData?.plan !== 'catalog' && (
+                                                                             <textarea 
+                                                                                 className="w-full border rounded-lg p-3 text-gray-900 text-sm font-medium bg-gray-50" 
+                                                                                 rows={3} 
+                                                                                 value={formData.productos_servicios} 
+                                                                                 onChange={(e) => setFormData({ ...formData, productos_servicios: e.target.value })} 
+                                                                                 placeholder="Lista tus soluciones o servicios principales..." 
+                                                                             />
+                                                                         )
+                                                                     )}
+                                                                 </div>
+                                                             )}
+                                                             {formData.tipo_perfil === 'negocio' && (
+                                                                 <div className="col-span-full grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                                                                     <div className="space-y-1">
+                                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Nombres Responsable</label>
+                                                                         <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" value={formData.contacto_nombre} onChange={(e) => setFormData({ ...formData, contacto_nombre: e.target.value })} placeholder="Ej. Juan" />
+                                                                     </div>
+                                                                     <div className="space-y-1">
+                                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Apellidos Responsable</label>
+                                                                         <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-white" value={formData.contacto_apellido} onChange={(e) => setFormData({ ...formData, contacto_apellido: e.target.value })} placeholder="Ej. Perez" />
+                                                                     </div>
+                                                                 </div>
+                                                             )}
+                                                             <div className="col-span-full space-y-1">
+                                                                 <label className="text-[10px] font-black text-primary uppercase tracking-widest">Etiquetas / Tags (Separados por coma)</label>
+                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-primary/5 border-primary/20" value={formData.etiquetas} onChange={(e) => setFormData({ ...formData, etiquetas: e.target.value })} placeholder="Ej. Parrillada, Eventos, Gourmet" />
+                                                             </div>
+                                                         </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+
+                                    {/* SECCIÓN 2: CONTACTO Y REDES */}
+                                    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                                        <button 
+                                            onClick={() => setActiveSection(activeSection === 'contacto' ? null : 'contacto')}
+                                            className="w-full flex items-center justify-between p-4 bg-gray-50/50 hover:bg-gray-100 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-[#25D366]/10 flex items-center justify-center text-[#25D366]">
+                                                    <Phone size={18} />
+                                                </div>
+                                                <span className="font-black text-navy uppercase text-sm tracking-tighter">Contacto y Redes Sociales</span>
+                                            </div>
+                                            <ChevronDown size={20} className={cn("text-navy/30 transition-transform", activeSection === 'contacto' && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeSection === 'contacto' && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: "auto", opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden bg-white border-t border-gray-100"
+                                                >
+                                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-[#25D366] uppercase tracking-widest">WhatsApp</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="+593..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Email</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@ejemplo.com" />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Instagram (Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.instagram} onChange={(e) => setFormData({ ...formData, instagram: e.target.value })} placeholder="https://..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-[#0077B5] uppercase tracking-widest">LinkedIn (Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.linkedin} onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })} placeholder="https://..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-black uppercase tracking-widest">TikTok (Social)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.tiktok} onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })} placeholder="Link a perfil TikTok..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-[#FF0000] uppercase tracking-widest">YouTube (Social)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.youtube} onChange={(e) => setFormData({ ...formData, youtube: e.target.value })} placeholder="Link a canal YouTube..." />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest text-[#1DA1F2]">X (Twitter - Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-blue-100" value={formData.x} onChange={(e) => setFormData({ ...formData, x: e.target.value })} placeholder="https://x.com/tuperfil" />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-[#1877F2] uppercase tracking-widest">Facebook (Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-blue-100" value={formData.facebook} onChange={(e) => setFormData({ ...formData, facebook: e.target.value })} placeholder="https://facebook.com/..." />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest decoration-primary decoration-2 underline-offset-4 flex items-center gap-2">
+                                                                <Video size={14} /> Video Promocional (YouTube, TikTok, IG, FB)
+                                                            </label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-indigo-200" value={formData.youtube_video_url} onChange={(e) => setFormData({ ...formData, youtube_video_url: e.target.value })} placeholder="Pega aquí el link de YouTube, TikTok, Instagram o Facebook..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-orange-600 uppercase tracking-widest">Título de Catálogo / Carta</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={menuTitle} onChange={(e) => updateMenuTitle(e.target.value)} placeholder="Ej. NUESTRA CARTA" />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Menú Digital (Link)</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.menu_digital} onChange={(e) => setFormData({ ...formData, menu_digital: e.target.value })} placeholder="https://..." />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[10px] font-black text-primary uppercase tracking-widest">Sitio Web</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.web} onChange={(e) => setFormData({ ...formData, web: e.target.value })} placeholder="https://..." />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Dirección Física</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} placeholder="Ej. Calle Principal #123" />
+                                                        </div>
+                                                        <div className="col-span-full space-y-1">
+                                                            <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Google Business / Maps</label>
+                                                            <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50" value={formData.google_business} onChange={(e) => setFormData({ ...formData, google_business: e.target.value })} placeholder="Link a Maps" />
+                                                        </div>
+                                                        {(userData?.plan === 'business' || userData?.plan === 'catalog') && (
+                                                         <div className="grid grid-cols-2 gap-4 col-span-full">
+                                                             <div className="space-y-1">
+                                                                 <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Puntaje Google (Estrellas)</label>
+                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" step="0.1" min="1" max="5" value={formData.google_rating} onChange={(e) => setFormData({ ...formData, google_rating: e.target.value })} placeholder="Ej. 4.9" />
+                                                             </div>
+                                                             <div className="space-y-1">
+                                                                 <label className="text-[10px] font-black text-yellow-500 uppercase tracking-widest">Número de Reseñas</label>
+                                                                 <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-gray-50 border-yellow-100" type="number" value={formData.google_reviews_count} onChange={(e) => setFormData({ ...formData, google_reviews_count: e.target.value })} placeholder="Ej. 128" />
+                                                             </div>
+                                                         </div>
+                                                         )}
                                                     </div>
                                                 </motion.div>
                                             )}

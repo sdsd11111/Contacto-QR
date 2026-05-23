@@ -288,7 +288,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                                 <span className="font-display-condensed text-white/40 text-xl tracking-[0.4em] uppercase block mb-4">
                                                     Categoría {col.num}
                                                 </span>
-                                                <h3 className="font-display-condensed text-5xl md:text-8xl text-white uppercase tracking-tight mb-4 drop-shadow-xl">
+                                                <h3 className="font-display-condensed text-lg md:text-2xl lg:text-3xl text-white uppercase tracking-tight mb-4 drop-shadow-xl line-clamp-2">
                                                     {col.title}
                                                 </h3>
                                                 <p 

@@ -719,7 +719,7 @@ export default function ClassicTemplate({
                                                                                 <span className="px-3 py-1 bg-[var(--theme-primary)] text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-4 inline-block shadow-lg shadow-[var(--theme-primary)]/40">
                                                                                     {experienceSubtitle || 'Categoría'}
                                                                                 </span>
-                                                                                <h3 className="text-2xl md:text-3xl lg:text-4xl font-display-condensed font-black text-white uppercase italic leading-none mb-4 break-words">
+                                                                                <h3 className="text-sm md:text-base lg:text-lg font-display-condensed font-black text-white uppercase italic leading-tight mb-4 line-clamp-2">
                                                                                     {displayText}
                                                                                 </h3>
                                                                                 <div className="h-0.5 w-12 bg-[var(--theme-primary)] group-hover:w-full transition-all duration-700 mb-6" />
