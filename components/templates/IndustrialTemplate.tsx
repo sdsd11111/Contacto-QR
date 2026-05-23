@@ -339,6 +339,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                             >
                                                 {btnText}
                                             </a>
+                                            {data.plan === 'catalog' && (
                                             <button
                                                 onClick={() => {
                                                     const url = new URL(window.location.href);
@@ -350,6 +351,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                             >
                                                 Ver catálogo
                                             </button>
+                                            )}
                                             </>
                                         )}
                                         {experienceButton.action === 'link' && (

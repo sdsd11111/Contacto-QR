@@ -731,6 +731,7 @@ export default function ClassicTemplate({
                                                                                     >
                                                                                         Consultar
                                                                                     </button>
+                                                                                    {data.plan === 'catalog' && (
                                                                                     <button
                                                                                         onClick={() => {
                                                                                             const url = new URL(window.location.href);
@@ -742,6 +743,7 @@ export default function ClassicTemplate({
                                                                                     >
                                                                                         Ver catálogo
                                                                                     </button>
+                                                                                    )}
                                                                                 </div>
                                                                             </div>
                                                                         </div>

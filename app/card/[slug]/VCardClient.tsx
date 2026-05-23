@@ -310,7 +310,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
     ) : null;
 
     // ─── Catálogo: parsear una sola vez ───────────────────────────────────────────
-    const hasCatalog = (showCatalog || data?.plan === 'catalog' || data?.plan === 'business') && data?.catalogo_json;
+    const hasCatalog = (showCatalog || data?.plan === 'catalog') && data?.catalogo_json;
     const catalogNode = hasCatalog ? (
         <div id="catalogo" className="w-full bg-[var(--theme-bg)] max-w-7xl mx-auto px-4 py-8">
             <CatalogGallery 
