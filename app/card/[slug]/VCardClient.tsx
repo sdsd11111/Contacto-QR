@@ -137,16 +137,41 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
         }).catch(err => console.warn("[VCardClient] Could not load node-vibrant:", err));
     }, [data?.foto_url, slug, data?.nombre_negocio]);
 
-    // ─── Scroll al catálogo si viene con ?cat= (desde "Ver catálogo") ─────────
+    // ─── Categoría desde URL (?cat=) para pasar al catálogo ─────────
+    const [urlCategory, setUrlCategory] = useState<string>('');
+
+    // Escuchar cambios en la URL (pushState/popstate desde "Ver catálogo") y scroll al catálogo
     useEffect(() => {
         if (!data) return;
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('cat')) {
-            setTimeout(() => {
-                const el = document.getElementById('catalogo');
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 800); // Esperar a que termine de renderizar el catálogo
-        }
+
+        const checkUrl = () => {
+            const params = new URLSearchParams(window.location.search);
+            const cat = params.get('cat') || '';
+            setUrlCategory(cat);
+            if (cat) {
+                setTimeout(() => {
+                    const el = document.getElementById('catalogo');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 800);
+            }
+        };
+
+        // Interceptar pushState para detectar cambios desde "Ver catálogo"
+        const originalPushState = history.pushState;
+        history.pushState = function (...args) {
+            originalPushState.apply(this, args);
+            window.dispatchEvent(new Event('urlchange'));
+        };
+
+        // Check on mount and on urlchange/popstate
+        checkUrl();
+        window.addEventListener('urlchange', checkUrl);
+        window.addEventListener('popstate', checkUrl);
+        return () => {
+            window.removeEventListener('urlchange', checkUrl);
+            window.removeEventListener('popstate', checkUrl);
+            history.pushState = originalPushState;
+        };
     }, [data]);
 
     // ─── Acciones ─────────────────────────────────────────────────────────────
@@ -318,6 +343,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                 whatsapp={data.whatsapp}
                 onLightboxToggle={setIsLightboxOpen}
                 templateId={data.template_id}
+                initialCategory={urlCategory}
             />
         </div>
     ) : null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ZoomIn, Info, DollarSign, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -59,12 +59,25 @@ export default function CatalogProGallery({ data, whatsapp, onLightboxToggle, th
     const categories = useMemo(() => {
         const cats = Array.from(new Set(items.map(item => item.category || item.categoria))).filter(Boolean) as string[];
         if (customCategories && customCategories.length > 0) {
-            return customCategories;
+            return customCategories.filter(c => c !== 'Nueva Categoría');
         }
         return cats;
     }, [items, customCategories]);
 
-    const [activeCategory, setActiveCategory] = useState<string>(() => categories[0] || '');
+    const [activeCategory, setActiveCategory] = useState<string>('');
+
+    // Leer categoría inicial desde URL (?cat=) solo UNA VEZ al cargar
+    const urlCatApplied = useRef(false);
+    useEffect(() => {
+        if (urlCatApplied.current || categories.length === 0) return;
+        const urlCat = new URLSearchParams(window.location.search).get('cat');
+        if (urlCat) {
+            const match = categories.find(c => c.toLowerCase() === urlCat.toLowerCase());
+            if (match) { setActiveCategory(match); urlCatApplied.current = true; return; }
+        }
+        setActiveCategory(categories[0]);
+        urlCatApplied.current = true;
+    }, [categories]);
 
     // Filter items based on active category
     const filteredItems = useMemo(() => {
@@ -183,7 +196,7 @@ export default function CatalogProGallery({ data, whatsapp, onLightboxToggle, th
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-black/90 backdrop-blur-md"
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-black/50 backdrop-blur-sm"
                         onClick={handleCloseItem}
                     >
                         <motion.div

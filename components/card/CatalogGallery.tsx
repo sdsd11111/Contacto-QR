@@ -29,6 +29,7 @@ interface CatalogGalleryProps {
     whatsapp?: string;
     onLightboxToggle?: (isOpen: boolean) => void;
     templateId?: string;
+    initialCategory?: string;
 }
 
 // Mapa de tipografías por template
@@ -40,7 +41,7 @@ const TEMPLATE_FONTS: Record<string, { title: string; body: string }> = {
 };
 const DEFAULT_FONTS = { title: 'font-black', body: 'font-sans' };
 
-export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templateId }: CatalogGalleryProps) {
+export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templateId, initialCategory }: CatalogGalleryProps) {
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [mediaIndex, setMediaIndex] = useState(0);
     const [activeMediaType, setActiveMediaType] = useState<'image' | 'video'>('image');
@@ -83,7 +84,8 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templ
 
     const customCategories = useMemo(() => {
         if (Array.isArray(data)) return null;
-        return data?.categories || null;
+        const cats = data?.categories || null;
+        return cats ? cats.filter((c: string) => c !== 'Nueva Categoría') : null;
     }, [data]);
 
     // Extract categories
@@ -96,21 +98,29 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templ
     }, [items, customCategories]);
 
     const [activeCategory, setActiveCategory] = useState<string>('');
-    const urlCatApplied = useRef(false);
 
-    // Leer categoría inicial desde URL (?cat=) solo UNA VEZ al cargar
+    // Leer categoría inicial: prioridad a prop initialCategory > URL (?cat=) > primera categoría
     useEffect(() => {
-        if (urlCatApplied.current) return;
+        if (categories.length === 0) return;
+
+        // Si viene initialCategory del padre (click en "Ver catálogo"), usarla
+        if (initialCategory) {
+            const match = categories.find(c => c.toLowerCase() === initialCategory.toLowerCase());
+            if (match) { setActiveCategory(match); return; }
+        }
+
+        // Si hay ?cat= en la URL, usarla
         const urlCat = new URLSearchParams(window.location.search).get('cat');
         if (urlCat) {
             const match = categories.find(c => c.toLowerCase() === urlCat.toLowerCase());
-            if (match) { setActiveCategory(match); urlCatApplied.current = true; return; }
+            if (match) { setActiveCategory(match); return; }
         }
-        if (categories.length > 0) {
+
+        // Por defecto: primera categoría (solo si aún no hay una seleccionada)
+        if (!activeCategory) {
             setActiveCategory(categories[0]);
-            urlCatApplied.current = true;
         }
-    }, [categories]);
+    }, [categories, initialCategory]);
 
     // Filter items based on active category (case-insensitive)
     const filteredItems = useMemo(() => {
@@ -283,14 +293,14 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templ
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] flex items-start justify-center p-0 md:p-10 bg-black/95 backdrop-blur-xl overflow-y-auto"
+                        className="fixed inset-0 z-[100] flex items-start justify-center p-0 md:p-10 bg-black/60 backdrop-blur-sm overflow-y-auto"
                         onClick={() => setSelectedItem(null)}
                     >
                         <motion.div
                             initial={{ y: 50, scale: 0.95 }}
                             animate={{ y: 0, scale: 1 }}
                             exit={{ y: 20, scale: 0.95 }}
-                            className="relative max-w-5xl w-full my-auto flex flex-col md:flex-row bg-[#111322] md:rounded-[48px] overflow-hidden border-x border-b border-white/10 shadow-2xl"
+                            className="relative max-w-5xl w-full my-auto flex flex-col md:flex-row bg-[#1a1d33] md:rounded-[48px] overflow-hidden border border-white/30 shadow-2xl shadow-black/80"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Mobile/Global Close Button - Fixed on mobile to always stay visible */}

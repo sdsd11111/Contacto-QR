@@ -356,10 +356,13 @@ export default function VCardEditModal({
         if (!catalogo || typeof catalogo !== 'object') catalogo = { categories: [], products: [] };
         if (!catalogo.categories) catalogo.categories = [];
 
+        // Limpiar 'Nueva Categoría' del array existente
+        const cleanCategories = catalogo.categories.filter((c: string) => c !== 'Nueva Categoría');
+
         // Solo agregar líneas NUEVAS que no existan ya como categorías
-        const newCats = rawLines.filter((line: string) => !catalogo.categories.includes(line));
-        if (newCats.length > 0) {
-            catalogo.categories = [...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...newCats];
+        const newCats = rawLines.filter((line: string) => !cleanCategories.includes(line));
+        if (newCats.length > 0 || cleanCategories.length !== catalogo.categories.length) {
+            catalogo.categories = [...cleanCategories, ...newCats];
             setFormData({ ...formData, catalogo_json: catalogo });
         }
     }, [formData?.productos_servicios]);
@@ -472,6 +475,9 @@ export default function VCardEditModal({
                         if (categories.length === 0) {
                             categories = Array.from(new Set(products.map((p: any) => p.category)));
                         }
+
+                        // Limpiar 'Nueva Categoría' de la carga inicial
+                        categories = categories.filter((c: string) => c !== 'Nueva Categoría');
 
                         return { categories, products };
                     })(),

@@ -46,10 +46,13 @@ export default function VCardEditModal({
         if (!catalogo || typeof catalogo !== 'object') catalogo = { categories: [], products: [] };
         if (!catalogo.categories) catalogo.categories = [];
 
+        // Limpiar 'Nueva Categoría' del array existente
+        const cleanCategories = catalogo.categories.filter((c: string) => c !== 'Nueva Categoría');
+        
         // Solo agregar líneas NUEVAS que no existan ya como categorías
-        const newCats = rawLines.filter((line: string) => !catalogo.categories.includes(line));
-        if (newCats.length > 0) {
-            catalogo.categories = [...catalogo.categories.filter((c: string) => c !== 'Nueva Categoría'), ...newCats];
+        const newCats = rawLines.filter((line: string) => !cleanCategories.includes(line));
+        if (newCats.length > 0 || cleanCategories.length !== catalogo.categories.length) {
+            catalogo.categories = [...cleanCategories, ...newCats];
             setEditingRegistro({ ...editingRegistro, catalogo_json: catalogo });
         }
     }, [editingRegistro?.productos_servicios]);
@@ -478,7 +481,7 @@ export default function VCardEditModal({
         
         if (typeof parsed === 'object' && parsed !== null) {
             const rawCats = (parsed.categories || []) as string[];
-            const normalizedCats = Array.from(new Set(rawCats.map(c => c === 'Sin Categoría' ? 'Todas' : c)));
+            const normalizedCats = Array.from(new Set(rawCats.map(c => c === 'Sin Categoría' ? 'Todas' : c))).filter(c => c !== 'Nueva Categoría');
             const products = (parsed.products || []).map((p: any) => {
                 const cat = p.categoria || p.category || (normalizedCats[0] || 'Todas');
                 const normalizedCat = cat === 'Sin Categoría' ? 'Todas' : cat;
@@ -1522,9 +1525,11 @@ export default function VCardEditModal({
                                             <button 
                                                 type="button"
                                                 onClick={() => {
+                                                    const name = prompt('Nombre de la nueva categoría:');
+                                                    if (!name || !name.trim()) return;
                                                     const current = (editingRegistro.productos_servicios || '').trim();
                                                     const separator = '\n';
-                                                    setEditingRegistro({ ...editingRegistro, productos_servicios: current + (current ? separator : '') + 'Nueva Categoría' });
+                                                    setEditingRegistro({ ...editingRegistro, productos_servicios: current + (current ? separator : '') + name.trim() });
                                                 }}
                                                 className="bg-primary/20 hover:bg-primary/40 text-primary px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2"
                                             >
