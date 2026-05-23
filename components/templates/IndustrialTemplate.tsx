@@ -342,7 +342,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                             <button
                                                 onClick={() => {
                                                     const url = new URL(window.location.href);
-                                                    url.searchParams.set('cat', service.title);
+                                                    url.searchParams.set('cat', service.title.toLowerCase());
                                                     window.history.pushState({}, '', url.toString());
                                                     document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                 }}

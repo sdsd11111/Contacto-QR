@@ -317,6 +317,7 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                 data={safeParse(data.catalogo_json, { products: [], categories: [] })} 
                 whatsapp={data.whatsapp}
                 onLightboxToggle={setIsLightboxOpen}
+                templateId={data.template_id}
             />
         </div>
     ) : null;

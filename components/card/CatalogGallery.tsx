@@ -28,12 +28,24 @@ interface CatalogGalleryProps {
     data: CatalogItem[] | { categories: string[], products: CatalogItem[] };
     whatsapp?: string;
     onLightboxToggle?: (isOpen: boolean) => void;
+    templateId?: string;
 }
 
-export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: CatalogGalleryProps) {
+// Mapa de tipografías por template
+const TEMPLATE_FONTS: Record<string, { title: string; body: string }> = {
+    'hedkandi': { title: 'font-display-condensed font-black', body: 'font-sans-body' },
+    'showcase': { title: 'font-display-condensed font-black', body: 'font-sans-body' },
+    'industrial': { title: 'font-black', body: 'font-sans' },
+    'carrocerias': { title: 'font-black', body: 'font-sans' },
+};
+const DEFAULT_FONTS = { title: 'font-black', body: 'font-sans' };
+
+export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templateId }: CatalogGalleryProps) {
     const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
     const [mediaIndex, setMediaIndex] = useState(0);
     const [activeMediaType, setActiveMediaType] = useState<'image' | 'video'>('image');
+
+    const fonts = TEMPLATE_FONTS[templateId || ''] || DEFAULT_FONTS;
 
     // Obtener arrays normalizados de imágenes y videos
     const getImages = (item: CatalogItem): string[] => {
@@ -100,10 +112,10 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
         }
     }, [categories]);
 
-    // Filter items based on active category
+    // Filter items based on active category (case-insensitive)
     const filteredItems = useMemo(() => {
         if (!activeCategory) return items;
-        return items.filter(item => (item.category || item.categoria) === activeCategory);
+        return items.filter(item => (item.category || item.categoria)?.toLowerCase() === activeCategory.toLowerCase());
     }, [items, activeCategory]);
 
     if (!items || items.length === 0) {
@@ -112,7 +124,7 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
 
     return (
         <div className="w-full mt-8 md:mt-16 pt-6 md:pt-10 border-t border-white/10 flex flex-col gap-8">
-            <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-[var(--theme-primary)] mb-2 flex items-center gap-2">
+            <h4 className={`text-[10px] sm:text-xs ${fonts.title} uppercase tracking-widest text-[var(--theme-primary)] mb-2 flex items-center gap-2`}>
                 <ZoomIn size={14} /> CATÁLOGO INTERACTIVO
             </h4>
 
@@ -125,11 +137,11 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
                             onClick={() => {
                                 setActiveCategory(cat);
                                 const url = new URL(window.location.href);
-                                url.searchParams.set('cat', cat);
+                                url.searchParams.set('cat', cat.toLowerCase());
                                 window.history.replaceState({}, '', url.toString());
                             }}
                             className={cn(
-                                "px-5 py-2 rounded-full text-xs font-black tracking-wider uppercase transition-all duration-300 border-2",
+                                `px-5 py-2 rounded-full text-xs ${fonts.title} tracking-wider uppercase transition-all duration-300 border-2`,
                                 activeCategory === cat
                                     ? "shadow-lg scale-105"
                                     : "bg-gray-100/80 dark:bg-white/10 text-navy dark:text-white border-gray-300 dark:border-white/20 hover:border-primary/50 hover:bg-white"
@@ -396,12 +408,12 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
 
                                 <div className="relative z-10">
                                     <div className="flex flex-wrap items-center gap-2 mb-6">
-                                        <div className="inline-block px-3 py-1 rounded-full bg-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest w-fit border border-white/5">
+                                        <div className={`inline-block px-3 py-1 rounded-full bg-white/10 text-white/60 text-[10px] ${fonts.title} uppercase tracking-widest w-fit border border-white/5`}>
                                             {selectedItem.category || selectedItem.categoria}
                                         </div>
                                     </div>
                                     
-                                    <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tight mb-4 leading-none">
+                                    <h2 className={`text-2xl md:text-4xl ${fonts.title} text-white uppercase tracking-tight mb-4 leading-none`}>
                                         {selectedItem.name || selectedItem.titulo}
                                     </h2>
                                     
@@ -423,7 +435,7 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle }: Cat
                                         <h4 className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-3 flex items-center gap-2">
                                             <Info size={12} /> DETALLES DEL PRODUCTO
                                         </h4>
-                                        <div className="text-white/80 text-sm md:text-base leading-relaxed font-medium space-y-2 whitespace-pre-line">
+                                        <div className={`text-white/80 text-sm md:text-base leading-relaxed ${fonts.body} space-y-2 whitespace-pre-line`}>
                                             {selectedItem.description || selectedItem.descripcion}
                                         </div>
                                     </div>

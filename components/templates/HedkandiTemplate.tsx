@@ -315,7 +315,7 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
                                                             whileTap={{ scale: 0.95 }}
                                                             onClick={() => {
                                                                 const url = new URL(window.location.href);
-                                                                url.searchParams.set('cat', col.title);
+                                                                url.searchParams.set('cat', col.title.toLowerCase());
                                                                 window.history.pushState({}, '', url.toString());
                                                                 document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                             }}

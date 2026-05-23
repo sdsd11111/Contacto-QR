@@ -734,7 +734,7 @@ export default function ClassicTemplate({
                                                                                     <button
                                                                                         onClick={() => {
                                                                                             const url = new URL(window.location.href);
-                                                                                            url.searchParams.set('cat', displayText);
+                                                                                            url.searchParams.set('cat', displayText.toLowerCase());
                                                                                             window.history.pushState({}, '', url.toString());
                                                                                             document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                                                                         }}
