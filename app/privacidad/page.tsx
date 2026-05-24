@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import PrivacidadForm from './PrivacidadForm';
 
 export const metadata: Metadata = {
     title: 'Política de Privacidad | ActivaQR',
@@ -154,6 +155,10 @@ export default function PrivacidadPage() {
                             Atenderemos tu solicitud en un plazo máximo de 15 días hábiles (la suspensión de tratamiento se ejecuta en 3 días hábiles).
                         </p>
                     </section>
+
+                    <div className="pt-8 mt-10">
+                        <PrivacidadForm />
+                    </div>
 
                     <div className="pt-8 border-t border-navy/5 mt-10">
                         <Link href="/" className="text-primary font-black uppercase tracking-widest hover:underline flex items-center gap-2">
