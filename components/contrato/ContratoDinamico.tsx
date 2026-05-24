@@ -17,26 +17,58 @@ interface ContratoDinamicoProps {
 }
 
 const PRIVACIDAD_TEXTO = `
-1. IDENTIDAD DEL RESPONSABLE
-ActivaQR, operada por el Grupo Empresarial Reyes, es el Responsable del tratamiento de tus datos personales.
+1. Identidad del Responsable del Tratamiento
+César Augusto Reyes Jaramillo, con domicilio legal en las calles Juan José Peña 1181 y Mercadillo, Loja - Ecuador, teléfono +593963410409 y correo electrónico negocios@cesarreyesjaramillo.com, es el Responsable del tratamiento de tus datos personales bajo la plataforma ActivaQR.
 
-2. FINALIDADES DEL TRATAMIENTO
-Tus datos (nombre, teléfono y correo) serán tratados para:
-- Gestión de Identidad Digital
-- Notificaciones de Valor: envío de cotizaciones, actualizaciones y casos de éxito vía WhatsApp y email.
-- Ejecución del servicio contratado según los términos del presente contrato.
+2. Finalidades del Tratamiento
+Tus datos personales son tratados exclusivamente para:
+- Gestión de Identidad Digital: Creación, personalización y entrega de tu VCard digital; registro en la agenda de contactos comercial del cliente que te compartió el código QR.
+- Notificaciones de Valor: Envío de cotizaciones, actualizaciones sobre herramientas tecnológicas y casos de éxito comerciales vía WhatsApp y correo electrónico.
 
-3. BASE LEGAL
-Este tratamiento se basa en tu consentimiento libre e inequívoco.
+3. Base Legal del Tratamiento
+El tratamiento de tus datos se fundamenta en tu consentimiento libre, específico, informado e inequívoco, otorgado al completar el formulario de activación (Art. 7.1 de la LOPDP). Para clientes con relación contractual activa, aplica adicionalmente la base de ejecución de medidas precontractuales o contractuales (Art. 7.5 LOPDP).
 
-4. TIEMPO DE CONSERVACIÓN
-Conservaremos tu información mientras dure la relación comercial o hasta que solicites su eliminación.
+4. Tipos de Tratamiento Realizados
+Sobre tus datos realizamos las siguientes operaciones: recolección, registro, almacenamiento, estructuración, consulta, comunicación y transferencia internacional hacia la infraestructura de alojamiento declarada.
 
-5. TUS DERECHOS (ARCO+PAL)
-Puedes ejercer tus derechos de Acceso, Rectificación, Cancelación/Eliminación, Oposición, Portabilidad, Anonimización y Limitación.
+5. Tiempo de Conservación
+Conservaremos tu información mientras dure la relación comercial o hasta que solicites su eliminación. Realizamos revisiones periódicas cada 2 años para verificar la pertinencia de los datos almacenados. Una vez concluida la relación y vencido el plazo de revisión, los datos serán eliminados de forma definitiva.
 
-6. REVOCATORIA
-Puedes retirar tu consentimiento en cualquier momento escribiendo "BAJA" en nuestro chat de WhatsApp.
+6. Origen de los Datos
+Los datos son obtenidos directamente del titular a través del escaneo del código QR y la interacción con el formulario de activación del sistema ActivaQR.
+
+7. Existencia de Base de Datos
+Tus datos forman parte de la base de datos denominada "Contactos ActivaQR", de uso comercial, bajo responsabilidad exclusiva de César Augusto Reyes Jaramillo.
+
+8. Finalidades y Tratamientos Ulteriores
+No utilizaremos tus datos para finalidades distintas a las declaradas en el punto 2. Cualquier uso futuro incompatible requerirá una nueva base legal habilitante o un nuevo consentimiento específico de tu parte.
+
+9. Delegado de Protección de Datos (DPD)
+Dado el volumen actual de operaciones y al no realizarse tratamiento masivo de categorías especiales de datos, no existe obligación legal de designar un DPD. Para cualquier consulta relacionada con privacidad, el punto de contacto directo es el Responsable en: negocios@cesarreyesjaramillo.com
+
+10. Transferencia Internacional de Datos
+Tus datos son almacenados en servidores propios alojados en infraestructura de Hostdom (Estados Unidos). Esta operación constituye una transferencia internacional de datos hacia una jurisdicción con niveles de protección técnica adecuados, gestionada bajo los acuerdos de servicio del proveedor de infraestructura. No compartimos tus datos con terceros para sus propios fines comerciales sin tu consentimiento explícito.
+
+11. Consecuencias de la Negativa a Entregar Datos
+La entrega de nombre y número de WhatsApp es obligatoria para la prestación del servicio. Si decides no proporcionarlos o solicitas su eliminación inmediata, ActivaQR no podrá generar tu VCard ni activar tu identidad digital.
+
+12. Efecto de Suministrar Datos Erróneos
+La entrega de información inexacta o desactualizada impedirá la correcta generación de tu VCard y el envío de notificaciones, afectando la calidad del servicio recibido. ActivaQR no asume responsabilidad por errores derivados de datos incorrectos proporcionados por el titular.
+
+13. Revocatoria del Consentimiento
+Puedes retirar tu autorización en cualquier momento, de forma gratuita y sin necesidad de justificación. El mecanismo técnico disponible es escribir la palabra "BAJA" en nuestro chat de WhatsApp. Nuestro sistema ejecutará un bloqueo técnico inmediato sobre tus datos en el sistema de comunicaciones. La revocatoria no tiene efectos retroactivos sobre tratamientos ya realizados con base en el consentimiento previo.
+
+14. Ejercicio de Derechos ARCO+PAL
+Como titular tienes derecho a solicitar:
+- Acceso: Conocer qué datos tenemos sobre ti.
+- Rectificación: Corregir datos inexactos o incompletos.
+- Cancelación/Eliminación: Solicitar la supresión de tus datos.
+- Oposición: Oponerte a determinados tratamientos.
+- Portabilidad: Recibir tus datos en formato transferible.
+- Anonimización: Solicitar que tus datos no sean identificables.
+- Limitación: Restringir temporalmente el tratamiento.
+Para ejercer cualquiera de estos derechos, escribe a: registro@activaqr.com
+Atenderemos tu solicitud en un plazo máximo de 15 días hábiles (la suspensión de tratamiento se ejecuta en 3 días hábiles).
 `.trim();
 
 export default function ContratoDinamico({
@@ -100,21 +132,15 @@ export default function ContratoDinamico({
         </div>
       </AccordionSection>
 
-      {/* Sección B — Términos */}
+      {/* Sección B — Contrato */}
       <AccordionSection
         id="terminos"
         icon={<Scale size={18} />}
-        title="Sección B — Términos y condiciones"
+        title="Sección B — Contrato de Producto"
         isOpen={expandedSection === 'terminos'}
         onToggle={() => onToggleSection('terminos')}
       >
         <div className="text-sm text-navy/80 leading-relaxed space-y-3 whitespace-pre-line font-medium">
-          <p><strong>1. PARTES</strong></p>
-          <p>
-            Comparece: <strong>{data.cliente_nombre || '[NOMBRE DEL CLIENTE]'}</strong>, en adelante "EL CLIENTE"; 
-            y ActivaQR, operado por Grupo Empresarial Reyes, en adelante "EL PROVEEDOR".
-          </p>
-
           <p><strong>1. PARTES</strong></p>
           <p>
             Comparece: <strong>{data.cliente_nombre || '[NOMBRE DEL CLIENTE]'}</strong>, en adelante "EL CONTRATANTE"; 
@@ -171,7 +197,7 @@ export default function ContratoDinamico({
               className="w-5 h-5 rounded border-navy/20 text-primary focus:ring-primary mt-0.5"
             />
             <span className="text-sm text-navy/80 group-hover:text-navy transition-colors font-medium">
-              <strong className="text-primary">*</strong> He leído y <strong>acepto los Términos y Condiciones</strong> descritos en esta sección
+              <strong className="text-primary">*</strong> He leído y <strong>acepto el Contrato de Producto</strong> descrito en esta sección
             </span>
           </label>
         </div>
@@ -185,16 +211,16 @@ export default function ContratoDinamico({
         isOpen={expandedSection === 'privacidad'}
         onToggle={() => onToggleSection('privacidad')}
       >
-        <div className="text-sm text-navy/80 leading-relaxed space-y-3 whitespace-pre-line font-medium">
+        <div className="text-xs text-navy/70 leading-relaxed space-y-2 whitespace-pre-line font-medium">
           {PRIVACIDAD_TEXTO.split('\n').map((line, i) => {
             if (!line.trim()) return null;
             if (line.match(/^\d\./)) {
-              return <p key={i}><strong>{line}</strong></p>;
+              return <p key={i} className="text-[11px] font-bold text-navy">{line}</p>;
             }
             if (line.startsWith('-')) {
-              return <li key={i} className="ml-4 list-disc">{line.substring(2)}</li>;
+              return <li key={i} className="ml-4 list-disc text-[11px]">{line.substring(2)}</li>;
             }
-            return <p key={i}>{line}</p>;
+            return <p key={i} className="text-[11px]">{line}</p>;
           })}
         </div>
         {/* Checkbox dentro de Sección C */}

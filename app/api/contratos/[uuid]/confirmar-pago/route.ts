@@ -3,8 +3,176 @@ import { v4 as uuidv4 } from 'uuid';
 import pool from '@/lib/db';
 import { sendMail } from '@/lib/mailer';
 import { SERVICIOS_LIST } from '@/lib/contrato-utils';
+import { jsPDF } from 'jspdf';
 
 export const dynamic = 'force-dynamic';
+
+// Generar PDF del Contrato (Sección B) para adjuntar al email
+function generarPDFContrato(contrato: any, serviciosTexto: string, fechaActual: string): Buffer {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageW = 210;
+    const margin = 20;
+    let y = 20;
+
+    const addText = (text: string, size: number = 10, bold: boolean = false, indent: number = 0) => {
+        if (y > 275) { doc.addPage(); y = 20; }
+        doc.setFontSize(size);
+        doc.setFont('helvetica', bold ? 'bold' : 'normal');
+        doc.text(text, margin + indent, y);
+        y += size * 0.5;
+    };
+
+    // Header
+    doc.setFillColor(5, 11, 28);
+    doc.rect(0, 0, pageW, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('ACTAIVAQ.R', 20, 20);
+    doc.setFontSize(8);
+    doc.text('Contrato de Producto', 20, 26);
+    doc.setTextColor(0, 0, 0);
+
+    y = 40;
+
+    // Título
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONTRATO DE PRODUCTO - ActivaQR', margin, y);
+    y += 10;
+
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Fecha: ${fechaActual}  |  ID: ${contrato.id?.substring(0, 12) || ''}...`, margin, y);
+    y += 8;
+    doc.setTextColor(0, 0, 0);
+
+    // Línea separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.line(margin, y, pageW - margin, y);
+    y += 8;
+
+    // 1. PARTES
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('1. PARTES', margin, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const clientName = contrato.cliente_nombre || '[NOMBRE DEL CLIENTE]';
+    doc.text(`Comparece: ${clientName}, en adelante "EL CONTRATANTE";`, margin, y);
+    y += 5;
+    doc.text(`y César Augusto Reyes Jaramillo, con C.I. 1103421531001, representante de`, margin, y);
+    y += 5;
+    doc.text(`ActivaQR, en adelante "EL PROVEEDOR".`, margin, y);
+    y += 8;
+
+    // 2. OBJETO
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('2. OBJETO DEL CONTRATO', margin, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const servicios = serviciosTexto.replace(/<br>/g, ', ');
+    doc.text(`EL CONTRATANTE contrata los servicios digitales de ActivaQR: ${servicios}.`, margin, y);
+    y += 5;
+    doc.text(`EL PROVEEDOR se compromete a mantenerlos activos, funcionales y accesibles`, margin, y);
+    y += 5;
+    doc.text(`durante la vigencia del contrato.`, margin, y);
+    y += 8;
+
+    // 3. PLAZO
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('3. PLAZO', margin, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`El presente contrato tiene una vigencia de UN AÑO contado desde la fecha`, margin, y);
+    y += 5;
+    doc.text(`de suscripción. EL PROVEEDOR asume el mantenimiento del hosting, dominio`, margin, y);
+    y += 5;
+    doc.text(`y servicio durante todo el período.`, margin, y);
+    y += 8;
+
+    // 4. VALOR
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('4. VALOR Y FORMA DE PAGO', margin, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const montoTotal = parseFloat(contrato.monto_total) || 0;
+    const montoAnticipo = parseFloat(contrato.monto_anticipo) || 0;
+    doc.text(`Valor total: $${montoTotal.toFixed(2)} USD.`, margin, y);
+    y += 5;
+    doc.text(`Anticipo: $${montoAnticipo.toFixed(2)} USD.`, margin, y);
+    y += 5;
+    doc.text(`Saldo restante según acuerdo entre las partes.`, margin, y);
+    y += 8;
+
+    // 5. CLAVE DE EDICIÓN
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('5. CLAVE DE EDICIÓN (AUTOGESTIÓN)', margin, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`EL PROVEEDOR entregará a EL CONTRATANTE una clave de edición para que`, margin, y);
+    y += 5;
+    doc.text(`pueda modificar sus propios datos, contenidos, precios, fotos y promociones`, margin, y);
+    y += 5;
+    doc.text(`de forma autónoma, sin depender del PROVEEDOR.`, margin, y);
+    y += 8;
+
+    // 6. CONFIDENCIALIDAD
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('6. CONFIDENCIALIDAD', margin, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`EL PROVEEDOR se compromete a mantener la confidencialidad de toda la`, margin, y);
+    y += 5;
+    doc.text(`información compartida por EL CONTRATANTE, no divulgándola a terceros`, margin, y);
+    y += 5;
+    doc.text(`sin autorización expresa.`, margin, y);
+    y += 8;
+
+    // 7. ACEPTACIÓN
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text('7. ACEPTACIÓN', margin, y);
+    y += 7;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Las partes declaran haber leído y comprendido los términos del presente`, margin, y);
+    y += 5;
+    doc.text(`contrato, aceptándolos libre y voluntariamente.`, margin, y);
+    y += 5;
+    doc.text(`Firmado en Loja, ${fechaActual}.`, margin, y);
+    y += 10;
+
+    // Línea de firma
+    doc.setDrawColor(150, 150, 150);
+    doc.line(margin, y, pageW - margin, y);
+    y += 3;
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Firma: ${contrato.firma_nombre || '________________________'}`, margin, y);
+
+    // Footer
+    doc.setFillColor(5, 11, 28);
+    doc.rect(0, 285, pageW, 12, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.text('ActivaQR · Grupo Empresarial Reyes · Loja, Ecuador', margin, 293);
+
+    const buffer = Buffer.from(doc.output('arraybuffer'));
+    return buffer;
+}
 
 /**
  * POST /api/contratos/[uuid]/confirmar-pago
@@ -254,6 +422,13 @@ export async function POST(
                     hour: '2-digit', minute: '2-digit'
                 });
 
+                // Generar PDF del Contrato (Sección B) para adjuntar
+                const fechaActualPDF = new Date().toLocaleDateString('es-EC', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                });
+                const pdfBuffer = generarPDFContrato(contrato, serviciosTexto, fechaActualPDF);
+                const fileName = `Contrato_ActivaQR_${contrato.cliente_nombre?.replace(/[^a-zA-Z0-9]/g, '_') || 'cliente'}.pdf`;
+
                 const emailHtml = `
                 <!DOCTYPE html>
                 <html>
@@ -286,7 +461,8 @@ export async function POST(
                         </div>
 
                         <p style="color: #555; font-size: 13px; line-height: 1.6;">
-                            Recibirás la clave de edición para que puedas gestionar tus datos de forma autónoma.
+                            Adjunto a este correo encontrarás tu <strong>Contrato de Producto</strong> en PDF.
+                            Recibirás también la clave de edición para que puedas gestionar tus datos de forma autónoma.
                             Cualquier consulta, responde a este correo o escríbenos al WhatsApp.
                         </p>
 
@@ -303,6 +479,11 @@ export async function POST(
                     to: clienteEmail,
                     subject: `✅ Pago confirmado - ActivaQR`,
                     html: emailHtml,
+                    attachments: [{
+                        filename: fileName,
+                        content: pdfBuffer,
+                        contentType: 'application/pdf',
+                    }],
                 });
                 emailSent = true;
                 console.log(`[Contratos] Email de pago enviado a ${clienteEmail}`);
