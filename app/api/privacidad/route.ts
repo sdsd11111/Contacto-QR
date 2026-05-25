@@ -39,7 +39,41 @@ export async function POST(request: Request) {
             ]
         );
 
-        // 2. Notificar al bot (activaqr-harness)
+        // 2. Enviar webhook al bot (consentimiento)
+        const botConsentimientoUrl = process.env.BOT_CONSENTIMIENTO_URL;
+        
+        if (botConsentimientoUrl) {
+            try {
+                const webhookPayload = {
+                    numero: telefono,
+                    nombre: nombre,
+                    email: email || null,
+                    acepta_comercial: acepta_comercial ? true : false,
+                    version: 'v2.0-ADN',
+                    url_origen: request.url
+                };
+
+                const botResponse = await fetch(botConsentimientoUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(webhookPayload)
+                });
+
+                if (botResponse.ok) {
+                    console.log(`[Privacidad API] Webhook enviado al bot exitosamente`);
+                } else {
+                    console.warn(`[Privacidad API] Bot respondió con error: ${botResponse.status} ${botResponse.statusText}`);
+                }
+            } catch (botErr) {
+                console.error(`[Privacidad API] Error enviando webhook al bot:`, botErr);
+            }
+        } else {
+            console.warn(`[Privacidad API] BOT_CONSENTIMIENTO_URL no configurada, no se envió webhook`);
+        }
+
+        // 3. Notificar al bot (activaqr-harness) para Google Contacts
         const botUrl = process.env.BOT_URL || 'http://localhost:4000';
         const botToken = process.env.BOT_INTERNAL_TOKEN || 'activaqr-internal-2026';
         
