@@ -23,6 +23,15 @@
 
     const SCRIPT = document.currentScript;
 
+    // ─── No mostrar en páginas de cards/catálogo de clientes ────
+    const EXCLUDED_PATHS = ['/card/', '/catalog/', '/admin/'];
+    const currentPath = window.location.pathname;
+    const isExcluded = EXCLUDED_PATHS.some(path => currentPath.startsWith(path));
+    if (isExcluded) {
+        console.log('[ActivaQR Widget] ⏭ Omitido en página de cliente:', currentPath);
+        return;
+    }
+
     // ─── Configuración ───────────────────────────────────────────
     const CONFIG = {
         phone: SCRIPT?.getAttribute('data-phone') || '593963425323',
