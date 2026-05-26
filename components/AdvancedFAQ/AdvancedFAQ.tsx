@@ -157,7 +157,7 @@ export function AdvancedFAQ({
                                                     {faq.ctaText && (
                                                         <div>
                                                             <a 
-                                                                href="https://wa.me/593983237491?text=Hola,%20acabo%20de%20ver%20los%20videos%20y%20quiero%20crear%20mi%20trajeta%20ActivaQR" 
+                                                                href="https://wa.me/593963425323?text=Hola,%20acabo%20de%20ver%20los%20videos%20y%20quiero%20crear%20mi%20trajeta%20ActivaQR" 
                                                                 target="_blank" 
                                                                 rel="noopener noreferrer"
                                                                 className="inline-flex w-full md:w-auto items-center justify-center gap-2 bg-primary text-white font-black uppercase tracking-widest px-8 py-3.5 rounded-xl hover:bg-navy hover:text-white hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-primary/20 text-sm"

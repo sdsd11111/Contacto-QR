@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
         const apiUrl = process.env.EVOLUTION_API_URL;
         const evolutionKey = process.env.EVOLUTION_API_KEY;
         const instance = process.env.EVOLUTION_INSTANCE;
-        const companyNumber = process.env.NOTIFY_WHATSAPP_NUMBER || '593983237491';
+        const companyNumber = process.env.NOTIFY_WHATSAPP_NUMBER || '593963425323';
 
         if (apiUrl && evolutionKey && instance) {
             try {

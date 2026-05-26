@@ -1204,7 +1204,7 @@ export default function PlanBusinessClient() {
 
             {/* Floating Support Button */}
             <motion.a
-                href="https://wa.me/593983237491?text=Hola,%20necesito%20soporte%20con%20ActivaQR"
+                href="https://wa.me/593963425323?text=Hola,%20necesito%20soporte%20con%20ActivaQR"
                 target="_blank"
                 rel="noopener noreferrer"
                 initial={{ opacity: 0, x: -20 }}

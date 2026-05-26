@@ -187,7 +187,7 @@ export default function RecorridoTab({ seller }: { seller: any }) {
     }, [seller?.id]);
 
     // Soporte Centralizado (Número del Admin)
-    const SUPPORT_NUMBER = "593983237491"; // WhatsApp Soporte ActivaQR
+    const SUPPORT_NUMBER = "593963425323"; // WhatsApp Soporte ActivaQR
     const SUPPORT_URL = `https://wa.me/${SUPPORT_NUMBER}?text=${encodeURIComponent("Hola ActivaQR necesito soporte 😊")}`;
 
     const todayStr = new Date().toLocaleDateString("es-EC", { weekday: "long", day: "numeric", month: "long" });

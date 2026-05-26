@@ -216,7 +216,7 @@ function SalesLeadForm() {
                 // Redirigir a WhatsApp después de 1.5 segundos
                 setTimeout(() => {
                     const message = encodeURIComponent(`Hola ActivaQR quiero informacion sobre los vendedores. Soy ${formData.nombre} de ${formData.canton}, ${formData.provincia} 😊`);
-                    window.open(`https://wa.me/593983237491?text=${message}`, '_blank');
+                    window.open(`https://wa.me/593963425323?text=${message}`, '_blank');
                 }, 1500);
             } else {
                 setStatus('error');

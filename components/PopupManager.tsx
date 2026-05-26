@@ -16,15 +16,6 @@ export default function PopupManager() {
         };
         document.addEventListener("mouseleave", handleMouseLeave);
 
-        // --- 2. Scroll Logic (50%) ---
-        const handleScroll = () => {
-            const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-            if (scrollPercent > 50 && !sessionStorage.getItem("popup_scroll_closed") && !activePopup) {
-                setActivePopup("scroll");
-            }
-        };
-        window.addEventListener("scroll", handleScroll);
-
         // --- 3. Time Logic (45s) ---
         const timer = setTimeout(() => {
             if (!sessionStorage.getItem("popup_time_closed") && !activePopup) {
@@ -34,7 +25,6 @@ export default function PopupManager() {
 
         return () => {
             document.removeEventListener("mouseleave", handleMouseLeave);
-            window.removeEventListener("scroll", handleScroll);
             clearTimeout(timer);
         };
     }, [activePopup]);
@@ -79,36 +69,6 @@ export default function PopupManager() {
                         </div>
                     </motion.div>
                 </div>
-            )}
-
-            {/* Scroll Popup (Toast) */}
-            {activePopup === "scroll" && (
-                <motion.div
-                    initial={{ x: 100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    className="fixed bottom-8 right-8 z-[110] max-w-sm w-full bg-navy rounded-3xl p-6 shadow-2xl border border-white/10"
-                >
-                    <button onClick={() => closePopup("scroll")} className="absolute top-4 right-4 text-white/20 hover:text-white/40"><X size={20} /></button>
-                    <div className="flex items-center gap-4 mb-4">
-                        <img src="/images/las%20costillas%20del%20veci.webp" alt="Las Costillas del Veci" className="w-12 h-12 rounded-full border-2 border-primary grayscale hover:grayscale-0 transition-transform cursor-pointer object-cover" />
-                        <div>
-                            <h4 className="text-white text-sm font-black uppercase tracking-widest leading-none">Las Costillas del Veci</h4>
-                            <p className="text-primary text-[10px] font-bold mt-1 uppercase">Restaurante · Loja</p>
-                        </div>
-                    </div>
-                    <p className="text-white/70 text-xs font-medium italic leading-relaxed mb-4">
-                        "El Código QR es una gran ayuda para compartir nuestro contacto a los clientes. ¡Ya nos agendan al instante!"
-                    </p>
-                    <button
-                        onClick={() => {
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                            closePopup("scroll");
-                        }}
-                        className="text-primary text-[10px] font-black uppercase tracking-widest hover:underline"
-                    >
-                        Ver cómo lo hicieron ellos →
-                    </button>
-                </motion.div>
             )}
 
             {/* Time Delayed (Oferta) */}

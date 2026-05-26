@@ -90,7 +90,7 @@ export default function QuoteModal({ isOpen, onClose }: QuoteModalProps) {
                 );
                 
                 setTimeout(() => {
-                    window.open(`https://wa.me/593983237491?text=${message}`, "_blank");
+                    window.open(`https://wa.me/593963425323?text=${message}`, "_blank");
                 }, 1500);
 
             } else {
