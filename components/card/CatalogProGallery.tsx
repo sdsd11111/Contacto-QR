@@ -101,13 +101,18 @@ export default function CatalogProGallery({ data, whatsapp, onLightboxToggle, th
             {/* Naluz-style Sticky Category Tabs */}
             {categories.length > 1 && (
                 <div className="sticky top-20 z-40 bg-[#F5F7FA]/90 backdrop-blur-md py-4 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-gray-200">
-                    <div className="flex gap-6 overflow-x-auto pb-2 scrollbar-hide snap-x">
+                    <div className="flex gap-6 overflow-x-auto pb-2 scrollbar-hide snap-x touch-pan-y">
                         {categories.map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
+                                onPointerDown={(e) => {
+                                    // Capturar el evento táctil inmediatamente para evitar que overflow-x-auto
+                                    // consuma el toque como gesto de scroll en móvil
+                                    e.currentTarget.focus();
+                                }}
                                 className={cn(
-                                    "whitespace-nowrap pb-2 text-sm md:text-base font-bold uppercase tracking-wider transition-all relative snap-start",
+                                    "whitespace-nowrap pb-2 text-sm md:text-base font-bold uppercase tracking-wider transition-all relative snap-start touch-manipulation cursor-pointer select-none",
                                     activeCategory === cat
                                         ? "text-navy"
                                         : "text-gray-400 hover:text-navy/70"

@@ -98,10 +98,14 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templ
     }, [items, customCategories]);
 
     const [activeCategory, setActiveCategory] = useState<string>('');
+    const userChangedRef = useRef(false);
 
-    // Leer categoría inicial: prioridad a prop initialCategory > URL (?cat=) > primera categoría
+    // Leer categoría inicial: solo se aplica UNA VEZ (o cuando cambia initialCategory y el usuario no ha intervenido)
     useEffect(() => {
         if (categories.length === 0) return;
+
+        // Si el usuario ya tocó manualmente una tab, no sobreescribir su selección
+        if (userChangedRef.current) return;
 
         // Si viene initialCategory del padre (click en "Ver catálogo"), usarla
         if (initialCategory) {
@@ -145,13 +149,14 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templ
                         <button
                             key={cat}
                             onClick={() => {
+                                userChangedRef.current = true;
                                 setActiveCategory(cat);
                                 const url = new URL(window.location.href);
                                 url.searchParams.set('cat', cat.toLowerCase());
                                 window.history.replaceState({}, '', url.toString());
                             }}
                             className={cn(
-                                `px-5 py-2 rounded-full text-xs ${fonts.title} tracking-wider uppercase transition-all duration-300 border-2`,
+                                `px-5 py-2 rounded-full text-xs ${fonts.title} tracking-wider uppercase transition-all duration-300 border-2 touch-manipulation cursor-pointer select-none`,
                                 activeCategory === cat
                                     ? "shadow-lg scale-105"
                                     : "bg-gray-100/80 dark:bg-white/10 text-navy dark:text-white border-gray-300 dark:border-white/20 hover:border-primary/50 hover:bg-white"
