@@ -89,11 +89,25 @@ export default function CatalogProGallery({ data, whatsapp, onLightboxToggle, th
         return null;
     }
 
+    // Placeholder SVG inline (no depende de servicios externos)
+    const PLACEHOLDER_SVG = 'data:image/svg+xml,' + encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">
+            <rect fill="#1a1d33" width="600" height="600"/>
+            <g transform="translate(300,260)" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2">
+                <rect x="-40" y="-30" width="80" height="60" rx="4"/>
+                <circle cx="-10" cy="-10" r="6"/>
+                <circle cx="10" cy="-10" r="6"/>
+                <path d="M-25,15 L-10,0 L0,12 L10,0 L25,15"/>
+            </g>
+            <text x="300" y="330" text-anchor="middle" fill="rgba(255,255,255,0.2)" font-family="sans-serif" font-size="14" font-weight="bold">Sin imagen</text>
+        </svg>`
+    );
+
     // Helper to get all images for an item
     const getItemImages = (item: CatalogItem) => {
         if (item.images && item.images.length > 0) return item.images;
         const mainImg = item.image || item.url || item.foto || item.imagen;
-        return mainImg ? [mainImg] : ['https://via.placeholder.com/600x600?text=Cargando...'];
+        return mainImg ? [mainImg] : [PLACEHOLDER_SVG];
     };
 
     return (
@@ -101,16 +115,11 @@ export default function CatalogProGallery({ data, whatsapp, onLightboxToggle, th
             {/* Naluz-style Sticky Category Tabs */}
             {categories.length > 1 && (
                 <div className="sticky top-20 z-40 bg-[#F5F7FA]/90 backdrop-blur-md py-4 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-gray-200">
-                    <div className="flex gap-6 overflow-x-auto pb-2 scrollbar-hide snap-x touch-pan-y">
+                    <div className="flex gap-6 overflow-x-auto pb-2 scrollbar-hide snap-x">
                         {categories.map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
-                                onPointerDown={(e) => {
-                                    // Capturar el evento táctil inmediatamente para evitar que overflow-x-auto
-                                    // consuma el toque como gesto de scroll en móvil
-                                    e.currentTarget.focus();
-                                }}
                                 className={cn(
                                     "whitespace-nowrap pb-2 text-sm md:text-base font-bold uppercase tracking-wider transition-all relative snap-start touch-manipulation cursor-pointer select-none",
                                     activeCategory === cat
