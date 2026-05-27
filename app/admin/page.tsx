@@ -1082,26 +1082,50 @@ export default function AdminDashboard() {
             if (!uploadRes.ok) throw new Error('Error subiendo imagen del catálogo');
             const { url } = await uploadRes.json();
 
+            // Extraer categorías existentes desde catalogo_json
+            let existingCatalogo: any = { categories: [], products: [] };
+            try {
+                const raw = catalogRegistro.catalogo_json;
+                const parsed = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+                if (Array.isArray(parsed)) {
+                    existingCatalogo = { categories: [...new Set(parsed.map((p: any) => p.categoria || p.category || 'General'))], products: parsed };
+                } else if (parsed?.products) {
+                    existingCatalogo = parsed;
+                }
+            } catch (e) {}
+            if (!existingCatalogo.categories) existingCatalogo.categories = [];
+            if (!existingCatalogo.products) existingCatalogo.products = [];
+
             const newItem = {
                 id: Date.now().toString(),
                 categoria: newCatalogItem.categoria || 'General',
-                titulo: newCatalogItem.titulo,
+                category: newCatalogItem.categoria || 'General',
+                nombre: newCatalogItem.titulo,
+                name: newCatalogItem.titulo,
                 descripcion: newCatalogItem.descripcion,
+                description: newCatalogItem.descripcion,
                 precio: newCatalogItem.precio,
-                url
+                price: newCatalogItem.precio,
+                imagenes: url ? [url] : [],
+                videos: []
             };
 
-            const updatedItems = [...catalogItems, newItem];
-            setCatalogItems(updatedItems);
+            const updatedItems = [...existingCatalogo.products, newItem];
+            const allCats = [...new Set([...existingCatalogo.categories, newItem.categoria])];
+            const catalogoPayload = { categories: allCats, products: updatedItems };
 
-            // Guardar en JSON de Registro
+            setCatalogItems(updatedItems);
+            // Actualizar catalogRegistro con el nuevo estado
+            setCatalogRegistro((prev: any) => ({ ...prev, catalogo_json: catalogoPayload }));
+
+            // Guardar en formato OBJECT (compatible con VCardEditModal)
             await fetch('/api/admin/registros', {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'x-admin-key': localStorage.getItem('admin_access_key') || ''
                 },
-                body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(updatedItems) })
+                body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(catalogoPayload) })
             });
 
             // Limpiar formulario
@@ -1122,13 +1146,20 @@ export default function AdminDashboard() {
         updatedItems.splice(index, 1);
         setCatalogItems(updatedItems);
 
+        // Re-calcular categorías desde productos restantes
+        const remainingCats = [...new Set(updatedItems.map((p: any) => p.categoria || p.category || 'General').filter(Boolean))];
+        const catalogoPayload = { categories: remainingCats, products: updatedItems };
+
+        // Actualizar catalogRegistro
+        setCatalogRegistro((prev: any) => ({ ...prev, catalogo_json: catalogoPayload }));
+
         await fetch('/api/admin/registros', {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
                 'x-admin-key': localStorage.getItem('admin_access_key') || ''
             },
-            body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(updatedItems) })
+            body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(catalogoPayload) })
         });
         fetchRegistros();
     };
@@ -1145,11 +1176,18 @@ export default function AdminDashboard() {
             const formattedProducts = productsToSave.map((p, idx) => ({
                 id: p.id || (Date.now() + idx).toString(),
                 categoria: p.categoria.trim() || 'General',
-                titulo: p.titulo.trim() || `Producto ${idx + 1}`,
+                category: p.categoria.trim() || 'General',
+                nombre: p.titulo.trim() || `Producto ${idx + 1}`,
+                name: p.titulo.trim() || `Producto ${idx + 1}`,
                 descripcion: p.descripcion.trim(),
+                description: p.descripcion.trim(),
                 precio: p.precio.trim(),
-                url: p.url || ''
+                price: p.precio.trim(),
+                imagenes: p.url ? [p.url] : [],
+                videos: []
             }));
+            const cats = [...new Set(formattedProducts.map(p => p.categoria).filter(Boolean))];
+            const catalogoPayload = { categories: cats, products: formattedProducts };
 
             try {
                 await fetch('/api/admin/registros', {
@@ -1160,7 +1198,7 @@ export default function AdminDashboard() {
                     },
                     body: JSON.stringify({
                         id: promptRegistro.id,
-                        catalogo_json: JSON.stringify(formattedProducts)
+                        catalogo_json: JSON.stringify(catalogoPayload)
                     })
                 });
             } catch (err) {
@@ -2877,14 +2915,25 @@ export default function AdminDashboard() {
                                 <div className="space-y-6 pb-12">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-4 ml-1">Productos Existentes ({catalogItems.length})</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {catalogItems.map((item: any, index: number) => (
+                                        {catalogItems.map((item: any, index: number) => {
+                                            // Compatibilidad: soportar ambos formatos de campo (VCardEditModal + legacy)
+                                            const imgSrc = item.imagenes?.[0] || item.url || item.image || '';
+                                            const titulo = item.nombre || item.name || item.titulo || 'Producto';
+                                            const categoria = item.categoria || item.category || 'General';
+                                            const descripcion = item.descripcion || item.description || '';
+                                            const precio = item.precio || item.price || '';
+                                            return (
                                             <div key={item.id || index} className="bg-white/5 border border-white/10 rounded-3xl p-6 flex gap-6 group hover:bg-white/[0.08] transition-all relative">
                                                 <div className="w-20 h-20 bg-white/5 rounded-2xl overflow-hidden flex-shrink-0 border border-white/5">
-                                                    <img src={item.url} className="w-full h-full object-cover" />
+                                                    {imgSrc ? (
+                                                        <img src={imgSrc} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-white/10 text-[18px] font-black">?</div>
+                                                    )}
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-start mb-1">
-                                                        <h5 className="font-bold text-white text-sm line-clamp-1">{item.titulo}</h5>
+                                                        <h5 className="font-bold text-white text-sm line-clamp-1">{titulo}</h5>
                                                         <button 
                                                             onClick={() => handleDeleteCatalogItem(index)}
                                                             className="text-white/20 hover:text-red-500 transition-colors p-1"
@@ -2892,12 +2941,13 @@ export default function AdminDashboard() {
                                                             <Trash2 size={14} />
                                                         </button>
                                                     </div>
-                                                    <p className="text-[10px] font-black text-primary uppercase mb-2 tracking-tighter">{item.categoria}</p>
-                                                    <p className="text-[10px] text-white/40 line-clamp-2 leading-relaxed">{item.descripcion}</p>
-                                                    {item.precio && <p className="text-xs font-black text-white mt-2">${item.precio}</p>}
+                                                    <p className="text-[10px] font-black text-primary uppercase mb-2 tracking-tighter">{categoria}</p>
+                                                    <p className="text-[10px] text-white/40 line-clamp-2 leading-relaxed">{descripcion}</p>
+                                                    {precio && <p className="text-xs font-black text-white mt-2">${precio}</p>}
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                     {catalogItems.length === 0 && (
                                         <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-[40px]">

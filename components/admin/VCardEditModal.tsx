@@ -454,6 +454,34 @@ export default function VCardEditModal({
     );
 
     // Parse catalogo_json into a usable object
+    // Normalizar campos legacy de productos (Catalog Manager usa titulo/url, VCardEditModal usa nombre/imagenes)
+    const normalizeProduct = (p: any) => {
+        const normalized = { ...p };
+        // Mapear titulo → nombre/name
+        if (!normalized.nombre && !normalized.name && normalized.titulo) {
+            normalized.nombre = normalized.titulo;
+            normalized.name = normalized.titulo;
+        }
+        // Mapear url → imagenes array
+        if ((!normalized.imagenes || normalized.imagenes.length === 0) && normalized.url) {
+            normalized.imagenes = [normalized.url];
+        }
+        if ((!normalized.imagenes || normalized.imagenes.length === 0) && normalized.image) {
+            normalized.imagenes = [normalized.image];
+        }
+        // Mapear descripcion/description
+        if (!normalized.descripcion && !normalized.description) {
+            normalized.descripcion = normalized.descripcion || '';
+            normalized.description = normalized.description || '';
+        }
+        // Mapear precio/price
+        if (!normalized.precio && !normalized.price) {
+            normalized.precio = normalized.precio || '';
+            normalized.price = normalized.price || '';
+        }
+        return normalized;
+    };
+
     const catalogoJson = (() => {
         let raw = editingRegistro.catalogo_json;
         if (!raw) return { categories: [] as string[], products: [] as any[] };
@@ -471,7 +499,7 @@ export default function VCardEditModal({
             const products = parsed.map((p: any) => {
                 const cat = p.categoria || p.category || 'Todas';
                 const normalizedCat = cat === 'Sin Categoría' ? 'Todas' : cat;
-                return { ...p, categoria: normalizedCat, category: normalizedCat };
+                return normalizeProduct({ ...p, categoria: normalizedCat, category: normalizedCat });
             });
             return {
                 categories: Array.from(new Set(products.map((p: any) => p.categoria))) as string[],
@@ -485,7 +513,7 @@ export default function VCardEditModal({
             const products = (parsed.products || []).map((p: any) => {
                 const cat = p.categoria || p.category || (normalizedCats[0] || 'Todas');
                 const normalizedCat = cat === 'Sin Categoría' ? 'Todas' : cat;
-                return { ...p, categoria: normalizedCat, category: normalizedCat };
+                return normalizeProduct({ ...p, categoria: normalizedCat, category: normalizedCat });
             });
             return {
                 categories: normalizedCats,
