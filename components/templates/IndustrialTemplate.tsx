@@ -141,20 +141,23 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
     };
 
     return (
-        <div className="min-h-screen bg-[#F5F7FA] font-sans text-navy selection:bg-[#FF5C00] selection:text-white">
+        <div 
+            className="min-h-screen bg-[#F5F7FA] font-sans text-navy selection:bg-[var(--theme-primary)] selection:text-white"
+            style={{ '--theme-primary': props.themePrimary || '#FF5C00' } as React.CSSProperties}
+        >
             
             {/* 0. MINI NAVBAR */}
             <nav className="fixed top-0 left-0 w-full z-[100] px-4 md:px-8 py-3 flex justify-between items-center bg-[#001549]/95 backdrop-blur-md border-b border-white/10 shadow-2xl">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-[#FF5C00] rounded-sm flex items-center justify-center text-white font-black text-lg italic shadow-lg shadow-[#FF5C00]/20">
+                    <div className="w-9 h-9 bg-[var(--theme-primary)] rounded-sm flex items-center justify-center text-white font-black text-lg italic shadow-lg shadow-[var(--theme-primary)]/20">
                         {data.nombre_negocio?.charAt(0).toUpperCase() || 'A'}
                     </div>
                     <span className="text-white font-black uppercase tracking-tighter text-lg leading-none">{data.nombre_negocio || data.nombre || 'ACTIVAQR'}</span>
                 </div>
                 <div className="hidden md:flex gap-8 text-white/80 font-bold uppercase text-[10px] tracking-widest">
-                    <a href="#servicios" className="hover:text-[#FF5C00] transition-colors">Servicios</a>
-                    <a href="#nosotros" className="hover:text-[#FF5C00] transition-colors">Nosotros</a>
-                    <a href="#proyectos" className="hover:text-[#FF5C00] transition-colors">Flota</a>
+                    <a href="#servicios" className="hover:text-[var(--theme-primary)] transition-colors">Servicios</a>
+                    <a href="#nosotros" className="hover:text-[var(--theme-primary)] transition-colors">Nosotros</a>
+                    <a href="#proyectos" className="hover:text-[var(--theme-primary)] transition-colors">Flota</a>
                 </div>
                 {data.whatsapp && (
                     <a 
@@ -228,7 +231,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.8 }}
                         >
-                            <span className="inline-block py-1 px-3 border border-[#FF5C00]/50 bg-[#FF5C00]/10 text-[#FF5C00] font-black text-[10px] tracking-widest uppercase mb-6 rounded-sm">
+                            <span className="inline-block py-1 px-3 border border-[var(--theme-primary)]/50 bg-[var(--theme-primary)]/10 text-[var(--theme-primary)] font-black text-[10px] tracking-widest uppercase mb-6 rounded-sm">
                                 {data.profesion || data.nombre_negocio || "Servicios"}
                             </span>
                             
@@ -236,7 +239,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                 {data.nombre_negocio || data.nombre || "Nombre Empresa"}
                             </h1>
                             
-                            <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-base md:text-[20px] text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[#FF5C00] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
+                            <p className="w-fit bg-[#001B3D]/60 backdrop-blur-md px-6 py-4 rounded-2xl text-base md:text-[20px] text-white/80 max-w-xl font-medium leading-relaxed mb-10 border-l-4 border-[var(--theme-primary)] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                                 {data.bio || (data.nombre_negocio ? `Excelencia y compromiso en cada servicio de ${data.nombre_negocio}.` : "Soluciones de alta calidad y eficiencia en cada entrega.")}
                             </p>
 
@@ -246,7 +249,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                         href={`https://wa.me/${data.whatsapp.replace(/\D/g, '')}?text=Hola%20${data.nombre_negocio},%20me%20gustaría%20solicitar%20información.`}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="group bg-[#FF5C00] text-white px-8 py-4 font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:bg-[#e65300] transition-colors relative overflow-hidden"
+                                        className="group bg-[var(--theme-primary)] text-white px-8 py-4 font-black uppercase text-sm tracking-widest flex items-center gap-3 hover:brightness-90 transition-all relative overflow-hidden"
                                     >
                                         <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full skew-x-12 group-hover:animate-[shimmer_1.5s_infinite]" />
                                         <span>Cotizar Ahora</span>
@@ -274,9 +277,9 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                 {/* Info Bar Bottom */}
                 <div className="absolute bottom-0 left-0 w-full bg-[#001229]/90 backdrop-blur-md border-t border-white/10 z-20 hidden md:block">
                     <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center text-white/70 text-xs font-bold uppercase tracking-widest">
-                        {data.email && <div className="flex items-center gap-2"><Mail size={14} className="text-[#FF5C00]" /> {data.email}</div>}
-                        {data.address && <div className="flex items-center gap-2"><MapPin size={14} className="text-[#FF5C00]" /> {data.address}</div>}
-                        {data.whatsapp && <div className="flex items-center gap-2"><Phone size={14} className="text-[#FF5C00]" /> {formatPhoneEcuador(data.whatsapp)}</div>}
+                        {data.email && <div className="flex items-center gap-2"><Mail size={14} className="text-[var(--theme-primary)]" /> {data.email}</div>}
+                        {data.address && <div className="flex items-center gap-2"><MapPin size={14} className="text-[var(--theme-primary)]" /> {data.address}</div>}
+                        {data.whatsapp && <div className="flex items-center gap-2"><Phone size={14} className="text-[var(--theme-primary)]" /> {formatPhoneEcuador(data.whatsapp)}</div>}
                     </div>
                 </div>
             </section>
@@ -285,9 +288,9 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
             <section id="servicios" className="py-24 px-4 bg-white relative">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">
-                        <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Qué Hacemos</h4>
-                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestros <span className="text-[#FF5C00]">Servicios</span></h2>
-                        <div className="w-20 h-1 bg-[#FF5C00] mx-auto mt-6" />
+                        <h4 className="text-[var(--theme-primary)] font-black tracking-widest uppercase text-sm mb-2">Qué Hacemos</h4>
+                        <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestros <span className="text-[var(--theme-primary)]">Servicios</span></h2>
+                        <div className="w-20 h-1 bg-[var(--theme-primary)] mx-auto mt-6" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -312,17 +315,17 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                     )}
                                     
                                     {/* Transparent Orange Overlay */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-navy via-[#FF5C00]/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-navy via-[var(--theme-primary)]/40 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
                                     
-                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-[#FF5C00] shadow-lg relative z-10 group-hover:scale-110 transition-transform">
+                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-[var(--theme-primary)] shadow-lg relative z-10 group-hover:scale-110 transition-transform">
                                         {index % 3 === 0 ? <Truck size={28} /> : index % 3 === 1 ? <Activity size={28} /> : <Shield size={28} />}
                                     </div>
                                 </div>
 
                                 {/* Content Area */}
                                 <div className="p-8 text-center bg-navy text-white relative z-10">
-                                    <h3 className="font-black uppercase text-base md:text-lg mb-3 tracking-tight group-hover:text-[#FF5C00] transition-colors line-clamp-2">{service.title}</h3>
-                                    <div className="w-8 h-1 bg-[#FF5C00] mx-auto mb-4" />
+                                    <h3 className="font-black uppercase text-base md:text-lg mb-3 tracking-tight group-hover:text-[var(--theme-primary)] transition-colors line-clamp-2">{service.title}</h3>
+                                    <div className="w-8 h-1 bg-[var(--theme-primary)] mx-auto mb-4" />
                                     <p className="text-white/60 text-sm font-medium leading-relaxed">
                                         {service.description}
                                     </p>
@@ -335,7 +338,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                                 href={`https://wa.me/${data.whatsapp?.replace(/\D/g, '')}?text=Hola, deseo información sobre ${service.title}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="bg-[#FF5C00] hover:bg-[#e65300] text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-colors duration-300 rounded-sm inline-block shadow-md animate-none"
+                                                className="bg-[var(--theme-primary)] hover:brightness-90 text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-all duration-300 rounded-sm inline-block shadow-md animate-none"
                                             >
                                                 {btnText}
                                             </a>
@@ -359,7 +362,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                                 href={experienceButton.url || "#"}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="bg-[#FF5C00] hover:bg-[#e65300] text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-colors duration-300 rounded-sm inline-block shadow-md animate-none"
+                                                className="bg-[var(--theme-primary)] hover:brightness-90 text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-all duration-300 rounded-sm inline-block shadow-md animate-none"
                                             >
                                                 {btnText}
                                             </a>
@@ -370,7 +373,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 download
-                                                className="bg-[#FF5C00] hover:bg-[#e65300] text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-colors duration-300 rounded-sm inline-flex items-center gap-2 shadow-md animate-none"
+                                                className="bg-[var(--theme-primary)] hover:brightness-90 text-white text-xs font-black uppercase tracking-wider py-2.5 px-6 transition-all duration-300 rounded-sm inline-flex items-center gap-2 shadow-md animate-none"
                                             >
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                                                 {btnText}
@@ -396,8 +399,8 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                     <section className="py-24 px-4 bg-navy relative overflow-hidden">
                         <div className="max-w-5xl mx-auto relative z-10">
                             <div className="text-center mb-12">
-                                <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-xs mb-3">En Acción</h4>
-                                <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Nuestra <span className="text-[#FF5C00]">Experiencia</span></h2>
+                                <h4 className="text-[var(--theme-primary)] font-black tracking-widest uppercase text-xs mb-3">En Acción</h4>
+                                <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter">Nuestra <span className="text-[var(--theme-primary)]">Experiencia</span></h2>
                             </div>
                             <div className={cn(
                                 "relative w-full rounded-2xl overflow-hidden shadow-2xl border-4 border-white/5 mx-auto",
@@ -413,7 +416,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                             </div>
                         </div>
                         {/* Background decorative elements */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#FF5C00]/10 blur-[100px]" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--theme-primary)]/10 blur-[100px]" />
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 blur-[100px]" />
                     </section>
                 );
@@ -423,10 +426,10 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
             <section id="nosotros" className="py-24 px-4 bg-[#001B3D] text-white">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
                     <div className="w-full md:w-1/2">
-                        <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">{chooseUs.badge}</h4>
+                        <h4 className="text-[var(--theme-primary)] font-black tracking-widest uppercase text-sm mb-2">{chooseUs.badge}</h4>
                         <h2 className="text-4xl md:text-5xl font-black uppercase tracking-tight mb-8">
                             {chooseUs.title.split(' ').map((word: string, i: number) => (
-                                <span key={i} className={i === chooseUs.title.split(' ').length - 1 ? "text-[#FF5C00]" : ""}>
+                                <span key={i} className={i === chooseUs.title.split(' ').length - 1 ? "text-[var(--theme-primary)]" : ""}>
                                     {word}{' '}
                                 </span>
                             ))}
@@ -441,10 +444,10 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                 <div key={i}>
                                     <div className="flex justify-between text-xs font-bold uppercase tracking-widest mb-2">
                                         <span>{m.label}</span>
-                                        <span className="text-[#FF5C00]">{m.value}%</span>
+                                        <span className="text-[var(--theme-primary)]">{m.value}%</span>
                                     </div>
                                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#FF5C00]" style={{ width: `${m.value}%` }} />
+                                        <div className="h-full bg-[var(--theme-primary)]" style={{ width: `${m.value}%` }} />
                                     </div>
                                 </div>
                             ))}
@@ -453,8 +456,8 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
 
                     <div className="w-full md:w-1/2 grid grid-cols-2 gap-6">
                         {stats.map((stat: any, i: number) => (
-                            <div key={i} className="bg-white/5 border border-white/10 p-6 flex flex-col items-center justify-center text-center group hover:bg-[#FF5C00] transition-colors">
-                                <div className="text-[#FF5C00] group-hover:text-white mb-4">
+                            <div key={i} className="bg-white/5 border border-white/10 p-6 flex flex-col items-center justify-center text-center group hover:bg-[var(--theme-primary)] transition-colors">
+                                <div className="text-[var(--theme-primary)] group-hover:text-white mb-4">
                                     {/* Icon selector logic or default icons */}
                                     {i === 0 ? <Building size={36} /> : i === 1 ? <Activity size={36} /> : i === 2 ? <Shield size={36} /> : <Clock size={36} />}
                                 </div>
@@ -485,15 +488,15 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                         <section id="proyectos" className="py-24 px-4 bg-[#F5F7FA]">
                             <div className="max-w-7xl mx-auto">
                                 <div className="text-center mb-16">
-                                    <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Galería de Proyectos</h4>
-                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestro <span className="text-[#FF5C00]">Catálogo</span></h2>
-                                    <div className="w-20 h-1 bg-[#FF5C00] mx-auto mt-6" />
+                                    <h4 className="text-[var(--theme-primary)] font-black tracking-widest uppercase text-sm mb-2">Galería de Proyectos</h4>
+                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight">Nuestro <span className="text-[var(--theme-primary)]">Catálogo</span></h2>
+                                    <div className="w-20 h-1 bg-[var(--theme-primary)] mx-auto mt-6" />
                                 </div>
                                 
                                 <CatalogProGallery 
                                     data={catalogData} 
                                     whatsapp={data.whatsapp}
-                                    themeColor="#FF5C00" 
+                                    themeColor={props.themePrimary || '#FF5C00'} 
                                 />
                             </div>
                         </section>
@@ -525,8 +528,8 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                             <div className="absolute top-0 right-0 w-1/3 h-full bg-navy/5 transform skew-x-12 translate-x-32" />
                             <div className="max-w-7xl mx-auto px-4 relative z-10">
                                 <div className="text-center mb-16">
-                                    <h4 className="text-[#FF5C00] font-black tracking-widest uppercase text-sm mb-2">Centro de Operaciones</h4>
-                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight mb-6">Nuestra <span className="text-[#FF5C00]">Ubicación</span></h2>
+                                    <h4 className="text-[var(--theme-primary)] font-black tracking-widest uppercase text-sm mb-2">Centro de Operaciones</h4>
+                                    <h2 className="text-4xl md:text-5xl font-black text-navy uppercase tracking-tight mb-6">Nuestra <span className="text-[var(--theme-primary)]">Ubicación</span></h2>
                                     <p className="text-navy/60 font-medium leading-relaxed max-w-2xl mx-auto mb-8">
                                         {addressText || "Visítanos en nuestra ubicación oficial para una atención directa y especializada."}
                                     </p>
@@ -534,7 +537,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                         href={buttonHref}
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-3 bg-navy text-white px-8 py-4 font-black uppercase text-sm tracking-widest hover:bg-[#FF5C00] transition-colors"
+                                        className="inline-flex items-center gap-3 bg-navy text-white px-8 py-4 font-black uppercase text-sm tracking-widest hover:bg-[var(--theme-primary)] transition-colors"
                                     >
                                         <MapPin size={18} />
                                         Trazar Ruta
@@ -547,7 +550,7 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                                     containerClassName="w-full h-[400px] md:h-[600px] relative border-4 border-navy/5 shadow-2xl overflow-hidden group"
                                     iframeStyle={{ filter: 'contrast(1.1) brightness(0.95)' }}
                                 >
-                                    <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF5C00] z-10 flex items-center justify-center transform translate-x-12 -translate-y-12 rotate-45 group-hover:scale-110 transition-transform" />
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--theme-primary)] z-10 flex items-center justify-center transform translate-x-12 -translate-y-12 rotate-45 group-hover:scale-110 transition-transform" />
                                 </MapSection>
                             </div>
                         </section>
@@ -561,14 +564,14 @@ export default function IndustrialTemplate(props: HeroCarouselTemplateProps) {
                         <h2 className="text-2xl font-black uppercase tracking-tight mb-4">{data.nombre_negocio || data.nombre}</h2>
                         <p className="text-white/50 text-sm mb-6">{data.profesion || "Líderes en soluciones de alta calidad."}</p>
                         <div className="flex gap-4 justify-center md:justify-start">
-                            {data.instagram && <a href={data.instagram} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[#FF5C00] rounded-full flex items-center justify-center transition-colors"><Instagram size={18} /></a>}
-                            {data.facebook && <a href={data.facebook} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[#FF5C00] rounded-full flex items-center justify-center transition-colors"><Facebook size={18} /></a>}
+                            {data.instagram && <a href={data.instagram} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[var(--theme-primary)] rounded-full flex items-center justify-center transition-colors"><Instagram size={18} /></a>}
+                            {data.facebook && <a href={data.facebook} target="_blank" className="w-10 h-10 bg-white/5 hover:bg-[var(--theme-primary)] rounded-full flex items-center justify-center transition-colors"><Facebook size={18} /></a>}
                         </div>
                     </div>
                     
                     <div className="w-full md:w-2/3 flex flex-col md:flex-row justify-end gap-12 text-center md:text-right">
                         <div>
-                            <h4 className="text-[#FF5C00] font-black uppercase tracking-widest text-xs mb-6">Contacto Directo</h4>
+                            <h4 className="text-[var(--theme-primary)] font-black uppercase tracking-widest text-xs mb-6">Contacto Directo</h4>
                             <ul className="space-y-4 text-sm font-medium text-white/70">
                                 {data.whatsapp && <li>{data.whatsapp}</li>}
                                 {data.email && <li>{data.email}</li>}

@@ -158,8 +158,8 @@ export default function CatalogGallery({ data, whatsapp, onLightboxToggle, templ
                             className={cn(
                                 `px-5 py-2 rounded-full text-xs ${fonts.title} tracking-wider uppercase transition-all duration-300 border-2 touch-manipulation cursor-pointer select-none`,
                                 activeCategory === cat
-                                    ? "shadow-lg scale-105"
-                                    : "bg-gray-100/80 dark:bg-white/10 text-navy dark:text-white border-gray-300 dark:border-white/20 hover:border-primary/50 hover:bg-white"
+                                    ? "shadow-lg scale-105 text-white"
+                                    : "bg-white/10 text-white/80 border-white/20 hover:border-[var(--theme-primary)]/50 hover:bg-white/20"
                             )}
                                 style={activeCategory === cat ? { 
                                     backgroundColor: 'var(--theme-primary, #FF6B00)',

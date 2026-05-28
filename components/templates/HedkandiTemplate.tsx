@@ -53,7 +53,13 @@ export default function HedkandiTemplate(props: HedkandiTemplateProps) {
     }, [lightboxImg]);
  
     return (
-        <div className="w-full min-h-screen bg-white text-[#1A1A1A] overflow-x-hidden selection:bg-[#7292ab] selection:text-white">
+        <div 
+            className="w-full min-h-screen bg-white text-[#1A1A1A] overflow-x-hidden selection:bg-[#7292ab] selection:text-white"
+            style={{ 
+                '--theme-primary': props.themePrimary || '#FF5C00',
+                '--theme-bg': props.extractedBg ? `color-mix(in srgb, ${props.extractedBg} 20%, #050510)` : '#001549',
+            } as React.CSSProperties}
+        >
             
             {/* HIDE GLOBAL HEADER/FOOTER */}
             <style dangerouslySetInnerHTML={{__html: `
