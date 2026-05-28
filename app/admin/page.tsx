@@ -1142,6 +1142,9 @@ export default function AdminDashboard() {
 
     const handleDeleteCatalogItem = async (index: number) => {
         if (!catalogRegistro) return;
+        const item = catalogItems[index];
+        const itemName = item?.nombre || item?.name || item?.titulo || 'este producto';
+        if (!confirm('Eliminar "' + itemName + '"?\n\nEsta accion no se puede deshacer.')) return;
         const updatedItems = [...catalogItems];
         updatedItems.splice(index, 1);
         setCatalogItems(updatedItems);
@@ -2834,6 +2837,165 @@ export default function AdminDashboard() {
 
                             {/* Body Scrollable */}
                             <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
+                                {/* ─── GESTIÓN DE CATEGORÍAS ─── */}
+                                {(() => {
+                                    const allCategories = [...new Set(catalogItems.map((p: any) => p.categoria || p.category || 'General').filter(Boolean))];
+                                    return (
+                                        <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 md:p-8 mb-8">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400">📁 Categorías ({allCategories.length})</h4>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const cat = prompt('Nueva categoría:');
+                                                        if (cat && cat.trim()) {
+                                                            // Add a placeholder product just to create the category
+                                                            const newItem = { 
+                                                                id: `cat_${Date.now()}`, 
+                                                                nombre: '---', 
+                                                                categoria: cat.trim(),
+                                                                category: cat.trim(),
+                                                                imagenes: [], 
+                                                                videos: [],
+                                                                descripcion: '', 
+                                                                description: '',
+                                                                precio: '',
+                                                                price: ''
+                                                            };
+                                                            const updatedItems = [newItem, ...catalogItems];
+                                                            setCatalogItems(updatedItems);
+                                                            const remainingCats = [...new Set(updatedItems.map((p: any) => p.categoria || p.category || 'General').filter(Boolean))];
+                                                            const catalogoPayload = { categories: remainingCats, products: updatedItems };
+                                                            setCatalogRegistro((prev: any) => ({ ...prev, catalogo_json: catalogoPayload }));
+                                                            fetch('/api/admin/registros', {
+                                                                method: 'PATCH',
+                                                                headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_access_key') || '' },
+                                                                body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(catalogoPayload) })
+                                                            });
+                                                            fetchRegistros();
+                                                        }
+                                                    }}
+                                                    className="text-[10px] font-black text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-full flex items-center gap-1 hover:bg-indigo-500/20 transition-all"
+                                                >
+                                                    + Nueva
+                                                </button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {allCategories.map((cat, idx) => {
+                                                    const productCount = catalogItems.filter((p: any) => (p.categoria || p.category || '').toLowerCase() === cat.toLowerCase()).length;
+                                                    return (
+                                                        <div key={idx} className="bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full flex items-center gap-2">
+                                                            <span className="text-[10px] font-black text-indigo-300 uppercase">{cat}</span>
+                                                            <span className="text-[8px] text-indigo-400/50 font-bold">({productCount})</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const msg = productCount > 0
+                                                                        ? 'Eliminar categoria "' + cat + '"?\n\nADVERTENCIA: Tambien se eliminaran ' + productCount + ' producto(s) de esta categoria.\n\nEsta accion no se puede deshacer.'
+                                                                        : 'Eliminar categoria "' + cat + '"?\n\nEsta categoria esta vacia.';
+                                                                    if (!confirm(msg)) return;
+                                                                    const updatedItems = catalogItems.filter((p: any) => (p.categoria || p.category || '').toLowerCase() !== cat.toLowerCase());
+                                                                    setCatalogItems(updatedItems);
+                                                                    const remainingCats = [...new Set(updatedItems.map((p: any) => p.categoria || p.category || 'General').filter(Boolean))];
+                                                                    const catalogoPayload = { categories: remainingCats, products: updatedItems };
+                                                                    setCatalogRegistro((prev: any) => ({ ...prev, catalogo_json: catalogoPayload }));
+                                                                    fetch('/api/admin/registros', {
+                                                                        method: 'PATCH',
+                                                                        headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_access_key') || '' },
+                                                                        body: JSON.stringify({ id: catalogRegistro.id, catalogo_json: JSON.stringify(catalogoPayload) })
+                                                                    });
+                                                                    fetchRegistros();
+                                                                }}
+                                                                className="text-indigo-400/50 hover:text-red-400 transition-colors"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {allCategories.length === 0 && (
+                                                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-wider">Sin categorías. Crea una o añade productos.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* ─── COLOR PICKER ─── */}
+                                {(() => {
+                                    let currentOverride: Record<string, any> = {};
+                                    try {
+                                        const raw = (catalogRegistro as any)?.json_override;
+                                        currentOverride = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+                                    } catch {}
+                                    const currentColor = currentOverride?.themePrimary || '#f66739';
+                                    return (
+                                        <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-[32px] p-6 md:p-8 mb-8">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 flex items-center gap-2">🎨 Color del Tema</h4>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        let currentOverride: Record<string, any> = {};
+                                                        try {
+                                                            const raw = (catalogRegistro as any)?.json_override;
+                                                            currentOverride = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+                                                        } catch {}
+                                                        delete currentOverride.themePrimary;
+                                                        delete currentOverride.themeTextOnPrimary;
+                                                        setCatalogRegistro((prev: any) => ({ ...prev, json_override: currentOverride }));
+                                                        await fetch('/api/admin/registros', {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_access_key') || '' },
+                                                            body: JSON.stringify({ id: catalogRegistro.id, json_override: JSON.stringify(currentOverride) })
+                                                        });
+                                                        fetchRegistros();
+                                                    }}
+                                                    className="text-[9px] font-black uppercase tracking-widest text-indigo-300/50 hover:text-red-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/10"
+                                                >
+                                                    Restaurar Auto
+                                                </button>
+                                            </div>
+                                            <p className="text-[9px] text-indigo-300/40 font-bold uppercase tracking-widest mb-5">
+                                                Color principal para botones, títulos y bordes del perfil. Si no eliges, se extrae de la foto.
+                                            </p>
+                                            <div className="flex items-center gap-6">
+                                                <input 
+                                                    type="color" 
+                                                    value={currentColor}
+                                                    onChange={async (e) => {
+                                                        const newColor = e.target.value;
+                                                        let currentOverride: Record<string, any> = {};
+                                                        try {
+                                                            const raw = (catalogRegistro as any)?.json_override;
+                                                            currentOverride = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {});
+                                                        } catch {}
+                                                        const newOverride = { ...currentOverride, themePrimary: newColor, themeTextOnPrimary: '#ffffff' };
+                                                        setCatalogRegistro((prev: any) => ({ ...prev, json_override: newOverride }));
+                                                        await fetch('/api/admin/registros', {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json', 'x-admin-key': localStorage.getItem('admin_access_key') || '' },
+                                                            body: JSON.stringify({ id: catalogRegistro.id, json_override: JSON.stringify(newOverride) })
+                                                        });
+                                                        fetchRegistros();
+                                                    }}
+                                                    className="w-14 h-14 rounded-2xl border-2 border-white/20 cursor-pointer hover:border-indigo-400/50 transition-all"
+                                                    style={{ backgroundColor: currentColor }}
+                                                />
+                                                <div className="flex-1">
+                                                    <div 
+                                                        className="w-full h-9 rounded-xl flex items-center px-4 text-[10px] font-black uppercase tracking-widest"
+                                                        style={{ backgroundColor: currentColor, color: '#ffffff' }}
+                                                    >
+                                                        Vista previa
+                                                    </div>
+                                                    <span className="text-[9px] font-mono text-white/20 mt-1 block">{currentColor}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
                                 {/* Formulario para nuevo item */}
                                 <div className="bg-white/5 border border-white/10 rounded-[32px] p-6 md:p-8 mb-12">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-8 border-b border-white/5 pb-4">Añadir Nuevo Producto</h4>

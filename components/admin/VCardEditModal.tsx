@@ -528,8 +528,28 @@ export default function VCardEditModal({
         setEditingRegistro({ ...editingRegistro, catalogo_json: updated });
     };
 
-
-
+    const handleDeleteCategory = (catName: string) => {
+        const catalogoJson = (() => {
+            const raw = editingRegistro.catalogo_json;
+            if (!raw) return { categories: [], products: [] };
+            if (typeof raw === 'string') { try { return JSON.parse(raw); } catch { return { categories: [], products: [] }; } }
+            return raw;
+        })();
+        const productCount = catalogoJson.products.filter(
+            (p: any) => (p.categoria || p.category || '').toLowerCase() === catName.toLowerCase()
+        ).length;
+        const msg = productCount > 0
+            ? 'Eliminar categoria "' + catName + '"?\n\nADVERTENCIA: Tambien se eliminaran ' + productCount + ' producto(s) de esta categoria.\n\nEsta accion no se puede deshacer.'
+            : 'Eliminar categoria "' + catName + '"?\n\nEsta categoria esta vacia, se eliminara sin afectar productos.';
+        if (!confirm(msg)) return;
+        updateCatalogo({ 
+            ...catalogoJson, 
+            products: catalogoJson.products.filter((p: any) => 
+                (p.categoria || p.category || '').toLowerCase() !== catName.toLowerCase()
+            ),
+            categories: catalogoJson.categories.filter((cat: any) => cat !== catName) 
+        });
+    };
 
     const handleSaveEdit = () => {
         let recalculatedNombre = editingRegistro.nombre;
@@ -1867,6 +1887,73 @@ export default function VCardEditModal({
                                             )}
                                         </div>
                                 </div>
+
+                                {/* ─── COLOR PICKER: Tema personalizado ─── */}
+                                <div className="bg-indigo-500/5 p-8 rounded-[2.5rem] border border-indigo-500/20 space-y-6">
+                                    <div className="flex justify-between items-center">
+                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400 flex items-center gap-2">
+                                            🎨 COLOR DEL TEMA
+                                        </h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const raw = editingRegistro.json_override;
+                                                let currentOverride: Record<string, any> = {};
+                                                try { currentOverride = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {}); } catch {}
+                                                delete currentOverride.themePrimary;
+                                                delete currentOverride.themeTextOnPrimary;
+                                                setEditingRegistro({ ...editingRegistro, json_override: currentOverride });
+                                            }}
+                                            className="text-indigo-300/50 hover:text-red-400 text-[9px] font-black uppercase tracking-widest transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/10"
+                                        >
+                                            Restaurar Auto
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-indigo-300/40 font-bold uppercase tracking-widest leading-relaxed px-1">
+                                        Color principal que destacará en botones, títulos y bordes del perfil digital.
+                                        Si no eliges ninguno, se extraerá automáticamente de la foto de perfil.
+                                    </p>
+                                    <div className="flex items-center gap-6">
+                                        {(() => {
+                                            const raw = editingRegistro.json_override;
+                                            let currentOverride: Record<string, any> = {};
+                                            try { currentOverride = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {}); } catch {}
+                                            const currentColor = currentOverride?.themePrimary || '#f66739';
+                                            return (
+                                                <>
+                                                    <input 
+                                                        type="color" 
+                                                        value={currentColor}
+                                                        onChange={(e) => {
+                                                            let currentOverride: Record<string, any> = {};
+                                                            try { 
+                                                                const raw = editingRegistro.json_override;
+                                                                currentOverride = typeof raw === 'string' ? JSON.parse(raw || '{}') : (raw || {}); 
+                                                            } catch {}
+                                                            setEditingRegistro({ 
+                                                                ...editingRegistro, 
+                                                                json_override: { ...currentOverride, themePrimary: e.target.value, themeTextOnPrimary: '#ffffff' } 
+                                                            });
+                                                        }}
+                                                        className="w-16 h-16 rounded-2xl border-2 border-white/20 cursor-pointer hover:border-indigo-400/50 transition-all"
+                                                        style={{ backgroundColor: currentColor }}
+                                                    />
+                                                    <div className="flex-1 space-y-2">
+                                                        <div 
+                                                            className="w-full h-10 rounded-xl flex items-center px-5 text-[11px] font-black uppercase tracking-widest"
+                                                            style={{ backgroundColor: currentColor, color: '#ffffff' }}
+                                                        >
+                                                            Vista previa del color
+                                                        </div>
+                                                        <span className="text-[10px] font-mono text-white/30">
+                                                            {currentColor}
+                                                        </span>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
                             </div>
                         )}
 
@@ -1896,13 +1983,7 @@ export default function VCardEditModal({
                                                 {catalogoJson.categories.map((c: string, i: number) => (
                                                     <div key={i} className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-3">
                                                         <span className="text-[10px] font-black text-primary uppercase">{c}</span>
-                                                        <button type="button" onClick={() => updateCatalogo({ 
-                                                            ...catalogoJson, 
-                                                            products: catalogoJson.products.map((p: any) => 
-                                                                (p.categoria || p.category) === c ? { ...p, categoria: 'Todas', category: 'Todas' } : p
-                                                            ),
-                                                            categories: catalogoJson.categories.filter((cat: any) => cat !== c) 
-                                                        })} className="hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
+                                                        <button type="button" onClick={() => handleDeleteCategory(c)} className="hover:text-red-500 transition-colors"><Trash2 size={12} /></button>
                                                     </div>
                                                 ))}
                                             </div>

@@ -97,6 +97,17 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
 
     // ─── Color Extraction ─────────────────────────────────────────────────────
     useEffect(() => {
+        if (!data) return;
+
+        // ✅ PRIORIDAD 1: Color manual desde json_override (si el usuario lo eligió en el editor)
+        const manualOverrides = safeParse<any>(data?.json_override, {});
+        if (manualOverrides?.themePrimary) {
+            setThemePrimary(manualOverrides.themePrimary);
+            setThemeTextOnPrimary(manualOverrides.themeTextOnPrimary || '#ffffff');
+            if (manualOverrides.extractedBg) setExtractedBg(manualOverrides.extractedBg);
+            return; // Saltar extracción automática, usar el color manual
+        }
+
         if (!data?.foto_url) return;
 
         const isActivaQR =
@@ -119,23 +130,41 @@ export default function VCardClient({ showCatalog = false }: VCardClientProps) {
                 try {
                     const v = new Vibrant(img, { colorCount: 64, quality: 3 });
                     v.getPalette().then((palette: any) => {
+                        // ── Background: DarkVibrant → DarkMuted → Muted → Vibrant ──
                         if (palette?.DarkVibrant) setExtractedBg(palette.DarkVibrant.hex);
                         else if (palette?.DarkMuted) setExtractedBg(palette.DarkMuted.hex);
+                        else if (palette?.Muted) setExtractedBg(palette.Muted.hex);
+                        else if (palette?.Vibrant) setExtractedBg(palette.Vibrant.hex);
 
+                        // ── Primary: Vibrant → LightVibrant → Muted → DarkMuted → LightMuted ──
                         if (palette?.Vibrant) {
                             setThemePrimary(palette.Vibrant.hex);
                             setThemeTextOnPrimary(palette.Vibrant.titleTextColor ?? '#ffffff');
                         } else if (palette?.LightVibrant) {
                             setThemePrimary(palette.LightVibrant.hex);
                             setThemeTextOnPrimary(palette.LightVibrant.titleTextColor ?? '#000000');
+                        } else if (palette?.Muted) {
+                            setThemePrimary(palette.Muted.hex);
+                            setThemeTextOnPrimary(palette.Muted.titleTextColor ?? '#ffffff');
+                        } else if (palette?.DarkMuted) {
+                            setThemePrimary(palette.DarkMuted.hex);
+                            setThemeTextOnPrimary(palette.DarkMuted.titleTextColor ?? '#ffffff');
+                        } else if (palette?.LightMuted) {
+                            setThemePrimary(palette.LightMuted.hex);
+                            setThemeTextOnPrimary(palette.LightMuted.titleTextColor ?? '#000000');
                         }
+                        // Si no hay NINGÚN color en el palette, se queda el default #f66739
                     });
                 } catch (e) {
                     console.warn("[VCardClient] Vibrant extraction error:", e);
                 }
             };
+            img.onerror = () => {
+                console.warn("[VCardClient] Profile image failed to load for color extraction:", data.foto_url?.substring(0, 80));
+                // No se actualizan colores, se mantienen los defaults (#f66739 naranja, #001549 navy)
+            };
         }).catch(err => console.warn("[VCardClient] Could not load node-vibrant:", err));
-    }, [data?.foto_url, slug, data?.nombre_negocio]);
+    }, [data, slug]);
 
     // ─── Categoría desde URL (?cat=) para pasar al catálogo ─────────
     const [urlCategory, setUrlCategory] = useState<string>('');

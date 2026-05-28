@@ -1982,11 +1982,22 @@ export default function VCardEditModal({
                                                                     <div key={idx} className="bg-[#FF5C00]/10 border border-[#FF5C00]/20 px-3 py-1.5 rounded-full flex items-center gap-2">
                                                                         <span className="text-[11px] font-black text-[#FF5C00]">{cat}</span>
                                                                         <button onClick={() => {
+                                                                            const productCount = formData.catalogo_json.products.filter(
+                                                                                p => (p.category || p.categoria || '').toLowerCase() === cat.toLowerCase()
+                                                                            ).length;
+                                                                            var msg = 'Eliminar categoria "' + cat + '"?';
+                                                                            if (productCount > 0) {
+                                                                                msg += '\n\nADVERTENCIA: Tambien se eliminaran ' + productCount + ' producto(s) de esta categoria.\n\nEsta accion no se puede deshacer.';
+                                                                            }
+                                                                            if (!confirm(msg)) return;
                                                                             setFormData({
                                                                                 ...formData,
                                                                                 catalogo_json: {
                                                                                     ...formData.catalogo_json,
-                                                                                    categories: formData.catalogo_json.categories.filter(c => c !== cat)
+                                                                                    categories: formData.catalogo_json.categories.filter(c => c !== cat),
+                                                                                    products: formData.catalogo_json.products.filter(
+                                                                                        p => (p.category || p.categoria || '').toLowerCase() !== cat.toLowerCase()
+                                                                                    )
                                                                                 }
                                                                             });
                                                                         }} className="text-[#FF5C00]/50 hover:text-red-500 transition-colors"><X size={13} /></button>
@@ -2295,6 +2306,77 @@ export default function VCardEditModal({
                                                              <div className="col-span-full space-y-1">
                                                                  <label className="text-[10px] font-black text-primary uppercase tracking-widest">Etiquetas / Tags (Separados por coma)</label>
                                                                  <input className="w-full border rounded-lg p-3 text-gray-900 text-sm font-bold bg-primary/5 border-primary/20" value={formData.etiquetas} onChange={(e) => setFormData({ ...formData, etiquetas: e.target.value })} placeholder="Ej. Parrillada, Eventos, Gourmet" />
+                                                             </div>
+
+                                                             {/* ─── COLOR PICKER: Tema personalizado ─── */}
+                                                             <div className="col-span-full border-t border-gray-100 pt-4 mt-2">
+                                                                 <div className="flex items-center justify-between gap-4">
+                                                                     <div className="flex-1">
+                                                                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Color Principal del Tema</label>
+                                                                         <p className="text-[9px] text-gray-400 leading-tight">
+                                                                             Elige el color que destacará en tu perfil (botones, títulos, bordes). 
+                                                                             Si no eliges ninguno, se extraerá automáticamente de tu foto de perfil.
+                                                                         </p>
+                                                                     </div>
+                                                                     <div className="flex items-center gap-3 shrink-0">
+                                                                         <input 
+                                                                             type="color" 
+                                                                             value={(() => {
+                                                                                 const override = formData.json_override || {};
+                                                                                 return (override as any).themePrimary || '#f66739';
+                                                                             })()}
+                                                                             onChange={(e) => {
+                                                                                 const newColor = e.target.value;
+                                                                                 setFormData({
+                                                                                     ...formData,
+                                                                                     json_override: {
+                                                                                         ...(formData.json_override || {}),
+                                                                                         themePrimary: newColor,
+                                                                                         themeTextOnPrimary: '#ffffff',
+                                                                                     }
+                                                                                 });
+                                                                             }}
+                                                                             className="w-12 h-12 rounded-xl border-2 border-gray-200 cursor-pointer hover:border-primary/50 transition-colors"
+                                                                             style={{ backgroundColor: (() => {
+                                                                                 const override = formData.json_override || {};
+                                                                                 return (override as any).themePrimary || '#f66739';
+                                                                             })() }}
+                                                                         />
+                                                                         <button
+                                                                             onClick={() => {
+                                                                                 const newOverride = { ...(formData.json_override || {}) };
+                                                                                 delete (newOverride as any).themePrimary;
+                                                                                 delete (newOverride as any).themeTextOnPrimary;
+                                                                                 setFormData({ ...formData, json_override: newOverride });
+                                                                             }}
+                                                                             className="text-[9px] font-black uppercase tracking-wider text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+                                                                             title="Restaurar color automático"
+                                                                         >
+                                                                             Auto
+                                                                         </button>
+                                                                     </div>
+                                                                 </div>
+                                                                 {/* Preview del color */}
+                                                                 <div className="flex items-center gap-3 mt-3">
+                                                                     <div 
+                                                                         className="w-full h-9 rounded-lg flex items-center px-4 text-[10px] font-black uppercase tracking-widest"
+                                                                         style={{ 
+                                                                             backgroundColor: (() => {
+                                                                                 const override = formData.json_override || {};
+                                                                                 return (override as any).themePrimary || '#f66739';
+                                                                             })(),
+                                                                             color: '#ffffff'
+                                                                         }}
+                                                                     >
+                                                                         Vista previa del color
+                                                                     </div>
+                                                                     <span className="text-[10px] font-mono text-gray-400 shrink-0">
+                                                                         {(() => {
+                                                                             const override = formData.json_override || {};
+                                                                             return (override as any).themePrimary || '#f66739';
+                                                                         })()}
+                                                                     </span>
+                                                                 </div>
                                                              </div>
                                                          </div>
                                                     </div>
